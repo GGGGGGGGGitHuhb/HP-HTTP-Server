@@ -1,10 +1,33 @@
 # Changelog
 
-本文档记录 HP HTTP Server 已经完成、合并或形成基线的重要变化。未来计划写入 `ROADMAP.md`，长期架构写入 `ARCHITECTURE.md`，技术债写入 `TECH-DEBT-TRACKER.md`，具体实现和审查结果写入对应报告。
+本文档记录 HP HTTP Server 已经完成并得到适当验证的重要变化。未来计划写入 `ROADMAP.md`，长期架构写入 `ARCHITECTURE.md`，技术债写入 `TECH-DEBT-TRACKER.md`，实现与审查证据写入对应报告。
 
 ## Unreleased
 
-当前暂无已完成但未归入版本的功能变更。
+### 新增
+
+- 新增并批准 `docs/leader/designs/V0.1/S1-design.md`，形成 Builder 可执行的 S1 基线。
+- 新增并批准 `docs/reviewer/reviews/V0.1/S1-review.md`，形成 Reviewer 的 REQ/AC/RV 审查基线。
+- 新增 `docs/leader/reports/V0.1/S1-report-001.md`，保留初始设计过程。
+- 新增 `docs/leader/reports/V0.1/S1-report-002.md`，记录文档完整性整改、决策和验证结果。
+- 新增 S1 的 CMake/C++20 工程骨架、同步日志、Socket fd RAII、基础设置操作、最小 CLI 和 3 个 CTest 测试目标。
+- 新增 Builder 实现报告 001/002、Reviewer 审查报告 001 和 Leader 阶段关闭报告 003，保留实现、独立验收与关闭证据。
+
+### 变更
+
+- 统一仓库级文档权威顺序、阶段生命周期、返工规则、角色交接和 Reviewer 唯一结论。
+- `ARCHITECTURE.md` 区分当前实现状态与长期目标，补充 metrics 依赖、事件循环线程池和信号关闭边界。
+- `ROADMAP.md` 补充版本前置条件、阶段完成门槛，并明确 V1.1 是 V1.0 之后的可选扩展。
+- S1 设计固定工具链基线、CLI 范围、Socket 所有权、错误策略、Builder 里程碑和验收追溯。
+- S1 状态同步为 `已完成`；下一步为 Leader 设计 `V0.1 / S2`，S2 尚未开始实现。
+- 技术债跟踪器改为只记录跨阶段债务、批准延期和持续风险，并移除不属于技术债范围的本地文档发布议题。
+
+### 验证
+
+- Builder 已完成配置、构建、CTest 和三种 CLI 验证，CTest `3/3` 通过。
+- Reviewer 使用全新的 `build-review/` 独立完成 Debug/Ninja 配置与构建，RV-01 至 RV-07 全部通过，CTest `3/3` 通过，唯一结论为 `PASS`。
+- Reviewer 确认 P0、P1、P2 均无；唯一 P3 顶层状态同步已由 Leader 阶段关闭处理。
+- Reviewer 报告：`docs/reviewer/reports/V0.1/S1-report-001.md`。
 
 ## V0.0.0 - 2026-05-22
 
@@ -33,20 +56,19 @@
 
 ### 安全
 
-- 在架构文档中明确静态文件服务必须限制在配置的根目录内，后续路径解析需要防止路径穿越。
-- 在架构文档中明确生产代码不得执行用户传入的系统命令，日志不得泄露敏感信息。
+- 架构文档明确静态文件服务必须限制在配置根目录内，后续路径解析需要防止路径穿越。
+- 架构文档明确生产代码不得执行用户传入的系统命令，日志不得泄露敏感信息。
 - 当前版本尚未实现网络服务，因此没有运行时安全修复。
 
 ### 验证
 
 - 本阶段为文档准备阶段，未运行代码测试。
-- 已检查 `ROADMAP.md`、`TECH-DEBT-TRACKER.md`、`README.md` 的标题结构。
-- 已确认 README 明确标注当前暂不可运行，避免把规划能力误写成已实现能力。
+- 已检查路线图、技术债、README 的标题结构和当前状态声明。
 
 ### 相关文档
 
-- 架构文档：`ARCHITECTURE.md`
-- 路线图：`ROADMAP.md`
-- 技术债跟踪：`TECH-DEBT-TRACKER.md`
-- 项目入口：`README.md`
-- 文档规范：`docs/references/`
+- `ARCHITECTURE.md`
+- `ROADMAP.md`
+- `TECH-DEBT-TRACKER.md`
+- `README.md`
+- `docs/references/`

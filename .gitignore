@@ -1,2 +1,4 @@
 docs/
 AGENTS.md
+build/
+build-*/
