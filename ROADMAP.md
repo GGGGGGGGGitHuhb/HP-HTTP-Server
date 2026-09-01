@@ -71,11 +71,26 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 历史文档即使过时，也应通过追加新文档、补充说明或标记状态处理，不应直接删除来“清理历史”。
 
+## 推进与完成规则
+
+- 同一时间默认只有一个活动阶段；当前活动阶段为 `V0.1 / S1`。
+- 阶段状态统一使用：`未开始`、`设计中`、`待实现`、`实现中`、`待审查`、`返工中`、`已完成`、`阻塞`。
+- 阶段设计和审查计划必须处于 `Approved`，Builder 才能开始实现。
+- 阶段只有在实现证据完整，且 Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT` 后，才能标记为 `已完成`。
+- 后续阶段以前一阶段 `已完成` 为前置条件；后续版本以前一版本全部阶段 `已完成` 为前置条件。
+- 版本完成还要求 README、CHANGELOG、技术债和对应报告与实际行为一致。
+- `V1.1` 是 `V1.0` 之后的可选扩展，不属于简历交付版的必需完成条件。
+
 ## 版本路线
 
 ### V0.1 最小可运行 HTTP Server
 
-状态：计划中。
+状态：进行中；`S1 已完成`，下一步由 Leader 设计 `S2`。
+
+前置条件：
+
+- 项目准备文档完成。
+- `V0.1 / S1` 设计与审查计划已经批准。
 
 目标：
 
@@ -106,9 +121,9 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 阶段划分：
 
-- `S1 项目骨架与基础资源封装`：建立 CMake、目录结构、基础类型、日志、socket RAII 和最小启动入口。设计文档：`docs/leader/designs/V0.1/S1-design.md`。
-- `S2 单线程 epoll 与连接读写`：实现监听 socket、非阻塞连接、`epoll` 事件循环、连接状态和短写处理。设计文档：`docs/leader/designs/V0.1/S2-design.md`。
-- `S3 最小 HTTP 静态文件服务`：实现基础 HTTP 解析、路径安全、静态文件响应、错误码和 smoke test。设计文档：`docs/leader/designs/V0.1/S3-design.md`。
+- `S1 项目骨架与基础资源封装`（`已完成`）：建立 CMake、目录结构、基础类型、日志、socket RAII 和最小启动入口。设计文档：`docs/leader/designs/V0.1/S1-design.md`。
+- `S2 单线程 epoll 与连接读写`（`未开始`）：下一步由 Leader 编写阶段设计与审查计划并提交批准；批准前不得实现。设计文档：`docs/leader/designs/V0.1/S2-design.md`。
+- `S3 最小 HTTP 静态文件服务`（`未开始`）：实现基础 HTTP 解析、路径安全、静态文件响应、错误码和 smoke test。设计文档：`docs/leader/designs/V0.1/S3-design.md`。
 
 完成标准：
 
@@ -118,6 +133,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 单元测试和 smoke test 通过。
 - `README.md` 包含最小构建、运行和验证命令。
 - Builder 报告和 Reviewer 审查报告已生成。
+- `V0.1 / S3` Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT`。
 
 相关文档：
 
@@ -128,6 +144,10 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 ### V0.2 Reactor 抽象重构
 
 状态：计划中。
+
+前置条件：
+
+- `V0.1` 已完成。
 
 目标：
 
@@ -174,6 +194,10 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 ### V0.3 HTTP 状态机与连接复用
 
 状态：计划中。
+
+前置条件：
+
+- `V0.2` 已完成。
 
 目标：
 
@@ -222,17 +246,21 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 状态：计划中。
 
+前置条件：
+
+- `V0.3` 已完成。
+
 目标：
 
-引入多线程并发模型和连接资源治理。版本完成后，服务器应具备主从 Reactor、线程池、定时器、空闲连接超时、优雅关闭和基础背压能力，可以解释高并发连接下如何避免资源失控。
+引入多线程并发模型和连接资源治理。版本完成后，服务器应具备主从 Reactor、事件循环线程池、定时器、空闲连接超时、优雅关闭和基础背压能力，可以解释高并发连接下如何避免资源失控。
 
 核心能力：
 
 - 主从 Reactor 模型。
 - `EventLoopThread` 或等价事件循环线程封装。
-- 线程池和任务队列边界。
+- 固定大小的 `EventLoopThreadPool` 和跨线程投递边界。
 - 定时器与空闲连接超时。
-- 优雅关闭流程。
+- 响应 `SIGINT`、`SIGTERM` 的优雅关闭流程。
 - 输出 Buffer 高水位和慢连接保护。
 - 跨线程任务投递和唤醒机制。
 
@@ -248,9 +276,9 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 阶段划分：
 
 - `S1 EventLoop 线程化`：建立事件循环线程封装和跨线程唤醒机制。设计文档：`docs/leader/designs/V0.4/S1-design.md`。
-- `S2 主从 Reactor`：实现 main reactor 接收连接、sub reactor 管理连接读写。设计文档：`docs/leader/designs/V0.4/S2-design.md`。
+- `S2 主从 Reactor`：实现由 `EventLoopThreadPool` 持有 sub reactor，main reactor 接收连接并按固定策略分配。设计文档：`docs/leader/designs/V0.4/S2-design.md`。
 - `S3 定时器与连接超时`：实现空闲连接超时、keep-alive 超时和定时清理。设计文档：`docs/leader/designs/V0.4/S3-design.md`。
-- `S4 资源上限与优雅关闭`：加入输出高水位、任务队列上限和关闭流程验证。设计文档：`docs/leader/designs/V0.4/S4-design.md`。
+- `S4 资源上限与优雅关闭`：加入输出高水位、跨线程任务上限、信号停止通知和关闭流程验证。设计文档：`docs/leader/designs/V0.4/S4-design.md`。
 
 完成标准：
 
@@ -270,6 +298,10 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 ### V0.5 性能优化与静态文件传输增强
 
 状态：计划中。
+
+前置条件：
+
+- `V0.4` 已完成。
 
 目标：
 
@@ -319,6 +351,10 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 状态：计划中。
 
+前置条件：
+
+- `V0.5` 已完成。
+
 目标：
 
 补齐项目作为简历项目所需的可观测和性能分析材料。版本完成后，项目不仅能运行和压测，还能解释吞吐、延迟、错误、连接数、CPU 热点和优化方向。
@@ -366,6 +402,10 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 状态：计划中。
 
+前置条件：
+
+- `V0.6` 已完成。
+
 目标：
 
 将项目整理为可展示、可运行、可讲解的秋招简历项目。版本完成后，面试官可以通过 README 快速理解项目价值，通过架构文档深入查看设计，通过压测报告验证性能叙事。
@@ -409,6 +449,11 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 ### V1.1 轻量 L7 Gateway 扩展
 
 状态：计划中。
+
+前置条件：
+
+- `V1.0` 已完成。
+- 用户明确批准继续扩展代理能力。
 
 目标：
 
@@ -458,7 +503,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.1 阶段摘要
 
-- `S1 项目骨架与基础资源封装`：产出可构建项目、基础 RAII 工具、socket 封装和最小启动入口；涉及 `app`、`base`、`net`。
+- `S1 项目骨架与基础资源封装`（`已完成`）：产出可构建项目、基础 RAII 工具、socket 封装和最小启动入口；Reviewer 独立 CTest `3/3` 通过，结论为 `PASS`；涉及 `app`、`base`、`net`。
 - `S2 单线程 epoll 与连接读写`：产出非阻塞监听、连接读写、输出缓冲和事件循环；涉及 `net`。
 - `S3 最小 HTTP 静态文件服务`：产出 GET 静态文件、错误响应、路径安全和 smoke test；涉及 `http`、`tests`。
 
@@ -477,9 +522,9 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 ### V0.4 阶段摘要
 
 - `S1 EventLoop 线程化`：产出事件循环线程和跨线程唤醒机制；涉及 `net`、`base`.
-- `S2 主从 Reactor`：产出 main-sub Reactor 连接分发模型；涉及 `net`。
+- `S2 主从 Reactor`：产出由固定 `EventLoopThreadPool` 持有 sub reactor 的连接分发模型；涉及 `net`。
 - `S3 定时器与连接超时`：产出空闲连接清理和超时策略；涉及 `timer`、`net`。
-- `S4 资源上限与优雅关闭`：产出高水位、任务上限和关闭流程验证；涉及 `net`、`base`。
+- `S4 资源上限与优雅关闭`：产出高水位、跨线程任务上限、信号停止通知和关闭流程验证；涉及 `net`、`base`。
 
 ### V0.5 阶段摘要
 
@@ -526,4 +571,6 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 变更记录
 
+- `2026-08-25`：依据 S1 Builder 报告 002 和 Reviewer 报告 001 的 `PASS` 结论，将 S1 标记为已完成，并明确下一步由 Leader 设计 S2。
+- `2026-08-24`：补充版本前置条件、统一阶段完成门槛，明确 `V0.4` 的事件循环线程池边界及 `V1.1` 的可选扩展属性。
 - `2026-05-21`：初始化项目路线图，确定从最小 HTTP Server 到 Reactor、HTTP 状态机、并发治理、性能优化、可观测性、简历交付版和 L7 Gateway 的版本路线。
