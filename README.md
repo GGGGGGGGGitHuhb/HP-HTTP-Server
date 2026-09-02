@@ -5,15 +5,20 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 ## 当前状态
 
 - 当前版本：`V0.1 最小可运行 HTTP Server`。
-- 最近完成阶段：`S1 项目骨架与基础资源封装`。
-- 阶段状态：`已完成`。
-- 已批准基线：
-  - `docs/leader/designs/V0.1/S1-design.md`
-  - `docs/reviewer/reviews/V0.1/S1-review.md`
-- 当前已实现 CMake/C++20 构建、同步日志、Socket fd RAII、非阻塞与地址复用设置，以及最小 CLI；程序不监听端口，也不提供 HTTP 服务。
-- Reviewer 已在全新的 `build-review/` 中独立配置、构建并完成 RV-01 至 RV-07，CTest `3/3` 通过，唯一结论为 `PASS`。
-- 验收报告：`docs/reviewer/reports/V0.1/S1-report-001.md`。
-- 下一步：由 Leader 设计 `V0.1 / S2 单线程 epoll 与连接读写`；S2 设计批准前不开始实现。
+- 最近完成阶段：`V0.1 / S2 单线程 epoll 与连接读写`；Reviewer 复审唯一结论为 `PASS`，阶段状态为 `已完成`。
+- S2 已实现显式 `--port` CLI、端口 0 实际端口报告、非阻塞 TCP listener、单线程单 epoll LT、accept drain、连接表、原始字节 echo、输出缓冲与短写续传、半关闭排空、连接错误隔离和 fd RAII 清理。
+- Reviewer 在全新的 `build-review-s2-r2/` 中独立完成 Debug 配置、构建和 RV-01 至 RV-08：CTest `6/6`、P2-01 专项 `100/100`、全量稳定性 `60/60` 均通过；首轮 P2-01 已关闭，P0/P1/P2、无法验证项和新增技术债均无。
+- 当前运行入口仍是临时 `V0.1 / S2 TCP echo` 验证接口，不解析 HTTP，也不提供 HTTP 响应、静态文件、生产安全或性能承诺。
+- 下一步：由 Leader 设计 `V0.1 / S3 最小 HTTP 静态文件服务`；S3 尚无 Approved 基线，不得直接实现。
+- S2 已批准基线：
+  - `docs/leader/designs/V0.1/S2-design.md`
+  - `docs/reviewer/reviews/V0.1/S2-review.md`
+- Builder 报告：
+  - `docs/builder/reports/V0.1/S2-report-001.md`
+  - `docs/builder/reports/V0.1/S2-report-002.md`
+- Reviewer 报告：
+  - `docs/reviewer/reports/V0.1/S2-report-001.md`（历史 `FAIL`）
+  - `docs/reviewer/reports/V0.1/S2-report-002.md`（最终 `PASS`）
 
 规划能力与当前已实现能力必须区分。具体版本顺序、完成门槛和禁止范围以 `ROADMAP.md` 为准。
 
@@ -32,7 +37,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 环境要求
 
-S1 基线：
+S2 基线：
 
 - Linux 或 WSL2。
 - CMake 3.20 或更高。
@@ -49,7 +54,7 @@ S1 基线：
 - GCC：`13.3.0`
 - Ninja：`1.11.1`
 - curl：`8.5.0`
-- wrk、perf：当前未安装；它们分别到 V0.5、V0.6 才成为阶段工具，因此不阻塞 S1
+- wrk、perf：当前未安装；它们分别到 V0.5、V0.6 才成为阶段工具，因此不阻塞 S2
 
 项目核心运行时不依赖数据库、外部服务、Web 框架或替代核心网络模型的大型网络库。
 
@@ -64,39 +69,42 @@ Shell：Bash
 ```
 
 ```bash
-cmake -S . -B build -G Ninja
-cmake --build build
-ctest --test-dir build --output-on-failure
-./build/hp_http_server
+cmake -S . -B build-s2 -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-s2 --verbose
+ctest --test-dir build-s2 --output-on-failure
+./build-s2/hp_http_server --help
+./build-s2/hp_http_server --port 8080
 ```
 
 预期稳定信号：
 
 ```text
-100% tests passed, 0 tests failed out of 3
-[INFO] HP HTTP Server V0.1 / S1 skeleton
-[INFO] This stage does not provide HTTP service.
+100% tests passed, 0 tests failed out of 6
+[INFO] HP HTTP Server V0.1 / S2 TCP echo
+[INFO] Listening on TCP port 8080.
+[INFO] This temporary echo endpoint does not provide HTTP service.
+V0.1 / S2 TCP echo listening on port 8080; HTTP service is not available.
 ```
 
-三种 CLI 验证命令：
+CLI 验证命令：
 
 ```bash
-./build/hp_http_server --help
-./build/hp_http_server
-./build/hp_http_server --unknown-option
+./build-s2/hp_http_server --help
+./build-s2/hp_http_server
+./build-s2/hp_http_server --port invalid
 ```
 
-`--help` 和无参数运行退出 `0`；未知参数输出错误与用法，并以非零状态退出。
+`--help` 退出 `0`；无参数、未知参数、重复参数、缺失值、非十进制值和超范围端口均输出简短用法并以非零状态退出。`--port 0` 允许内核选择临时端口，启动输出会给出实际非零端口。
 
 ## 配置说明
 
-当前未实现配置系统，也不接受端口、静态目录或线程数等运行参数。
+当前没有配置文件系统，只接受一个必需的 `--port <0-65535>` 参数。
 
-按路线图逐步引入：
+当前行为：
 
-- S1：只提供 `--help`、无参数骨架输出和未知参数错误。
-- V0.1 后续阶段：监听端口和静态资源根目录。
-- 后续版本：线程数、连接上限、超时和日志级别。
+- `--port 8080`：监听显式端口。
+- `--port 0`：由内核分配临时端口，并在启动输出中报告实际端口。
+- 当前不接受静态目录、线程数、连接上限、超时或日志级别参数。
 
 每个参数只有在实现、测试和 README 命令同时完成后，才视为可用接口。
 
@@ -119,7 +127,7 @@ ctest --test-dir build --output-on-failure
     └── reviewer/
 ```
 
-S1 已实现代码目录：
+S2 已实现代码目录：
 
 ```text
 app/
@@ -131,29 +139,31 @@ tests/
 CMakeLists.txt
 ```
 
-- `app/`：S1 命令行入口和顶层异常转换。
+- `app/`：S2 严格 CLI、服务器启动和顶层异常转换。
 - `include/base/`、`src/base/`：不可拷贝约束和同步日志。
-- `include/net/`、`src/net/`：Socket fd 所有权与基础设置操作。
-- `tests/`：base、Socket 真实 fd 和 CLI 进程测试。
+- `include/net/`、`src/net/`：Socket fd RAII、Epoller RAII、集中式单线程 TCP echo 服务器和连接 IO 状态。
+- `tests/`：S1 回归、网络原语、受控短写/EAGAIN、EINTR、CLI 和真实 loopback 集成测试。
 - `docs/`：阶段设计、审查计划和三角色工作证据。
 
 ## 测试与验证
 
-S1 的可复现验证命令为：
+S2 的可复现验证命令为：
 
 ```bash
-cmake -S . -B build -G Ninja
-cmake --build build
-ctest --test-dir build --output-on-failure
+cmake -S . -B build-s2 -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-s2 --verbose
+ctest --test-dir build-s2 --output-on-failure
 ```
 
-Builder 自测为 `3/3` CTest 通过。Reviewer 随后使用全新的 `build-review/` 独立配置和构建，复跑 RV-01 至 RV-07，CTest 同样为 `3/3` 通过，并确认：
+Builder 与 Reviewer 已验证 6 项 CTest：
 
-- 同步日志调用、不可拷贝约束和 Socket 真实 fd 所有权语义符合设计。
-- `release/reset`、非阻塞与地址复用的成功/失败路径通过。
-- 三种 CLI 行为和 S1 禁止范围符合 Approved 基线。
+- `base_tests`、`socket_tests`：保留 S1 基础能力与 fd 所有权回归。
+- `network_primitives_tests`：覆盖 epoll LT、add/modify/remove、EINTR、listener/connection close-on-exec、accept drain、注册失败、组合 IN/RDHUP 和 fd 清理。
+- `connection_io_tests`：覆盖二进制跨块读取、受控短写/EAGAIN、读写 EINTR、输出游标、半关闭、SIGPIPE，以及真实 RST 下同批 `EPOLLIN|EPOLLERR`、`SO_ERROR=ECONNRESET`、先诊断后读取和同批字节不丢失。
+- `cli_tests`：覆盖帮助、严格参数校验和受控 bind 失败。
+- `server_integration_tests`：启动真实 `--port 0` 子进程，覆盖文本/二进制/大数据、多连接、半关闭排空、reset 隔离和重复连接。
 
-HTTP smoke test、wrk 压测和 perf 分析属于后续阶段，当前没有相关结果或性能数字。
+Reviewer 已在全新的 `build-review-s2-r2/` 中独立复审 P2-01 并全量回归 RV-01 至 RV-08，CTest `6/6`、专项 `100/100`、全量稳定性 `60/60` 均通过，唯一结论为 `PASS`。HTTP smoke test、wrk 压测和 perf 分析属于后续阶段，当前没有相关结果或性能数字。
 
 ## 文档索引
 
@@ -183,7 +193,9 @@ HTTP smoke test、wrk 压测和 perf 分析属于后续阶段，当前没有相�
 
 ## 已知限制
 
-- 当前可执行程序只是 S1 骨架，不监听端口、不提供 HTTP 服务，也没有性能数据。
+- 当前 TCP echo 只是 S2 网络闭环的临时验证接口，不是 HTTP 服务，也不是长期协议。
+- 当前不解析 HTTP，不提供静态文件、keep-alive、线程池、定时器、优雅关闭或性能数据。
+- 当前输出缓冲没有高水位或慢连接保护，只适用于开发和阶段验收，不作生产安全或规模承诺；该治理按路线图留到 V0.4。
 - 只承诺 Linux / WSL2 方向，不承诺跨平台。
 - WSL2 可用于开发和初步验证；最终性能结论必须记录环境，必要时在原生 Linux 复测。
 - HTTP/2、HTTPS/TLS、完整 Web 框架、数据库 ORM、L4LB、XDP 和 DPDK 不属于当前路线。

@@ -73,7 +73,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 推进与完成规则
 
-- 同一时间默认只有一个活动阶段；当前活动阶段为 `V0.1 / S1`。
+- 当前没有正在实现的活动阶段；`V0.1 / S2` 已完成。下一步由 Leader 设计 `V0.1 / S3`，S3 基线批准前不得实现。
 - 阶段状态统一使用：`未开始`、`设计中`、`待实现`、`实现中`、`待审查`、`返工中`、`已完成`、`阻塞`。
 - 阶段设计和审查计划必须处于 `Approved`，Builder 才能开始实现。
 - 阶段只有在实现证据完整，且 Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT` 后，才能标记为 `已完成`。
@@ -85,7 +85,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.1 最小可运行 HTTP Server
 
-状态：进行中；`S1 已完成`，下一步由 Leader 设计 `S2`。
+状态：进行中；`S1 已完成`，`S2 已完成`。下一步是 Leader 设计 `S3`，不是直接实现 S3。
 
 前置条件：
 
@@ -122,8 +122,8 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 阶段划分：
 
 - `S1 项目骨架与基础资源封装`（`已完成`）：建立 CMake、目录结构、基础类型、日志、socket RAII 和最小启动入口。设计文档：`docs/leader/designs/V0.1/S1-design.md`。
-- `S2 单线程 epoll 与连接读写`（`未开始`）：下一步由 Leader 编写阶段设计与审查计划并提交批准；批准前不得实现。设计文档：`docs/leader/designs/V0.1/S2-design.md`。
-- `S3 最小 HTTP 静态文件服务`（`未开始`）：实现基础 HTTP 解析、路径安全、静态文件响应、错误码和 smoke test。设计文档：`docs/leader/designs/V0.1/S3-design.md`。
+- `S2 单线程 epoll 与连接读写`（`已完成`）：实现单线程 epoll LT、非阻塞连接读写、临时 TCP echo、短写续传、半关闭和 fd 生命周期；Reviewer 复审 CTest `6/6`，唯一结论 `PASS`。设计文档：`docs/leader/designs/V0.1/S2-design.md`。
+- `S3 最小 HTTP 静态文件服务`（`未开始`）：下一步由 Leader 形成 Draft 设计与审查计划；批准前不得实现。计划覆盖基础 HTTP 解析、路径安全、静态文件响应、错误码和 smoke test。设计文档：`docs/leader/designs/V0.1/S3-design.md`。
 
 完成标准：
 
@@ -502,9 +502,8 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 ## 阶段设计摘要
 
 ### V0.1 阶段摘要
-
 - `S1 项目骨架与基础资源封装`（`已完成`）：产出可构建项目、基础 RAII 工具、socket 封装和最小启动入口；Reviewer 独立 CTest `3/3` 通过，结论为 `PASS`；涉及 `app`、`base`、`net`。
-- `S2 单线程 epoll 与连接读写`：产出非阻塞监听、连接读写、输出缓冲和事件循环；涉及 `net`。
+- `S2 单线程 epoll 与连接读写`（`已完成`）：已产出非阻塞监听、单线程 epoll LT、连接读写、输出缓冲和临时 echo；Reviewer 复审 `PASS`；涉及 `net`、`tests`。
 - `S3 最小 HTTP 静态文件服务`：产出 GET 静态文件、错误响应、路径安全和 smoke test；涉及 `http`、`tests`。
 
 ### V0.2 阶段摘要
@@ -571,6 +570,8 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 变更记录
 
+- `2026-09-01`：依据 Builder 报告 001/002 与 Reviewer 复审报告 002 的 `PASS`，将 S2 标记为 `已完成`；下一步由 Leader 设计 S3，S3 批准前不实现。
+- `2026-08-27`：S2 Draft 设计与审查计划已形成；将活动阶段同步为 S2 `设计中` / `Awaiting PM Decision`，批准前不交给 Builder。
 - `2026-08-25`：依据 S1 Builder 报告 002 和 Reviewer 报告 001 的 `PASS` 结论，将 S1 标记为已完成，并明确下一步由 Leader 设计 S2。
 - `2026-08-24`：补充版本前置条件、统一阶段完成门槛，明确 `V0.4` 的事件循环线程池边界及 `V1.1` 的可选扩展属性。
 - `2026-05-21`：初始化项目路线图，确定从最小 HTTP Server 到 Reactor、HTTP 状态机、并发治理、性能优化、可观测性、简历交付版和 L7 Gateway 的版本路线。

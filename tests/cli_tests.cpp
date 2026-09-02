@@ -1,9 +1,13 @@
+#include <arpa/inet.h>
 #include <cerrno>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <sys/socket.h>
 #include <sys/wait.h>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <utility>
 #include <vector>
@@ -92,6 +96,34 @@ void expect_contains(const std::string& output, const std::string& text,
     expect(output.find(text) != std::string::npos, message);
 }
 
+int reserve_loopback_port(std::uint16_t& port) {
+    const int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
+    if (fd == -1) {
+        throw std::runtime_error(std::string("socket: ") + std::strerror(errno));
+    }
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    address.sin_port = 0;
+    if (::bind(fd, reinterpret_cast<const sockaddr*>(&address),
+               sizeof(address)) == -1 ||
+        ::listen(fd, 1) == -1) {
+        const int error_number = errno;
+        ::close(fd);
+        throw std::runtime_error(std::string("reserve port: ") +
+                                 std::strerror(error_number));
+    }
+    socklen_t length = sizeof(address);
+    if (::getsockname(fd, reinterpret_cast<sockaddr*>(&address), &length) == -1) {
+        const int error_number = errno;
+        ::close(fd);
+        throw std::runtime_error(std::string("getsockname: ") +
+                                 std::strerror(error_number));
+    }
+    port = ntohs(address.sin_port);
+    return fd;
+}
+
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -105,21 +137,49 @@ int main(int argc, char* argv[]) {
         expect(help.exit_code == 0, "--help must exit 0");
         expect_contains(help.output, "Usage:", "--help must print usage");
         expect_contains(help.output, "does not provide HTTP service",
-                        "--help must state that HTTP service is unavailable");
+                        "--help must preserve the non-HTTP boundary");
+        expect_contains(help.output, "--port <0-65535>",
+                        "--help must document the explicit port syntax");
 
         const RunResult default_run = run_process(argv[1], {});
-        expect(default_run.exit_code == 0, "default run must exit 0");
-        expect_contains(default_run.output, "V0.1 / S1 skeleton",
-                        "default run must identify the S1 skeleton");
-        expect_contains(default_run.output, "does not provide HTTP service",
-                        "default run must state that HTTP service is unavailable");
+        expect(default_run.exit_code != 0, "missing --port must exit non-zero");
+        expect_contains(default_run.output, "expected exactly one --port",
+                        "missing --port must be diagnosed");
 
         const RunResult unknown = run_process(argv[1], {"--unknown-option"});
         expect(unknown.exit_code != 0, "unknown option must exit non-zero");
-        expect_contains(unknown.output, "unknown option",
-                        "unknown option must print an error");
         expect_contains(unknown.output, "Usage:",
                         "unknown option must print usage");
+
+        const std::vector<std::vector<std::string>> invalid_cases = {
+            {"--port"},
+            {"--port", ""},
+            {"--port", "invalid"},
+            {"--port", "-1"},
+            {"--port", "65536"},
+            {"--port", "12x"},
+            {"--port", "1", "--port", "2"},
+            {"--help", "--port", "0"},
+        };
+        for (const auto& arguments : invalid_cases) {
+            const RunResult invalid = run_process(argv[1], arguments);
+            expect(invalid.exit_code != 0,
+                   "each malformed or duplicate CLI must exit non-zero");
+            expect_contains(invalid.output, "Usage:",
+                            "invalid CLI must include concise usage");
+        }
+
+        std::uint16_t occupied_port = 0;
+        const int reservation = reserve_loopback_port(occupied_port);
+        const RunResult bind_failure =
+            run_process(argv[1], {"--port", std::to_string(occupied_port)});
+        ::close(reservation);
+        expect(bind_failure.exit_code != 0,
+               "occupied port startup must exit non-zero");
+        expect_contains(bind_failure.output, "bind",
+                        "occupied port failure must name bind");
+        expect_contains(bind_failure.output, "Address already in use",
+                        "occupied port failure must retain the system error");
     } catch (const std::exception& error) {
         std::cerr << "FAIL: " << error.what() << '\n';
         return 1;
