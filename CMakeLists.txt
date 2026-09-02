@@ -8,7 +8,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(hp_http_core STATIC
     src/base/logger.cpp
+    src/net/epoller.cpp
     src/net/socket.cpp
+    src/net/tcp_server.cpp
 )
 target_include_directories(hp_http_core PUBLIC include)
 
@@ -36,13 +38,27 @@ if(BUILD_TESTING)
     add_executable(socket_tests tests/socket_tests.cpp)
     target_link_libraries(socket_tests PRIVATE hp_http_core)
 
+    add_executable(network_primitives_tests tests/network_primitives_tests.cpp)
+    target_link_libraries(network_primitives_tests PRIVATE hp_http_core)
+
+    add_executable(connection_io_tests tests/connection_io_tests.cpp)
+    target_link_libraries(connection_io_tests PRIVATE hp_http_core)
+
     add_executable(cli_tests tests/cli_tests.cpp)
 
-    foreach(test_target IN ITEMS base_tests socket_tests cli_tests)
+    add_executable(server_integration_tests tests/server_integration_tests.cpp)
+
+    foreach(test_target IN ITEMS base_tests socket_tests
+                                 network_primitives_tests connection_io_tests
+                                 cli_tests server_integration_tests)
         enable_debug_warnings(${test_target})
     endforeach()
 
     add_test(NAME base_tests COMMAND base_tests)
     add_test(NAME socket_tests COMMAND socket_tests)
+    add_test(NAME network_primitives_tests COMMAND network_primitives_tests)
+    add_test(NAME connection_io_tests COMMAND connection_io_tests)
     add_test(NAME cli_tests COMMAND cli_tests $<TARGET_FILE:hp_http_server>)
+    add_test(NAME server_integration_tests
+             COMMAND server_integration_tests $<TARGET_FILE:hp_http_server>)
 endif()

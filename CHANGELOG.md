@@ -11,7 +11,9 @@
 - 新增 `docs/leader/reports/V0.1/S1-report-001.md`，保留初始设计过程。
 - 新增 `docs/leader/reports/V0.1/S1-report-002.md`，记录文档完整性整改、决策和验证结果。
 - 新增 S1 的 CMake/C++20 工程骨架、同步日志、Socket fd RAII、基础设置操作、最小 CLI 和 3 个 CTest 测试目标。
-- 新增 Builder 实现报告 001/002、Reviewer 审查报告 001 和 Leader 阶段关闭报告 003，保留实现、独立验收与关闭证据。
+- 新增 Builder 实现报告 001/002、Reviewer 审查报告 001 和 Leader 阶段关闭报告 003，保留 S1 实现、独立验收与关闭证据。
+- 新增 S2 的 Epoller RAII、Socket 监听扩展、集中式单线程 TCP echo 服务器、连接 IO 状态和 3 个网络测试目标；CTest 总数由 3 增至 6。
+- 新增 S2 Builder 报告 001/002、Reviewer 报告 001/002 和 Leader 关闭报告 004，保留首轮 `FAIL`、范围内返工、最终 `PASS` 与收口证据。
 
 ### 变更
 
@@ -19,7 +21,9 @@
 - `ARCHITECTURE.md` 区分当前实现状态与长期目标，补充 metrics 依赖、事件循环线程池和信号关闭边界。
 - `ROADMAP.md` 补充版本前置条件、阶段完成门槛，并明确 V1.1 是 V1.0 之后的可选扩展。
 - S1 设计固定工具链基线、CLI 范围、Socket 所有权、错误策略、Builder 里程碑和验收追溯。
-- S1 状态同步为 `已完成`；下一步为 Leader 设计 `V0.1 / S2`，S2 尚未开始实现。
+- S1 与 S2 状态均同步为 `已完成`；下一步由 Leader 设计 `V0.1 / S3`，S3 尚无 Approved 基线，不直接实现。
+- CLI 从 S1 骨架行为升级为严格的 `--port <0-65535>` 入口；运行时明确标识临时 S2 TCP echo 与非 HTTP 边界。
+- S2 返工以最小生产 `ConnectionIo::handle_event` seam 补齐真实组合事件与 `SO_ERROR` 证据，没有改变 Approved 范围或架构。
 - 技术债跟踪器改为只记录跨阶段债务、批准延期和持续风险，并移除不属于技术债范围的本地文档发布议题。
 
 ### 验证
@@ -28,6 +32,8 @@
 - Reviewer 使用全新的 `build-review/` 独立完成 Debug/Ninja 配置与构建，RV-01 至 RV-07 全部通过，CTest `3/3` 通过，唯一结论为 `PASS`。
 - Reviewer 确认 P0、P1、P2 均无；唯一 P3 顶层状态同步已由 Leader 阶段关闭处理。
 - Reviewer 报告：`docs/reviewer/reports/V0.1/S1-report-001.md`。
+- S2 Reviewer 首轮因 P2-01 组合事件动态证据缺失给出 `FAIL`；Builder 范围内返工后，Reviewer 在全新 `build-review-s2-r2/` 中独立完成 CTest `6/6`、专项 `100/100`、全量 `60/60`，REQ-01..07、AC-01..08、RV-01..08 全部通过，最终唯一结论 `PASS`。
+- S2 P0/P1/P2、无法验证项和新增技术债均无；P3-01 根状态漂移由 Leader 阶段收口关闭。
 
 ## V0.0.0 - 2026-05-22
 
