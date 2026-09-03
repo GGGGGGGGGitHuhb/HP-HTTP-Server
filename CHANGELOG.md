@@ -14,6 +14,8 @@
 - 新增 Builder 实现报告 001/002、Reviewer 审查报告 001 和 Leader 阶段关闭报告 003，保留 S1 实现、独立验收与关闭证据。
 - 新增 S2 的 Epoller RAII、Socket 监听扩展、集中式单线程 TCP echo 服务器、连接 IO 状态和 3 个网络测试目标；CTest 总数由 3 增至 6。
 - 新增 S2 Builder 报告 001/002、Reviewer 报告 001/002 和 Leader 关闭报告 004，保留首轮 `FAIL`、范围内返工、最终 `PASS` 与收口证据。
+- 新增 S3 的严格有界 HTTP 请求解析、响应构造、fd-relative 静态文件服务、`--root` CLI、示例首页及 parser/static/真实服务器/curl 测试；CTest 总数由 6 增至 9。
+- 新增 S3 Builder 报告 001、Reviewer 报告 001 和 Leader 关闭报告 003，保留 Approved 基线、实现、独立验收与收口证据。
 
 ### 变更
 
@@ -21,9 +23,10 @@
 - `ARCHITECTURE.md` 区分当前实现状态与长期目标，补充 metrics 依赖、事件循环线程池和信号关闭边界。
 - `ROADMAP.md` 补充版本前置条件、阶段完成门槛，并明确 V1.1 是 V1.0 之后的可选扩展。
 - S1 设计固定工具链基线、CLI 范围、Socket 所有权、错误策略、Builder 里程碑和验收追溯。
-- S1 与 S2 状态均同步为 `已完成`；下一步由 Leader 设计 `V0.1 / S3`，S3 尚无 Approved 基线，不直接实现。
+- V0.1 的 S1、S2、S3 状态均同步为`已完成`；下一步由 Leader 设计 `V0.2 / S1 EventLoop 与 Channel`，新基线批准前不直接实现。
 - CLI 从 S1 骨架行为升级为严格的 `--port <0-65535>` 入口；运行时明确标识临时 S2 TCP echo 与非 HTTP 边界。
 - S2 返工以最小生产 `ConnectionIo::handle_event` seam 补齐真实组合事件与 `SO_ERROR` 证据，没有改变 Approved 范围或架构。
+- 运行入口由临时 TCP echo 升级为每连接单个 `GET` 的最小 HTTP/1.1 静态文件服务，使用严格大小边界、`Connection: close`、root-fd 锚定的逐组件 `openat`/no-follow 访问及受控的 `200/400/403/404/405/500` 响应。
 - 技术债跟踪器改为只记录跨阶段债务、批准延期和持续风险，并移除不属于技术债范围的本地文档发布议题。
 
 ### 验证
@@ -34,6 +37,9 @@
 - Reviewer 报告：`docs/reviewer/reports/V0.1/S1-report-001.md`。
 - S2 Reviewer 首轮因 P2-01 组合事件动态证据缺失给出 `FAIL`；Builder 范围内返工后，Reviewer 在全新 `build-review-s2-r2/` 中独立完成 CTest `6/6`、专项 `100/100`、全量 `60/60`，REQ-01..07、AC-01..08、RV-01..08 全部通过，最终唯一结论 `PASS`。
 - S2 P0/P1/P2、无法验证项和新增技术债均无；P3-01 根状态漂移由 Leader 阶段收口关闭。
+- S3 Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建且告警为 0、CTest `9/9`，REQ-01..08、AC-01..10、RV-01..10 全部通过，唯一结论 `PASS`。
+- S3 真实集成 `10/10`，状态计数 `{200:35,400:6,403:6,404:1,405:1}`，生产写 EAGAIN 非零、secret 泄露为 0、隔离 `20/20`、服务 fd `6->6`；静态文件成功路径 `openat/close 530/530`，S2 组合事件与 `SO_ERROR=ECONNRESET` 回归仍动态成立。
+- S3 无 P0/P1/P2、无法验证项或新增技术债；P3-01 根状态漂移由 Leader 阶段收口关闭。
 
 ## V0.0.0 - 2026-05-22
 

@@ -6,7 +6,9 @@
 
 ## 当前状态与目标架构
 
-本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1` 与 `V0.1 / S2` 已完成：当前已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、单线程单 epoll LT、连接表、原始字节 echo、输出缓冲与短写续传、半关闭和连接错误隔离。Reviewer 在全新 r2 构建目录完成 RV-01 至 RV-08，CTest `6/6`、P2-01 专项 `100/100`、全量稳定性 `60/60` 均通过，唯一结论为 `PASS`。当前临时 echo 不是 HTTP 服务；尚无 HTTP 解析、静态文件、生产安全或性能能力。下一步由 Leader 设计 `V0.1 / S3`，批准前不得实现。
+本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1`、`S2`、`S3` 均已完成：当前已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、集中式单线程单 epoll LT、连接表、输出缓冲与短写续传、半关闭和连接错误隔离，以及有界的单请求 HTTP/1.1 `GET` 解析和静态文件响应。S3 以 root fd 为锚逐组件使用 `openat` 与 no-follow 约束，响应后统一关闭连接；不支持 body/chunked、keep-alive、第二个 pipelined 响应、URL decode 或 symlink 服务。Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建、CTest `9/9` 与 RV-01 至 RV-10，唯一结论为 `PASS`。这些证据只证明 V0.1 的最小闭环，不构成生产安全、容量或性能承诺。
+
+当前活动规划为 `V0.2 / S1 EventLoop 与 Channel`，状态`设计中 / Awaiting PM Decision`。Draft revision 1 计划把 wait、interest、revents 与 callback 分发从 TcpServer 抽到单线程 EventLoop/Channel，并让生产入口实际经过该层；它尚未获批或实现。S1 不拆 `Acceptor`/`TcpConnection`，不重接 HTTP 连接模型，也不引入线程、wakeup 或 timer。
 
 阅读本文档时应区分：
 
@@ -524,6 +526,10 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 
 ## 变更记录
 
+- `2026-09-03`：记录 V0.2/S1 Draft revision 1 的架构方向与未实现状态；固定 S1 只抽取单线程 EventLoop/Channel，Acceptor/TcpConnection 与 HTTP 重接仍分别留在 S2/S3。
+- `2026-09-03`：依据 S3 Reviewer 报告 001 的唯一 `PASS`，同步 V0.1 最小 HTTP 静态文件服务、fd-relative 路径约束与单请求关闭语义为当前已落地能力；保留 Reactor、资源治理和性能能力的后续边界。
+- `2026-09-03`：记录 PM 批准 S3 revision 1；状态推进到 `待实现 / Ready for Builder`，并继续区分 Approved 目标与当前 S2 echo 实现。
+- `2026-09-03`：同步 S3 Draft revision 1 与 `Awaiting PM Decision` 门禁；HTTP 模块仍是目标边界，不描述为已落地。
 - `2026-09-01`：依据 S2 Reviewer 复审 `PASS` 同步已落地的单线程 epoll LT、TCP echo、连接 IO 与 fd 生命周期边界，并明确下一步为 S3 设计。
 - `2026-08-25`：依据独立 Reviewer `PASS` 同步 S1 已完成状态、当前已落地边界和 S2 设计前置条件。
 - `2026-08-24`：区分当前实现状态与长期目标架构，补充 metrics 依赖边界、`EventLoopThreadPool` 定义和信号驱动的优雅关闭约束。
