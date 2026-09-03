@@ -8,6 +8,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(hp_http_core STATIC
     src/base/logger.cpp
+    src/http/http_request.cpp
+    src/http/http_response.cpp
+    src/http/static_file_service.cpp
     src/net/epoller.cpp
     src/net/socket.cpp
     src/net/tcp_server.cpp
@@ -44,13 +47,21 @@ if(BUILD_TESTING)
     add_executable(connection_io_tests tests/connection_io_tests.cpp)
     target_link_libraries(connection_io_tests PRIVATE hp_http_core)
 
+    add_executable(http_parser_tests tests/http_parser_tests.cpp)
+    target_link_libraries(http_parser_tests PRIVATE hp_http_core)
+
+    add_executable(static_file_tests tests/static_file_tests.cpp)
+    target_link_libraries(static_file_tests PRIVATE hp_http_core)
+
     add_executable(cli_tests tests/cli_tests.cpp)
 
-    add_executable(server_integration_tests tests/server_integration_tests.cpp)
+    add_executable(http_server_integration_tests
+                   tests/http_server_integration_tests.cpp)
 
     foreach(test_target IN ITEMS base_tests socket_tests
                                  network_primitives_tests connection_io_tests
-                                 cli_tests server_integration_tests)
+                                 http_parser_tests static_file_tests cli_tests
+                                 http_server_integration_tests)
         enable_debug_warnings(${test_target})
     endforeach()
 
@@ -58,7 +69,18 @@ if(BUILD_TESTING)
     add_test(NAME socket_tests COMMAND socket_tests)
     add_test(NAME network_primitives_tests COMMAND network_primitives_tests)
     add_test(NAME connection_io_tests COMMAND connection_io_tests)
+    add_test(NAME http_parser_tests COMMAND http_parser_tests)
+    add_test(NAME static_file_tests COMMAND static_file_tests)
     add_test(NAME cli_tests COMMAND cli_tests $<TARGET_FILE:hp_http_server>)
+    add_test(NAME http_server_integration_tests
+             COMMAND http_server_integration_tests
+                     $<TARGET_FILE:hp_http_server>)
+    # Preserve the S2 integration identity while running the stronger S3 suite.
     add_test(NAME server_integration_tests
-             COMMAND server_integration_tests $<TARGET_FILE:hp_http_server>)
+             COMMAND http_server_integration_tests
+                     $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(cli_tests http_server_integration_tests
+                         server_integration_tests PROPERTIES
+        ENVIRONMENT
+        "HP_S3_TEST_TMP_ROOT=${CMAKE_SOURCE_DIR}/.cache/olympus-v0.1-s3/tests")
 endif()

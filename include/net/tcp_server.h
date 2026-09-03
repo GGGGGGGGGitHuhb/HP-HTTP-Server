@@ -1,16 +1,34 @@
 #pragma once
 
-#include "base/non_copyable.h"
-#include "net/epoller.h"
-#include "net/socket.h"
-
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <span>
 #include <unordered_map>
 #include <vector>
 
+#include "base/non_copyable.h"
+#include "net/epoller.h"
+#include "net/socket.h"
+
 namespace hp::net {
+
+enum class ApplicationStatus {
+    need_more,
+    response,
+};
+
+struct ApplicationResult {
+    ApplicationStatus status{ApplicationStatus::need_more};
+    std::vector<std::byte> response;
+
+    [[nodiscard]] static ApplicationResult need_more();
+    [[nodiscard]] static ApplicationResult respond(
+        std::vector<std::byte> bytes);
+};
+
+using ApplicationHandler = std::function<ApplicationResult(
+    std::span<const std::byte> input, bool peer_closed)>;
 
 struct ReadResult {
     std::size_t bytes_read{0};
@@ -28,6 +46,7 @@ struct WriteResult {
 struct ConnectionEventResult {
     std::size_t bytes_read{0};
     std::size_t bytes_written{0};
+    bool write_would_block{false};
     bool socket_error_observed{false};
     int socket_error{0};
     int socket_error_query_error{0};
@@ -37,8 +56,9 @@ struct ConnectionEventResult {
 };
 
 class ConnectionIo final : private base::NonCopyable {
-public:
-    explicit ConnectionIo(Socket socket) noexcept;
+   public:
+    explicit ConnectionIo(Socket socket, ApplicationHandler handler = {},
+                          std::size_t max_input_bytes = 0) noexcept;
     ConnectionIo(ConnectionIo&&) noexcept = default;
     ConnectionIo& operator=(ConnectionIo&&) noexcept = default;
 
@@ -50,24 +70,34 @@ public:
     void mark_peer_half_closed() noexcept;
     [[nodiscard]] bool peer_half_closed() const noexcept;
     [[nodiscard]] bool has_pending_output() const noexcept;
+    [[nodiscard]] bool accepts_input() const noexcept;
     [[nodiscard]] std::size_t pending_bytes() const noexcept;
     [[nodiscard]] bool ready_to_close() const noexcept;
 
-private:
+   private:
+    [[nodiscard]] bool process_application(bool peer_closed);
+
     Socket socket_;
+    ApplicationHandler application_handler_;
+    std::size_t max_input_bytes_{0};
+    std::vector<std::byte> input_;
     std::vector<std::byte> output_;
     std::size_t write_offset_{0};
     bool peer_half_closed_{false};
+    bool response_queued_{false};
+    bool close_after_write_{false};
 };
 
 class TcpServer final : private base::NonCopyable {
-public:
-    explicit TcpServer(std::uint16_t requested_port);
+   public:
+    explicit TcpServer(std::uint16_t requested_port,
+                       ApplicationHandler handler = {},
+                       std::size_t max_input_bytes = 0);
 
     [[nodiscard]] std::uint16_t bound_port() const noexcept;
     [[noreturn]] void run();
 
-private:
+   private:
     struct ConnectionState {
         ConnectionIo io;
         std::uint32_t generation;
@@ -81,7 +111,7 @@ private:
 
     [[nodiscard]] static Socket create_listener(std::uint16_t port);
     [[nodiscard]] static std::uint64_t make_token(int fd,
-                                                   std::uint32_t generation);
+                                                  std::uint32_t generation);
     [[nodiscard]] static int token_fd(std::uint64_t token);
     [[nodiscard]] static std::uint32_t token_generation(std::uint64_t token);
 
@@ -95,6 +125,8 @@ private:
     Socket listener_;
     Epoller epoller_;
     std::unordered_map<int, ConnectionState> connections_;
+    ApplicationHandler application_handler_;
+    std::size_t max_input_bytes_{0};
     std::uint16_t bound_port_{0};
     std::uint32_t next_generation_{1};
 };

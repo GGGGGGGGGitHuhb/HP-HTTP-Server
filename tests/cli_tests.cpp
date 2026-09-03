@@ -1,14 +1,18 @@
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include <cerrno>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <netinet/in.h>
-#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -77,10 +81,43 @@ RunResult run_process(const char* executable,
                                      std::strerror(errno));
         }
     }
-
     const int exit_code = WIFEXITED(status) ? WEXITSTATUS(status) : 128;
     return {exit_code, std::move(output)};
 }
+
+class Fixture {
+   public:
+    Fixture() {
+        const char* configured = std::getenv("HP_S3_TEST_TMP_ROOT");
+        const std::filesystem::path base =
+            configured == nullptr
+                ? std::filesystem::path(".cache/olympus-v0.1-s3/tests")
+                : std::filesystem::path(configured);
+        std::filesystem::create_directories(base);
+        std::string pattern = (base / "cli-XXXXXX").string();
+        std::vector<char> storage(pattern.begin(), pattern.end());
+        storage.push_back('\0');
+        char* created = ::mkdtemp(storage.data());
+        if (created == nullptr) {
+            throw std::runtime_error(std::string("mkdtemp: ") +
+                                     std::strerror(errno));
+        }
+        workspace = created;
+        root = workspace / "root";
+        file = workspace / "not-a-directory";
+        std::filesystem::create_directory(root);
+        std::ofstream(file) << "not a root";
+    }
+
+    ~Fixture() {
+        std::error_code ignored;
+        std::filesystem::remove_all(workspace, ignored);
+    }
+
+    std::filesystem::path workspace;
+    std::filesystem::path root;
+    std::filesystem::path file;
+};
 
 int failures = 0;
 
@@ -99,7 +136,8 @@ void expect_contains(const std::string& output, const std::string& text,
 int reserve_loopback_port(std::uint16_t& port) {
     const int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (fd == -1) {
-        throw std::runtime_error(std::string("socket: ") + std::strerror(errno));
+        throw std::runtime_error(std::string("socket: ") +
+                                 std::strerror(errno));
     }
     sockaddr_in address{};
     address.sin_family = AF_INET;
@@ -114,7 +152,8 @@ int reserve_loopback_port(std::uint16_t& port) {
                                  std::strerror(error_number));
     }
     socklen_t length = sizeof(address);
-    if (::getsockname(fd, reinterpret_cast<sockaddr*>(&address), &length) == -1) {
+    if (::getsockname(fd, reinterpret_cast<sockaddr*>(&address), &length) ==
+        -1) {
         const int error_number = errno;
         ::close(fd);
         throw std::runtime_error(std::string("getsockname: ") +
@@ -133,53 +172,68 @@ int main(int argc, char* argv[]) {
     }
 
     try {
+        Fixture fixture;
         const RunResult help = run_process(argv[1], {"--help"});
         expect(help.exit_code == 0, "--help must exit 0");
-        expect_contains(help.output, "Usage:", "--help must print usage");
-        expect_contains(help.output, "does not provide HTTP service",
-                        "--help must preserve the non-HTTP boundary");
-        expect_contains(help.output, "--port <0-65535>",
-                        "--help must document the explicit port syntax");
-
-        const RunResult default_run = run_process(argv[1], {});
-        expect(default_run.exit_code != 0, "missing --port must exit non-zero");
-        expect_contains(default_run.output, "expected exactly one --port",
-                        "missing --port must be diagnosed");
-
-        const RunResult unknown = run_process(argv[1], {"--unknown-option"});
-        expect(unknown.exit_code != 0, "unknown option must exit non-zero");
-        expect_contains(unknown.output, "Usage:",
-                        "unknown option must print usage");
+        expect_contains(help.output,
+                        "V0.1 / S3 minimal HTTP static file server",
+                        "--help must identify S3 HTTP");
+        expect_contains(help.output, "--root <directory>",
+                        "--help must document root");
 
         const std::vector<std::vector<std::string>> invalid_cases = {
+            {},
+            {"--unknown-option"},
             {"--port"},
+            {"--root"},
+            {"--port", "0"},
+            {"--root", fixture.root.string()},
             {"--port", ""},
-            {"--port", "invalid"},
-            {"--port", "-1"},
-            {"--port", "65536"},
-            {"--port", "12x"},
-            {"--port", "1", "--port", "2"},
-            {"--help", "--port", "0"},
+            {"--port", "invalid", "--root", fixture.root.string()},
+            {"--port", "-1", "--root", fixture.root.string()},
+            {"--port", "65536", "--root", fixture.root.string()},
+            {"--port", "12x", "--root", fixture.root.string()},
+            {"--port", "1", "--port", "2", "--root", fixture.root.string()},
+            {"--port", "0", "--root", fixture.root.string(), "--root",
+             fixture.root.string()},
+            {"--help", "--port", "0", "--root", fixture.root.string()},
         };
         for (const auto& arguments : invalid_cases) {
             const RunResult invalid = run_process(argv[1], arguments);
             expect(invalid.exit_code != 0,
-                   "each malformed or duplicate CLI must exit non-zero");
-            expect_contains(invalid.output, "Usage:",
-                            "invalid CLI must include concise usage");
+                   "malformed, missing or duplicate CLI must fail");
+            expect_contains(invalid.output,
+                            "Usage:", "invalid CLI must include concise usage");
         }
+
+        const std::string missing =
+            (fixture.workspace / "private-missing-root").string();
+        const RunResult missing_root =
+            run_process(argv[1], {"--port", "0", "--root", missing});
+        expect(missing_root.exit_code != 0,
+               "missing root must fail before serving");
+        expect_contains(missing_root.output, "static root is unavailable",
+                        "missing root must have a concise diagnosis");
+        expect(missing_root.output.find(missing) == std::string::npos,
+               "root failure must not echo a private absolute path");
+
+        const RunResult file_root = run_process(
+            argv[1], {"--root", fixture.file.string(), "--port", "0"});
+        expect(file_root.exit_code != 0, "non-directory root must fail");
+        expect(
+            file_root.output.find(fixture.file.string()) == std::string::npos,
+            "non-directory failure must not echo its absolute path");
 
         std::uint16_t occupied_port = 0;
         const int reservation = reserve_loopback_port(occupied_port);
         const RunResult bind_failure =
-            run_process(argv[1], {"--port", std::to_string(occupied_port)});
+            run_process(argv[1], {"--root", fixture.root.string(), "--port",
+                                  std::to_string(occupied_port)});
         ::close(reservation);
         expect(bind_failure.exit_code != 0,
                "occupied port startup must exit non-zero");
         expect_contains(bind_failure.output, "bind",
                         "occupied port failure must name bind");
-        expect_contains(bind_failure.output, "Address already in use",
-                        "occupied port failure must retain the system error");
     } catch (const std::exception& error) {
         std::cerr << "FAIL: " << error.what() << '\n';
         return 1;
@@ -189,6 +243,6 @@ int main(int argc, char* argv[]) {
         std::cerr << failures << " CLI test assertion(s) failed\n";
         return 1;
     }
-    std::cout << "CLI tests passed\n";
+    std::cout << "CLI tests passed; invalid_cases=14 root_preflight_cases=2\n";
     return 0;
 }

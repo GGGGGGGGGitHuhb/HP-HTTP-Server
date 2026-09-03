@@ -4,13 +4,13 @@
 
 ## 当前概况
 
-- 最近完成阶段：`V0.1 / S2 单线程 epoll 与连接读写`，状态为 `已完成`。
-- S2 design/review revision 2：`Approved`，批准日期 `2026-09-01`。
-- 最终 Reviewer 报告：`docs/reviewer/reports/V0.1/S2-report-002.md`，唯一结论 `PASS`；REQ-01..07、AC-01..08、RV-01..08 全部通过，P0/P1/P2、无法验证项和新增技术债均无。
-- 首轮 P2-01 已在 Builder 报告 002 与 Reviewer 报告 002 中关闭；P3-01 文档漂移由本次 Leader Closing 关闭。
-- 当前无正在实现的活动阶段；下一步由 Leader 设计 `V0.1 / S3`，S3 基线批准前不得实现。
-- 输出高水位与慢连接保护仍按既有路线保留到后续资源治理阶段；当前 echo 不形成生产安全或性能承诺。
-- wrk 和 perf 尚未安装，但它们不属于 S2 验收工具。
+- 最近完成阶段：`V0.1 / S3 最小 HTTP 静态文件服务`；`V0.1` 状态为`已完成`。
+- S3 design/review revision 1：`Approved`，批准日期 `2026-09-03`。
+- 最终 Reviewer 报告：`docs/reviewer/reports/V0.1/S3-report-001.md`，唯一结论 `PASS`；REQ-01..08、AC-01..10、RV-01..10 全部通过，P0/P1/P2、无法验证项和新增技术债均无。
+- S3 P3-01 根状态漂移由本次 Leader Closing 关闭；TD-003 的 S3 检查点与 TD-005 的本阶段同步检查点均已完成，但两个持续风险条目仍保持 `Open`。
+- 当前活动规划为 `V0.2 / S1 EventLoop 与 Channel`，状态`设计中 / Awaiting PM Decision`；Draft revision 1 尚未批准或实现，批准前不启动 Builder。
+- 输出高水位与慢连接保护仍按既有路线保留到后续资源治理阶段；当前最小 HTTP 服务不形成生产安全、容量或性能承诺。
+- wrk 和 perf 尚未安装，但它们不属于 V0.1/S3 验收工具。
 - 本文档不跟踪本地协作文档是否进入版本控制或远程发布。
 
 ## 类型与状态
@@ -77,9 +77,9 @@ V0.5/S2 形成 Approved 设计并完成 Reviewer 验收，明确队列上限、�
 
 - 类型：`Risk`
 - 状态：`Open`
-- 影响范围：`V0.3` 及后续
+- 影响范围：`V0.1 / S3`、`V0.3` 及后续
 - 责任角色：Leader
-- 目标检查点：`V0.3 / S1` 设计
+- 目标检查点：`V0.1 / S3` Reviewer 验收；`V0.3 / S1` 设计
 
 问题：
 
@@ -87,7 +87,7 @@ HTTP/1.1 细节包含 body、chunked、pipelining、Range 和缓存协商。项�
 
 当前决定：
 
-V0.3 只覆盖请求行、Header、消息边界、Header 上限、keep-alive 和异常请求。其他协议能力必须由新的版本范围明确批准。
+S3 已按 Approved revision 1 交付单请求 GET、严格 Header 边界和 `Connection: close`，并保持 body/chunked、pipelining 第二响应、URL decode 和完整状态机在范围外；Reviewer 的 RV-01..10 及非零动态证据全部通过，S3 检查点关闭。V0.3 再设计完整状态机、半包/粘包、Header 上限和 keep-alive。其他协议能力必须由新的版本范围明确批准。
 
 退出标准：
 
@@ -127,7 +127,7 @@ V1.0 已完成，用户明确批准 V1.1，且 Approved 设计包含禁止范围
 
 当前决定：
 
-使用 `Draft/Approved/Superseded` 生命周期和 `REQ/AC/RV` 追溯。Builder 报告必须记录设计差异，Reviewer 必须检查文档一致性，阶段通过后由 Leader 同步状态文档。`2026-09-01` 的 S2 检查点已按此流程完成：首轮缺口保留历史、返工与复审证据完整、根状态由 Leader 同步；TD-005 继续作为跨阶段治理风险保持 `Open`。
+使用 `Draft/Approved/Superseded` 生命周期和 `REQ/AC/RV` 追溯。Builder 报告必须记录设计差异，Reviewer 必须检查文档一致性，阶段通过后由 Leader 同步状态文档。`2026-09-01` 的 S2 与 `2026-09-03` 的 S3 检查点均已按此流程完成。V0.2/S1 Draft revision 1 已建立一致的 8 REQ、10 AC、10 RV 与根状态，等待 PM 决策；尚不构成实现权威。TD-005 继续作为跨阶段治理风险保持 `Open`。
 
 退出标准：
 
@@ -174,7 +174,22 @@ S2 关闭条件已经满足：
 - CTest `6/6`、P2-01 专项 `100/100`、全量稳定性 `60/60` 通过；P0/P1/P2、无法验证项和新增技术债均无。
 - P3-01 根状态漂移已由本次 Leader Closing 同步关闭。
 
-下一步由 Leader 设计 `V0.1 / S3`；S3 尚无 Approved 基线，不得直接实现。既有慢读/无高水位边界保持不变。
+S3 关闭条件已经满足：
+
+- S3 design/review revision 1 为 `Approved`，批准日期 `2026-09-03`。
+- Builder 报告 001 提供完整实现与自测证据。
+- Reviewer 报告 001 在全新 `build-review-s3/` 中完成 RV-01 至 RV-10，CTest `9/9`，唯一结论为 `PASS`。
+- 真实 HTTP 集成 `10/10`，状态 `{200:35,400:6,403:6,404:1,405:1}`，生产写 EAGAIN 非零、secret 泄露为 0、隔离 `20/20`、fd `6->6`；静态文件 `openat/close 530/530`，S2 关键组合事件回归仍成立。
+- P0/P1/P2、无法验证项和新增技术债均无；P3-01 已由本次 Leader Closing 同步关闭。
+- TD-003 的 S3 检查点已完成但条目保持 `Open` 至 V0.3/S1；TD-005 的 S3 同步检查点已完成但作为持续治理风险保持 `Open`。
+- 既有慢读、无全局高水位和无超时治理边界保持不变，不阻塞 V0.1 关闭。
+
+V0.2/S1 当前入口条件：
+
+- V0.1 已完成，无阻塞进入 V0.2 的 Reviewer finding 或新技术债。
+- V0.2/S1 design/review Draft revision 1 已形成，当前仅为`设计中 / Awaiting PM Decision`。
+- TD-005 的规划一致性检查已完成；没有现有 TD 条目阻塞基线审批。
+- PM 批准并由 Leader 记录 `Approved` 前不得启动 Builder；设计完成不等于阶段完成。
 
 ## 关闭与更新规则
 
@@ -186,6 +201,10 @@ S2 关闭条件已经满足：
 
 ## 变更记录
 
+- `2026-09-03`：同步 V0.2/S1 Draft revision 1 与`设计中 / Awaiting PM Decision`；记录 TD-005 的规划一致性检查，无新债务或状态关闭。
+- `2026-09-03`：依据 S3 Reviewer 报告 001 的唯一 `PASS` 关闭 S3 阶段检查点与 P3-01；记录 TD-003/TD-005 的本阶段检查结果，两个持续风险条目仍保持 `Open`，未新增技术债。
+- `2026-09-03`：记录 PM 批准 S3 revision 1；状态推进到 `待实现 / Ready for Builder`，未新增债务或完成声明。
+- `2026-09-03`：同步 S3 Draft revision 1 与 `Awaiting PM Decision`；扩展 TD-003 的 S3 检查点，但未把未实现功能或普通待办登记为新技术债。
 - `2026-09-01`：依据 S2 Reviewer 复审 `PASS` 完成阶段边界同步，关闭 P3-01 与 TD-005 的本阶段检查点；未新增技术债，下一步进入 S3 设计。
 - `2026-08-27`：同步 S2 Draft 已形成、活动阶段为 `设计中` 且 `Awaiting PM Decision`；未新增技术债。
 - `2026-08-25`：依据 S1 Reviewer `PASS` 完成阶段边界同步，关闭 RO-001 的观察检查点；S1 未产生新技术债，下一步进入 S2 设计。

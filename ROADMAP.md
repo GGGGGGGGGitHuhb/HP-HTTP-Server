@@ -73,7 +73,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 推进与完成规则
 
-- 当前没有正在实现的活动阶段；`V0.1 / S2` 已完成。下一步由 Leader 设计 `V0.1 / S3`，S3 基线批准前不得实现。
+- `V0.1 / S3` 已完成，`V0.1` 三个阶段均已关闭。当前活动规划为 `V0.2 / S1 EventLoop 与 Channel`，状态`设计中 / Awaiting PM Decision`；Draft revision 1 未批准、未实现，批准前不启动 Builder。
 - 阶段状态统一使用：`未开始`、`设计中`、`待实现`、`实现中`、`待审查`、`返工中`、`已完成`、`阻塞`。
 - 阶段设计和审查计划必须处于 `Approved`，Builder 才能开始实现。
 - 阶段只有在实现证据完整，且 Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT` 后，才能标记为 `已完成`。
@@ -85,7 +85,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.1 最小可运行 HTTP Server
 
-状态：进行中；`S1 已完成`，`S2 已完成`。下一步是 Leader 设计 `S3`，不是直接实现 S3。
+状态：`已完成`；`S1`、`S2`、`S3` 均已完成。
 
 前置条件：
 
@@ -123,7 +123,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 - `S1 项目骨架与基础资源封装`（`已完成`）：建立 CMake、目录结构、基础类型、日志、socket RAII 和最小启动入口。设计文档：`docs/leader/designs/V0.1/S1-design.md`。
 - `S2 单线程 epoll 与连接读写`（`已完成`）：实现单线程 epoll LT、非阻塞连接读写、临时 TCP echo、短写续传、半关闭和 fd 生命周期；Reviewer 复审 CTest `6/6`，唯一结论 `PASS`。设计文档：`docs/leader/designs/V0.1/S2-design.md`。
-- `S3 最小 HTTP 静态文件服务`（`未开始`）：下一步由 Leader 形成 Draft 设计与审查计划；批准前不得实现。计划覆盖基础 HTTP 解析、路径安全、静态文件响应、错误码和 smoke test。设计文档：`docs/leader/designs/V0.1/S3-design.md`。
+- `S3 最小 HTTP 静态文件服务`（`已完成`）：design/review revision 1 于 `2026-09-03` 获 PM 批准；Builder 按基线实现，Reviewer 在全新 `build-review-s3/` 中完成 CTest `9/9` 及 RV-01..10，唯一结论 `PASS`。已交付有界最小 HTTP 解析、fd-relative 路径安全、静态文件响应、错误码和真实 smoke test。设计文档：`docs/leader/designs/V0.1/S3-design.md`。
 
 完成标准：
 
@@ -143,7 +143,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.2 Reactor 抽象重构
 
-状态：计划中。
+状态：进行中；`S1 设计中 / Awaiting PM Decision`，`S2/S3 未开始`。
 
 前置条件：
 
@@ -172,9 +172,9 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 阶段划分：
 
-- `S1 EventLoop 与 Channel`：抽象事件循环和 fd 事件分发，保持单线程模型。设计文档：`docs/leader/designs/V0.2/S1-design.md`。
-- `S2 Acceptor 与 TcpConnection`：拆分监听连接和普通连接生命周期，明确输入输出 Buffer 边界。设计文档：`docs/leader/designs/V0.2/S2-design.md`。
-- `S3 HTTP 链路重接与回归验证`：将 HTTP 处理接入新的连接回调模型，补充回归测试。设计文档：`docs/leader/designs/V0.2/S3-design.md`。
+- `S1 EventLoop 与 Channel`（`设计中 / Awaiting PM Decision`）：抽象事件循环和 fd 事件分发，保持单线程模型；Draft revision 1 尚未批准或实现。设计文档：`docs/leader/designs/V0.2/S1-design.md`。
+- `S2 Acceptor 与 TcpConnection`（`未开始`）：拆分监听连接和普通连接生命周期，明确输入输出 Buffer 边界；不得提前进入 S1。设计文档：`docs/leader/designs/V0.2/S2-design.md`。
+- `S3 HTTP 链路重接与回归验证`（`未开始`）：将 HTTP 处理接入新的连接回调模型，补充回归测试；不得提前进入 S1。设计文档：`docs/leader/designs/V0.2/S3-design.md`。
 
 完成标准：
 
@@ -504,13 +504,13 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 ### V0.1 阶段摘要
 - `S1 项目骨架与基础资源封装`（`已完成`）：产出可构建项目、基础 RAII 工具、socket 封装和最小启动入口；Reviewer 独立 CTest `3/3` 通过，结论为 `PASS`；涉及 `app`、`base`、`net`。
 - `S2 单线程 epoll 与连接读写`（`已完成`）：已产出非阻塞监听、单线程 epoll LT、连接读写、输出缓冲和临时 echo；Reviewer 复审 `PASS`；涉及 `net`、`tests`。
-- `S3 最小 HTTP 静态文件服务`：产出 GET 静态文件、错误响应、路径安全和 smoke test；涉及 `http`、`tests`。
+- `S3 最小 HTTP 静态文件服务`（`已完成`）：已产出 GET 静态文件、错误响应、路径安全和 smoke test；Reviewer 独立 CTest `9/9`、RV-01..10 全部通过，唯一结论 `PASS`；涉及 `http`、`net`、`app`、`tests`。
 
 ### V0.2 阶段摘要
 
-- `S1 EventLoop 与 Channel`：产出可复用事件循环和 fd 事件抽象；涉及 `net`。
-- `S2 Acceptor 与 TcpConnection`：产出监听连接和普通连接生命周期抽象；涉及 `net`、`base`。
-- `S3 HTTP 链路重接与回归验证`：产出重构后的 HTTP 服务链路和回归测试；涉及 `net`、`http`、`tests`。
+- `S1 EventLoop 与 Channel`（`设计中 / Awaiting PM Decision`）：计划产出生产路径实际使用的单线程事件循环和非 fd owner Channel；涉及 `net`、`tests`。
+- `S2 Acceptor 与 TcpConnection`（`未开始`）：计划产出监听连接和普通连接生命周期抽象；涉及 `net`、`base`。
+- `S3 HTTP 链路重接与回归验证`（`未开始`）：计划产出重构后的 HTTP 服务链路和回归测试；涉及 `net`、`http`、`tests`。
 
 ### V0.3 阶段摘要
 
@@ -570,6 +570,10 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 变更记录
 
+- `2026-09-03`：形成 V0.2/S1 Draft revision 1，活动规划进入`设计中 / Awaiting PM Decision`；保持既有 S1/S2/S3 边界，批准前不实现，并修正 V0.1/S3 阶段摘要的状态漂移。
+- `2026-09-03`：依据 S3 Builder 报告 001 与 Reviewer 报告 001 的唯一 `PASS`，将 S3 与 V0.1 标记为`已完成`；下一步由 Leader 设计 V0.2/S1，不直接实现。
+- `2026-09-03`：PM 明确批准 S3 Draft revision 1；design/review 同步为 `Approved`，活动阶段推进到 `待实现 / Ready for Builder`，尚未开始实现。
+- `2026-09-03`：形成 S3 Draft design/review revision 1 与 PM 决策包；活动阶段同步为 `设计中 / Awaiting PM Decision`，批准前不启动 Builder/Reviewer。
 - `2026-09-01`：依据 Builder 报告 001/002 与 Reviewer 复审报告 002 的 `PASS`，将 S2 标记为 `已完成`；下一步由 Leader 设计 S3，S3 批准前不实现。
 - `2026-08-27`：S2 Draft 设计与审查计划已形成；将活动阶段同步为 S2 `设计中` / `Awaiting PM Decision`，批准前不交给 Builder。
 - `2026-08-25`：依据 S1 Builder 报告 002 和 Reviewer 报告 001 的 `PASS` 结论，将 S1 标记为已完成，并明确下一步由 Leader 设计 S2。
