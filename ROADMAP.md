@@ -18,7 +18,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 使用 `sendfile`、异步日志、Buffer 优化和压测分析支撑高性能叙事。
 - 在 HTTP Server 内核稳定后，扩展轻量 L7 Reverse Proxy / Gateway 能力，减少普通 WebServer 项目的同质化。
 
-当前项目已完成 V0.1 最小可运行 HTTP Server 和 V0.2 Reactor 抽象重构；V0.2 的 S1/S2/S3 均有 Approved、实现、独立 Reviewer PASS 与 Leader 收口证据。V0.3 尚未开始，本轮不启动后续阶段。
+当前项目已完成 V0.1 最小可运行 HTTP Server 和 V0.2 Reactor 抽象重构；V0.2 的 S1/S2/S3 均有 Approved、实现、独立 Reviewer PASS 与 Leader 收口证据。V0.3/S1增量HTTP Parser已完成并独立PASS；V0.3整体进行中，S2/S3未开始。
 
 总体技术方向：
 
@@ -73,7 +73,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 推进与完成规则
 
-- V0.1、V0.2 均已完成；V0.2/S3 于2026-09-08取得独立 Reviewer PASS并收口。V0.3未开始。
+- V0.1、V0.2 均已完成；V0.2/S3 于2026-09-08取得独立 Reviewer PASS并收口。V0.3/S1已完成，V0.3整体进行中，S2/S3未开始。
 - 阶段状态统一使用：`未开始`、`设计中`、`待实现`、`实现中`、`待审查`、`返工中`、`已完成`、`阻塞`。
 - 阶段设计和审查计划必须处于 `Approved`，Builder 才能开始实现。
 - 阶段只有在实现证据完整，且 Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT` 后，才能标记为 `已完成`。
@@ -193,7 +193,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.3 HTTP 状态机与连接复用
 
-状态：`未开始`。
+状态：进行中；S1已完成，Approved revision1及独立Reviewer PASS齐备；S2/S3未开始。
 
 前置条件：
 
@@ -224,7 +224,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 阶段划分：
 
-- `S1 HTTP Parser 状态机`：建立请求解析状态机，支持半包、粘包和 Header 上限。设计文档：`docs/leader/designs/V0.3/S1-design.md`。
+- `S1 HTTP Parser 状态机`（`已完成`）：Approved revision 1 已交付增量解析、半包、粘包首边界和 Header 上限，并接入每连接适配器；生产仍单响应关闭，已于2026-09-08通过独立Reviewer验收。设计文档：`docs/leader/designs/V0.3/S1-design.md`。
 - `S2 Keep-Alive 连接复用`：实现连接复用、请求消费、响应后保活或关闭决策。设计文档：`docs/leader/designs/V0.3/S2-design.md`。
 - `S3 协议边界与异常用例`：补充非法请求、超大 Header、异常关闭和回归测试。设计文档：`docs/leader/designs/V0.3/S3-design.md`。
 
@@ -514,7 +514,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.3 阶段摘要
 
-- `S1 HTTP Parser 状态机`：产出可处理半包、粘包和 Header 上限的解析器；涉及 `http`。
+- `S1 HTTP Parser 状态机`（`已完成`）：Approved revision 1，独立PASS、CTest13/13，已于2026-09-08通过独立Reviewer验收；已交付增量解析、粘包边界和限额，涉及 `http`、`app`、`tests`，服务复用留给 S2。
 - `S2 Keep-Alive 连接复用`：产出同连接多请求顺序处理能力；涉及 `http`、`net`。
 - `S3 协议边界与异常用例`：产出异常输入测试和错误语义验证；涉及 `http`、`tests`。
 
@@ -569,6 +569,12 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 用户明确希望继续扩展，而不是优先准备简历材料或面试讲解。
 
 ## 变更记录
+
+- `2026-09-08`：依据V0.3/S1 Builder001、Reviewer001 PASS及Leader003关闭S1/P3-01和TD003/005当前检查点；V0.3整体进行中，S2/S3未开始，无新债务。
+
+- `2026-09-08`：依据PM批准及Leader V0.3/S1-report-002，design/review revision1登记Approved，当前待实现；V0.3/S2/S3未开始，无新增债务。
+
+- `2026-09-08`：形成 V0.3/S1 Draft revision 1 设计、审查和决策包，S1 设计中等待批准，S2/S3 未开始。
 
 - `2026-09-08`：依据S3 Builder001、Reviewer001唯一PASS与Leader003，关闭S3和整个V0.2、P3-01/P3-02及TD-005检查点；V0.3未开始，无新增债务。
 

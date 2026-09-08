@@ -66,6 +66,9 @@ if(BUILD_TESTING)
     add_executable(connection_io_tests tests/connection_io_tests.cpp)
     target_link_libraries(connection_io_tests PRIVATE hp_http_core)
 
+    add_executable(http_parser_state_tests tests/http_parser_state_tests.cpp)
+    target_link_libraries(http_parser_state_tests PRIVATE hp_http_core)
+
     add_executable(http_parser_tests tests/http_parser_tests.cpp)
     target_link_libraries(http_parser_tests PRIVATE hp_http_core)
 
@@ -80,7 +83,7 @@ if(BUILD_TESTING)
     foreach(test_target IN ITEMS base_tests socket_tests
                                  network_primitives_tests connection_io_tests
                                  event_loop_channel_tests acceptor_tcp_connection_tests http_connection_callback_tests
-                                 http_parser_tests static_file_tests cli_tests
+                                 http_parser_tests http_parser_state_tests static_file_tests cli_tests
                                  http_server_integration_tests)
         enable_debug_warnings(${test_target})
     endforeach()
@@ -92,6 +95,7 @@ if(BUILD_TESTING)
     add_test(NAME acceptor_tcp_connection_tests COMMAND acceptor_tcp_connection_tests)
     add_test(NAME event_loop_channel_tests COMMAND event_loop_channel_tests)
     add_test(NAME connection_io_tests COMMAND connection_io_tests)
+    add_test(NAME http_parser_state_tests COMMAND http_parser_state_tests)
     add_test(NAME http_parser_tests COMMAND http_parser_tests)
     add_test(NAME static_file_tests COMMAND static_file_tests)
     add_test(NAME cli_tests COMMAND cli_tests $<TARGET_FILE:hp_http_server>)

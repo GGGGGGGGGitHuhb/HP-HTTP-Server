@@ -5,6 +5,7 @@
 namespace hp::app {
 struct HttpCallbackStats {
     std::size_t callbacks{}, parses{}, need_more{}, responses{}, eof_notifications{};
+    std::size_t submitted_bytes{}, accepted_bytes{}, consumed_bytes{};
 };
 using ResponseProvider = std::function<std::vector<std::byte>(const http::HttpRequest&)>;
 // Each call creates independent done state. Provider/service outlives the connection.

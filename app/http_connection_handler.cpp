@@ -6,13 +6,16 @@
 
 namespace hp::app {
 net::TcpConnection::MessageCallback make_http_callback(ResponseProvider provider, HttpCallbackStats* stats) {
-    return [provider = std::move(provider), stats, done = false](net::TcpConnection& connection,
+    return [provider = std::move(provider), stats, done = false, parser = http::RequestParser{}](net::TcpConnection& connection,
             std::span<const std::byte> input, bool peer_closed) mutable {
         if (done) return;
         if (stats) { ++stats->callbacks; ++stats->parses; if (peer_closed) ++stats->eof_notifications; }
         std::vector<std::byte> response;
         try {
-            const auto parsed = http::parse_request({reinterpret_cast<const char*>(input.data()), input.size()});
+            const auto parsed = parser.feed({reinterpret_cast<const char*>(input.data()), input.size()});
+            if (stats) { stats->submitted_bytes += input.size(); stats->accepted_bytes += parsed.accepted_bytes; }
+            connection.consume(parsed.accepted_bytes);
+            if (stats) stats->consumed_bytes += parsed.accepted_bytes;
             switch (parsed.status) {
                 case http::ParseStatus::need_more:
                     if (!peer_closed) { if (stats) ++stats->need_more; return; }
@@ -28,12 +31,10 @@ net::TcpConnection::MessageCallback make_http_callback(ResponseProvider provider
             response = http::make_error_response(http::Status::internal_server_error);
         }
         done = true;
-        const auto consumed = input.size();
         connection.send(response);
-        connection.consume(consumed);
         connection.close_after_flush();
         if (stats) ++stats->responses;
-        base::info("S3 evidence: HTTP message callback produced one response.");
+        base::info("S3 evidence: HTTP message callback produced one response via incremental parser.");
     };
 }
 net::TcpServer::MessageCallbackFactory make_http_factory(const http::StaticFileService& service) {

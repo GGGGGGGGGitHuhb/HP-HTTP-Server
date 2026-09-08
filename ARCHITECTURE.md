@@ -6,7 +6,7 @@
 
 ## 当前状态与目标架构
 
-当前已完成 V0.2/S3 及整个 V0.2；S3独立 Reviewer PASS，全新 Debug告警0、CTest12/12，版本完成标准逐项通过。V0.3未开始；下文区分当前实现与长期目标。
+当前V0.1/V0.2及V0.3/S1均已完成。V0.3/S1增量Parser获独立Reviewer PASS，全新Debug告警0、CTest13/13；V0.3整体进行中，S2/S3未开始。当前生产每连接持有RequestParser，逐段feed新输入并立即consume accepted_bytes，包括NeedMore。
 
 本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1`、`S2`、`S3` 均已完成：当前已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、集中式单线程单 epoll LT、连接表、输出缓冲与短写续传、半关闭和连接错误隔离，以及有界的单请求 HTTP/1.1 `GET` 解析和静态文件响应。S3 以 root fd 为锚逐组件使用 `openat` 与 no-follow 约束，响应后统一关闭连接；不支持 body/chunked、keep-alive、第二个 pipelined 响应、URL decode 或 symlink 服务。Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建、CTest `9/9` 与 RV-01 至 RV-10，唯一结论为 `PASS`。这些证据只证明 V0.1 的最小闭环，不构成生产安全、容量或性能承诺。
 
@@ -287,7 +287,7 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 ### 静态文件请求流
 
-当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::read_messages -> MessageCallback -> app HTTP adapter -> http`。每次Factory创建独立done状态，NeedMore保留输入，完成/错误只send一次、consume并close_after_flush；ConnectionIo只读写字节，输出排空后由TcpServer延迟回收。StaticFileService生命周期覆盖全部回调，root文件fd保持原路径安全用途。
+当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::read_messages -> MessageCallback -> app HTTP adapter -> RequestParser/HTTP`。每个Factory创建独立parser/done；每次feed只提交新字节，随即消费accepted_bytes，结果自有字段不依赖旧span。NeedMore状态由parser保存，完成/错误只send一次并排空关闭；ConnectionIo只读写字节。StaticFileService生命周期覆盖全部回调，保留root文件fd安全访问。
 
 以下请求流兼列长期扩展；连接复用、sendfile 与指标仍非当前交付能力：
 
@@ -531,6 +531,12 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 如果 Builder 发现实现与当前架构冲突，应在 Builder 报告中记录冲突点和建议，不应直接绕过架构约束继续扩大实现。
 
 ## 变更记录
+
+- `2026-09-08`：依据V0.3/S1 Builder001、Reviewer001 PASS及Leader003关闭S1/P3-01和TD003/005当前检查点；V0.3整体进行中，S2/S3未开始，无新债务。
+
+- `2026-09-08`：依据PM批准及Leader V0.3/S1-report-002，design/review revision1登记Approved，当前待实现；V0.3/S2/S3未开始，无新增债务。
+
+- `2026-09-08`：准备 V0.3/S1 Draft revision 1，当前阶段设计中等待批准；V0.2 已完成，功能代码未变。
 
 - `2026-09-08`：依据S3 Builder001、Reviewer001唯一PASS与Leader003，关闭S3和整个V0.2、P3-01/P3-02及TD-005检查点；V0.3未开始，无新增债务。
 

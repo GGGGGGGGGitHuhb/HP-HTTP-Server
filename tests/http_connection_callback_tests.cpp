@@ -14,6 +14,7 @@ struct TcpConnectionTestAccess {
     static auto result(TcpConnection& c) { return c.last_result_; }
     static auto mask(TcpConnection& c) { return c.last_mask_; }
     static auto messages(TcpConnection& c) { return c.message_count_; }
+    static auto buffered(TcpConnection& c) { return c.io_.input_view().size(); }
     static auto events(TcpConnection& c) { return c.event_count_; }
     static auto token(TcpConnection& c) { return c.channel_.token(); }
     static auto interest(TcpConnection& c) { return c.channel_.interest(); }
@@ -69,6 +70,28 @@ void interleaved_and_eof(){
     int eof_empty{};Pair empty;TcpConnection cc(loop,std::move(empty.owner),4,[&](TcpConnection& c,std::span<const std::byte> in,bool ended){if(ended&&in.empty())++eof_empty;c.close_after_flush();},0,[](int,auto){});cc.start();::shutdown(empty.peer.fd(),SHUT_WR);loop.poll_once(250);
     expect(eof_empty==1,"empty EOF notification once");
     std::cout<<"isolation: callbacks="<<sa.callbacks+sb.callbacks<<" need_more="<<sa.need_more+sb.need_more<<" unique_responses="<<closed<<" eof400="<<se.responses<<" empty_eof="<<eof_empty<<'\n';
+}
+void incremental_consumption(){
+    EventLoop loop; Pair a,b; app::HttpCallbackStats sa,sb;
+    auto provider=[](const http::HttpRequest& r){return response(r.target);};
+    TcpConnection ca(loop,std::move(a.owner),90,app::make_http_callback(provider,&sa),http::max_request_bytes,[](int,auto){});
+    TcpConnection cb(loop,std::move(b.owner),91,app::make_http_callback(provider,&sb),http::max_request_bytes,[](int,auto){});
+    ca.start(); cb.start();
+    const std::vector<std::string> pa={"GET /", "a HTTP/1.1\r\nHo", "st: x\r\n\r\n"};
+    const std::vector<std::string> pb={"GET /b HTTP/1.1\r", "\nHost: y\r", "\n\r\n"};
+    std::size_t sent_a=0,sent_b=0;
+    for(std::size_t i=0;i<pa.size();++i){
+        a.send(pa[i]);sent_a+=pa[i].size();loop.poll_once(250);
+        expect(sa.parses==i+1&&sa.accepted_bytes==sent_a&&sa.submitted_bytes==sent_a&&sa.consumed_bytes==sent_a&&C::buffered(ca)==0,"each A segment fed once and released before next write");
+        b.send(pb[i]);sent_b+=pb[i].size();loop.poll_once(250);
+        expect(sb.parses==i+1&&sb.accepted_bytes==sent_b&&sb.submitted_bytes==sent_b&&sb.consumed_bytes==sent_b&&C::buffered(cb)==0,"each B segment fed once and released before next write");
+        if(i<2)expect(sa.responses==0&&sb.responses==0,"incremental partial states independent");
+    }
+    expect(collect(a.peer.fd())==response("/a")&&collect(b.peer.fd())==response("/b")&&sa.need_more==2&&sb.need_more==2,"three fragments preserve independent request fields");
+    Pair empty; app::HttpCallbackStats se;
+    TcpConnection ce(loop,std::move(empty.owner),92,app::make_http_callback(provider,&se),http::max_request_bytes,[](int,auto){});ce.start();::shutdown(empty.peer.fd(),SHUT_WR);loop.poll_once(250);
+    expect(collect(empty.peer.fd())==http::make_error_response(http::Status::bad_request)&&se.accepted_bytes==0&&se.eof_notifications==1,"empty HTTP EOF feed produces400 without consumed bytes");
+    std::cout<<"incremental: feeds="<<sa.parses+sb.parses<<" need_more="<<sa.need_more+sb.need_more<<" submitted="<<sa.submitted_bytes+sb.submitted_bytes<<" accepted="<<sa.accepted_bytes+sb.accepted_bytes<<" consumed="<<sa.consumed_bytes+sb.consumed_bytes<<" network_buffer=0 independent_responses=2 empty_http_eof400=1\n";
 }
 void limits_and_500(){
     EventLoop loop;auto provider=[](const http::HttpRequest&){return response("ok");};
@@ -149,4 +172,4 @@ void reset_new_message(){
     std::cout<<"reset: combined="<<combined<<" so_error="<<result.socket_error<<" recv_bytes="<<result.bytes_read<<" message_bytes="<<received.size()<<" messages="<<messages<<" closes="<<closed<<'\n';
 }
 }
-int main(){interleaved_and_eof();limits_and_500();drain_pipeline_and_borrow();factory_message_lifetime();reset_new_message();std::cout<<"HTTP callback assertions_failed="<<failures<<'\n';return failures?1:0;}
+int main(){interleaved_and_eof();incremental_consumption();limits_and_500();drain_pipeline_and_borrow();factory_message_lifetime();reset_new_message();std::cout<<"HTTP callback assertions_failed="<<failures<<'\n';return failures?1:0;}
