@@ -136,6 +136,8 @@ void test_limits() {
     exact_line += " HTTP/1.1\r\nHost: x\r\n\r\n";
     expect(exact_line.find("\r\n") == hp::http::max_request_line_bytes,
            "exact request-line fixture must be 4 KiB");
+    expect(parse(std::string_view(exact_line).substr(0, hp::http::max_request_line_bytes)).status == hp::http::ParseStatus::need_more,
+           "exact 4 KiB content prefix must await CRLF independent of chunking");
     expect(parse(exact_line).status == hp::http::ParseStatus::complete,
            "a request line exactly at 4 KiB must be accepted");
 
