@@ -3,12 +3,14 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <utility>
 #include <span>
 #include <unordered_map>
 #include <vector>
 
 #include "base/non_copyable.h"
-#include "net/epoller.h"
+#include "net/event_loop.h"
+#include "net/channel.h"
 #include "net/socket.h"
 
 namespace hp::net {
@@ -94,6 +96,8 @@ class TcpServer final : private base::NonCopyable {
                        ApplicationHandler handler = {},
                        std::size_t max_input_bytes = 0);
 
+    ~TcpServer() noexcept;
+
     [[nodiscard]] std::uint16_t bound_port() const noexcept;
     [[noreturn]] void run();
 
@@ -101,10 +105,16 @@ class TcpServer final : private base::NonCopyable {
     struct ConnectionState {
         ConnectionIo io;
         std::uint32_t generation;
+        Channel channel;
+        ConnectionState* next_closing{nullptr};
+        bool closing{false};
+        ConnectionState(Socket socket, ApplicationHandler handler,
+                        std::size_t max_input, std::uint32_t gen,
+                        EventLoop& loop, Channel::Callback callback)
+            : io(std::move(socket), std::move(handler), max_input),
+              generation(gen), channel(loop, io.fd(), std::move(callback)) {}
     };
 
-    static constexpr std::uint64_t listener_token =
-        static_cast<std::uint64_t>(-1);
     static constexpr std::uint32_t listener_events = EPOLLIN;
     static constexpr std::uint32_t connection_read_events =
         EPOLLIN | EPOLLRDHUP;
@@ -120,11 +130,14 @@ class TcpServer final : private base::NonCopyable {
     void handle_connection_event(std::uint64_t token, std::uint32_t events);
     void update_interest(ConnectionState& connection);
     void close_connection(int fd) noexcept;
+    void drain_closed_connections() noexcept;
     [[nodiscard]] std::uint32_t next_generation() noexcept;
 
     Socket listener_;
-    Epoller epoller_;
+    EventLoop loop_;
+    Channel listener_channel_;
     std::unordered_map<int, ConnectionState> connections_;
+    ConnectionState* closing_head_{nullptr};
     ApplicationHandler application_handler_;
     std::size_t max_input_bytes_{0};
     std::uint16_t bound_port_{0};

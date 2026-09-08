@@ -4,15 +4,17 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前版本：`V0.1 最小可运行 HTTP Server`。
-- 当前版本状态：`V0.1 最小可运行 HTTP Server` 已完成；S1、S2、S3 均有 Approved 基线、Builder 实现证据与 Reviewer `PASS`。
-- 当前活动规划：`V0.2 / S1 EventLoop 与 Channel` 为`设计中 / Awaiting PM Decision`；Draft revision 1 尚未批准，EventLoop/Channel 尚未实现。
+- 当前版本：`V0.2 Reactor 抽象重构`，整体进行中；S1 已完成，S2/S3 未开始。
+- 前置版本状态：`V0.1 最小可运行 HTTP Server` 已完成；S1、S2、S3 均有 Approved 基线、Builder 实现证据与 Reviewer `PASS`。
+- 最近完成阶段：`V0.2 / S1 EventLoop 与 Channel`，状态`已完成 / Completed`；revision 1 于 `2026-09-07` 获 PM 批准，已实现并取得 Reviewer 独立 `PASS`。
 - 真实运行入口现为单线程、单 epoll LT 的最小 HTTP/1.1 静态文件服务：严格要求 `--port` 与 `--root`，只处理每连接一个 `GET` 请求，并统一返回 `Connection: close`。
 - 已实现严格 CRLF/Host/request-line/Header 解析、16 KiB 请求上限、4 KiB 请求行上限、8 MiB 文件上限，以及 `200/400/403/404/405/500`。
 - 静态文件访问以启动时打开的 root fd 为锚点，逐组件使用 `openat`、`O_NOFOLLOW|O_CLOEXEC`，中间目录另用 `O_DIRECTORY`；拒绝 raw/encoded traversal、反斜杠、歧义组件与 symlink escape。
 - S2 的短写/EAGAIN 续传、半关闭、`EPOLLERR/SO_ERROR` 同批读取、generation guard、先 epoll DEL 后释放 fd 和连接错误隔离仍由回归测试保护。
 - Reviewer 已在全新的 `build-review-s3/` 中完成 Debug 独立构建且告警为 0，CTest `9/9`；REQ-01..08、AC-01..10、RV-01..10 全部通过，唯一结论为 `PASS`。真实集成摘要为 `200:35, 400:6, 403:6, 404:1, 405:1`，分段 `NeedMore=1`、生产写 EAGAIN `=1`、accept-drain `8/8`、reset 后续连接 `20/20`、secret 泄露 `0`。
-- 下一步：PM 决定是否批准 `V0.2/S1 Draft baseline revision 1, 2026-09-03，引用 S1-report-001`；批准前不启动 Builder。
+- V0.2/S1 验收：全新 `build-review-v0.2-s1/` Debug 构建告警 0，CTest `10/10`，REQ-01..08、AC-01..10、RV-01..10 全部通过；事件专项 ASan/UBSan 无报告，真实 HTTP 回归保持原行为。
+- 下一阶段：V0.2/S2 未开始；本次仅关闭 S1。实现、验收与关闭证据分别见 `docs/builder/reports/V0.2/S1-report-001.md`、`docs/reviewer/reports/V0.2/S1-report-001.md`、`docs/leader/reports/V0.2/S1-report-003.md`。
+- 当前生产 listener/connection 通过非 fd owner 的 Channel 注册，由 EventLoop wait、按 registration token 分发完整 mask；TcpServer 保留连接 IO、generation 与关闭决策，在回调返回后销毁已移除连接。
 - S3 Approved 权威包：
   - `docs/leader/designs/V0.1/S3-design.md`
   - `docs/reviewer/reviews/V0.1/S3-review.md`
@@ -22,7 +24,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
   - `docs/reviewer/reports/V0.1/S3-report-001.md`
 - S3 Leader 关闭报告：
   - `docs/leader/reports/V0.1/S3-report-003.md`
-- V0.2/S1 Draft 权威包：
+- V0.2/S1 Approved 权威包：
   - `docs/leader/designs/V0.2/S1-design.md`
   - `docs/reviewer/reviews/V0.2/S1-review.md`
   - `docs/leader/reports/V0.2/S1-report-001.md`
@@ -67,11 +69,14 @@ Shell：Bash
 ```
 
 ```bash
-cmake -S . -B build-s3 -DCMAKE_BUILD_TYPE=Debug
-cmake --build build-s3 --verbose
-ctest --test-dir build-s3 --output-on-failure
-./build-s3/hp_http_server --help
-./build-s3/hp_http_server --port 8080 --root ./www
+mkdir -p .cache/olympus-v0.2-s1/builder/tmp .cache/olympus-v0.2-s1/builder/cache
+export TMPDIR="$PWD/.cache/olympus-v0.2-s1/builder/tmp" TMP="$PWD/.cache/olympus-v0.2-s1/builder/tmp" TEMP="$PWD/.cache/olympus-v0.2-s1/builder/tmp"
+export XDG_CACHE_HOME="$PWD/.cache/olympus-v0.2-s1/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/olympus-v0.2-s1/builder/tests"
+cmake -S . -B build-v0.2-s1-builder -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-v0.2-s1-builder --verbose
+ctest --test-dir build-v0.2-s1-builder --output-on-failure
+./build-v0.2-s1-builder/hp_http_server --help
+./build-v0.2-s1-builder/hp_http_server --port 8080 --root ./www
 ```
 
 另开一个终端验证：
@@ -82,7 +87,7 @@ curl --http1.1 -i http://127.0.0.1:8080/missing.txt
 curl --http1.1 -i -X POST http://127.0.0.1:8080/
 ```
 
-预期信号包括 `9/9` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
+预期信号包括 `10/10` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
 
 ## 配置说明
 
@@ -102,10 +107,10 @@ curl --http1.1 -i -X POST http://127.0.0.1:8080/
 app/                 # 严格 CLI 与 http/net 组合
 include/base/        # 基础约束
 include/http/        # 纯 parser、response 与静态文件服务接口
-include/net/         # Socket、Epoller、通用字节 handler seam
+include/net/         # Socket、Epoller、EventLoop、Channel、通用字节 handler seam
 src/base/
 src/http/            # 严格请求解析、响应构造、fd-relative 文件读取
-src/net/             # 单线程 epoll LT 与连接输入/输出生命周期
+src/net/             # 单线程 EventLoop/Channel 与连接输入/输出生命周期
 tests/               # S1/S2 回归、HTTP 单元/集成/curl smoke
 www/index.html       # 最小示例静态首页
 CMakeLists.txt
@@ -118,18 +123,24 @@ CMakeLists.txt
 可复现的验证命令：
 
 ```bash
-cmake -S . -B build-s3-builder -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build build-s3-builder --verbose
-ctest --test-dir build-s3-builder --output-on-failure
-./build-s3-builder/http_parser_tests
-./build-s3-builder/static_file_tests
-./build-s3-builder/http_server_integration_tests ./build-s3-builder/hp_http_server
-HP_S3_TEST_TMP_ROOT=/home/power/projects/HP-HTTP-Server/.cache/olympus-v0.1-s3/tests \
-  bash tests/http_smoke_test.sh ./build-s3-builder/hp_http_server
+mkdir -p .cache/olympus-v0.2-s1/builder/tmp .cache/olympus-v0.2-s1/builder/cache
+export TMPDIR="$PWD/.cache/olympus-v0.2-s1/builder/tmp" TMP="$PWD/.cache/olympus-v0.2-s1/builder/tmp" TEMP="$PWD/.cache/olympus-v0.2-s1/builder/tmp"
+export XDG_CACHE_HOME="$PWD/.cache/olympus-v0.2-s1/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/olympus-v0.2-s1/builder/tests"
+cmake -S . -B build-v0.2-s1-builder -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build-v0.2-s1-builder --verbose
+ctest --test-dir build-v0.2-s1-builder --output-on-failure
+./build-v0.2-s1-builder/event_loop_channel_tests
+./build-v0.2-s1-builder/connection_io_tests
+./build-v0.2-s1-builder/http_parser_tests
+./build-v0.2-s1-builder/static_file_tests
+./build-v0.2-s1-builder/http_server_integration_tests ./build-v0.2-s1-builder/hp_http_server
+NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
+  bash tests/http_smoke_test.sh ./build-v0.2-s1-builder/hp_http_server
 ```
 
-当前 CTest 共 9 项：
+当前 CTest 共 10 项：
 
+- `event_loop_channel_tests`：真实 wait、ADD/MOD/DEL、读写 interest、回调后销毁、同批 stale token、fd reuse、失败回滚以及经 Channel 的真实 ERR|IN/SO_ERROR/recv。
 - `base_tests`、`socket_tests`、`network_primitives_tests`、`connection_io_tests`：保护 S1/S2 fd、epoll、短写/EAGAIN、EINTR、半关闭和组合错误路径。
 - `http_parser_tests`：覆盖分段、严格 CRLF/Host/请求行/Header、4 KiB/16 KiB 边界、单请求 consumed bytes、状态响应与 MIME。
 - `static_file_tests`：覆盖 root fd、逐组件 no-follow、文本/二进制、query、traversal/symlink、8 MiB 上限、500 分类、500 次 fd 稳态与只读性。
@@ -138,7 +149,7 @@ HP_S3_TEST_TMP_ROOT=/home/power/projects/HP-HTTP-Server/.cache/olympus-v0.1-s3/t
 - `server_integration_tests`：保留 S2 CTest 标识，映射到同一套更强的 S3 真实入口回归。
 - `tests/http_smoke_test.sh`：真实启动端口 0，并用 curl `--path-as-is` 覆盖 `200/400/403/404/405` 与 secret 不泄露。
 
-Reviewer 已在全新目录独立复现这些关键路径；Builder 自测与 Reviewer 结论的审计细节见对应报告。
+V0.2/S1 新事件核心及 V0.1 回归均已由 Reviewer 在全新 `build-review-v0.2-s1/` 独立验证，CTest `10/10`，唯一结论 `PASS`。事件专项 ASan/UBSan 无报告；审计细节见 `docs/reviewer/reports/V0.2/S1-report-001.md`。
 
 ## 文档索引
 
@@ -172,7 +183,8 @@ Reviewer 已在全新目录独立复现这些关键路径；Builder 自测与 Re
 - 不解析 request body 或 chunked，不支持 keep-alive、pipelining 第二响应、Range、压缩、缓存协商、目录列表或 URL decode。
 - 任何 `%` 编码请求返回 `400`；歧义路径、反斜杠和 symlink 返回 `403`。
 - 请求累计上限 16 KiB、请求行上限 4 KiB、文件上限 8 MiB。
-- 当前仍是集中式单线程单 epoll LT；没有 V0.2 Reactor 类型、线程池、定时器、优雅关闭、全局连接上限、高水位或慢连接治理。
+- 当前是单线程单 epoll LT 的 EventLoop/Channel；所有注册、更新、移除及回调必须在 loop 线程或启动前执行。Channel 不关闭 fd，所有者必须先 remove，回调返回后再销毁 Channel 和 fd owner。
+- 尚未拆分 Acceptor/TcpConnection；没有线程池、wakeup、定时器、优雅关闭、全局连接上限、高水位或慢连接治理。
 - 文件采用读入内存后复用输出缓冲，不使用 `sendfile`，不作生产安全、容量或性能承诺。
 - 只承诺 Linux / WSL2 方向；HTTP/2、TLS、数据库、代理、L4LB、XDP 和 DPDK 均不在当前范围。
 

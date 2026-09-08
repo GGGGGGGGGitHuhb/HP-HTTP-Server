@@ -73,7 +73,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 推进与完成规则
 
-- `V0.1 / S3` 已完成，`V0.1` 三个阶段均已关闭。当前活动规划为 `V0.2 / S1 EventLoop 与 Channel`，状态`设计中 / Awaiting PM Decision`；Draft revision 1 未批准、未实现，批准前不启动 Builder。
+- `V0.1 / S3` 已完成，`V0.1` 三个阶段均已关闭。`V0.2 / S1 EventLoop 与 Channel` 已于 `2026-09-07` 完成并取得 Reviewer `PASS`；V0.2 整体进行中，S2/S3 未开始。
 - 阶段状态统一使用：`未开始`、`设计中`、`待实现`、`实现中`、`待审查`、`返工中`、`已完成`、`阻塞`。
 - 阶段设计和审查计划必须处于 `Approved`，Builder 才能开始实现。
 - 阶段只有在实现证据完整，且 Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT` 后，才能标记为 `已完成`。
@@ -143,7 +143,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.2 Reactor 抽象重构
 
-状态：进行中；`S1 设计中 / Awaiting PM Decision`，`S2/S3 未开始`。
+状态：进行中；`S1 已完成 / Completed`，`S2/S3 未开始`。
 
 前置条件：
 
@@ -172,7 +172,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 阶段划分：
 
-- `S1 EventLoop 与 Channel`（`设计中 / Awaiting PM Decision`）：抽象事件循环和 fd 事件分发，保持单线程模型；Draft revision 1 尚未批准或实现。设计文档：`docs/leader/designs/V0.2/S1-design.md`。
+- `S1 EventLoop 与 Channel`（`已完成`）：生产入口已使用单线程 EventLoop/Channel；Approved revision 1 已实现，Reviewer CTest `10/10` 与 RV-01..10 全通过，唯一结论 `PASS`。设计文档：`docs/leader/designs/V0.2/S1-design.md`。
 - `S2 Acceptor 与 TcpConnection`（`未开始`）：拆分监听连接和普通连接生命周期，明确输入输出 Buffer 边界；不得提前进入 S1。设计文档：`docs/leader/designs/V0.2/S2-design.md`。
 - `S3 HTTP 链路重接与回归验证`（`未开始`）：将 HTTP 处理接入新的连接回调模型，补充回归测试；不得提前进入 S1。设计文档：`docs/leader/designs/V0.2/S3-design.md`。
 
@@ -508,7 +508,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.2 阶段摘要
 
-- `S1 EventLoop 与 Channel`（`设计中 / Awaiting PM Decision`）：计划产出生产路径实际使用的单线程事件循环和非 fd owner Channel；涉及 `net`、`tests`。
+- `S1 EventLoop 与 Channel`（`已完成`）：已交付生产路径实际使用的单线程事件循环和非 fd owner Channel；涉及 `net`、`tests`。
 - `S2 Acceptor 与 TcpConnection`（`未开始`）：计划产出监听连接和普通连接生命周期抽象；涉及 `net`、`base`。
 - `S3 HTTP 链路重接与回归验证`（`未开始`）：计划产出重构后的 HTTP 服务链路和回归测试；涉及 `net`、`http`、`tests`。
 
@@ -569,6 +569,10 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 用户明确希望继续扩展，而不是优先准备简历材料或面试讲解。
 
 ## 变更记录
+
+- `2026-09-07`：依据 V0.2/S1 Builder 001 与 Reviewer 001 唯一 `PASS`，Leader report-003 关闭 S1 和 P3-01；V0.2 整体进行中、S2/S3 未开始，无新增债务。
+
+- `2026-09-07`：登记 PM 批准 V0.2/S1 revision 1，状态同步为`待实现 / Ready for Builder`；批准依据见 Leader S1-report-002，尚未实现或验收。
 
 - `2026-09-03`：形成 V0.2/S1 Draft revision 1，活动规划进入`设计中 / Awaiting PM Decision`；保持既有 S1/S2/S3 边界，批准前不实现，并修正 V0.1/S3 阶段摘要的状态漂移。
 - `2026-09-03`：依据 S3 Builder 报告 001 与 Reviewer 报告 001 的唯一 `PASS`，将 S3 与 V0.1 标记为`已完成`；下一步由 Leader 设计 V0.2/S1，不直接实现。
