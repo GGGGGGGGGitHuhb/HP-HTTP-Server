@@ -220,11 +220,24 @@ Socket TcpServer::create_listener(std::uint16_t port) {
 TcpServer::TcpServer(std::uint16_t requested_port, ApplicationHandler handler,
                      std::size_t max_input_bytes)
     : listener_(create_listener(requested_port)),
-      epoller_(),
+      loop_(),
+      listener_channel_(loop_, listener_.fd(),
+                        [this](std::uint32_t mask) { handle_listener_event(mask); }),
       application_handler_(std::move(handler)),
       max_input_bytes_(max_input_bytes),
       bound_port_(listener_.local_port()) {
-    epoller_.add(listener_.fd(), listener_events, listener_token);
+    loop_.set_after_dispatch([this] { drain_closed_connections(); });
+    listener_channel_.set_interest(listener_events);
+}
+
+TcpServer::~TcpServer() noexcept {
+    listener_channel_.remove();
+    for (auto& [fd, connection] : connections_) {
+        (void)fd;
+        connection.channel.remove();
+    }
+    // ConnectionState destroys Channel before ConnectionIo (reverse member order).
+    connections_.clear();
 }
 
 std::uint16_t TcpServer::bound_port() const noexcept { return bound_port_; }
@@ -251,16 +264,7 @@ std::uint32_t TcpServer::next_generation() noexcept {
 }
 
 [[noreturn]] void TcpServer::run() {
-    while (true) {
-        const auto events = epoller_.wait(-1);
-        for (const epoll_event& event : events) {
-            if (event.data.u64 == listener_token) {
-                handle_listener_event(event.events);
-            } else {
-                handle_connection_event(event.data.u64, event.events);
-            }
-        }
-    }
+    loop_.loop();
 }
 
 void TcpServer::handle_listener_event(std::uint32_t events) {
@@ -292,22 +296,24 @@ void TcpServer::accept_ready_connections() {
         const std::uint32_t generation = next_generation();
         const std::uint64_t token = make_token(accepted_fd, generation);
         try {
-            epoller_.add(accepted_fd, connection_read_events, token);
-        } catch (const std::system_error& error) {
-            base::warn(std::string("connection epoll registration failed: ") +
-                       error.what());
-            continue;
-        }
-
-        try {
-            connections_.emplace(
-                accepted_fd, ConnectionState{ConnectionIo(std::move(accepted),
-                                                          application_handler_,
-                                                          max_input_bytes_),
-                                             generation});
+            auto [position, inserted] = connections_.try_emplace(
+                accepted_fd, std::move(accepted), application_handler_,
+                max_input_bytes_, generation, loop_,
+                [this, token, accepted_fd](std::uint32_t mask) {
+                    try {
+                        handle_connection_event(token, mask);
+                    } catch (...) {
+                        // Isolate callback failures; removal is allocation-free.
+                        close_connection(accepted_fd);
+                    }
+                });
+            if (!inserted) throw std::logic_error("duplicate connection fd");
+            position->second.channel.set_interest(connection_read_events);
+        } catch (const std::exception& error) {
+            close_connection(accepted_fd);
+            base::warn(std::string("connection registration failed: ") + error.what());
         } catch (...) {
-            epoller_.remove(accepted_fd);
-            throw;
+            close_connection(accepted_fd);
         }
     }
 }
@@ -317,6 +323,7 @@ void TcpServer::handle_connection_event(std::uint64_t token,
     const int fd = token_fd(token);
     const auto found = connections_.find(fd);
     if (found == connections_.end() ||
+        found->second.closing ||
         found->second.generation != token_generation(token)) {
         return;
     }
@@ -377,17 +384,25 @@ void TcpServer::update_interest(ConnectionState& connection) {
     if (connection.io.has_pending_output()) {
         events |= EPOLLOUT;
     }
-    epoller_.modify(connection.io.fd(), events,
-                    make_token(connection.io.fd(), connection.generation));
+    connection.channel.set_interest(events);
 }
 
 void TcpServer::close_connection(int fd) noexcept {
     const auto found = connections_.find(fd);
-    if (found == connections_.end()) {
-        return;
+    if (found == connections_.end() || found->second.closing) return;
+    auto& connection = found->second;
+    connection.closing = true;
+    connection.channel.remove();
+    connection.next_closing = closing_head_;
+    closing_head_ = &connection;
+}
+
+void TcpServer::drain_closed_connections() noexcept {
+    while (closing_head_) {
+        auto* connection = closing_head_;
+        closing_head_ = connection->next_closing;
+        connections_.erase(connection->io.fd());
     }
-    epoller_.remove(fd);
-    connections_.erase(found);
 }
 
 }  // namespace hp::net

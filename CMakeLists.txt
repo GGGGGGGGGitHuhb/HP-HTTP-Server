@@ -11,6 +11,8 @@ add_library(hp_http_core STATIC
     src/http/http_request.cpp
     src/http/http_response.cpp
     src/http/static_file_service.cpp
+    src/net/channel.cpp
+    src/net/event_loop.cpp
     src/net/epoller.cpp
     src/net/socket.cpp
     src/net/tcp_server.cpp
@@ -44,6 +46,9 @@ if(BUILD_TESTING)
     add_executable(network_primitives_tests tests/network_primitives_tests.cpp)
     target_link_libraries(network_primitives_tests PRIVATE hp_http_core)
 
+    add_executable(event_loop_channel_tests tests/event_loop_channel_tests.cpp)
+    target_link_libraries(event_loop_channel_tests PRIVATE hp_http_core)
+
     add_executable(connection_io_tests tests/connection_io_tests.cpp)
     target_link_libraries(connection_io_tests PRIVATE hp_http_core)
 
@@ -60,6 +65,7 @@ if(BUILD_TESTING)
 
     foreach(test_target IN ITEMS base_tests socket_tests
                                  network_primitives_tests connection_io_tests
+                                 event_loop_channel_tests
                                  http_parser_tests static_file_tests cli_tests
                                  http_server_integration_tests)
         enable_debug_warnings(${test_target})
@@ -68,6 +74,7 @@ if(BUILD_TESTING)
     add_test(NAME base_tests COMMAND base_tests)
     add_test(NAME socket_tests COMMAND socket_tests)
     add_test(NAME network_primitives_tests COMMAND network_primitives_tests)
+    add_test(NAME event_loop_channel_tests COMMAND event_loop_channel_tests)
     add_test(NAME connection_io_tests COMMAND connection_io_tests)
     add_test(NAME http_parser_tests COMMAND http_parser_tests)
     add_test(NAME static_file_tests COMMAND static_file_tests)
@@ -79,8 +86,8 @@ if(BUILD_TESTING)
     add_test(NAME server_integration_tests
              COMMAND http_server_integration_tests
                      $<TARGET_FILE:hp_http_server>)
-    set_tests_properties(cli_tests http_server_integration_tests
+    set_tests_properties(static_file_tests cli_tests http_server_integration_tests
                          server_integration_tests PROPERTIES
         ENVIRONMENT
-        "HP_S3_TEST_TMP_ROOT=${CMAKE_SOURCE_DIR}/.cache/olympus-v0.1-s3/tests")
+        "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
 endif()

@@ -6,6 +6,9 @@
 
 ### 新增
 
+- V0.2/S1 新增单线程 EventLoop 与非 fd owner Channel，生产入口实际接入；新增事件核心动态专项，CTest 总数由 9 增至 10。
+- V0.2/S1 Builder 001、Reviewer 001 和 Leader 003 记录实现、独立 `PASS` 与阶段关闭。
+
 - 新增并批准 `docs/leader/designs/V0.1/S1-design.md`，形成 Builder 可执行的 S1 基线。
 - 新增并批准 `docs/reviewer/reviews/V0.1/S1-review.md`，形成 Reviewer 的 REQ/AC/RV 审查基线。
 - 新增 `docs/leader/reports/V0.1/S1-report-001.md`，保留初始设计过程。
@@ -19,6 +22,8 @@
 
 ### 变更
 
+- V0.2/S1 将 wait、interest 与完整事件分发抽入 EventLoop/Channel，使用稳定 token 隔离 stale/fd reuse，并在回调返回后释放已移除连接；保留 V0.1 HTTP 行为。S1 已完成，V0.2 整体进行中、S2/S3 未开始。
+
 - 统一仓库级文档权威顺序、阶段生命周期、返工规则、角色交接和 Reviewer 唯一结论。
 - `ARCHITECTURE.md` 区分当前实现状态与长期目标，补充 metrics 依赖、事件循环线程池和信号关闭边界。
 - `ROADMAP.md` 补充版本前置条件、阶段完成门槛，并明确 V1.1 是 V1.0 之后的可选扩展。
@@ -30,6 +35,8 @@
 - 技术债跟踪器改为只记录跨阶段债务、批准延期和持续风险，并移除不属于技术债范围的本地文档发布议题。
 
 ### 验证
+
+- V0.2/S1 Reviewer 全新 Debug 构建告警 0、CTest `10/10`、REQ-01..08/AC-01..10/RV-01..10 全通过；真实 stale/fd reuse、ERR|IN → SO_ERROR → recv 1053 字节、HTTP EAGAIN/路径安全/隔离/fd 稳态与 curl 均通过，事件专项 ASan/UBSan 无报告。唯一结论 `PASS`，无新增债务，P3-01 已由 Leader 收口关闭。
 
 - Builder 已完成配置、构建、CTest 和三种 CLI 验证，CTest `3/3` 通过。
 - Reviewer 使用全新的 `build-review/` 独立完成 Debug/Ninja 配置与构建，RV-01 至 RV-07 全部通过，CTest `3/3` 通过，唯一结论为 `PASS`。
