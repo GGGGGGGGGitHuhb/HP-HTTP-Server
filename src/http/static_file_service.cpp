@@ -45,8 +45,9 @@ std::span<const std::byte> byte_span(const std::vector<std::byte>& bytes) {
     return {bytes.data(), bytes.size()};
 }
 
-std::vector<std::byte> error_response(Status status) {
-    return make_error_response(status);
+ResponseResult error_response(Status status, ConnectionPolicy policy) {
+    if (status == Status::bad_request || status == Status::method_not_allowed) policy = ConnectionPolicy::close;
+    return {make_error_response(status, policy), policy};
 }
 
 bool is_symlink_at(int parent_fd, const std::string& component) {
@@ -112,18 +113,18 @@ PathResult validate_path(std::string_view target) {
     return result;
 }
 
-std::vector<std::byte> read_file_response(int file_fd,
+ResponseResult read_file_response(int file_fd,
                                           std::string_view relative_path,
-                                          const struct stat& metadata) {
+                                          const struct stat& metadata, ConnectionPolicy policy) {
     if (!S_ISREG(metadata.st_mode)) {
-        return error_response(Status::not_found);
+        return error_response(Status::not_found, policy);
     }
     if (metadata.st_size < 0) {
-        return error_response(Status::internal_server_error);
+        return error_response(Status::internal_server_error, policy);
     }
     const auto size = static_cast<std::uintmax_t>(metadata.st_size);
     if (size > max_file_bytes) {
-        return error_response(Status::forbidden);
+        return error_response(Status::forbidden, policy);
     }
 
     std::vector<std::byte> body(static_cast<std::size_t>(size));
@@ -138,10 +139,10 @@ std::vector<std::byte> read_file_response(int file_fd,
         if (count == -1 && errno == EINTR) {
             continue;
         }
-        return error_response(Status::internal_server_error);
+        return error_response(Status::internal_server_error, policy);
     }
-    return make_response(Status::ok, byte_span(body),
-                         content_type_for_path(relative_path));
+    return {make_response(Status::ok, byte_span(body),
+                         content_type_for_path(relative_path), false, policy), policy};
 }
 
 }  // namespace
@@ -170,11 +171,16 @@ StaticFileService::~StaticFileService() {
 }
 
 std::vector<std::byte> StaticFileService::handle(
-    const HttpRequest& request) const {
+    const HttpRequest& request, ConnectionPolicy policy) const {
+    return handle_response(request, policy).bytes;
+}
+
+ResponseResult StaticFileService::handle_response(
+    const HttpRequest& request, ConnectionPolicy policy) const {
     try {
         const PathResult validated = validate_path(request.target);
         if (validated.status != Status::ok) {
-            return error_response(validated.status);
+            return error_response(validated.status, policy);
         }
 
         int parent_fd = root_fd_;
@@ -187,7 +193,7 @@ std::vector<std::byte> StaticFileService::handle(
                          O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
             if (opened == -1) {
                 return error_response(
-                    classify_open_error(parent_fd, component, errno));
+                    classify_open_error(parent_fd, component, errno), policy);
             }
             current_directory = UniqueFd(opened);
             parent_fd = current_directory.get();
@@ -198,15 +204,15 @@ std::vector<std::byte> StaticFileService::handle(
                                O_RDONLY | O_NOFOLLOW | O_CLOEXEC));
         if (file.get() == -1) {
             return error_response(
-                classify_open_error(parent_fd, filename, errno));
+                classify_open_error(parent_fd, filename, errno), policy);
         }
         struct stat metadata {};
         if (::fstat(file.get(), &metadata) == -1) {
-            return error_response(Status::internal_server_error);
+            return error_response(Status::internal_server_error, policy);
         }
-        return read_file_response(file.get(), validated.path, metadata);
+        return read_file_response(file.get(), validated.path, metadata, policy);
     } catch (...) {
-        return error_response(Status::internal_server_error);
+        return error_response(Status::internal_server_error, policy);
     }
 }
 

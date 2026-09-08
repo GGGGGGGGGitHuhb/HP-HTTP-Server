@@ -52,13 +52,13 @@ std::span<const std::byte> as_bytes(std::string_view text) {
 std::vector<std::byte> make_response(Status status,
                                      std::span<const std::byte> body,
                                      std::string_view content_type,
-                                     bool include_allow_get) {
+                                     bool include_allow_get, ConnectionPolicy policy) {
     std::string header = "HTTP/1.1 " +
                          std::to_string(static_cast<int>(status)) + " " +
                          std::string(reason_phrase(status)) + "\r\n";
     header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
     header += "Content-Type: " + std::string(content_type) + "\r\n";
-    header += "Connection: close\r\n";
+    header += policy == ConnectionPolicy::close ? "Connection: close\r\n" : "Connection: keep-alive\r\n";
     if (include_allow_get) {
         header += "Allow: GET\r\n";
     }
@@ -72,10 +72,10 @@ std::vector<std::byte> make_response(Status status,
     return response;
 }
 
-std::vector<std::byte> make_error_response(Status status) {
+std::vector<std::byte> make_error_response(Status status, ConnectionPolicy policy) {
     const std::string_view body = error_body(status);
     return make_response(status, as_bytes(body), "text/plain; charset=utf-8",
-                         status == Status::method_not_allowed);
+                         status == Status::method_not_allowed, policy);
 }
 
 std::string content_type_for_path(std::string_view path) {

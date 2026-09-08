@@ -6,6 +6,7 @@
 
 #include "base/non_copyable.h"
 #include "http/http_request.h"
+#include "http/http_response.h"
 
 namespace hp::http {
 
@@ -17,7 +18,10 @@ class StaticFileService final : private base::NonCopyable {
     ~StaticFileService();
 
     [[nodiscard]] std::vector<std::byte> handle(
-        const HttpRequest& request) const;
+        const HttpRequest& request, ConnectionPolicy policy = ConnectionPolicy::close) const;
+
+    [[nodiscard]] ResponseResult handle_response(
+        const HttpRequest& request, ConnectionPolicy policy = ConnectionPolicy::close) const;
 
    private:
     int root_fd_{-1};

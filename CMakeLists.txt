@@ -111,3 +111,15 @@ if(BUILD_TESTING)
         ENVIRONMENT
         "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
 endif()
+
+if(BUILD_TESTING)
+    add_executable(http_keep_alive_tests tests/http_keep_alive_tests.cpp)
+    target_link_libraries(http_keep_alive_tests PRIVATE hp_http_app)
+    enable_debug_warnings(http_keep_alive_tests)
+    add_executable(http_keep_alive_integration_tests tests/http_keep_alive_integration_tests.cpp)
+    enable_debug_warnings(http_keep_alive_integration_tests)
+    add_test(NAME http_keep_alive_tests COMMAND http_keep_alive_tests)
+    add_test(NAME http_keep_alive_integration_tests COMMAND http_keep_alive_integration_tests $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(http_keep_alive_tests http_keep_alive_integration_tests PROPERTIES
+        TIMEOUT 60 ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
+endif()

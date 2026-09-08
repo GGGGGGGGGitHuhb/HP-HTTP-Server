@@ -54,7 +54,7 @@ request() {
     local expected="$1"
     shift
     local actual
-    actual="$(curl --silent --show-error --path-as-is \
+    actual="$(curl -H 'Connection: close' --silent --show-error --path-as-is \
         --dump-header "$headers" --output "$body" \
         --write-out '%{http_code}' "$@")"
     [[ "$actual" == "$expected" ]]

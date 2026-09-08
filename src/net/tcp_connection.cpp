@@ -48,7 +48,8 @@ void TcpConnection::send(std::span<const std::byte> bytes) {
     try {
         io_.queue_output(bytes); // Take independent storage before returning.
         if (!handling_event_ && state_ == State::active) {
-            flush_output(); if (state_ == State::active) update_interest();
+            if (!write_complete_callback_) flush_output();
+            if (state_ == State::active) update_interest();
         }
     } catch (...) { request_close(); throw; }
 }
@@ -60,13 +61,24 @@ void TcpConnection::close_after_flush() {
         try { update_interest(); } catch (...) { request_close(); throw; }
     }
 }
+void TcpConnection::set_write_complete_callback(WriteCompleteCallback callback) {
+    write_complete_callback_ = std::move(callback);
+}
+void TcpConnection::pause_reading() {
+    read_paused_ = true;
+    if (!handling_event_ && state_ == State::active) update_interest();
+}
+void TcpConnection::resume_reading() {
+    read_paused_ = false;
+    if (!handling_event_ && state_ == State::active) update_interest();
+}
 void TcpConnection::update_interest() {
-    std::uint32_t events = !input_stopped_ && io_.accepts_input() ? EPOLLIN | EPOLLRDHUP : 0U;
+    std::uint32_t events = !input_stopped_ && !read_paused_ && io_.accepts_input() ? EPOLLIN | EPOLLRDHUP : 0U;
     if (io_.has_pending_output()) events |= EPOLLOUT;
     channel_.set_interest(events);
 }
 void TcpConnection::read_messages() {
-    while (state_ == State::active && !input_stopped_) {
+    while (state_ == State::active && !input_stopped_ && !read_paused_) {
         const auto read = io_.read_once();
         last_result_.bytes_read += read.bytes_read;
         last_result_.read_error = read.error_number;
@@ -76,21 +88,27 @@ void TcpConnection::read_messages() {
             message_callback_(*this, io_.input_view(), read.peer_closed);
             // The callback may have consumed or invalidated the borrowed view.
         }
-        if (read.peer_closed) input_stopped_ = true;
+        if (read.peer_closed && !write_complete_callback_) input_stopped_ = true;
         if (read.error_number) last_result_.close_requested = true;
         if (!read.bytes_read) break;
     }
 }
 void TcpConnection::flush_output() {
-    if (io_.has_pending_output()) {
+    while (state_ == State::active && io_.has_pending_output()) {
         const auto written = io_.write_available();
         last_result_.bytes_written += written.bytes_written;
         last_result_.write_would_block = written.would_block;
         last_result_.write_error = written.error_number;
-        if (written.error_number) last_result_.close_requested = true;
-        if (written.would_block)
+        if (written.error_number) { last_result_.close_requested = true; break; }
+        if (written.would_block) {
             base::info("S3 evidence: connection write reached EAGAIN with " +
                        std::to_string(io_.pending_bytes()) + " response bytes pending.");
+            break;
+        }
+        if (!io_.has_pending_output() && written.bytes_written && write_complete_callback_ && !input_stopped_) {
+            // Callback send only queues: the outer loop drives the next response.
+            write_complete_callback_(*this);
+        } else break;
     }
     if (input_stopped_ && !io_.has_pending_output()) last_result_.close_requested = true;
     if (!handling_event_ && last_result_.close_requested) request_close();

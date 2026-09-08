@@ -13,6 +13,7 @@ inline constexpr std::size_t max_request_line_bytes = 4U * 1024U;
 struct HttpRequest {
     std::string method;
     std::string target;
+    bool close_requested{false};
 };
 
 enum class ParseStatus {
@@ -59,6 +60,8 @@ private:
     ParseStatus status_{ParseStatus::need_more};
     bool pending_cr_{false};
     bool host_seen_{false};
+    bool content_length_seen_{false};
+    bool close_requested_{false};
     std::size_t line_start_{0}, line_size_{0}, request_bytes_{0};
     std::size_t method_size_{0}, target_start_{0}, target_size_{0};
     std::size_t scan_steps_{0}, peak_buffered_{0};

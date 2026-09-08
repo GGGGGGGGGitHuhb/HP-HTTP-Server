@@ -54,6 +54,7 @@ class ConnectionIo final : private base::NonCopyable {
     [[nodiscard]] bool ready_to_close() const noexcept;
 
    private:
+    friend struct ConnectionIoTestAccess;
     Socket socket_;
     std::size_t max_input_bytes_{0};
     std::vector<std::byte> input_;

@@ -6,11 +6,13 @@
 
 ## 当前状态与目标架构
 
-当前V0.1/V0.2及V0.3/S1均已完成。V0.3/S1增量Parser获独立Reviewer PASS，全新Debug告警0、CTest13/13；V0.3整体进行中，S2/S3未开始。当前生产每连接持有RequestParser，逐段feed新输入并立即consume accepted_bytes，包括NeedMore。
+V0.3/S2已完成：http判定零body请求边界与连接策略，app驱动串行会话，net提供通用读暂停/恢复与非递归排空通知。原设计 `docs/leader/designs/V0.3/S2-design.md` 与Approved `docs/leader/reworks/V0.3/S2-rework-001.md`共同定义已交付契约；Reviewer001唯一PASS，Leader004完成收口。
 
-本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1`、`S2`、`S3` 均已完成：当前已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、集中式单线程单 epoll LT、连接表、输出缓冲与短写续传、半关闭和连接错误隔离，以及有界的单请求 HTTP/1.1 `GET` 解析和静态文件响应。S3 以 root fd 为锚逐组件使用 `openat` 与 no-follow 约束，响应后统一关闭连接；不支持 body/chunked、keep-alive、第二个 pipelined 响应、URL decode 或 symlink 服务。Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建、CTest `9/9` 与 RV-01 至 RV-10，唯一结论为 `PASS`。这些证据只证明 V0.1 的最小闭环，不构成生产安全、容量或性能承诺。
+当前V0.1/V0.2及V0.3/S1/S2均已完成；S2独立Debug告警0、CTest15/15、全部12AC与专项sanitizer通过。V0.3整体进行中，S3未开始。当前生产每连接持有RequestParser，逐段feed新输入并立即consume accepted_bytes，包括NeedMore；每个响应实际排空后才重置parser并处理下一请求。
 
-S1 已交付的 EventLoop/Channel 保持注册 token 分发与 stale 过滤。当前，Acceptor 独占 listener Socket/Channel，负责 accept-drain 并移动交付 Socket；TcpServer 建立并持有 TcpConnection 集合。TcpConnection 独占 ConnectionIo/Channel，处理完整事件、interest、诊断及一次关闭通知；先 remove/token 失效，TcpServer 在回调返回后校验 fd+稳定 identity 并回收，EventLoop 最后销毁。Channel 不拥有 fd。旧ApplicationHandler/Result生产路径已移除；TcpConnection发布通用消息，app适配器处理HTTP，HTTP外部行为不变，线程/wakeup/timer、连接复用仍未实现。
+本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1`、`S2`、`S3` 均已完成；以下为V0.1历史交付：当时已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、集中式单线程单 epoll LT、连接表、输出缓冲与短写续传、半关闭和连接错误隔离，以及有界的单请求 HTTP/1.1 `GET` 解析和静态文件响应。S3 以 root fd 为锚逐组件使用 `openat` 与 no-follow 约束，响应后统一关闭连接；不支持 body/chunked、keep-alive、第二个 pipelined 响应、URL decode 或 symlink 服务。Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建、CTest `9/9` 与 RV-01 至 RV-10，唯一结论为 `PASS`。这些证据只证明 V0.1 的最小闭环，不构成生产安全、容量或性能承诺。
+
+S1 已交付的 EventLoop/Channel 保持注册 token 分发与 stale 过滤。当前，Acceptor 独占 listener Socket/Channel，负责 accept-drain 并移动交付 Socket；TcpServer 建立并持有 TcpConnection 集合。TcpConnection 独占 ConnectionIo/Channel，处理完整事件、interest、诊断及一次关闭通知；先 remove/token 失效，TcpServer 在回调返回后校验 fd+稳定 identity 并回收，EventLoop 最后销毁。Channel 不拥有 fd。旧ApplicationHandler/Result生产路径已移除；TcpConnection发布通用消息，app适配器处理HTTP，S2已增加HTTP串行复用；线程/wakeup/timer仍未实现。
 
 阅读本文档时应区分：
 
@@ -127,13 +129,14 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 - 创建服务器配置对象。
 - 初始化并启动 HTTP Server 或 Gateway Server。
 - 处理进程级退出码和最外层异常。
+- 用消息/排空回调组合HTTP parser、结构化响应与net，按请求顺序驱动单响应会话。
 
 不应承担的职责：
 
 - 不直接调用 `epoll_wait`。
 - 不解析 HTTP 请求。
 - 不读取静态文件内容。
-- 不实现连接状态机。
+- 不实现网络连接状态机；app HTTP适配器拥有Reading/Writing/Closing串行会话，协议解析状态由http管理。
 
 ### `include/base/` 与 `src/base/`
 
@@ -157,7 +160,7 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 `net` 模块是网络事件和连接生命周期的核心。
 
-当前实现边界：EventLoop注册分发、Channel观察fd、Acceptor监听、TcpConnection消息/发送/消费/排空关闭，TcpServer工厂/集合/identity回收。ConnectionIo只拥有Socket和输入/输出/发送游标，不调用应用；send复制响应存储，consume使旧span失效，close_after_flush停读并排空后关闭。net无HTTP规则，纯http无连接fd/epoll依赖；StaticFileService保留root文件fd/openat。
+当前实现边界：EventLoop注册分发、Channel观察fd、Acceptor监听、TcpConnection消息/发送/消费/暂停恢复/写完成通知/排空关闭，TcpServer工厂/集合/identity回收。ConnectionIo只拥有Socket和输入/输出/发送游标，不调用应用；send复制响应存储，consume使旧span失效，close_after_flush停读并排空后关闭。net无HTTP规则，纯http无连接fd/epoll依赖；StaticFileService保留root文件fd/openat。
 
 主要职责：
 
@@ -287,9 +290,9 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 ### 静态文件请求流
 
-当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::read_messages -> MessageCallback -> app HTTP adapter -> RequestParser/HTTP`。每个Factory创建独立parser/done；每次feed只提交新字节，随即消费accepted_bytes，结果自有字段不依赖旧span。NeedMore状态由parser保存，完成/错误只send一次并排空关闭；ConnectionIo只读写字节。StaticFileService生命周期覆盖全部回调，保留root文件fd安全访问。
+当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::read_messages -> MessageCallback -> app Session -> RequestParser/HTTP`。每个factory创建共享会话Reading/Writing/Closing及独立parser；feed新字节后立即consume并丢弃旧view。解析成功后暂停读取，service.handle_response返回拥有bytes/effective_policy的ResponseResult；策略先决定再序列化，服务400收紧close，旧handle委托以保持兼容。app保存最终策略再send，write-complete排空通知后close或reset并优先处理缓存后缀，无须新socket事件。Session不拥有连接/service，ConnectionIo只读写字节；service生命周期覆盖回调并保留root文件fd。
 
-以下请求流兼列长期扩展；连接复用、sendfile 与指标仍非当前交付能力：
+以下请求流包含已交付连接复用与长期扩展；sendfile和完整指标仍非当前交付能力：
 
 1. 用户通过浏览器、curl 或 wrk 发起 HTTP 请求。
 2. Linux 内核将监听 fd 或连接 fd 标记为就绪。
@@ -410,6 +413,8 @@ metrics
 
 ### HTTP 接口
 
+当前仅无请求体HTTP/1.1 GET默认保活，close token优先。只接受无CL/TE或唯一CL十进制零；重复/列表/非零或非法CL、任何TE/Expect为400关闭，合法非GET为405关闭。正常403/404及有界服务500可复用；provider异常500、服务400和显式close终止后缀。Connection按ASCII token判定，不解释Upgrade为协议切换。此为受限支持矩阵，不是完整HTTP/1.1支持。
+
 HTTP 接口是项目主要用户入口。
 
 长期支持方向包括：
@@ -457,6 +462,8 @@ HTTP 接口必须限制请求头大小、路径解析范围和连接生命周期
 - upstream 不可用时应返回明确网关错误，并记录可诊断日志。
 
 ## 并发、状态与资源管理
+
+当前S2为单线程LT，每连接parser固定16KiB，transport未消费逻辑输入≤16KiB，最多一个未排空响应，文件≤8MiB。Writing暂停新的recv，实际排空后再推进缓存，EAGAIN退出等事件；暂停、peerEOF、永久关闭相互独立。临时复制允许固定倍数单响应内存，容量不随请求次数增长。初始空EOF/部分请求EOF为400关闭，已完成请求后的空闲EOF静默关闭；完整缓存请求在FIN后仍顺序排空。无空闲超时或全局配额，不声称生产抗DoS。
 
 项目长期以非阻塞 IO 和 Reactor 模型作为并发基础。
 
@@ -531,6 +538,12 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 如果 Builder 发现实现与当前架构冲突，应在 Builder 报告中记录冲突点和建议，不应直接绕过架构约束继续扩大实现。
 
 ## 变更记录
+
+- `2026-09-08`：依据V0.3/S2 Builder001、Reviewer001 PASS和Leader004关闭S2及P3-01，TD-003/005当前检查点完成但持续Open；V0.3进行中、S3未开始。
+
+- `2026-09-08`：依据PM原话“批准，进行开发”及Leader V0.3/S2-report-002，将S2 design/review revision1登记Approved，当前待实现 / Ready for Builder；无功能验收或新增债务。
+
+- `2026-09-08`：新增V0.3/S2 Draft设计入口并同步设计中状态；保留S1实际单响应/增量Parser事实，尚未批准架构实现变更。
 
 - `2026-09-08`：依据V0.3/S1 Builder001、Reviewer001 PASS及Leader003关闭S1/P3-01和TD003/005当前检查点；V0.3整体进行中，S2/S3未开始，无新债务。
 
