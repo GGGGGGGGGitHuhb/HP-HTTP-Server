@@ -2,90 +2,55 @@
 #include <algorithm>
 #include <array>
 #include <cerrno>
-#include <sys/epoll.h>
+#include <stdexcept>
 #include <sys/socket.h>
 #include <system_error>
 #include <utility>
 
 namespace hp::net {
-ApplicationResult ApplicationResult::need_more() { return {}; }
-
-ApplicationResult ApplicationResult::respond(std::vector<std::byte> bytes) {
-    return {ApplicationStatus::response, std::move(bytes)};
-}
-
-ConnectionIo::ConnectionIo(Socket socket, ApplicationHandler handler,
-                           std::size_t max_input_bytes) noexcept
-    : socket_(std::move(socket)),
-      application_handler_(std::move(handler)),
-      max_input_bytes_(max_input_bytes) {}
-
+ConnectionIo::ConnectionIo(Socket socket, std::size_t max_input_bytes) noexcept
+    : socket_(std::move(socket)), max_input_bytes_(max_input_bytes) {}
 int ConnectionIo::fd() const noexcept { return socket_.fd(); }
-
-bool ConnectionIo::process_application(bool peer_closed) {
-    if (!application_handler_ || response_queued_) {
-        return false;
-    }
-    const ApplicationResult application =
-        application_handler_({input_.data(), input_.size()}, peer_closed);
-    if (application.status == ApplicationStatus::need_more) {
-        return false;
-    }
-    input_.clear();
-    queue_output(application.response);
-    response_queued_ = true;
-    close_after_write_ = true;
-    return true;
+int ConnectionIo::socket_error() const { return socket_.socket_error(); }
+std::span<const std::byte> ConnectionIo::input_view() const noexcept { return input_; }
+void ConnectionIo::consume(std::size_t count) {
+    if (count > input_.size()) throw std::out_of_range("input consumption exceeds buffered bytes");
+    input_.erase(input_.begin(), input_.begin() + static_cast<std::ptrdiff_t>(count));
 }
-
-ReadResult ConnectionIo::read_available() {
+ReadResult ConnectionIo::read_once() {
     ReadResult result;
+    if (peer_half_closed_) { result.peer_closed = true; return result; }
     std::array<std::byte, 16 * 1024> buffer{};
-
-    while (!response_queued_) {
-        std::size_t read_size = buffer.size();
-        if (application_handler_ && max_input_bytes_ != 0) {
-            if (input_.size() >= max_input_bytes_) {
-                if (!process_application(false)) {
-                    result.error_number = EMSGSIZE;
-                }
-                return result;
-            }
-            read_size = std::min(read_size, max_input_bytes_ - input_.size());
-        }
-
-        const ssize_t count = ::recv(socket_.fd(), buffer.data(), read_size, 0);
+    std::size_t size = buffer.size();
+    if (max_input_bytes_) {
+        if (input_.size() >= max_input_bytes_) { result.error_number = EMSGSIZE; return result; }
+        size = std::min(size, max_input_bytes_ - input_.size());
+    }
+    while (true) {
+        const auto count = ::recv(fd(), buffer.data(), size, 0);
         if (count > 0) {
-            const auto byte_count = static_cast<std::size_t>(count);
-            result.bytes_read += byte_count;
-            if (application_handler_) {
-                input_.insert(input_.end(), buffer.begin(),
-                              buffer.begin() + count);
-                if (process_application(false)) {
-                    return result;
-                }
-            } else {
-                queue_output({buffer.data(), byte_count});
-            }
-            continue;
-        }
-        if (count == 0) {
-            peer_half_closed_ = true;
-            result.peer_closed = true;
-            (void)process_application(true);
+            input_.insert(input_.end(), buffer.begin(), buffer.begin() + count);
+            result.bytes_read = static_cast<std::size_t>(count);
             return result;
         }
-        if (errno == EINTR) {
-            continue;
-        }
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            result.would_block = true;
-            return result;
-        }
-        result.error_number = errno;
+        if (count == 0) { peer_half_closed_ = true; result.peer_closed = true; return result; }
+        if (errno == EINTR) continue;
+        if (errno == EAGAIN || errno == EWOULDBLOCK) result.would_block = true;
+        else result.error_number = errno;
         return result;
     }
-    return result;
+}
+ReadResult ConnectionIo::read_available() {
+    ReadResult total;
+    while (true) {
+        auto read = read_once();
+        total.bytes_read += read.bytes_read;
+        if (read.bytes_read) continue;
+        total.would_block = read.would_block;
+        total.peer_closed = read.peer_closed;
+        total.error_number = read.error_number;
+        return total;
+    }
 }
 
 WriteResult ConnectionIo::write_available() {
@@ -121,51 +86,6 @@ WriteResult ConnectionIo::write_available() {
     return result;
 }
 
-ConnectionEventResult ConnectionIo::handle_event(std::uint32_t events) {
-    ConnectionEventResult result;
-
-    if ((events & EPOLLERR) != 0U) {
-        try {
-            result.socket_error = socket_.socket_error();
-            result.socket_error_observed = true;
-        } catch (const std::system_error& error) {
-            result.socket_error_query_error = error.code().value();
-        }
-        result.close_requested = true;
-    }
-
-    if ((events & (EPOLLIN | EPOLLRDHUP)) != 0U) {
-        const ReadResult read = read_available();
-        result.bytes_read = read.bytes_read;
-        result.read_error = read.error_number;
-        if (read.error_number != 0) {
-            result.close_requested = true;
-        }
-    }
-
-    if ((events & EPOLLRDHUP) != 0U) {
-        mark_peer_half_closed();
-        if (application_handler_ && !response_queued_) {
-            (void)process_application(true);
-        }
-    }
-
-    if (has_pending_output()) {
-        const WriteResult write = write_available();
-        result.bytes_written = write.bytes_written;
-        result.write_would_block = write.would_block;
-        result.write_error = write.error_number;
-        if (write.error_number != 0) {
-            result.close_requested = true;
-        }
-    }
-
-    if ((events & EPOLLHUP) != 0U || ready_to_close()) {
-        result.close_requested = true;
-    }
-    return result;
-}
-
 void ConnectionIo::queue_output(std::span<const std::byte> bytes) {
     output_.insert(output_.end(), bytes.begin(), bytes.end());
 }
@@ -183,7 +103,7 @@ bool ConnectionIo::has_pending_output() const noexcept {
 }
 
 bool ConnectionIo::accepts_input() const noexcept {
-    return !peer_half_closed_ && !response_queued_;
+    return !peer_half_closed_;
 }
 
 std::size_t ConnectionIo::pending_bytes() const noexcept {
@@ -191,7 +111,7 @@ std::size_t ConnectionIo::pending_bytes() const noexcept {
 }
 
 bool ConnectionIo::ready_to_close() const noexcept {
-    return (peer_half_closed_ || close_after_write_) && !has_pending_output();
+    return peer_half_closed_ && !has_pending_output();
 }
 
 }  // namespace hp::net

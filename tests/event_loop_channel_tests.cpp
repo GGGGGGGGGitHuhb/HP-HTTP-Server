@@ -13,6 +13,9 @@
 
 namespace hp::net {
 // Controlled stale payload seam: uses the exact production token dispatch path.
+struct TcpConnectionTestAccess {
+    static ConnectionEventResult event(TcpConnection& c, std::uint32_t mask) { c.handle_event(mask); return c.last_result_; }
+};
 struct EventLoopTestAccess {
     static void dispatch(EventLoop& loop, std::uint64_t token, std::uint32_t mask) {
         loop.dispatch(token, mask);
@@ -188,7 +191,9 @@ void real_reset_through_channel() {
     loop.poll_once(250);
     listening.remove();
     expect(accepted.valid(), "Channel listener accepted TCP connection");
-    ConnectionIo io(std::move(accepted));
+    EventLoop io_loop;
+    TcpConnection io(io_loop,std::move(accepted),1,{},0,[](int,auto){});
+    io.start();
     bool consume = false, error_ready = false;
     ConnectionEventResult result;
     Channel connection(loop, io.fd(), [&](std::uint32_t mask) {
@@ -197,7 +202,7 @@ void real_reset_through_channel() {
         if (consume) {
             expect(mask == connection.revents(), "reset mask preserved in Channel");
             if ((mask & (EPOLLERR | EPOLLIN)) == (EPOLLERR | EPOLLIN)) ++combined;
-            result = io.handle_event(mask);
+            result = TcpConnectionTestAccess::event(io, mask);
             if (result.socket_error_observed && result.socket_error == ECONNRESET) ++so_errors;
             connection.remove();
         }

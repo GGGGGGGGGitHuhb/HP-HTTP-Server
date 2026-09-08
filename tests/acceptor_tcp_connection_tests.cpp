@@ -174,11 +174,12 @@ void application_boundaries() {
     EventLoop loop;
     int calls{}, notices{};
     Pair pair;
-    TcpConnection c(loop,std::move(pair.observed),2,[&](std::span<const std::byte> input,bool){
+    TcpConnection c(loop,std::move(pair.observed),2,[&](TcpConnection& connection,std::span<const std::byte> input,bool){
         ++calls;
-        if(input.size()<2) return ApplicationResult::need_more();
+        if(input.size()<2) return;
         expect(input.size()==2,"accumulated borrowed input span");
-        return ApplicationResult::respond({std::byte{0x78},std::byte{0x79}});
+        const std::byte response[]{std::byte{0x78},std::byte{0x79}};
+        connection.send(response);connection.consume(input.size());connection.close_after_flush();
     },2,[&](int,auto){++notices;});
     c.start();pair.ready();loop.poll_once(250);
     expect(calls==1 && c.state()==TcpConnection::State::active,"partial input no response");
@@ -189,8 +190,8 @@ void application_boundaries() {
     pair.ready();loop.poll_once(0);expect(calls==2,"removed connection does not call application again");
     Pair limit;
     int limit_calls{},limit_closed{};
-    TcpConnection capped(loop,std::move(limit.observed),3,[&](std::span<const std::byte> input,bool){
-        ++limit_calls;expect(input.size()<=2,"input limit respected");return ApplicationResult::need_more();
+    TcpConnection capped(loop,std::move(limit.observed),3,[&](TcpConnection& connection,std::span<const std::byte> input,bool){
+        (void)connection; ++limit_calls;expect(input.size()<=2,"input limit respected");
     },2,[&](int,auto){++limit_closed;});
     capped.start();std::byte over[3]{};limit.send(over);loop.poll_once(250);
     expect(limit_closed==1 && C::result(capped).read_error==EMSGSIZE,"oversized input closes within original cap");
@@ -202,13 +203,13 @@ void close_batch_and_reuse() {
     std::size_t stale{};
     {
         TcpConnection* a{};TcpConnection* b{};
-        TcpServer server(0,[&](std::span<const std::byte> bytes,bool){
-            if(bytes[0]==std::byte{0x73}){++survivor_calls;return ApplicationResult::need_more();}
+        TcpServer server(0,[&]{ return [&](TcpConnection&,std::span<const std::byte> bytes,bool){
+            if(bytes[0]==std::byte{0x73}){++survivor_calls;return;}
             ++self_calls;
             a->request_close();a->request_close();b->request_close();
             if(::fcntl(a->fd(),F_GETFD)>=0 && ::fcntl(b->fd(),F_GETFD)>=0)++in_callback_fd_alive;
-            return ApplicationResult::need_more();
-        });
+            return;
+        }; });
         Pair x,y,z;int fx=x.observed.fd(),fy=y.observed.fd(),fz=z.observed.fd();
         S::add(server,std::move(x.observed));S::add(server,std::move(y.observed));S::add(server,std::move(z.observed));
         a=&S::connection(server,fx);b=&S::connection(server,fy);

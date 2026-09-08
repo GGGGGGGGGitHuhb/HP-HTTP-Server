@@ -9,15 +9,21 @@ struct TcpConnectionTestAccess;
 // the connection; destruction is permitted only after the active callback returns.
 class TcpConnection final : private base::NonCopyable {
 public:
+    // Borrowed input is invalidated by consume; never retain it after callback.
+    using MessageCallback = std::function<void(TcpConnection&, std::span<const std::byte>, bool)>;
     using Identity = std::uint64_t;
     using CloseCallback = std::function<void(int, Identity)>;
     enum class State { unregistered, active, closing };
     TcpConnection(EventLoop& loop, Socket socket, Identity identity,
-                  ApplicationHandler handler, std::size_t max_input_bytes,
+                  MessageCallback handler, std::size_t max_input_bytes,
                   CloseCallback close_callback);
     ~TcpConnection() noexcept;
     void start();
     void request_close() noexcept;
+    void send(std::span<const std::byte> bytes);
+    void consume(std::size_t count);
+    void close_after_flush();
+    [[nodiscard]] std::size_t pending_bytes() const noexcept { return io_.pending_bytes(); }
     // Owner teardown: unregister without notifying a possibly destructing owner.
     void stop() noexcept;
     [[nodiscard]] int fd() const noexcept { return io_.fd(); }
@@ -28,10 +34,17 @@ private:
     friend struct TcpConnectionTestAccess;
     void handle_event(std::uint32_t mask) noexcept;
     void update_interest();
+    void read_messages();
+    void flush_output();
     ConnectionIo io_;
+    MessageCallback message_callback_;
     const Identity identity_;
     CloseCallback close_callback_;
     Channel channel_;
+    bool input_stopped_{false};
+    bool handling_event_{false};
+    bool eof_notified_{false};
+    std::size_t message_count_{0};
     State state_{State::unregistered};
     // Intrusive owner recovery record: no allocation when an event requests close.
     TcpConnection* next_closing_{nullptr};

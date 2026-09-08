@@ -4,9 +4,9 @@
 #include <utility>
 
 namespace hp::net {
-TcpServer::TcpServer(std::uint16_t requested_port, ApplicationHandler handler,
+TcpServer::TcpServer(std::uint16_t requested_port, MessageCallbackFactory factory,
                      std::size_t max_input_bytes)
-    : application_handler_(std::move(handler)), max_input_bytes_(max_input_bytes),
+    : callback_factory_(std::move(factory)), max_input_bytes_(max_input_bytes),
       acceptor_(loop_, requested_port, [this](Socket socket) { add_connection(std::move(socket)); }) {
     loop_.set_after_dispatch([this] { drain_closed_connections(); });
     acceptor_.start();
@@ -27,7 +27,7 @@ void TcpServer::add_connection(Socket socket) {
     next_identity_ = identity == std::numeric_limits<TcpConnection::Identity>::max() ? 0 : identity + 1;
     const int fd = socket.fd();
     auto connection = std::make_unique<TcpConnection>(loop_, std::move(socket), identity,
-        application_handler_, max_input_bytes_,
+        callback_factory_ ? callback_factory_() : TcpConnection::MessageCallback{}, max_input_bytes_,
         [this](int closed_fd, TcpConnection::Identity id) noexcept { connection_closed(closed_fd, id); });
     auto [position, inserted] = connections_.try_emplace(fd, std::move(connection));
     if (!inserted) throw std::logic_error("duplicate connection fd");

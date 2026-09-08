@@ -22,8 +22,12 @@ add_library(hp_http_core STATIC
 )
 target_include_directories(hp_http_core PUBLIC include)
 
+add_library(hp_http_app STATIC app/http_connection_handler.cpp)
+target_include_directories(hp_http_app PUBLIC app)
+target_link_libraries(hp_http_app PUBLIC hp_http_core)
+
 add_executable(hp_http_server app/main.cpp)
-target_link_libraries(hp_http_server PRIVATE hp_http_core)
+target_link_libraries(hp_http_server PRIVATE hp_http_app)
 
 function(enable_debug_warnings target)
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
@@ -36,6 +40,7 @@ function(enable_debug_warnings target)
 endfunction()
 
 enable_debug_warnings(hp_http_core)
+enable_debug_warnings(hp_http_app)
 enable_debug_warnings(hp_http_server)
 
 include(CTest)
@@ -48,6 +53,9 @@ if(BUILD_TESTING)
 
     add_executable(network_primitives_tests tests/network_primitives_tests.cpp)
     target_link_libraries(network_primitives_tests PRIVATE hp_http_core)
+
+    add_executable(http_connection_callback_tests tests/http_connection_callback_tests.cpp)
+    target_link_libraries(http_connection_callback_tests PRIVATE hp_http_app)
 
     add_executable(acceptor_tcp_connection_tests tests/acceptor_tcp_connection_tests.cpp)
     target_link_libraries(acceptor_tcp_connection_tests PRIVATE hp_http_core)
@@ -71,7 +79,7 @@ if(BUILD_TESTING)
 
     foreach(test_target IN ITEMS base_tests socket_tests
                                  network_primitives_tests connection_io_tests
-                                 event_loop_channel_tests acceptor_tcp_connection_tests
+                                 event_loop_channel_tests acceptor_tcp_connection_tests http_connection_callback_tests
                                  http_parser_tests static_file_tests cli_tests
                                  http_server_integration_tests)
         enable_debug_warnings(${test_target})
@@ -80,6 +88,7 @@ if(BUILD_TESTING)
     add_test(NAME base_tests COMMAND base_tests)
     add_test(NAME socket_tests COMMAND socket_tests)
     add_test(NAME network_primitives_tests COMMAND network_primitives_tests)
+    add_test(NAME http_connection_callback_tests COMMAND http_connection_callback_tests)
     add_test(NAME acceptor_tcp_connection_tests COMMAND acceptor_tcp_connection_tests)
     add_test(NAME event_loop_channel_tests COMMAND event_loop_channel_tests)
     add_test(NAME connection_io_tests COMMAND connection_io_tests)
