@@ -6,9 +6,11 @@
 
 ## 当前状态与目标架构
 
+当前已完成 `V0.2/S2 Acceptor 与 TcpConnection`，Approved revision 1 的独立 Reviewer 结论 `PASS`，全新 Debug 构建告警 0、CTest `11/11`。V0.2 整体进行中，S3 HTTP 模型重接未开始。
+
 本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1`、`S2`、`S3` 均已完成：当前已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、集中式单线程单 epoll LT、连接表、输出缓冲与短写续传、半关闭和连接错误隔离，以及有界的单请求 HTTP/1.1 `GET` 解析和静态文件响应。S3 以 root fd 为锚逐组件使用 `openat` 与 no-follow 约束，响应后统一关闭连接；不支持 body/chunked、keep-alive、第二个 pipelined 响应、URL decode 或 symlink 服务。Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建、CTest `9/9` 与 RV-01 至 RV-10，唯一结论为 `PASS`。这些证据只证明 V0.1 的最小闭环，不构成生产安全、容量或性能承诺。
 
-`V0.2 / S1 EventLoop 与 Channel` 已完成，Approved revision 1 的独立 Reviewer 结论为 `PASS`，全新 Debug 构建告警 0、CTest `10/10`。生产 `TcpServer::run()` 进入 EventLoop；EventLoop 独占 Epoller，用不复用 registration token 重新查表分发完整 revents，过滤 stale event。Channel 不拥有 fd；TcpServer 保留 listener、ConnectionIo、连接表、generation、HTTP handler 和关闭决策，先 remove/token 失效，在回调返回后销毁 Channel 和 fd owner。单线程与原有 HTTP 行为保持不变；Acceptor/TcpConnection、HTTP 链路重接、线程/wakeup/timer 尚未实现，V0.2 整体仍进行中。
+S1 已交付的 EventLoop/Channel 保持注册 token 分发与 stale 过滤。在当前 S2 中，Acceptor 独占 listener Socket/Channel，负责 accept-drain 并移动交付 Socket；TcpServer 建立并持有 TcpConnection 集合。TcpConnection 独占 ConnectionIo/Channel，处理完整事件、interest、诊断及一次关闭通知；先 remove/token 失效，TcpServer 在回调返回后校验 fd+稳定 identity 并回收，EventLoop 最后销毁。Channel 不拥有 fd。原 ApplicationHandler 契约与 HTTP 行为不变，线程/wakeup/timer、连接复用仍未实现。
 
 阅读本文档时应区分：
 
@@ -155,7 +157,7 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 `net` 模块是网络事件和连接生命周期的核心。
 
-当前 S1 实现边界：EventLoop 管理 wait、注册与事件分发；Channel 只观察 fd；TcpServer 继续拥有连接 IO 与关闭策略。下面的 Acceptor/TcpConnection 职责属于后续阶段。
+当前 S2 实现边界：EventLoop 管理注册与分发；Acceptor 管理监听；TcpConnection 管理单连接事件与关闭，组合 ConnectionIo。输入累积、输出字节与发送游标均归 ConnectionIo；EAGAIN 保留未发尾部，排空后清零并禁用写事件。应用借用 span 只在调用期间有效，响应转入连接独立存储；TcpServer 不保存缓冲副本。
 
 主要职责：
 
@@ -285,15 +287,15 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 ### 静态文件请求流
 
-当前 S1 请求链路为 `main -> TcpServer -> EventLoop -> Epoller -> Channel callback -> TcpServer/ConnectionIo -> ApplicationHandler -> HTTP`。返回响应后由 ConnectionIo 缓冲与续写，TcpServer 移除 Channel 并在回调返回后释放连接。
+当前 S2 监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；连接链为 `EventLoop -> Channel -> TcpConnection -> ConnectionIo -> ApplicationHandler -> HTTP`。ApplicationHandler(span, peer_closed) → ApplicationResult 的契约和调用时机保持不变，app/main 与 HTTP 模块未重接。响应由 ConnectionIo 缓冲续写，TcpConnection 关闭并通知 TcpServer 延迟回收。
 
-以下为后续目标请求流，其中 Acceptor/TcpConnection、连接复用与指标尚非当前交付能力：
+以下请求流兼列长期扩展；连接复用、sendfile 与指标仍非当前交付能力：
 
 1. 用户通过浏览器、curl 或 wrk 发起 HTTP 请求。
 2. Linux 内核将监听 fd 或连接 fd 标记为就绪。
 3. `Epoller` 从 `epoll_wait` 返回就绪事件。
 4. `EventLoop` 根据 registration token 查表找到对应 `Channel`，忽略已失效 token。
-5. 监听 fd 就绪时，`Acceptor` 接收新连接并创建 `TcpConnection`。
+5. 监听 fd 就绪时，`Acceptor` 接收新 Socket 并移动交给 `TcpServer`，由其创建和持有 `TcpConnection`。
 6. 连接 fd 可读时，`TcpConnection` 将字节读入输入 Buffer。
 7. `http` 模块从输入 Buffer 中解析请求边界和 HTTP 语义。
 8. 静态文件服务逻辑解析路径，确认目标文件位于静态资源根目录内。
@@ -529,6 +531,10 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 如果 Builder 发现实现与当前架构冲突，应在 Builder 报告中记录冲突点和建议，不应直接绕过架构约束继续扩大实现。
 
 ## 变更记录
+
+- `2026-09-08`：依据 S2 Builder 001、Reviewer 001 唯一 PASS 与 Leader 003，关闭 V0.2/S2、P3-01 和 TD-005 阶段检查点；V0.2 进行中，S3 未开始，无新增债务。
+
+- `2026-09-08`：依据 PM 明确批准与 Leader S2-report-002，V0.2/S2 revision 1 登记 Approved，当前待实现；S1 已完成，S3 未开始，无新增债务。
 
 - `2026-09-07`：依据 V0.2/S1 Builder 001 与 Reviewer 001 唯一 `PASS`，Leader report-003 关闭 S1 和 P3-01；V0.2 整体进行中、S2/S3 未开始，无新增债务。
 

@@ -4,10 +4,9 @@
 
 ## 当前概况
 
-- 最近完成阶段：`V0.2 / S1 EventLoop 与 Channel`；V0.2 整体进行中，S2/S3 未开始；V0.1 已完成。
-- V0.2/S1 design/review revision 1：`Approved`，批准日期 `2026-09-07`。
-- 最终 Reviewer 报告：`docs/reviewer/reports/V0.2/S1-report-001.md`，唯一结论 `PASS`；REQ-01..08、AC-01..10、RV-01..10 全通过，无 P0/P1/P2、无法验证项或新增技术债。
-- V0.2/S1 P3-01 根状态同步已由 Leader report-003 关闭；TD-005 本阶段检查点完成，持续条目仍保持 `Open`。既有 TD-003 等条目及其退出标准不变。
+- 最近完成阶段：`V0.2/S2 Acceptor 与 TcpConnection`；S1/S2 已完成，V0.2 整体进行中，S3 未开始；V0.1 已完成。
+- S2 design/review revision 1 为 Approved，批准日期 `2026-09-08`；Builder 001 与 Reviewer 001 的独立 `PASS` 证据齐备，全部 REQ/AC/RV 通过。
+- 新增债务、P0/P1/P2、必需无法验证项与阻塞：无。P3-01 根状态同步由 Leader S2-report-003 关闭，TD-005 本阶段检查点完成，条目仍保持 Open。
 - 输出高水位与慢连接保护仍按既有路线保留到后续资源治理阶段；当前最小 HTTP 服务不形成生产安全、容量或性能承诺。
 - wrk 和 perf 尚未安装，但它们不属于 V0.1/S3 验收工具。
 - 本文档不跟踪本地协作文档是否进入版本控制或远程发布。
@@ -126,7 +125,7 @@ V1.0 已完成，用户明确批准 V1.1，且 Approved 设计包含禁止范围
 
 当前决定：
 
-使用 `Draft/Approved/Superseded` 生命周期和 `REQ/AC/RV` 追溯。Builder 报告必须记录设计差异，Reviewer 必须检查文档一致性，阶段通过后由 Leader 同步状态文档。`2026-09-01` 的 S2 与 `2026-09-03` 的 S3 检查点均已按此流程完成。V0.2/S1 revision 1 已建立一致的 8 REQ、10 AC、10 RV 与根状态，并于 `2026-09-07` 登记为 Approved；现有 Builder 001、Reviewer 001 唯一 PASS 及 Leader 003 同步收口证据，本阶段 P3-01 与 TD-005 同步检查点已关闭。TD-005 继续作为跨阶段治理风险保持 `Open`。
+使用 `Draft/Approved/Superseded` 生命周期和 `REQ/AC/RV` 追溯。Builder 报告必须记录设计差异，Reviewer 必须检查文档一致性，阶段通过后由 Leader 同步状态文档。`2026-09-01` 的 S2 与 `2026-09-03` 的 S3 检查点均已按此流程完成。V0.2/S1 revision 1 已建立一致的 8 REQ、10 AC、10 RV 与根状态，并于 `2026-09-07` 登记为 Approved；现有 Builder 001、Reviewer 001 唯一 PASS 及 Leader 003 同步收口证据，本阶段 P3-01 与 TD-005 同步检查点已关闭。V0.2/S2 同样已于 `2026-09-08` 具备 Approved、Builder 001、Reviewer 001 PASS 与 Leader 003 收口证据，S2 同步检查点关闭。TD-005 继续作为跨阶段治理风险保持 `Open`。
 
 退出标准：
 
@@ -189,6 +188,12 @@ V0.2/S1 关闭证据（2026-09-07）：
 - 独立 Debug CTest `10/10`、告警 0；真实 stale/fd reuse 隔离、Channel ERR|IN → SO_ERROR → recv 1053 字节、HTTP EAGAIN/隔离/fd 稳态与事件专项 sanitizer 均通过。
 - P0/P1/P2、必需未验证项、返工与新增债务：无。P3-01 由 Leader report-003 根文档同步关闭；TD-005 仅关闭本阶段检查点，条目继续 `Open`。
 
+V0.2/S2 关闭证据（2026-09-08）：
+
+- Approved revision 1、Builder 001 四里程碑、Reviewer 001 全部 REQ-01..08/AC-01..10/RV-01..10 PASS 已齐备。
+- 独立 CTest 11/11、告警 0；内核队列 8 单轮 drain、65536 字节 EAGAIN 恢复、回调后销毁、真实 fd/旧 identity 隔离、新连接 ERR/IN→SO_ERROR→recv1053、HTTP fd6→6 与专项 sanitizer 均通过。
+- P3-01 与 TD-005 本阶段同步检查点由 Leader 003 关闭；无新债务，不关闭既有持续风险。S3 未开始。
+
 ## 关闭与更新规则
 
 - 技术债只有在退出标准满足且存在 Builder/Reviewer 证据后才能关闭。
@@ -198,6 +203,10 @@ V0.2/S1 关闭证据（2026-09-07）：
 - 条目状态变化时追加更新记录，不覆盖形成决策时的原因。
 
 ## 变更记录
+
+- `2026-09-08`：依据 S2 Builder 001、Reviewer 001 唯一 PASS 与 Leader 003，关闭 V0.2/S2、P3-01 和 TD-005 阶段检查点；V0.2 进行中，S3 未开始，无新增债务。
+
+- `2026-09-08`：依据 PM 明确批准与 Leader S2-report-002，V0.2/S2 revision 1 登记 Approved，当前待实现；S1 已完成，S3 未开始，无新增债务。
 
 - `2026-09-07`：依据 V0.2/S1 Builder 001 与 Reviewer 001 唯一 `PASS`，Leader report-003 关闭 S1 和 P3-01；V0.2 整体进行中、S2/S3 未开始，无新增债务。
 

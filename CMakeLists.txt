@@ -11,6 +11,9 @@ add_library(hp_http_core STATIC
     src/http/http_request.cpp
     src/http/http_response.cpp
     src/http/static_file_service.cpp
+    src/net/acceptor.cpp
+    src/net/tcp_connection.cpp
+    src/net/connection_io.cpp
     src/net/channel.cpp
     src/net/event_loop.cpp
     src/net/epoller.cpp
@@ -46,6 +49,9 @@ if(BUILD_TESTING)
     add_executable(network_primitives_tests tests/network_primitives_tests.cpp)
     target_link_libraries(network_primitives_tests PRIVATE hp_http_core)
 
+    add_executable(acceptor_tcp_connection_tests tests/acceptor_tcp_connection_tests.cpp)
+    target_link_libraries(acceptor_tcp_connection_tests PRIVATE hp_http_core)
+
     add_executable(event_loop_channel_tests tests/event_loop_channel_tests.cpp)
     target_link_libraries(event_loop_channel_tests PRIVATE hp_http_core)
 
@@ -65,7 +71,7 @@ if(BUILD_TESTING)
 
     foreach(test_target IN ITEMS base_tests socket_tests
                                  network_primitives_tests connection_io_tests
-                                 event_loop_channel_tests
+                                 event_loop_channel_tests acceptor_tcp_connection_tests
                                  http_parser_tests static_file_tests cli_tests
                                  http_server_integration_tests)
         enable_debug_warnings(${test_target})
@@ -74,6 +80,7 @@ if(BUILD_TESTING)
     add_test(NAME base_tests COMMAND base_tests)
     add_test(NAME socket_tests COMMAND socket_tests)
     add_test(NAME network_primitives_tests COMMAND network_primitives_tests)
+    add_test(NAME acceptor_tcp_connection_tests COMMAND acceptor_tcp_connection_tests)
     add_test(NAME event_loop_channel_tests COMMAND event_loop_channel_tests)
     add_test(NAME connection_io_tests COMMAND connection_io_tests)
     add_test(NAME http_parser_tests COMMAND http_parser_tests)
