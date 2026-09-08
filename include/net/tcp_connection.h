@@ -23,6 +23,12 @@ public:
     void send(std::span<const std::byte> bytes);
     void consume(std::size_t count);
     void close_after_flush();
+    void pause_reading();
+    void resume_reading();
+    using WriteCompleteCallback = std::function<void(TcpConnection&)>;
+    void set_write_complete_callback(WriteCompleteCallback callback);
+    [[nodiscard]] std::span<const std::byte> input_view() const noexcept { return io_.input_view(); }
+    [[nodiscard]] bool peer_closed() const noexcept { return io_.peer_half_closed(); }
     [[nodiscard]] std::size_t pending_bytes() const noexcept { return io_.pending_bytes(); }
     // Owner teardown: unregister without notifying a possibly destructing owner.
     void stop() noexcept;
@@ -42,6 +48,8 @@ private:
     CloseCallback close_callback_;
     Channel channel_;
     bool input_stopped_{false};
+    bool read_paused_{false};
+    WriteCompleteCallback write_complete_callback_;
     bool handling_event_{false};
     bool eof_notified_{false};
     std::size_t message_count_{0};

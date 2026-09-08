@@ -4,23 +4,25 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前结论：V0.3/S1 HTTP Parser 状态机已完成 / Completed；独立 Reviewer PASS、全新 Debug告警0、CTest13/13。V0.3整体进行中，S2/S3未开始；批准/实现/验收/关闭见 `docs/leader/reports/V0.3/S1-report-002.md`、`docs/builder/reports/V0.3/S1-report-001.md`、`docs/reviewer/reports/V0.3/S1-report-001.md`、`docs/leader/reports/V0.3/S1-report-003.md`。
+- 当前阶段：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
-- 当前版本：`V0.3 HTTP 状态机与连接复用`，整体进行中；S1已完成，S2/S3未开始。V0.1/V0.2已完成。
+- 当前结论：独立全新Debug告警0、CTest15/15，8REQ/12AC/12RV/RW01..04全部通过，parser状态与keep-alive组件ASan/UBSan/LSan无诊断。交付证据：`docs/builder/reports/V0.3/S2-report-001.md`、`docs/reviewer/reports/V0.3/S2-report-001.md`、`docs/leader/reports/V0.3/S2-report-004.md`。
+
+- 当前版本：`V0.3 HTTP 状态机与连接复用`，整体进行中；S1/S2已完成，S3未开始。V0.1/V0.2已完成。
 - 前置版本状态：`V0.1 最小可运行 HTTP Server` 已完成；S1、S2、S3 均有 Approved 基线、Builder 实现证据与 Reviewer `PASS`。
-- 最近完成阶段：`V0.3/S1 HTTP Parser 状态机`；8REQ/10AC/10RV全通过，解析状态与生产回调两项独立ASan/UBSan/LSan无诊断。
-- 真实运行入口现为单线程、单 epoll LT 的最小 HTTP/1.1 静态文件服务：严格要求 `--port` 与 `--root`，只处理每连接一个 `GET` 请求，并统一返回 `Connection: close`。
+- 最近完成阶段：`V0.3/S2 Keep-Alive 连接复用`；V0.3整体进行中，S1/S2已完成，S3未开始。
+- 真实运行入口现为单线程、单 epoll LT 的最小 HTTP/1.1 静态文件服务：严格要求 `--port` 与 `--root`，支持同连接连续无请求体 `GET`，默认返回 `Connection: keep-alive`，显式 close 优先；响应按请求顺序逐个排空。
 - 已实现严格 CRLF/Host/request-line/Header 解析、16 KiB 请求上限、4 KiB 请求行上限、8 MiB 文件上限，以及 `200/400/403/404/405/500`。
 - 静态文件访问以启动时打开的 root fd 为锚点，逐组件使用 `openat`、`O_NOFOLLOW|O_CLOEXEC`，中间目录另用 `O_DIRECTORY`；拒绝 raw/encoded traversal、反斜杠、歧义组件与 symlink escape。
 - S2 的短写/EAGAIN 续传、半关闭、`EPOLLERR/SO_ERROR` 同批读取、稳定 identity guard（保留原 generation 防复用语义）、先 epoll DEL 后释放 fd 和连接错误隔离仍由回归测试保护。
-- Reviewer 已在全新的 `build-review-s3/` 中完成 Debug 独立构建且告警为 0，CTest `9/9`；REQ-01..08、AC-01..10、RV-01..10 全部通过，唯一结论为 `PASS`。真实集成摘要为 `200:35, 400:6, 403:6, 404:1, 405:1`，分段 `NeedMore=1`、生产写 EAGAIN `=1`、accept-drain `8/8`、reset 后续连接 `20/20`、secret 泄露 `0`。
+- V0.1/S3历史验收：Reviewer 已在全新的 `build-review-s3/` 中完成 Debug 独立构建且告警为 0，CTest `9/9`；REQ-01..08、AC-01..10、RV-01..10 全部通过，唯一结论为 `PASS`。真实集成摘要为 `200:35, 400:6, 403:6, 404:1, 405:1`，分段 `NeedMore=1`、生产写 EAGAIN `=1`、accept-drain `8/8`、reset 后续连接 `20/20`、secret 泄露 `0`。
 - V0.2/S1 验收：全新 `build-review-v0.2-s1/` Debug 构建告警 0，CTest `10/10`，REQ-01..08、AC-01..10、RV-01..10 全部通过；事件专项 ASan/UBSan 无报告，真实 HTTP 回归保持原行为。
 - V0.2/S2 已完成；其批准、实现、独立验收与关闭证据见 `docs/leader/reports/V0.2/S2-report-002.md`、`docs/builder/reports/V0.2/S2-report-001.md`、`docs/reviewer/reports/V0.2/S2-report-001.md`、`docs/leader/reports/V0.2/S2-report-003.md`。
 - 当前生产 listener/connection 通过非 fd owner 的 Channel 注册，由 EventLoop wait、按 registration token 分发完整 mask；Acceptor 独占监听与 accept-drain，TcpConnection 独占 ConnectionIo、Channel、事件诊断、interest 与本地关闭；TcpServer 持有连接集合，在回调返回后按稳定 identity 回收。
 - V0.2/S2 独立验收：全新 Debug 构建告警 0、CTest `11/11`、REQ-01..08/AC-01..10/RV-01..10 全通过；新增组件专项 ASan/UBSan 无诊断。
-- V0.2/S3 新链路：TcpConnection 发布累计未消费输入/EOF；app 层 HTTP 适配器每连接独立 done，通过 send/consume/close_after_flush 发送并排空；ConnectionIo 仅管理字节读写和缓冲。实现报告见 `docs/builder/reports/V0.2/S3-report-001.md`。
+- V0.2/S3 历史链路（S2会话已替代done）：TcpConnection 发布累计未消费输入/EOF；app 层 HTTP 适配器每连接独立 done，通过 send/consume/close_after_flush 发送并排空；ConnectionIo 仅管理字节读写和缓冲。实现报告见 `docs/builder/reports/V0.2/S3-report-001.md`。
 - V0.3/S1 实现：每连接独立 `RequestParser` 接收新字节，NeedMore 时立即消费已接收字节；RequestLine/Headers/Complete/Error 状态保留跨块 CR。`parse_request` 使用同一算法。请求行内容恰好 4096 字节的未结束前缀为 NeedMore，4097 内容字节为错误；完整请求头上限 16384 字节（含 CRLF）。
-- 增量 parser 的终态保持到显式 reset，并在首个请求头结尾精确停止。生产仍每连接只响应一次；Content-Length、Transfer-Encoding、Connection 只做 Header 语法检查，不读取 body、不处理 chunked、不启用 Keep-Alive。
+- 增量 parser 的终态保持到显式 reset，并在首个请求头结尾精确停止。生产在响应排空后 reset，先处理 transport 中缓存的后缀，最多保留一个未排空响应。待输出时暂停读取，正常空闲 EOF 静默关闭；初始空 EOF 或部分请求 EOF 返回400后关闭。
 - V0.1/S3 历史 Approved 权威包：
   - `docs/leader/designs/V0.1/S3-design.md`
   - `docs/reviewer/reviews/V0.1/S3-review.md`
@@ -75,14 +77,14 @@ Shell：Bash
 ```
 
 ```bash
-mkdir -p .cache/olympus-v0.3-s1/builder/tmp .cache/olympus-v0.3-s1/builder/cache
-export TMPDIR="$PWD/.cache/olympus-v0.3-s1/builder/tmp" TMP="$PWD/.cache/olympus-v0.3-s1/builder/tmp" TEMP="$PWD/.cache/olympus-v0.3-s1/builder/tmp"
-export XDG_CACHE_HOME="$PWD/.cache/olympus-v0.3-s1/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/olympus-v0.3-s1/builder/tests"
-cmake -S . -B build-v0.3-s1-builder -DCMAKE_BUILD_TYPE=Debug
-cmake --build build-v0.3-s1-builder --verbose
-ctest --test-dir build-v0.3-s1-builder --output-on-failure
-./build-v0.3-s1-builder/hp_http_server --help
-./build-v0.3-s1-builder/hp_http_server --port 8080 --root ./www
+mkdir -p .cache/olympus-v0.3-s2/builder/tmp .cache/olympus-v0.3-s2/builder/cache
+export TMPDIR="$PWD/.cache/olympus-v0.3-s2/builder/tmp" TMP="$PWD/.cache/olympus-v0.3-s2/builder/tmp" TEMP="$PWD/.cache/olympus-v0.3-s2/builder/tmp"
+export XDG_CACHE_HOME="$PWD/.cache/olympus-v0.3-s2/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/olympus-v0.3-s2/builder/tests"
+cmake -S . -B build-v0.3-s2-builder-final -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-v0.3-s2-builder-final --verbose
+ctest --test-dir build-v0.3-s2-builder-final --output-on-failure
+./build-v0.3-s2-builder-final/hp_http_server --help
+./build-v0.3-s2-builder-final/hp_http_server --port 8080 --root ./www
 ```
 
 另开一个终端验证：
@@ -93,7 +95,7 @@ curl --http1.1 -i http://127.0.0.1:8080/missing.txt
 curl --http1.1 -i -X POST http://127.0.0.1:8080/
 ```
 
-预期信号包括 `13/13` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
+预期信号包括 `15/15` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
 
 ## 配置说明
 
@@ -129,41 +131,57 @@ CMakeLists.txt
 可复现的验证命令：
 
 ```bash
-mkdir -p .cache/olympus-v0.3-s1/builder/tmp .cache/olympus-v0.3-s1/builder/cache
-export TMPDIR="$PWD/.cache/olympus-v0.3-s1/builder/tmp" TMP="$PWD/.cache/olympus-v0.3-s1/builder/tmp" TEMP="$PWD/.cache/olympus-v0.3-s1/builder/tmp"
-export XDG_CACHE_HOME="$PWD/.cache/olympus-v0.3-s1/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/olympus-v0.3-s1/builder/tests"
-cmake -S . -B build-v0.3-s1-builder -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build build-v0.3-s1-builder --verbose
-ctest --test-dir build-v0.3-s1-builder --output-on-failure
-./build-v0.3-s1-builder/http_connection_callback_tests
-./build-v0.3-s1-builder/acceptor_tcp_connection_tests
-./build-v0.3-s1-builder/event_loop_channel_tests
-./build-v0.3-s1-builder/connection_io_tests
-./build-v0.3-s1-builder/http_parser_tests
-./build-v0.3-s1-builder/http_parser_state_tests
-./build-v0.3-s1-builder/static_file_tests
-./build-v0.3-s1-builder/http_server_integration_tests ./build-v0.3-s1-builder/hp_http_server
+mkdir -p .cache/olympus-v0.3-s2/builder/tmp .cache/olympus-v0.3-s2/builder/cache
+export TMPDIR="$PWD/.cache/olympus-v0.3-s2/builder/tmp" TMP="$PWD/.cache/olympus-v0.3-s2/builder/tmp" TEMP="$PWD/.cache/olympus-v0.3-s2/builder/tmp"
+export XDG_CACHE_HOME="$PWD/.cache/olympus-v0.3-s2/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/olympus-v0.3-s2/builder/tests"
+cmake -S . -B build-v0.3-s2-builder-final -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build-v0.3-s2-builder-final --verbose
+ctest --test-dir build-v0.3-s2-builder-final --output-on-failure
+./build-v0.3-s2-builder-final/http_connection_callback_tests
+./build-v0.3-s2-builder-final/http_keep_alive_tests
+./build-v0.3-s2-builder-final/http_keep_alive_integration_tests ./build-v0.3-s2-builder-final/hp_http_server
+./build-v0.3-s2-builder-final/acceptor_tcp_connection_tests
+./build-v0.3-s2-builder-final/event_loop_channel_tests
+./build-v0.3-s2-builder-final/connection_io_tests
+./build-v0.3-s2-builder-final/http_parser_tests
+./build-v0.3-s2-builder-final/http_parser_state_tests
+./build-v0.3-s2-builder-final/static_file_tests
+./build-v0.3-s2-builder-final/http_server_integration_tests ./build-v0.3-s2-builder-final/hp_http_server
 NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
-  bash tests/http_smoke_test.sh ./build-v0.3-s1-builder/hp_http_server
+  bash tests/http_smoke_test.sh ./build-v0.3-s2-builder-final/hp_http_server
 ```
 
-当前 CTest 共 13 项：
+当前 CTest 共 15 项（原13项身份保留）：
 
-- `http_parser_state_tests`：19 类支持矩阵的全 split 点/逐字节输入、CRLF 跨块、精确消费、粘包剩余/reset、终态零消费、4 KiB/16 KiB 边界和线性扫描/缓存计数。
-- `http_connection_callback_tests`：新增两连接各三段增量 feed/consume 与空 HTTP EOF；保留交错分段/EOF/上限、应用异常500、临时响应所有权与真实EAGAIN、pipeline单响应、工厂/消息异常、旧身份及新消息路径真实reset。
+- `http_keep_alive_tests`：小发送缓冲真实EAGAIN、单响应积压、628请求与容量稳定、framing/close/EOF、服务400终止、策略违规500、非递归drain及回调后销毁。
+- `http_keep_alive_integration_tests`：真实生产binary的逐次/粘包三请求、部分第三请求、FIN、服务400后缀终止、403/404复用、暂停时reset及20个后续连接。
+
+- `http_parser_state_tests`：原19类与新增26类 framing/Connection 矩阵的全 split 点/逐字节输入、CRLF 跨块、精确消费、粘包剩余/reset、终态零消费、4 KiB/16 KiB 边界和线性扫描/缓存计数。
+- `http_connection_callback_tests`：新增两连接各三段增量 feed/consume 与空 HTTP EOF；保留交错分段/EOF/上限、应用异常500、临时响应所有权与真实EAGAIN、显式close后的pipeline单响应、工厂/消息异常、旧身份及新消息路径真实reset。
 - `acceptor_tcp_connection_tests`：真实单轮 8 客户端 accept-drain、交付/注册/MOD 失败与恢复、缓冲 EAGAIN 后逐字节续写、回调后销毁、fd/token/关闭 identity 隔离及经 TcpConnection 的真实 ERR|IN。
 - `event_loop_channel_tests`：真实 wait、ADD/MOD/DEL、读写 interest、回调后销毁、同批 stale token、fd reuse、失败回滚以及经 Channel 的真实 ERR|IN/SO_ERROR/recv。
 - `base_tests`、`socket_tests`、`network_primitives_tests`、`connection_io_tests`：保护 S1/S2 fd、epoll、短写/EAGAIN、EINTR、半关闭和组合错误路径。
 - `http_parser_tests`：覆盖分段、严格 CRLF/Host/请求行/Header、4 KiB/16 KiB 边界、单请求 consumed bytes、状态响应与 MIME。
 - `static_file_tests`：覆盖 root fd、逐组件 no-follow、文本/二进制、query、traversal/symlink、8 MiB 上限、500 分类、500 次 fd 稳态与只读性。
 - `cli_tests`：覆盖帮助、参数唯一性/完整性、root 预检、端口错误和不泄露 root 绝对路径。
-- `http_server_integration_tests`：真实生产入口覆盖成功与错误状态、分段、pipelining 单响应、半关闭、accept-drain、生产 EAGAIN 和 reset 隔离。
+- `http_server_integration_tests`：真实生产入口覆盖成功与错误状态、分段、显式close后的pipelining 单响应、半关闭、accept-drain、生产 EAGAIN 和 reset 隔离。
 - `server_integration_tests`：保留 S2 CTest 标识，映射到同一套更强的 S3 真实入口回归。
 - `tests/http_smoke_test.sh`：真实启动端口 0，并用 curl `--path-as-is` 覆盖 `200/400/403/404/405` 与 secret 不泄露。
+
+V0.3/S2 Reviewer已在全新 `build-review-v0.3-s2` 独立构建告警0、CTest15/15（3.92秒）；parser状态与keep-alive组件的ASan/UBSan/LSan无诊断，唯一PASS。Builder独立自测也为15/15。专项复现（先沿用上面的任务临时目录环境）：
+
+```bash
+cmake -S . -B build-v0.3-s2-builder-asan -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer'
+cmake --build build-v0.3-s2-builder-asan --target http_parser_state_tests http_keep_alive_tests -j4
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ./build-v0.3-s2-builder-asan/http_parser_state_tests
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ./build-v0.3-s2-builder-asan/http_keep_alive_tests
+```
 
 V0.3/S1增量解析、生产回调及旧Reactor/HTTP回归已由Reviewer在全新 `build-review-v0.3-s1/` 独立验证，CTest13/13，唯一PASS。解析状态和生产回调两项ASan/UBSan/LSan无诊断，详见 `docs/reviewer/reports/V0.3/S1-report-001.md`。
 
 ## 文档索引
+
+- V0.3/S2交付：`docs/leader/designs/V0.3/S2-design.md`、`docs/reviewer/reviews/V0.3/S2-review.md`、`docs/leader/reworks/V0.3/S2-rework-001.md`及Leader关闭报告 `docs/leader/reports/V0.3/S2-report-004.md`。
 
 - `AGENTS.md`：仓库级 Agent 规则、文档权威和完成门槛。
 - `ARCHITECTURE.md`：当前态与长期目标架构、模块职责、数据流和依赖边界。
@@ -191,13 +209,15 @@ V0.3/S1增量解析、生产回调及旧Reactor/HTTP回归已由Reviewer在全�
 
 ## 已知限制
 
-- 每个连接只处理一个 HTTP/1.1 Header block，只支持 `GET`；响应后始终关闭。
-- 不解析 request body 或 chunked，不支持 keep-alive、pipelining 第二响应、Range、压缩、缓存协商、目录列表或 URL decode。
+- 只服务 HTTP/1.1 无请求体 `GET`；默认保活，合法非GET返回405+Allow并关闭。400、provider异常500或显式close后不处理后缀；正常403/404及有界服务500可继续复用。
+- 仅允许无 Content-Length 或唯一十进制零值（如0、00）；重复CL（即使都是0）、列表、非零/非法CL、任意Transfer-Encoding或Expect均400关闭，不等待或丢弃body。此为项目受限兼容策略。
+- Connection按ASCII大小写无关token合并，close优先，合法未知token忽略；非法token400。未知Upgrade/Proxy-Connection不改变协议或连接策略。
+- 不解析 request body 或 chunked，不支持并发/乱序pipelining、Range、压缩、缓存协商、目录列表或 URL decode。
 - 任何 `%` 编码请求返回 `400`；歧义路径、反斜杠和 symlink 返回 `403`。
-- 请求累计上限 16 KiB、请求行上限 4 KiB、文件上限 8 MiB。
+- 每请求累计上限 16 KiB、请求行上限 4 KiB、文件上限 8 MiB。
 - 当前是单线程单 epoll LT 的 EventLoop/Channel；所有注册、更新、移除及回调必须在 loop 线程或启动前执行。Channel 不关闭 fd，所有者必须先 remove，回调返回后再销毁 Channel 和 fd owner。
-- 消息 span 只在回调期间借用，consume 后不再使用旧视图；send 在返回前复制字节，close_after_flush 立即停止新输入通知并保留待写尾部。HTTP 每连接只发送一次，旧 ApplicationHandler/Result 生产接口已移除。
-- 没有线程池、wakeup、定时器、优雅关闭、全局连接上限、高水位或慢连接治理。
+- 消息 span 只在回调期间借用，consume 后不再使用旧视图；send 在返回前复制字节，close_after_flush 立即停止新输入通知并保留待写尾部。HTTP会话在上个响应实际排空后才解析下个请求；pause与永久关闭分离。旧 ApplicationHandler/Result 生产接口已移除。
+- 没有线程池、wakeup、定时器、空闲超时、优雅关闭、全局连接上限或慢连接治理；空闲保活连接继续占用fd，资源治理仍按V0.4推进。
 - 文件采用读入内存后复用输出缓冲，不使用 `sendfile`，不作生产安全、容量或性能承诺。
 - 只承诺 Linux / WSL2 方向；HTTP/2、TLS、数据库、代理、L4LB、XDP 和 DPDK 均不在当前范围。
 

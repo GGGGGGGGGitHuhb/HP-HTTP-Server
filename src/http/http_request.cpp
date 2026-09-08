@@ -6,7 +6,7 @@ namespace hp::http {
 namespace {
 bool token_character(unsigned char c) {
     constexpr std::string_view punctuation = "!#$%&'*+-.^_`|~";
-    return std::isalnum(c) != 0 || punctuation.find(static_cast<char>(c)) != std::string_view::npos;
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || punctuation.find(static_cast<char>(c)) != std::string_view::npos;
 }
 }
 bool RequestParser::validate_request_line() {
@@ -60,15 +60,46 @@ bool RequestParser::validate_header() {
         if (c == 0x7fU || (c < 0x20U && c != '\t')) return false;
         if (c != ' ' && c != '\t') nonempty_value = true;
     }
-    bool is_host = colon == 4;
-    constexpr std::string_view host = "host";
-    if (is_host) for (std::size_t i = 0; i < host.size(); ++i) {
-        ++scan_steps_;
-        if (std::tolower(static_cast<unsigned char>(line[i])) != host[i]) is_host = false;
-    }
-    if (is_host) {
+    const auto equal_ascii = [&](std::string_view value, std::string_view expected) {
+        if (value.size() != expected.size()) return false;
+        for (std::size_t i = 0; i < value.size(); ++i) {
+            ++scan_steps_;
+            const char c = value[i] >= 'A' && value[i] <= 'Z' ? value[i] + ('a' - 'A') : value[i];
+            if (c != expected[i]) return false;
+        }
+        return true;
+    };
+    const auto trim = [&](std::string_view value) {
+        while (!value.empty() && (value.front() == ' ' || value.front() == '\t')) {
+            ++scan_steps_; value.remove_prefix(1);
+        }
+        while (!value.empty() && (value.back() == ' ' || value.back() == '\t')) {
+            ++scan_steps_; value.remove_suffix(1);
+        }
+        return value;
+    };
+    const auto name = line.substr(0, colon);
+    const auto value = trim(line.substr(colon + 1));
+    if (equal_ascii(name, "host")) {
         if (host_seen_ || !nonempty_value) return false;
         host_seen_ = true;
+    } else if (equal_ascii(name, "content-length")) {
+        if (content_length_seen_ || value.empty()) return false;
+        content_length_seen_ = true;
+        // Only decimal zero is supported: no arithmetic and therefore no overflow.
+        for (char c : value) { ++scan_steps_; if (c != '0') return false; }
+    } else if (equal_ascii(name, "transfer-encoding") || equal_ascii(name, "expect")) {
+        return false;
+    } else if (equal_ascii(name, "connection")) {
+        std::size_t start = 0;
+        for (std::size_t i = 0; i <= value.size(); ++i) {
+            ++scan_steps_;
+            if (i != value.size() && value[i] != ',') continue;
+            const auto token = trim(value.substr(start, i - start));
+            for (unsigned char c : token) { ++scan_steps_; if (!token_character(c)) return false; }
+            if (equal_ascii(token, "close")) close_requested_ = true;
+            start = i + 1;
+        }
     }
     return true;
 }
@@ -90,6 +121,7 @@ void RequestParser::finish_line() {
 FeedResult RequestParser::result(std::size_t accepted) const {
     FeedResult result{status_, {}, accepted, request_bytes_};
     if (state_ == ParserState::complete) {
+        result.request.close_requested = close_requested_;
         result.request.method.assign(storage_.data(), method_size_);
         result.request.target.assign(storage_.data() + target_start_, target_size_);
     }
@@ -125,7 +157,7 @@ FeedResult RequestParser::feed(std::string_view bytes) {
 void RequestParser::reset() noexcept {
     state_ = ParserState::request_line;
     status_ = ParseStatus::need_more;
-    pending_cr_ = host_seen_ = false;
+    pending_cr_ = host_seen_ = content_length_seen_ = close_requested_ = false;
     line_start_ = line_size_ = request_bytes_ = 0;
     method_size_ = target_start_ = target_size_ = 0;
     scan_steps_ = peak_buffered_ = 0;

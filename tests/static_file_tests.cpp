@@ -259,6 +259,14 @@ int main() {
     try {
         Fixture fixture;
         hp::http::StaticFileService service(fixture.root.string());
+        for (const auto& target : std::vector<std::string>{"/", "/missing", "/../sibling-secret.txt", "/bad%20target", "/" + std::string(300, 'x')}) {
+            const auto result = service.handle_response({"GET", target}, hp::http::ConnectionPolicy::keep_alive);
+            const std::string raw(reinterpret_cast<const char*>(result.bytes.data()), result.bytes.size());
+            const bool close = std::string_view(target).find('%') != std::string_view::npos;
+            expect(result.effective_policy == (close ? hp::http::ConnectionPolicy::close : hp::http::ConnectionPolicy::keep_alive), "service effective policy");
+            expect(raw.find(close ? "Connection: close\r\n" : "Connection: keep-alive\r\n") != std::string::npos, "service bytes and metadata agree");
+            expect(service.handle({"GET", target}, hp::http::ConnectionPolicy::keep_alive) == result.bytes, "legacy handle delegates without changing bytes");
+        }
         test_success_and_mime(service);
         test_rejections(service);
         test_fd_stability_and_read_only(fixture, service);

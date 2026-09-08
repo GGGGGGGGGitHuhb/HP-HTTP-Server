@@ -6,6 +6,9 @@
 
 ### 新增
 
+- V0.3/S2交付HTTP/1.1无请求体GET默认保活、显式close优先与有界串行响应；新增通用pause/resume/write-complete，响应排空后推进缓存后缀并正确处理EOF。结构化ResponseResult确保服务400的Header和实际终止一致；旧handle默认close兼容。
+- V0.3/S2受限framing矩阵只接受无body或唯一CL零；重复/列表/非零或非法CL、任意TE/Expect统一400关闭。保留原13测试并新增组件/生产复用专项，独立Debug告警0、CTest15/15、双专项ASan/UBSan/LSan通过；Builder001、Reviewer001 PASS及Leader004记录交付。V0.3整体尚待S3，不代表版本发布。
+
 - V0.3/S1交付每连接增量RequestParser，状态/新字节消费/首请求边界/reset/自有结果，新增状态专项，CTest由12增为13；Builder001、Reviewer001及Leader003保留交付证据。
 
 - V0.2/S3 新增TcpConnection消息/发送/消费/排空关闭接口、app HTTP适配器与每连接工厂；新增消息专项，CTest由11增至12。Builder001、Reviewer001、Leader003保留实现、PASS与版本关闭证据。

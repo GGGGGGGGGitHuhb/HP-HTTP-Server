@@ -4,10 +4,10 @@
 
 ## 当前概况
 
-- 最近完成：V0.3/S1 HTTP Parser状态机；V0.3整体进行中、S2/S3未开始，V0.1/V0.2已完成。
-- S1 Approved revision1、Builder001、Reviewer001唯一PASS与Leader003齐备；独立Debug告警0、CTest13/13、8REQ/10AC/10RV全通过。
-- P3-01根状态同步、TD-003当前支持矩阵/解析检查点、TD-005治理检查点已完成。无新债务或阻塞；TD-003继续跟踪S2启用复用前framing审批，TD-005仍为持续Open风险。
-- 输出高水位与慢连接保护仍按既有路线保留到后续资源治理阶段；当前最小 HTTP 服务不形成生产安全、容量或性能承诺。
+- 当前检查：V0.3/S2原Approved revision1及S2-rework-001、Builder001、Reviewer001 PASS和Leader004齐备；独立Debug告警0、CTest15/15、8REQ/12AC/12RV/RW01..04全部通过。
+- 最近完成：V0.3/S2 Keep-Alive连接复用；V0.3整体进行中、S1/S2已完成、S3未开始，V0.1/V0.2已完成。
+- P3-01根状态同步、TD-003复用前framing审批与真实验收检查点、TD-005本阶段治理检查点均完成；TD-003/005持续风险仍Open。无新增债务、阻塞或未执行必需项。
+- S2已交付单响应积压限制、暂停读取及排空恢复；全局配额、空闲超时与完整慢连接治理继续按V0.4推进。当前不形成生产安全、容量或性能承诺。
 - wrk 和 perf 尚未安装，但它们不属于 V0.1/S3 验收工具。
 - 本文档不跟踪本地协作文档是否进入版本控制或远程发布。
 
@@ -77,7 +77,7 @@ V0.5/S2 形成 Approved 设计并完成 Reviewer 验收，明确队列上限、�
 - 状态：`Open`
 - 影响范围：`V0.1 / S3`、`V0.3` 及后续
 - 责任角色：Leader
-- 目标检查点：`V0.1 / S3`、`V0.3 / S1` 已完成；下一检查点为 `V0.3 / S2` 复用前 framing 矩阵审批
+- 目标检查点：`V0.1 / S3`、`V0.3 / S1` 已完成；`V0.3 / S2` 复用前 framing 矩阵审批与验收已完成；后续按V0.3/S3批准范围检查
 
 问题：
 
@@ -85,7 +85,7 @@ HTTP/1.1 细节包含 body、chunked、pipelining、Range 和缓存协商。项�
 
 当前决定：
 
-S3 已按 Approved revision 1 交付单请求 GET、严格 Header 边界和 `Connection: close`，并保持 body/chunked、pipelining 第二响应、URL decode 和完整状态机在范围外；Reviewer 的 RV-01..10 及非零动态证据全部通过，S3 检查点关闭。V0.3/S1已按Approved矩阵交付增量解析、半包/粘包首边界/reset、上限和非法输入验证，Reviewer确认无越界，当前解析检查点满足既有退出要求。持续协议范围风险保留Open以跟踪已规定的S2 framing矩阵批准；该检查点完成不授权body/chunked或keep-alive。其他协议能力必须由新的版本范围明确批准。
+S3 已按 Approved revision 1 交付单请求 GET、严格 Header 边界和 `Connection: close`，并保持 body/chunked、pipelining 第二响应、URL decode 和完整状态机在范围外；Reviewer 的 RV-01..10 及非零动态证据全部通过，S3 检查点关闭。V0.3/S1已按Approved矩阵交付增量解析、半包/粘包首边界/reset、上限和非法输入验证，Reviewer确认无越界，当前解析检查点满足既有退出要求。S2已按单独批准的矩阵及接口补充交付keep-alive，并通过全部12AC与独立Reviewer PASS；复用framing检查点完成。持续协议范围风险保留Open，不授权body/chunked或扩大协议范围。其他协议能力必须由新的版本范围明确批准。
 
 退出标准：
 
@@ -206,6 +206,12 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 - TD-005：Approved、Builder001、Reviewer001 PASS、Leader003及根状态同步齐备，本阶段检查点完成，持续治理风险Open。
 - 无新债务、必需未验证项或阻塞；S1已完成，V0.3整体进行中，S2/S3未开始。
 
+## V0.3/S2 关闭检查点
+
+- 2026-09-08：依据Approved design/review revision1及rework001、Builder001、Reviewer001唯一PASS、Leader004，TD-003复用framing检查点完成；矩阵拒绝与真实复用、close/EOF/内存有界全部验证。
+- TD-005：批准、接口补充、实现/独立审查及根状态同步齐备，本阶段检查点与Reviewer P3-01关闭。两个条目保持Open，无新债务或延期。
+- S2已完成，V0.3整体进行中，S3未开始；没有发布操作或版本完成声明。
+
 ## 关闭与更新规则
 
 - 技术债只有在退出标准满足且存在 Builder/Reviewer 证据后才能关闭。
@@ -215,6 +221,12 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 - 条目状态变化时追加更新记录，不覆盖形成决策时的原因。
 
 ## 变更记录
+
+- `2026-09-08`：依据V0.3/S2 Builder001、Reviewer001 PASS和Leader004关闭S2及P3-01，TD-003/005当前检查点完成但持续Open；V0.3进行中、S3未开始。
+
+- `2026-09-08`：依据PM原话“批准，进行开发”及Leader V0.3/S2-report-002，将S2 design/review revision1登记Approved，当前待实现 / Ready for Builder；无功能验收或新增债务。
+
+- `2026-09-08`：依据Leader V0.3/S2-report-001登记S2 Draft矩阵与规划同步；TD-003/005仍Open，无新增债务或本阶段关闭结论。
 
 - `2026-09-08`：依据V0.3/S1 Builder001、Reviewer001 PASS及Leader003关闭S1/P3-01和TD003/005当前检查点；V0.3整体进行中，S2/S3未开始，无新债务。
 

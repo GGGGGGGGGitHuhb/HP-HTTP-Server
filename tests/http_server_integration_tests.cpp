@@ -409,7 +409,7 @@ Response request(std::uint16_t port, std::string_view target,
                  std::string_view method = "GET",
                  std::string_view extra_headers = {}) {
     std::string raw = std::string(method) + " " + std::string(target) +
-                      " HTTP/1.1\r\nHost: localhost\r\n" +
+                      " HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n" +
                       std::string(extra_headers) + "\r\n";
     return parse_response(transact(port, raw));
 }
@@ -480,7 +480,7 @@ void test_accept_drain(std::uint16_t port) {
     for (int index = 0; index < 8; ++index) {
         clients.push_back(connect_client(port));
     }
-    const std::string raw = "GET /note.txt HTTP/1.1\r\nHost: localhost\r\n\r\n";
+    const std::string raw = "GET /note.txt HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
     for (int client : clients) {
         send_all(client, raw);
         (void)::shutdown(client, SHUT_WR);
@@ -504,14 +504,14 @@ void test_segmented_limits_and_half_close(std::uint16_t port) {
     const int early = ::poll(&descriptor, 1, 100);
     expect(early == 0, "first request fragment must not produce a response");
     if (early == 0) ++segmented_need_more_hits;
-    send_all(segmented, " localhost\r\n\r\n");
+    send_all(segmented, " localhost\r\nConnection: close\r\n\r\n");
     (void)::shutdown(segmented, SHUT_WR);
     const Response completed = parse_response(receive_to_eof(segmented));
     expect(completed.status == 200,
            "second fragment must complete one response");
     ::close(segmented);
 
-    std::string request_at_limit = "GET / HTTP/1.1\r\nHost: x\r\nX-Limit: ";
+    std::string request_at_limit = "GET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\nX-Limit: ";
     request_at_limit.append(request_limit - request_at_limit.size(), 'a');
     expect(request_at_limit.size() == request_limit,
            "limit fixture must be exactly 16 KiB");
@@ -519,14 +519,14 @@ void test_segmented_limits_and_half_close(std::uint16_t port) {
            "16 KiB incomplete headers must return 400");
 
     const Response half_closed =
-        parse_response(transact(port, "GET / HTTP/1.1\r\nHost: localhost\r\n"));
+        parse_response(transact(port, "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n"));
     expect(half_closed.status == 400,
            "incomplete request followed by write half-close must return 400");
 
     const std::string first =
-        "GET /note.txt HTTP/1.1\r\nHost: localhost\r\n\r\n";
+        "GET /note.txt HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
     const std::string second =
-        "GET /missing.txt HTTP/1.1\r\nHost: localhost\r\n\r\n";
+        "GET /missing.txt HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
     const auto pipelined_bytes = transact(port, first + second);
     const Response pipelined = parse_response(pipelined_bytes);
     const std::string raw(reinterpret_cast<const char*>(pipelined_bytes.data()),
@@ -540,7 +540,7 @@ void test_segmented_limits_and_half_close(std::uint16_t port) {
 void test_short_write_and_isolation(ServerProcess& server,
                                     const Fixture& fixture) {
     const std::string raw =
-        "GET /large.bin HTTP/1.1\r\nHost: localhost\r\n\r\n";
+        "GET /large.bin HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
     const Response large = parse_response(
         transact(server.port(), raw, 4096, std::chrono::milliseconds(300)));
     expect(large.status == 200 && large.body == fixture.large,
@@ -557,7 +557,7 @@ void test_short_write_and_isolation(ServerProcess& server,
     linger reset_linger{1, 0};
     (void)::setsockopt(reset_client, SOL_SOCKET, SO_LINGER, &reset_linger,
                        sizeof(reset_linger));
-    send_all(reset_client, "GET /large.bin HTTP/1.1\r\nHost: localhost\r\n");
+    send_all(reset_client, "GET /large.bin HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n");
     ::close(reset_client);
 
     for (int attempt = 0; attempt < 20; ++attempt) {

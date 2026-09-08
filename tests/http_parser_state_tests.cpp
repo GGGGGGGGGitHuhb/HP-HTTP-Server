@@ -17,12 +17,12 @@ void observe(const RequestParser& p, const FeedResult& r){
         case ParserState::complete: ++complete_hits;break;
         case ParserState::error: ++error_hits;break;
     }
-    expect(p.scan_steps()<=4*r.request_bytes,"linear framing and validation byte visits");
+    expect(p.scan_steps()<=10*r.request_bytes,"linear framing and validation byte visits");
     expect(p.peak_buffered_bytes()<=max_request_bytes,"bounded parser storage");
     max_scans=std::max(max_scans,p.scan_steps());max_buffer=std::max(max_buffer,p.peak_buffered_bytes());
 }
 bool same(const FeedResult& a,const FeedResult& b){
-    return a.status==b.status&&a.request.method==b.request.method&&a.request.target==b.request.target&&a.request_bytes==b.request_bytes;
+    return a.status==b.status&&a.request.method==b.request.method&&a.request.target==b.request.target&&a.request.close_requested==b.request.close_requested&&a.request_bytes==b.request_bytes;
 }
 void chunk_variants(const std::string& input,ParseStatus expected,bool all_splits=true){
     RequestParser whole;const auto baseline=whole.feed(input);expect(baseline.status==expected,"independent support-matrix result");observe(whole,baseline);
@@ -61,12 +61,45 @@ void support_and_splits(){
         {std::string("GET / HTTP/1.1\r\nHost: a\0junk\r\n\r\n",32),ParseStatus::bad_request},
         {"GET / HTTP/1.1\r\nHost: a\r\nX: \x01\r\n\r\n",ParseStatus::bad_request},
         {"GET / HTTP/1.1\r\nHost: a\r\nX: \x7f\r\n\r\n",ParseStatus::bad_request},
-        {"GET / HTTP/1.1\r\nHost: a\r\nContent-Length: 9\r\nConnection: keep-alive\r\n\r\nbody-tail",ParseStatus::complete},
-        {"GET / HTTP/1.1\r\nHost: a\r\nTransfer-Encoding: chunked\r\n\r\n1\r\nx\r\n0\r\n\r\n",ParseStatus::complete},
+        {"GET / HTTP/1.1\r\nHost: a\r\nContent-Length: 9\r\nConnection: keep-alive\r\n\r\nbody-tail",ParseStatus::bad_request},
+        {"GET / HTTP/1.1\r\nHost: a\r\nTransfer-Encoding: chunked\r\n\r\n1\r\nx\r\n0\r\n\r\n",ParseStatus::bad_request},
         {"GET / HTTP/1.1\r\nHost: par",ParseStatus::need_more}
     };
     for(const auto& [input,status]:samples)chunk_variants(input,status);
     std::cout<<"matrix: samples="<<samples.size()<<" split_cases="<<splits<<" byte_feeds="<<byte_feeds<<" cr_splits="<<cr_splits<<'\n';
+}
+void framing_matrix(){
+    const std::vector<std::pair<std::string, bool>> cases={
+        {"",true},{"Content-Length: 0\r\n",true},{"cOnTeNt-LeNgTh: \t00 \t\r\n",true},
+        {"Content-Length: 0\r\nContent-Length: 0\r\n",false},
+        {"Content-Length: 0,0\r\n",false},{"Content-Length: 1\r\n",false},
+        {"Content-Length: -0\r\n",false},{"Content-Length: +0\r\n",false},
+        {"Content-Length: 0 0\r\n",false},{"Content-Length: \t\r\n",false},
+        {"Content-Length: 184467440737095516160000000000\r\n",false},
+        {"Transfer-Encoding: chunked\r\n",false},{"Transfer-Encoding: \r\n",false},
+        {"Transfer-Encoding: unknown\r\nTransfer-Encoding: unknown\r\n",false},
+        {"Transfer-Encoding: chunked\r\nContent-Length: 0\r\n",false},
+        {"Content-Length: 0\r\nTransfer-Encoding: chunked\r\n",false},
+        {"Expect: 100-continue\r\n",false},{"Expect: \r\n",false},
+        {"Connection: keep-alive, ClOsE\r\nConnection: keep-alive\r\n",true},
+        {"cOnNeCtIoN: close\r\nConnection: xclose\r\n",true},
+        {"Connection: , , \t\r\n",true},{"Connection: xclose, unknown\r\n",true},
+        {"Connection: bad token\r\n",false},{"Connection: @\r\n",false},
+        {"Connection: content-length\r\nContent-Length: 1\r\n",false},
+        {"Upgrade: websocket\r\nProxy-Connection: close\r\n",true}
+    };
+    for(const auto& [header,ok]:cases){
+        const auto input="GET / HTTP/1.1\r\nHost: a\r\n"+header+"\r\nGET /suffix HTTP/1.1\r\nHost: a\r\n\r\n";
+        chunk_variants(input,ok?ParseStatus::complete:ParseStatus::bad_request);
+    }
+    RequestParser p;
+    auto r=p.feed("GET / HTTP/1.1\r\nHost: a\r\nContent-Length: 00\r\nConnection: ClOsE\r\n\r\n");
+    expect(r.request.close_requested,"mixed-case close recognized");
+    p.reset();r=p.feed("GET / HTTP/1.1\r\nHost: a\r\nContent-Length: 0\r\nConnection: xclose,,,,\r\n\r\n");
+    expect(r.status==ParseStatus::complete&&!r.request.close_requested,"reset clears CL and close; token match exact");
+    p.reset();expect(p.feed("GET / HTTP/1.1\r\n\r\n").status==ParseStatus::bad_request,"reset clears Host");
+    for(int i=0;i<1000;++i){p.reset();r=p.feed("GET / HTTP/1.1\r\nHost: a\r\n\r\n");expect(r.status==ParseStatus::complete,"per-request limit after repeated resets");}
+    std::cout<<"S2 framing matrix="<<cases.size()<<" reset=1003 scan_bound_K=10 splits="<<splits<<" byte_feeds="<<byte_feeds<<"\n";
 }
 void boundaries(){
     for(std::size_t length:{4095U,4096U,4097U}){
@@ -105,4 +138,4 @@ void sticky_reset_and_ownership(){
     std::cout<<"boundaries: first="<<one.size()<<" second="<<two.size()<<" remainder="<<partial.size()<<" resets=3 sticky_complete=1 sticky_error=1 suffix_ignored=1000000\n";
 }
 }
-int main(){support_and_splits();boundaries();sticky_reset_and_ownership();std::cout<<"states: RequestLine="<<line_hits<<" Headers="<<headers_hits<<" Complete="<<complete_hits<<" Error="<<error_hits<<" assertions_failed="<<failures<<'\n';return failures?1:0;}
+int main(){support_and_splits();framing_matrix();boundaries();sticky_reset_and_ownership();std::cout<<"states: RequestLine="<<line_hits<<" Headers="<<headers_hits<<" Complete="<<complete_hits<<" Error="<<error_hits<<" assertions_failed="<<failures<<'\n';return failures?1:0;}

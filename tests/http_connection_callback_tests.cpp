@@ -51,17 +51,17 @@ std::vector<std::byte> collect(int fd){
     return out;
 }
 std::vector<std::byte> response(std::string_view body){return http::make_response(http::Status::ok,bytes(body),"text/plain");}
-const std::string request="GET /first HTTP/1.1\r\nHost: test\r\n\r\n";
+const std::string request="GET /first HTTP/1.1\r\nHost: test\r\nConnection: close\r\n\r\n";
 void interleaved_and_eof(){
     EventLoop loop;Pair a,b;app::HttpCallbackStats sa,sb;
-    auto provider=[](const http::HttpRequest& r){return response(r.target);};
+    auto provider=[](const http::HttpRequest& r, http::ConnectionPolicy policy){return http::ResponseResult{response(r.target),policy};};
     int closed{};
     TcpConnection ca(loop,std::move(a.owner),1,app::make_http_callback(provider,&sa),http::max_request_bytes,[&](int,auto){++closed;});
     TcpConnection cb(loop,std::move(b.owner),2,app::make_http_callback(provider,&sb),http::max_request_bytes,[&](int,auto){++closed;});
     ca.start();cb.start();a.send("GET /one HTTP/1.1\r\n");loop.poll_once(250);
-    b.send("GET /two HTTP/1.1\r\nHost: test\r\n");loop.poll_once(250);
+    b.send("GET /two HTTP/1.1\r\nHost: test\r\nConnection: close\r\n");loop.poll_once(250);
     expect(collect(a.peer.fd()).empty()&&collect(b.peer.fd()).empty(),"independent NeedMore no response");
-    a.send("Host: test\r\n\r\n");loop.poll_once(250);b.send("\r\n");loop.poll_once(250);
+    a.send("Host: test\r\nConnection: close\r\n\r\n");loop.poll_once(250);b.send("\r\n");loop.poll_once(250);
     expect(collect(a.peer.fd())==response("/one") && collect(b.peer.fd())==response("/two"),"interleaved exact distinct responses");
     expect(sa.responses==1&&sb.responses==1&&sa.need_more==1&&sb.need_more==1&&closed==2,"per-connection done state");
     Pair eof;app::HttpCallbackStats se;TcpConnection ce(loop,std::move(eof.owner),3,app::make_http_callback(provider,&se),http::max_request_bytes,[](int,auto){});ce.start();
@@ -73,12 +73,12 @@ void interleaved_and_eof(){
 }
 void incremental_consumption(){
     EventLoop loop; Pair a,b; app::HttpCallbackStats sa,sb;
-    auto provider=[](const http::HttpRequest& r){return response(r.target);};
+    auto provider=[](const http::HttpRequest& r, http::ConnectionPolicy policy){return http::ResponseResult{response(r.target),policy};};
     TcpConnection ca(loop,std::move(a.owner),90,app::make_http_callback(provider,&sa),http::max_request_bytes,[](int,auto){});
     TcpConnection cb(loop,std::move(b.owner),91,app::make_http_callback(provider,&sb),http::max_request_bytes,[](int,auto){});
     ca.start(); cb.start();
-    const std::vector<std::string> pa={"GET /", "a HTTP/1.1\r\nHo", "st: x\r\n\r\n"};
-    const std::vector<std::string> pb={"GET /b HTTP/1.1\r", "\nHost: y\r", "\n\r\n"};
+    const std::vector<std::string> pa={"GET /", "a HTTP/1.1\r\nHo", "st: x\r\nConnection: close\r\n\r\n"};
+    const std::vector<std::string> pb={"GET /b HTTP/1.1\r", "\nHost: y\r", "\nConnection: close\r\n\r\n"};
     std::size_t sent_a=0,sent_b=0;
     for(std::size_t i=0;i<pa.size();++i){
         a.send(pa[i]);sent_a+=pa[i].size();loop.poll_once(250);
@@ -94,14 +94,14 @@ void incremental_consumption(){
     std::cout<<"incremental: feeds="<<sa.parses+sb.parses<<" need_more="<<sa.need_more+sb.need_more<<" submitted="<<sa.submitted_bytes+sb.submitted_bytes<<" accepted="<<sa.accepted_bytes+sb.accepted_bytes<<" consumed="<<sa.consumed_bytes+sb.consumed_bytes<<" network_buffer=0 independent_responses=2 empty_http_eof400=1\n";
 }
 void limits_and_500(){
-    EventLoop loop;auto provider=[](const http::HttpRequest&){return response("ok");};
-    std::string exact="GET / HTTP/1.1\r\nHost: t\r\nX: ";exact.append(http::max_request_bytes-exact.size()-4,'a');exact+="\r\n\r\n";
+    EventLoop loop;auto provider=[](const http::HttpRequest&, http::ConnectionPolicy policy){return http::ResponseResult{response("ok"),policy};};
+    std::string exact="GET / HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX: ";exact.append(http::max_request_bytes-exact.size()-4,'a');exact+="\r\n\r\n";
     for(bool over:{false,true}){
         Pair p;app::HttpCallbackStats st;TcpConnection c(loop,std::move(p.owner),5,app::make_http_callback(provider,&st),http::max_request_bytes,[](int,auto){});c.start();
         std::string input=over?std::string(http::max_request_bytes+1,'a'):exact;p.send(input);loop.poll_once(250);
         auto got=collect(p.peer.fd());expect(got==(over?http::make_error_response(http::Status::bad_request):response("ok")),"precise HTTP input bound response");
     }
-    Pair p;app::HttpCallbackStats st;TcpConnection c(loop,std::move(p.owner),6,app::make_http_callback([](const http::HttpRequest&)->std::vector<std::byte>{throw std::runtime_error("provider");},&st),http::max_request_bytes,[](int,auto){});c.start();p.send(request);loop.poll_once(250);
+    Pair p;app::HttpCallbackStats st;TcpConnection c(loop,std::move(p.owner),6,app::make_http_callback([](const http::HttpRequest&, http::ConnectionPolicy)->http::ResponseResult{throw std::runtime_error("provider");},&st),http::max_request_bytes,[](int,auto){});c.start();p.send(request);loop.poll_once(250);
     expect(collect(p.peer.fd())==http::make_error_response(http::Status::internal_server_error)&&st.responses==1,"adapter exception maps500");
     int exact_seen{},limit_closed{};Pair bounded;
     TcpConnection cap(loop,std::move(bounded.owner),7,[&](TcpConnection&,std::span<const std::byte> in,bool){if(in.size()==4)++exact_seen;},4,[&](int,auto){++limit_closed;});cap.start();bounded.send("12345");loop.poll_once(250);
@@ -114,7 +114,7 @@ void drain_pipeline_and_borrow(){
     for(std::size_t i=0;i<body.size();++i)body[i]=static_cast<std::byte>(i*71U);
     const auto expected=http::make_response(http::Status::ok,body,"application/octet-stream");
     int closes{};
-    TcpConnection c(loop,std::move(p.owner),8,app::make_http_callback([&](const http::HttpRequest&){return http::make_response(http::Status::ok,body,"application/octet-stream");},&stats),http::max_request_bytes,[&](int,auto){++closes;});c.start();
+    TcpConnection c(loop,std::move(p.owner),8,app::make_http_callback([&](const http::HttpRequest&, http::ConnectionPolicy policy){return http::ResponseResult{http::make_response(http::Status::ok,body,"application/octet-stream",false,policy),policy};},&stats),http::max_request_bytes,[&](int,auto){++closes;});c.start();
     p.send(request+request);loop.poll_once(250);
     const auto pending=c.pending_bytes();expect(pending>0&&C::result(c).write_would_block&&closes==0,"close_after_flush retains temporary response tail");
     const auto parses=stats.parses,sends=stats.responses,callbacks=stats.callbacks;

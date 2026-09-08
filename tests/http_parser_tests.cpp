@@ -178,6 +178,23 @@ void test_response_and_mime() {
     expect(internal.starts_with("HTTP/1.1 500 Internal Server Error\r\n"),
            "500 response construction must be covered");
 
+    for (auto policy : {hp::http::ConnectionPolicy::close, hp::http::ConnectionPolicy::keep_alive}) {
+        for (auto status : {hp::http::Status::ok, hp::http::Status::bad_request, hp::http::Status::forbidden,
+                            hp::http::Status::not_found, hp::http::Status::method_not_allowed, hp::http::Status::internal_server_error}) {
+            const auto raw = bytes_to_string(status == hp::http::Status::ok
+                ? hp::http::make_response(status, body, "application/octet-stream", false, policy)
+                : hp::http::make_error_response(status, policy));
+            const auto boundary = raw.find("\r\n\r\n") + 4;
+            const auto connection = raw.find("Connection: "), length = raw.find("Content-Length: ");
+            expect(connection != std::string::npos && raw.find("Connection: ", connection+1) == std::string::npos,
+                   "one Connection on every status");
+            expect(length != std::string::npos && raw.find("Content-Length: ", length+1) == std::string::npos &&
+                   std::stoull(raw.substr(length+16)) == raw.size()-boundary, "one exact length on every status");
+            expect(raw.find(policy == hp::http::ConnectionPolicy::close ? "Connection: close\r\n" : "Connection: keep-alive\r\n") != std::string::npos,
+                   "explicit policy serialized for all statuses");
+            if (status == hp::http::Status::method_not_allowed) expect(raw.find("Allow: GET\r\n") != std::string::npos, "405 policy preserves Allow");
+        }
+    }
     expect(
         hp::http::content_type_for_path("x.html") == "text/html; charset=utf-8",
         "html MIME must be known");
