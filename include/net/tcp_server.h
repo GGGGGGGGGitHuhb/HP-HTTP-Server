@@ -1,147 +1,30 @@
 #pragma once
-
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <utility>
-#include <span>
+#include <memory>
 #include <unordered_map>
-#include <vector>
-
-#include "base/non_copyable.h"
+#include "net/acceptor.h"
 #include "net/event_loop.h"
-#include "net/channel.h"
-#include "net/socket.h"
+#include "net/tcp_connection.h"
 
 namespace hp::net {
-
-enum class ApplicationStatus {
-    need_more,
-    response,
-};
-
-struct ApplicationResult {
-    ApplicationStatus status{ApplicationStatus::need_more};
-    std::vector<std::byte> response;
-
-    [[nodiscard]] static ApplicationResult need_more();
-    [[nodiscard]] static ApplicationResult respond(
-        std::vector<std::byte> bytes);
-};
-
-using ApplicationHandler = std::function<ApplicationResult(
-    std::span<const std::byte> input, bool peer_closed)>;
-
-struct ReadResult {
-    std::size_t bytes_read{0};
-    bool would_block{false};
-    bool peer_closed{false};
-    int error_number{0};
-};
-
-struct WriteResult {
-    std::size_t bytes_written{0};
-    bool would_block{false};
-    int error_number{0};
-};
-
-struct ConnectionEventResult {
-    std::size_t bytes_read{0};
-    std::size_t bytes_written{0};
-    bool write_would_block{false};
-    bool socket_error_observed{false};
-    int socket_error{0};
-    int socket_error_query_error{0};
-    int read_error{0};
-    int write_error{0};
-    bool close_requested{false};
-};
-
-class ConnectionIo final : private base::NonCopyable {
-   public:
-    explicit ConnectionIo(Socket socket, ApplicationHandler handler = {},
-                          std::size_t max_input_bytes = 0) noexcept;
-    ConnectionIo(ConnectionIo&&) noexcept = default;
-    ConnectionIo& operator=(ConnectionIo&&) noexcept = default;
-
-    [[nodiscard]] int fd() const noexcept;
-    [[nodiscard]] ReadResult read_available();
-    [[nodiscard]] WriteResult write_available();
-    [[nodiscard]] ConnectionEventResult handle_event(std::uint32_t events);
-    void queue_output(std::span<const std::byte> bytes);
-    void mark_peer_half_closed() noexcept;
-    [[nodiscard]] bool peer_half_closed() const noexcept;
-    [[nodiscard]] bool has_pending_output() const noexcept;
-    [[nodiscard]] bool accepts_input() const noexcept;
-    [[nodiscard]] std::size_t pending_bytes() const noexcept;
-    [[nodiscard]] bool ready_to_close() const noexcept;
-
-   private:
-    [[nodiscard]] bool process_application(bool peer_closed);
-
-    Socket socket_;
-    ApplicationHandler application_handler_;
-    std::size_t max_input_bytes_{0};
-    std::vector<std::byte> input_;
-    std::vector<std::byte> output_;
-    std::size_t write_offset_{0};
-    bool peer_half_closed_{false};
-    bool response_queued_{false};
-    bool close_after_write_{false};
-};
-
+struct TcpServerTestAccess;
 class TcpServer final : private base::NonCopyable {
-   public:
-    explicit TcpServer(std::uint16_t requested_port,
-                       ApplicationHandler handler = {},
+public:
+    explicit TcpServer(std::uint16_t requested_port, ApplicationHandler handler = {},
                        std::size_t max_input_bytes = 0);
-
     ~TcpServer() noexcept;
-
     [[nodiscard]] std::uint16_t bound_port() const noexcept;
     [[noreturn]] void run();
-
-   private:
-    struct ConnectionState {
-        ConnectionIo io;
-        std::uint32_t generation;
-        Channel channel;
-        ConnectionState* next_closing{nullptr};
-        bool closing{false};
-        ConnectionState(Socket socket, ApplicationHandler handler,
-                        std::size_t max_input, std::uint32_t gen,
-                        EventLoop& loop, Channel::Callback callback)
-            : io(std::move(socket), std::move(handler), max_input),
-              generation(gen), channel(loop, io.fd(), std::move(callback)) {}
-    };
-
-    static constexpr std::uint32_t listener_events = EPOLLIN;
-    static constexpr std::uint32_t connection_read_events =
-        EPOLLIN | EPOLLRDHUP;
-
-    [[nodiscard]] static Socket create_listener(std::uint16_t port);
-    [[nodiscard]] static std::uint64_t make_token(int fd,
-                                                  std::uint32_t generation);
-    [[nodiscard]] static int token_fd(std::uint64_t token);
-    [[nodiscard]] static std::uint32_t token_generation(std::uint64_t token);
-
-    void handle_listener_event(std::uint32_t events);
-    void accept_ready_connections();
-    void handle_connection_event(std::uint64_t token, std::uint32_t events);
-    void update_interest(ConnectionState& connection);
-    void close_connection(int fd) noexcept;
+private:
+    friend struct TcpServerTestAccess;
+    void add_connection(Socket socket);
+    void connection_closed(int fd, TcpConnection::Identity identity) noexcept;
     void drain_closed_connections() noexcept;
-    [[nodiscard]] std::uint32_t next_generation() noexcept;
-
-    Socket listener_;
     EventLoop loop_;
-    Channel listener_channel_;
-    std::unordered_map<int, ConnectionState> connections_;
-    ConnectionState* closing_head_{nullptr};
+    std::unordered_map<int, std::unique_ptr<TcpConnection>> connections_;
+    TcpConnection* closing_head_{nullptr};
     ApplicationHandler application_handler_;
     std::size_t max_input_bytes_{0};
-    std::uint16_t bound_port_{0};
-    std::uint32_t next_generation_{1};
+    TcpConnection::Identity next_identity_{1};
+    Acceptor acceptor_;
 };
-
-}  // namespace hp::net
+}

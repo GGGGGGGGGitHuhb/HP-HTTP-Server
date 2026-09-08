@@ -18,7 +18,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 使用 `sendfile`、异步日志、Buffer 优化和压测分析支撑高性能叙事。
 - 在 HTTP Server 内核稳定后，扩展轻量 L7 Reverse Proxy / Gateway 能力，减少普通 WebServer 项目的同质化。
 
-当前项目处于准备阶段，优先完成根文档、路线规划和阶段设计，再进入代码实现。近期目标是先完成最小可运行 HTTP Server，再逐步演进为结构清晰、性能可验证、适合简历展示的网络服务器项目。
+当前项目已完成 V0.1 最小可运行 HTTP Server，以及 V0.2 的 S1 EventLoop/Channel 和 S2 Acceptor/TcpConnection；各阶段均有实现与独立 Reviewer PASS 证据。V0.2 整体进行中，下一阶段 S3 HTTP 链路重接与回归验证尚未开始。后续继续按批准的阶段基线推进，逐步形成结构清晰、性能可验证的网络服务器。
 
 总体技术方向：
 
@@ -73,7 +73,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 推进与完成规则
 
-- `V0.1 / S3` 已完成，`V0.1` 三个阶段均已关闭。`V0.2 / S1 EventLoop 与 Channel` 已于 `2026-09-07` 完成并取得 Reviewer `PASS`；V0.2 整体进行中，S2/S3 未开始。
+- `V0.1 / S3` 已完成，`V0.1` 三个阶段均已关闭。`V0.2 / S1 EventLoop 与 Channel` 已于 `2026-09-07` 完成并取得 Reviewer `PASS`；V0.2 整体进行中，S2 已完成 / Completed，S3 未开始。
 - 阶段状态统一使用：`未开始`、`设计中`、`待实现`、`实现中`、`待审查`、`返工中`、`已完成`、`阻塞`。
 - 阶段设计和审查计划必须处于 `Approved`，Builder 才能开始实现。
 - 阶段只有在实现证据完整，且 Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT` 后，才能标记为 `已完成`。
@@ -143,7 +143,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.2 Reactor 抽象重构
 
-状态：进行中；`S1 已完成 / Completed`，`S2/S3 未开始`。
+状态：进行中；`S1 已完成 / Completed`，`S2 已完成 / Completed`，`S3 未开始`。
 
 前置条件：
 
@@ -173,7 +173,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 阶段划分：
 
 - `S1 EventLoop 与 Channel`（`已完成`）：生产入口已使用单线程 EventLoop/Channel；Approved revision 1 已实现，Reviewer CTest `10/10` 与 RV-01..10 全通过，唯一结论 `PASS`。设计文档：`docs/leader/designs/V0.2/S1-design.md`。
-- `S2 Acceptor 与 TcpConnection`（`未开始`）：拆分监听连接和普通连接生命周期，明确输入输出 Buffer 边界；不得提前进入 S1。设计文档：`docs/leader/designs/V0.2/S2-design.md`。
+- `S2 Acceptor 与 TcpConnection`（`已完成`）：拆分监听连接和普通连接生命周期，明确输入输出 Buffer 边界；Approved revision 1 已实现，Reviewer 全新 Debug CTest `11/11`、RV-01..10 全通过，唯一结论 `PASS`。设计文档：`docs/leader/designs/V0.2/S2-design.md`。
 - `S3 HTTP 链路重接与回归验证`（`未开始`）：将 HTTP 处理接入新的连接回调模型，补充回归测试；不得提前进入 S1。设计文档：`docs/leader/designs/V0.2/S3-design.md`。
 
 完成标准：
@@ -509,7 +509,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 ### V0.2 阶段摘要
 
 - `S1 EventLoop 与 Channel`（`已完成`）：已交付生产路径实际使用的单线程事件循环和非 fd owner Channel；涉及 `net`、`tests`。
-- `S2 Acceptor 与 TcpConnection`（`未开始`）：计划产出监听连接和普通连接生命周期抽象；涉及 `net`、`base`。
+- `S2 Acceptor 与 TcpConnection`（`已完成`）：已交付监听连接和普通连接生命周期抽象；涉及 `net`、`base`。
 - `S3 HTTP 链路重接与回归验证`（`未开始`）：计划产出重构后的 HTTP 服务链路和回归测试；涉及 `net`、`http`、`tests`。
 
 ### V0.3 阶段摘要
@@ -569,6 +569,12 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 用户明确希望继续扩展，而不是优先准备简历材料或面试讲解。
 
 ## 变更记录
+
+- `2026-09-08`：依据 S2 Builder 001、Reviewer 001 唯一 PASS 与 Leader 003，关闭 V0.2/S2、P3-01 和 TD-005 阶段检查点；V0.2 进行中，S3 未开始，无新增债务。
+
+- `2026-09-08`：依据 PM 明确批准与 Leader S2-report-002，V0.2/S2 revision 1 登记 Approved，当前待实现；S1 已完成，S3 未开始，无新增债务。
+
+- `2026-09-08`：S2设计与审查Draft revision 1形成，等待PM决定；S1已完成，S3未开始。
 
 - `2026-09-07`：依据 V0.2/S1 Builder 001 与 Reviewer 001 唯一 `PASS`，Leader report-003 关闭 S1 和 P3-01；V0.2 整体进行中、S2/S3 未开始，无新增债务。
 

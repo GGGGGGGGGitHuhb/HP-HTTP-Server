@@ -6,6 +6,8 @@
 
 ### 新增
 
+- V0.2/S2 交付生产 Acceptor/TcpConnection 和独立 ConnectionIo 文件，新增组件动态专项，CTest 由 10 项增为 11 项；Builder 001、Reviewer 001 与 Leader 003 保留实现、PASS 与收口证据。
+
 - V0.2/S1 新增单线程 EventLoop 与非 fd owner Channel，生产入口实际接入；新增事件核心动态专项，CTest 总数由 9 增至 10。
 - V0.2/S1 Builder 001、Reviewer 001 和 Leader 003 记录实现、独立 `PASS` 与阶段关闭。
 
@@ -22,6 +24,8 @@
 
 ### 变更
 
+- V0.2/S2 将监听、单连接事件/interest/关闭迁出 TcpServer；输入输出仍归 ConnectionIo，应用契约不变，关闭按稳定 identity 校验并在回调后回收。S2 已完成，V0.2 进行中，S3 未开始。
+
 - V0.2/S1 将 wait、interest 与完整事件分发抽入 EventLoop/Channel，使用稳定 token 隔离 stale/fd reuse，并在回调返回后释放已移除连接；保留 V0.1 HTTP 行为。S1 已完成，V0.2 整体进行中、S2/S3 未开始。
 
 - 统一仓库级文档权威顺序、阶段生命周期、返工规则、角色交接和 Reviewer 唯一结论。
@@ -35,6 +39,8 @@
 - 技术债跟踪器改为只记录跨阶段债务、批准延期和持续风险，并移除不属于技术债范围的本地文档发布议题。
 
 ### 验证
+
+- V0.2/S2 Reviewer 全新 Debug 告警 0、CTest 11/11，全部 REQ/AC/RV PASS；单次 drain8、65536 字节恢复、旧 identity/fd reuse、回调后销毁、真实 ERR/IN→SO_ERROR→recv1053、HTTP/curl 与新专项 ASan/UBSan 通过，无新增债务，P3-01 已收口。
 
 - V0.2/S1 Reviewer 全新 Debug 构建告警 0、CTest `10/10`、REQ-01..08/AC-01..10/RV-01..10 全通过；真实 stale/fd reuse、ERR|IN → SO_ERROR → recv 1053 字节、HTTP EAGAIN/路径安全/隔离/fd 稳态与 curl 均通过，事件专项 ASan/UBSan 无报告。唯一结论 `PASS`，无新增债务，P3-01 已由 Leader 收口关闭。
 
