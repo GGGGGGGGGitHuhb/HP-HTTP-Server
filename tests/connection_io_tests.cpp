@@ -15,6 +15,12 @@
 #include <unistd.h>
 #include <vector>
 
+namespace hp::net {
+struct TcpConnectionTestAccess {
+    static ConnectionEventResult event(TcpConnection& c, std::uint32_t mask) { c.handle_event(mask); return c.last_result_; }
+};
+}
+
 namespace {
 
 int failures = 0;
@@ -67,6 +73,8 @@ void test_binary_read_echo_and_half_close() {
            "read loop must consume all binary bytes across chunks");
     expect(read.peer_closed && connection.peer_half_closed(),
            "read EOF must mark peer half closed");
+    connection.queue_output(connection.input_view());
+    connection.consume(connection.input_view().size());
     expect(connection.pending_bytes() == payload.size(),
            "every read byte must enter output state");
 
@@ -448,9 +456,11 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
     expect((observed_events & EPOLLERR) != 0U,
            "real reset event must contain EPOLLERR");
 
-    hp::net::ConnectionIo connection{std::move(accepted)};
+    hp::net::EventLoop loop;
+    hp::net::TcpConnection connection(loop, std::move(accepted), 1, {}, 0, [](int, auto) {});
+    connection.start();
     const hp::net::ConnectionEventResult result =
-        connection.handle_event(observed_events);
+        hp::net::TcpConnectionTestAccess::event(connection, observed_events);
     expect(result.socket_error_observed,
            "production event path must query SO_ERROR for EPOLLERR");
     expect(result.socket_error == ECONNRESET,

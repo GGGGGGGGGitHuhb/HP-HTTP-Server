@@ -1,3 +1,4 @@
+#include "http_connection_handler.h"
 #include <charconv>
 #include <cstdint>
 #include <exception>
@@ -80,44 +81,6 @@ struct Options {
     return options;
 }
 
-hp::net::ApplicationHandler make_handler(
-    const hp::http::StaticFileService& service) {
-    return [&service](std::span<const std::byte> input, bool peer_closed) {
-        try {
-            const std::string_view bytes(
-                reinterpret_cast<const char*>(input.data()), input.size());
-            const hp::http::ParseResult parsed = hp::http::parse_request(bytes);
-            switch (parsed.status) {
-                case hp::http::ParseStatus::need_more:
-                    if (!peer_closed) {
-                        return hp::net::ApplicationResult::need_more();
-                    }
-                    return hp::net::ApplicationResult::respond(
-                        hp::http::make_error_response(
-                            hp::http::Status::bad_request));
-                case hp::http::ParseStatus::bad_request:
-                    return hp::net::ApplicationResult::respond(
-                        hp::http::make_error_response(
-                            hp::http::Status::bad_request));
-                case hp::http::ParseStatus::method_not_allowed:
-                    return hp::net::ApplicationResult::respond(
-                        hp::http::make_error_response(
-                            hp::http::Status::method_not_allowed));
-                case hp::http::ParseStatus::complete:
-                    return hp::net::ApplicationResult::respond(
-                        service.handle(parsed.request));
-            }
-        } catch (...) {
-            return hp::net::ApplicationResult::respond(
-                hp::http::make_error_response(
-                    hp::http::Status::internal_server_error));
-        }
-        return hp::net::ApplicationResult::respond(
-            hp::http::make_error_response(
-                hp::http::Status::internal_server_error));
-    };
-}
-
 int run(int argc, char* argv[]) {
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
         print_usage(std::cout);
@@ -134,7 +97,7 @@ int run(int argc, char* argv[]) {
     }
 
     hp::http::StaticFileService service(options.root);
-    hp::net::TcpServer server(options.port, make_handler(service),
+    hp::net::TcpServer server(options.port, hp::app::make_http_factory(service),
                               hp::http::max_request_bytes);
     const std::string port_text = std::to_string(server.bound_port());
     hp::base::info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");

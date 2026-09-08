@@ -6,6 +6,8 @@
 
 ### 新增
 
+- V0.2/S3 新增TcpConnection消息/发送/消费/排空关闭接口、app HTTP适配器与每连接工厂；新增消息专项，CTest由11增至12。Builder001、Reviewer001、Leader003保留实现、PASS与版本关闭证据。
+
 - V0.2/S2 交付生产 Acceptor/TcpConnection 和独立 ConnectionIo 文件，新增组件动态专项，CTest 由 10 项增为 11 项；Builder 001、Reviewer 001 与 Leader 003 保留实现、PASS 与收口证据。
 
 - V0.2/S1 新增单线程 EventLoop 与非 fd owner Channel，生产入口实际接入；新增事件核心动态专项，CTest 总数由 9 增至 10。
@@ -24,6 +26,8 @@
 
 ### 变更
 
+- V0.2/S3生产HTTP改走TcpConnection消息回调和app适配器，ConnectionIo移除应用策略；每连接独立done保留单响应与原HTTP行为。S3及整个V0.2已完成，V0.3未开始。
+
 - V0.2/S2 将监听、单连接事件/interest/关闭迁出 TcpServer；输入输出仍归 ConnectionIo，应用契约不变，关闭按稳定 identity 校验并在回调后回收。S2 已完成，V0.2 进行中，S3 未开始。
 
 - V0.2/S1 将 wait、interest 与完整事件分发抽入 EventLoop/Channel，使用稳定 token 隔离 stale/fd reuse，并在回调返回后释放已移除连接；保留 V0.1 HTTP 行为。S1 已完成，V0.2 整体进行中、S2/S3 未开始。
@@ -39,6 +43,8 @@
 - 技术债跟踪器改为只记录跨阶段债务、批准延期和持续风险，并移除不属于技术债范围的本地文档发布议题。
 
 ### 验证
+
+- V0.2/S3独立Debug告警0、CTest12/12，旧11项逐场景映射、全部REQ/AC/RV和版本完成标准PASS；临时响应524390字节完整排空、pipeline第二响应0、新消息ERRIN后1053字节、HTTP/curl/S1/S2与新专项sanitizer通过；无新增债务，P3-01/P3-02已收口。
 
 - V0.2/S2 Reviewer 全新 Debug 告警 0、CTest 11/11，全部 REQ/AC/RV PASS；单次 drain8、65536 字节恢复、旧 identity/fd reuse、回调后销毁、真实 ERR/IN→SO_ERROR→recv1053、HTTP/curl 与新专项 ASan/UBSan 通过，无新增债务，P3-01 已收口。
 
