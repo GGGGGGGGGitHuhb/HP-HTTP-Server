@@ -8,7 +8,7 @@
 
 V0.3/S2已完成：http判定零body请求边界与连接策略，app驱动串行会话，net提供通用读暂停/恢复与非递归排空通知。原设计 `docs/leader/designs/V0.3/S2-design.md` 与Approved `docs/leader/reworks/V0.3/S2-rework-001.md`共同定义已交付契约；Reviewer001唯一PASS，Leader004完成收口。
 
-当前V0.1/V0.2及V0.3/S1/S2均已完成；S2独立Debug告警0、CTest15/15、全部12AC与专项sanitizer通过。V0.3整体进行中，S3未开始。当前生产每连接持有RequestParser，逐段feed新输入并立即consume accepted_bytes，包括NeedMore；每个响应实际排空后才重置parser并处理下一请求。
+当前V0.1/V0.2及V0.3/S1/S2均已完成；S2独立Debug告警0、CTest15/15、全部12AC与专项sanitizer通过。V0.3/S3及V0.3已完成：S3独立Debug告警0、CTest15/15、8AC/RV与双专项sanitizer通过，Reviewer001 PASS、Leader004完成收口。S3仅新增测试和文档，不改变已交付架构；V0.4未开始。当前生产每连接持有RequestParser，逐段feed新输入并立即consume accepted_bytes，包括NeedMore；每个响应实际排空后才重置parser并处理下一请求。
 
 本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1`、`S2`、`S3` 均已完成；以下为V0.1历史交付：当时已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、集中式单线程单 epoll LT、连接表、输出缓冲与短写续传、半关闭和连接错误隔离，以及有界的单请求 HTTP/1.1 `GET` 解析和静态文件响应。S3 以 root fd 为锚逐组件使用 `openat` 与 no-follow 约束，响应后统一关闭连接；不支持 body/chunked、keep-alive、第二个 pipelined 响应、URL decode 或 symlink 服务。Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建、CTest `9/9` 与 RV-01 至 RV-10，唯一结论为 `PASS`。这些证据只证明 V0.1 的最小闭环，不构成生产安全、容量或性能承诺。
 
@@ -538,6 +538,12 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 如果 Builder 发现实现与当前架构冲突，应在 Builder 报告中记录冲突点和建议，不应直接绕过架构约束继续扩大实现。
 
 ## 变更记录
+
+- `2026-09-09`：依据S3 Builder001、独立Reviewer001 PASS及Leader004关闭S3、V0.3与P3-01；TD-003按退出条件Closed，TD-005当前检查点完成并持续Open；V0.4未开始。
+
+- `2026-09-09`：依据PM“批准，开始工作”及Leader V0.3/S3-report-002登记S3 revision1 Approved、待实现；范围及既有架构不变，未新增验收或债务关闭声明。
+
+- `2026-09-08`：准备V0.3/S3 Draft revision1设计、审查与Leader001；S3设计中待批准，S1/S2已完成，V0.3尚未完成。
 
 - `2026-09-08`：依据V0.3/S2 Builder001、Reviewer001 PASS和Leader004关闭S2及P3-01，TD-003/005当前检查点完成但持续Open；V0.3进行中、S3未开始。
 

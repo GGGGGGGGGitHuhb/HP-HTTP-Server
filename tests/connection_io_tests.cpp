@@ -17,7 +17,10 @@
 
 namespace hp::net {
 struct TcpConnectionTestAccess {
-    static ConnectionEventResult event(TcpConnection& c, std::uint32_t mask) { c.handle_event(mask); return c.last_result_; }
+    static ConnectionEventResult event(TcpConnection& c, std::uint32_t mask) {
+        c.handle_event(mask);
+        return c.last_result_;
+    }
 };
 }
 
