@@ -4,13 +4,15 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
+- 当前阶段：V0.3/S3 协议边界与异常用例，`已完成 / Completed`；Approved revision1、Builder001、Reviewer001唯一PASS及Leader004齐备。入口：`docs/leader/designs/V0.3/S3-design.md`、`docs/reviewer/reviews/V0.3/S3-review.md`、`docs/leader/reports/V0.3/S3-report-004.md`。
 
-- 当前结论：独立全新Debug告警0、CTest15/15，8REQ/12AC/12RV/RW01..04全部通过，parser状态与keep-alive组件ASan/UBSan/LSan无诊断。交付证据：`docs/builder/reports/V0.3/S2-report-001.md`、`docs/reviewer/reports/V0.3/S2-report-001.md`、`docs/leader/reports/V0.3/S2-report-004.md`。
+- S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
-- 当前版本：`V0.3 HTTP 状态机与连接复用`，整体进行中；S1/S2已完成，S3未开始。V0.1/V0.2已完成。
+- 最近验收（S3）：独立全新Debug告警0、CTest15/15（4.88秒）、6REQ/8AC/8RV全部通过，parser状态与keep-alive组件ASan/UBSan/LSan无诊断。交付：`docs/builder/reports/V0.3/S3-report-001.md`、`docs/reviewer/reports/V0.3/S3-report-001.md`、`docs/leader/reports/V0.3/S3-report-004.md`。
+
+- 当前版本：`V0.3 HTTP 状态机与连接复用`已完成，S1/S2/S3均已完成；V0.1/V0.2已完成，V0.4未开始。本轮尚未提交或发布。
 - 前置版本状态：`V0.1 最小可运行 HTTP Server` 已完成；S1、S2、S3 均有 Approved 基线、Builder 实现证据与 Reviewer `PASS`。
-- 最近完成阶段：`V0.3/S2 Keep-Alive 连接复用`；V0.3整体进行中，S1/S2已完成，S3未开始。
+- 最近完成阶段：`V0.3/S3 协议边界与异常用例`；本阶段扩充测试及说明，未修改生产代码或新增协议能力。
 - 真实运行入口现为单线程、单 epoll LT 的最小 HTTP/1.1 静态文件服务：严格要求 `--port` 与 `--root`，支持同连接连续无请求体 `GET`，默认返回 `Connection: keep-alive`，显式 close 优先；响应按请求顺序逐个排空。
 - 已实现严格 CRLF/Host/request-line/Header 解析、16 KiB 请求上限、4 KiB 请求行上限、8 MiB 文件上限，以及 `200/400/403/404/405/500`。
 - 静态文件访问以启动时打开的 root fd 为锚点，逐组件使用 `openat`、`O_NOFOLLOW|O_CLOEXEC`，中间目录另用 `O_DIRECTORY`；拒绝 raw/encoded traversal、反斜杠、歧义组件与 symlink escape。
@@ -77,14 +79,14 @@ Shell：Bash
 ```
 
 ```bash
-mkdir -p .cache/olympus-v0.3-s2/builder/tmp .cache/olympus-v0.3-s2/builder/cache
-export TMPDIR="$PWD/.cache/olympus-v0.3-s2/builder/tmp" TMP="$PWD/.cache/olympus-v0.3-s2/builder/tmp" TEMP="$PWD/.cache/olympus-v0.3-s2/builder/tmp"
-export XDG_CACHE_HOME="$PWD/.cache/olympus-v0.3-s2/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/olympus-v0.3-s2/builder/tests"
-cmake -S . -B build-v0.3-s2-builder-final -DCMAKE_BUILD_TYPE=Debug
-cmake --build build-v0.3-s2-builder-final --verbose
-ctest --test-dir build-v0.3-s2-builder-final --output-on-failure
-./build-v0.3-s2-builder-final/hp_http_server --help
-./build-v0.3-s2-builder-final/hp_http_server --port 8080 --root ./www
+mkdir -p .cache/v0.3-s3/builder/tmp .cache/v0.3-s3/builder/cache
+export TMPDIR="$PWD/.cache/v0.3-s3/builder/tmp" TMP="$PWD/.cache/v0.3-s3/builder/tmp" TEMP="$PWD/.cache/v0.3-s3/builder/tmp"
+export XDG_CACHE_HOME="$PWD/.cache/v0.3-s3/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/v0.3-s3/builder/tests"
+cmake -S . -B build-v0.3-s3 -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-v0.3-s3 --verbose
+ctest --test-dir build-v0.3-s3 --output-on-failure
+./build-v0.3-s3/hp_http_server --help
+./build-v0.3-s3/hp_http_server --port 8080 --root ./www
 ```
 
 另开一个终端验证：
@@ -131,32 +133,32 @@ CMakeLists.txt
 可复现的验证命令：
 
 ```bash
-mkdir -p .cache/olympus-v0.3-s2/builder/tmp .cache/olympus-v0.3-s2/builder/cache
-export TMPDIR="$PWD/.cache/olympus-v0.3-s2/builder/tmp" TMP="$PWD/.cache/olympus-v0.3-s2/builder/tmp" TEMP="$PWD/.cache/olympus-v0.3-s2/builder/tmp"
-export XDG_CACHE_HOME="$PWD/.cache/olympus-v0.3-s2/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/olympus-v0.3-s2/builder/tests"
-cmake -S . -B build-v0.3-s2-builder-final -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build build-v0.3-s2-builder-final --verbose
-ctest --test-dir build-v0.3-s2-builder-final --output-on-failure
-./build-v0.3-s2-builder-final/http_connection_callback_tests
-./build-v0.3-s2-builder-final/http_keep_alive_tests
-./build-v0.3-s2-builder-final/http_keep_alive_integration_tests ./build-v0.3-s2-builder-final/hp_http_server
-./build-v0.3-s2-builder-final/acceptor_tcp_connection_tests
-./build-v0.3-s2-builder-final/event_loop_channel_tests
-./build-v0.3-s2-builder-final/connection_io_tests
-./build-v0.3-s2-builder-final/http_parser_tests
-./build-v0.3-s2-builder-final/http_parser_state_tests
-./build-v0.3-s2-builder-final/static_file_tests
-./build-v0.3-s2-builder-final/http_server_integration_tests ./build-v0.3-s2-builder-final/hp_http_server
+mkdir -p .cache/v0.3-s3/builder/tmp .cache/v0.3-s3/builder/cache
+export TMPDIR="$PWD/.cache/v0.3-s3/builder/tmp" TMP="$PWD/.cache/v0.3-s3/builder/tmp" TEMP="$PWD/.cache/v0.3-s3/builder/tmp"
+export XDG_CACHE_HOME="$PWD/.cache/v0.3-s3/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/v0.3-s3/builder/tests"
+cmake -S . -B build-v0.3-s3 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build-v0.3-s3 --verbose
+ctest --test-dir build-v0.3-s3 --output-on-failure
+./build-v0.3-s3/http_connection_callback_tests
+./build-v0.3-s3/http_keep_alive_tests
+./build-v0.3-s3/http_keep_alive_integration_tests ./build-v0.3-s3/hp_http_server
+./build-v0.3-s3/acceptor_tcp_connection_tests
+./build-v0.3-s3/event_loop_channel_tests
+./build-v0.3-s3/connection_io_tests
+./build-v0.3-s3/http_parser_tests
+./build-v0.3-s3/http_parser_state_tests
+./build-v0.3-s3/static_file_tests
+./build-v0.3-s3/http_server_integration_tests ./build-v0.3-s3/hp_http_server
 NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
-  bash tests/http_smoke_test.sh ./build-v0.3-s2-builder-final/hp_http_server
+  bash tests/http_smoke_test.sh ./build-v0.3-s3/hp_http_server
 ```
 
-当前 CTest 共 15 项（原13项身份保留）：
+当前 CTest 共 15 项（S3扩展现有目标，S2全部15项身份保留）：
 
-- `http_keep_alive_tests`：小发送缓冲真实EAGAIN、单响应积压、628请求与容量稳定、framing/close/EOF、服务400终止、策略违规500、非递归drain及回调后销毁。
-- `http_keep_alive_integration_tests`：真实生产binary的逐次/粘包三请求、部分第三请求、FIN、服务400后缀终止、403/404复用、暂停时reset及20个后续连接。
+- `http_keep_alive_tests`：小发送缓冲真实EAGAIN、单响应积压、628请求与容量稳定、framing/close/EOF、服务400终止、策略违规500、非递归drain及回调后销毁；S3新增14个具名首/第二请求拒绝及52个FIN截断位置的单次关闭/provider隔离检查。
+- `http_keep_alive_integration_tests`：真实生产binary的逐次/粘包三请求、部分第三请求、FIN、服务400后缀终止、403/404复用、暂停时reset及20个后续连接；S3新增7类拒绝的首/第二位置、52个逐前缀FIN，以及不完整请求RST后20连接/fd回收，等待状态采用截止时间。
 
-- `http_parser_state_tests`：原19类与新增26类 framing/Connection 矩阵的全 split 点/逐字节输入、CRLF 跨块、精确消费、粘包剩余/reset、终态零消费、4 KiB/16 KiB 边界和线性扫描/缓存计数。
+- `http_parser_state_tests`：原19类与新增26类 framing/Connection 矩阵的全 split 点/逐字节输入、CRLF 跨块、精确消费、粘包剩余/reset、终态零消费、4 KiB/16 KiB 边界和线性扫描/缓存计数；S3再加入66个具名独立预期、9个长边界样本，共6629种调度（短样本全部两段切分、逐字节、两种固定seed），含多短Header累计上限与pending-CR reset。
 - `http_connection_callback_tests`：新增两连接各三段增量 feed/consume 与空 HTTP EOF；保留交错分段/EOF/上限、应用异常500、临时响应所有权与真实EAGAIN、显式close后的pipeline单响应、工厂/消息异常、旧身份及新消息路径真实reset。
 - `acceptor_tcp_connection_tests`：真实单轮 8 客户端 accept-drain、交付/注册/MOD 失败与恢复、缓冲 EAGAIN 后逐字节续写、回调后销毁、fd/token/关闭 identity 隔离及经 TcpConnection 的真实 ERR|IN。
 - `event_loop_channel_tests`：真实 wait、ADD/MOD/DEL、读写 interest、回调后销毁、同批 stale token、fd reuse、失败回滚以及经 Channel 的真实 ERR|IN/SO_ERROR/recv。
@@ -168,13 +170,17 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
 - `server_integration_tests`：保留 S2 CTest 标识，映射到同一套更强的 S3 真实入口回归。
 - `tests/http_smoke_test.sh`：真实启动端口 0，并用 curl `--path-as-is` 覆盖 `200/400/403/404/405` 与 secret 不泄露。
 
+V0.3/S3独立验收：Reviewer全新Debug告警0、CTest15/15（4.88秒）、curl及parser/keep-alive两项ASan/UBSan/LSan通过，唯一PASS；额外独立4语料/463调度通过。Builder自测15/15（4.92秒）保留为实现证据。见 `docs/reviewer/reports/V0.3/S3-report-001.md`、`docs/builder/reports/V0.3/S3-report-001.md`。
+
+超限请求达到16 KiB未完成即拒绝；若内核尚有未读输入，完整400响应之后可能是EOF或TCP reset。测试仅对具名总头部超限样本允许这两种结束方式，仍检查完整Content-Length、唯一错误、额外字节为零；其他FIN/close场景保持严格EOF。判据依据 `docs/leader/reports/V0.3/S3-report-003.md`，未改变生产关闭策略。
+
 V0.3/S2 Reviewer已在全新 `build-review-v0.3-s2` 独立构建告警0、CTest15/15（3.92秒）；parser状态与keep-alive组件的ASan/UBSan/LSan无诊断，唯一PASS。Builder独立自测也为15/15。专项复现（先沿用上面的任务临时目录环境）：
 
 ```bash
-cmake -S . -B build-v0.3-s2-builder-asan -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer'
-cmake --build build-v0.3-s2-builder-asan --target http_parser_state_tests http_keep_alive_tests -j4
-ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ./build-v0.3-s2-builder-asan/http_parser_state_tests
-ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ./build-v0.3-s2-builder-asan/http_keep_alive_tests
+cmake -S . -B build-v0.3-s3-asan -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer'
+cmake --build build-v0.3-s3-asan --target http_parser_state_tests http_keep_alive_tests -j4
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ./build-v0.3-s3-asan/http_parser_state_tests
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ./build-v0.3-s3-asan/http_keep_alive_tests
 ```
 
 V0.3/S1增量解析、生产回调及旧Reactor/HTTP回归已由Reviewer在全新 `build-review-v0.3-s1/` 独立验证，CTest13/13，唯一PASS。解析状态和生产回调两项ASan/UBSan/LSan无诊断，详见 `docs/reviewer/reports/V0.3/S1-report-001.md`。

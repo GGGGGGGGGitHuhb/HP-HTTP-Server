@@ -18,7 +18,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 使用 `sendfile`、异步日志、Buffer 优化和压测分析支撑高性能叙事。
 - 在 HTTP Server 内核稳定后，扩展轻量 L7 Reverse Proxy / Gateway 能力，减少普通 WebServer 项目的同质化。
 
-当前项目已完成 V0.1 最小可运行 HTTP Server 和 V0.2 Reactor 抽象重构；V0.2 的 S1/S2/S3 均有 Approved、实现、独立 Reviewer PASS 与 Leader 收口证据。V0.3/S1增量HTTP Parser已完成并独立PASS；V0.3整体进行中，S2已完成（Approved revision1及补充，Reviewer PASS），S3未开始。
+当前项目已完成 V0.1 最小可运行 HTTP Server 和 V0.2 Reactor 抽象重构；V0.2 的 S1/S2/S3 均有 Approved、实现、独立 Reviewer PASS 与 Leader 收口证据。V0.3/S1增量HTTP Parser已完成并独立PASS；V0.3已完成，S1/S2/S3全部具备Approved、实现、独立Reviewer PASS及Leader收口；V0.4未开始。
 
 总体技术方向：
 
@@ -73,7 +73,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 推进与完成规则
 
-- V0.1、V0.2 均已完成；V0.2/S3 于2026-09-08取得独立 Reviewer PASS并收口。V0.3/S1已完成，V0.3整体进行中，S2已完成（Approved revision1及补充，Reviewer PASS），S3未开始。
+- V0.1、V0.2 均已完成；V0.2/S3 于2026-09-08取得独立 Reviewer PASS并收口。V0.3/S1已完成，V0.3已完成，S1/S2/S3全部具备Approved、实现、独立Reviewer PASS及Leader收口；V0.4未开始。
 - 阶段状态统一使用：`未开始`、`设计中`、`待实现`、`实现中`、`待审查`、`返工中`、`已完成`、`阻塞`。
 - 阶段设计和审查计划必须处于 `Approved`，Builder 才能开始实现。
 - 阶段只有在实现证据完整，且 Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT` 后，才能标记为 `已完成`。
@@ -193,7 +193,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.3 HTTP 状态机与连接复用
 
-状态：进行中；S1已完成，Approved revision1及独立Reviewer PASS齐备；S2已完成（Approved revision1及补充，Reviewer PASS），S3未开始。
+状态：`已完成`；S1/S2/S3均已完成，Approved基线、Builder证据、独立Reviewer PASS及Leader收口齐备；2026-09-09完成版本验收，不表示已发布。
 
 前置条件：
 
@@ -226,7 +226,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 - `S1 HTTP Parser 状态机`（`已完成`）：Approved revision 1 已交付增量解析、半包、粘包首边界和 Header 上限，并接入每连接适配器；该S1交付时生产单响应关闭（S2已扩展复用），已于2026-09-08通过独立Reviewer验收。设计文档：`docs/leader/designs/V0.3/S1-design.md`。
 - `S2 Keep-Alive 连接复用`（`已完成`）：Approved revision1及S2-rework-001交付零body framing、默认保活/显式close、单响应有界串行与缓存排空恢复；独立Reviewer PASS、Debug告警0、CTest15/15，8REQ/12AC/12RV/RW01..04全部通过。涉及 `http`、`app`、`net`；设计 `docs/leader/designs/V0.3/S2-design.md`，关闭报告 `docs/leader/reports/V0.3/S2-report-004.md`。
-- `S3 协议边界与异常用例`：补充非法请求、超大 Header、异常关闭和回归测试。设计文档：`docs/leader/designs/V0.3/S3-design.md`。
+- `S3 协议边界与异常用例`（`已完成`，Approved revision1、Reviewer001 PASS及Leader004齐备）：补充非法请求、超大 Header、异常关闭和回归测试。设计文档：`docs/leader/designs/V0.3/S3-design.md`。
 
 完成标准：
 
@@ -244,7 +244,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.4 并发模型与资源治理
 
-状态：计划中。
+状态：`未开始`。
 
 前置条件：
 
@@ -516,7 +516,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 - `S1 HTTP Parser 状态机`（`已完成`）：Approved revision 1，独立PASS、CTest13/13，已于2026-09-08通过独立Reviewer验收；已交付增量解析、粘包边界和限额，涉及 `http`、`app`、`tests`，服务复用留给 S2。
 - `S2 Keep-Alive 连接复用`（`已完成`）：Approved revision1及S2-rework-001交付零body framing、默认保活/显式close、单响应有界串行与缓存排空恢复；独立Reviewer PASS、Debug告警0、CTest15/15，8REQ/12AC/12RV/RW01..04全部通过。涉及 `http`、`app`、`net`；设计 `docs/leader/designs/V0.3/S2-design.md`，关闭报告 `docs/leader/reports/V0.3/S2-report-004.md`。
-- `S3 协议边界与异常用例`：产出异常输入测试和错误语义验证；涉及 `http`、`tests`。
+- `S3 协议边界与异常用例`（`已完成`，Approved revision1、Reviewer001 PASS及Leader004齐备）：产出异常输入测试和错误语义验证；涉及 `http`、`tests`。
 
 ### V0.4 阶段摘要
 
@@ -569,6 +569,12 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 用户明确希望继续扩展，而不是优先准备简历材料或面试讲解。
 
 ## 变更记录
+
+- `2026-09-09`：依据S3 Builder001、独立Reviewer001 PASS及Leader004关闭S3、V0.3与P3-01；TD-003按退出条件Closed，TD-005当前检查点完成并持续Open；V0.4未开始。
+
+- `2026-09-09`：依据PM“批准，开始工作”及Leader V0.3/S3-report-002登记S3 revision1 Approved、待实现；范围及既有架构不变，未新增验收或债务关闭声明。
+
+- `2026-09-08`：准备V0.3/S3 Draft revision1设计、审查与Leader001；S3设计中待批准，S1/S2已完成，V0.3尚未完成。
 
 - `2026-09-08`：依据V0.3/S2 Builder001、Reviewer001 PASS和Leader004关闭S2及P3-01，TD-003/005当前检查点完成但持续Open；V0.3进行中、S3未开始。
 
