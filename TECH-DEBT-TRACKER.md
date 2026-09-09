@@ -4,8 +4,8 @@
 
 ## 当前概况
 
-- 当前检查：V0.4/S2 Approved revision 1 已交付，Builder001、独立Reviewer001 PASS与Leader003齐备；8REQ/12AC/12RV及容量/所有权/失败回收全部通过，无新增债务或批准延期。S1前置证据：V0.4/S1 Approved revision 1 已交付，Builder001、Reviewer001 PASS 与 Leader003 齐备；S1 的 P3-01 及 TD-005 检查点关闭；TD-005 持续 Open，无新增债务或延期。上一阶段 V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
-- 最近完成阶段：V0.4/S2；V0.4 整体尚未完成，S1/S2 已完成，S3/S4 未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
+- 当前检查：V0.4/S3 Approved revision1已实现、独立Reviewer001 PASS并由Leader003收口；定时记录有界、owner取消/回收及超时兼容性列入必验，无新增债务或批准延期。V0.4/S2 Approved revision 1 已交付，Builder001、独立Reviewer001 PASS与Leader003齐备；8REQ/12AC/12RV及容量/所有权/失败回收全部通过，无新增债务或批准延期。S1前置证据：V0.4/S1 Approved revision 1 已交付，Builder001、Reviewer001 PASS 与 Leader003 齐备；S1 的 P3-01 及 TD-005 检查点关闭；TD-005 持续 Open，无新增债务或延期。上一阶段 V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
+- 最近完成阶段：V0.4/S3；V0.4 整体尚未完成，S1/S2 已完成，S3已完成，S4未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
 - S1的P3-01根状态同步完成，TD-005的S1检查点完成且风险持续Open；TD-003按V0.3退出条件关闭。S2的P3-01及TD-005当前检查点也已由Leader003关闭，无新增债务或批准延期。
 - V0.3/S2已有单响应积压控制、暂停读取及排空恢复；V0.3/S3只补充回归，不新增治理能力。全局配额、空闲超时继续既定V0.4范围，不形成生产安全或性能承诺。
 - 本文档不跟踪本地协作文档是否进入版本控制或远程发布。
@@ -282,3 +282,15 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 - `2026-09-09`：依据 PM 明确批准及 Leader V0.4/S2-report-002 登记 S2 Approved；TD-005持续Open，无新增债务、风险豁免或延期。
 
 - `2026-09-09`：V0.4/S2经Reviewer001 PASS、Leader003收口，P3-01及TD-005本阶段检查点关闭；TD-005持续Open，固定池容量不等于活跃连接全局配额，S3/S4未开始。
+
+## V0.4/S3 准备检查点（设计中）
+
+- 2026-09-09：S2已合并并推送v0.4-s2标签；S3设计/审查Draft revision1及Leader001形成，尚无实现或验收。
+- TD-005持续Open：批准、实现、独立审查及收口仍待执行；现有S2检查点保留完成。timer索引取消/续期、fd身份、超时策略与真实生产验证均是本阶段任务，不另登记延期债务。
+- 不承诺请求绝对时限、最低速率、阻塞provider抢占或完整慢连接防护；S4高水位和优雅关闭仍未开始。
+
+- `2026-09-09`：依据PM批准与Leader V0.4/S3-report-002登记S3 Approved；TD-005持续Open，无新增债务、风险豁免或延期。
+
+## V0.4/S3 关闭检查点
+
+- 2026-09-09：Approved、Builder001、Reviewer001 PASS与Leader003齐备，8REQ/12AC/RV和8条生命周期通过，P3-01及TD-005本阶段检查点关闭。TD-005持续Open，无新增债务、风险豁免或必需未验证项；S4未开始，V0.4未完成。

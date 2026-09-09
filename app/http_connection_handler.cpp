@@ -53,6 +53,8 @@ struct Session {
         if (parsed.status == http::ParseStatus::need_more && !eof) {
             if (stats)
                 ++stats->need_more;
+            connection.set_idle_wait(completed && parsed.request_bytes == 0 &&
+                                     connection.pending_bytes() == 0);
             connection.resume_reading();
             return;
         }
@@ -65,6 +67,7 @@ struct Session {
         close = parsed.status != http::ParseStatus::complete || parsed.request.close_requested;
         const auto policy =
             close ? http::ConnectionPolicy::close : http::ConnectionPolicy::keep_alive;
+        connection.set_idle_wait(false);
         phase = Phase::writing;
         connection.pause_reading();
         std::vector<std::byte> response;

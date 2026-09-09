@@ -22,7 +22,10 @@ void print_usage(std::ostream& output) {
            << "       hp_http_server --root <directory> --port <0-65535>\n"
            << "       hp_http_server --help\n"
            << "V0.1 / S3 minimal HTTP static file server; restricted GET/keep-alive.\n"
-           << "--threads defaults to 2 workers; 0 selects a single Reactor.\n";
+           << "--threads defaults to 2 workers; 0 selects a single Reactor.\n"
+           << "--idle-timeout-ms <0-86400000> defaults to 30000; "
+              "--keep-alive-timeout-ms <0-86400000> defaults to 15000.\n"
+           << "0 disables that timeout. Expiry closes silently and may truncate a response.\n";
 }
 
 [[nodiscard]] std::uint16_t parse_port(std::string_view text) {
@@ -39,16 +42,20 @@ struct Options {
     std::uint16_t port{0};
     std::string root;
     std::size_t threads{2};
+    hp::net::ConnectionTimeouts timeouts{std::chrono::milliseconds(30000),
+                                      std::chrono::milliseconds(15000)};
 };
 
 [[nodiscard]] Options parse_options(int argc, char* argv[]) {
     bool has_port = false;
     bool has_root = false;
     bool has_threads = false;
+    bool has_idle = false, has_keep = false;
     Options options;
     for (int index = 1; index < argc; ++index) {
         const std::string_view option = argv[index];
-        if (option == "--port" || option == "--root" || option == "--threads") {
+        if (option == "--port" || option == "--root" || option == "--threads" ||
+            option == "--idle-timeout-ms" || option == "--keep-alive-timeout-ms") {
             if (index + 1 >= argc) {
                 throw std::invalid_argument("option value is missing");
             }
@@ -70,6 +77,20 @@ struct Options {
                     throw std::invalid_argument("threads must be decimal in 0-64");
                 options.threads = count;
                 has_threads = true;
+            } else if (option == "--idle-timeout-ms" || option == "--keep-alive-timeout-ms") {
+                bool& seen = option == "--idle-timeout-ms" ? has_idle : has_keep;
+                if (seen)
+                    throw std::invalid_argument("timeout appears more than once");
+                unsigned int value_ms = 0;
+                const auto [end, error] =
+                    std::from_chars(value.data(), value.data() + value.size(), value_ms, 10);
+                if (value.empty() || error != std::errc{} ||
+                    end != value.data() + value.size() || value_ms > 86400000)
+                    throw std::invalid_argument("timeout must be decimal in 0-86400000ms");
+                auto& duration = option == "--idle-timeout-ms" ? options.timeouts.idle
+                                                             : options.timeouts.keep_alive;
+                duration = std::chrono::milliseconds(value_ms);
+                seen = true;
             } else {
                 if (has_root) {
                     throw std::invalid_argument("--root appears more than once");
@@ -107,7 +128,7 @@ int run(int argc, char* argv[]) {
 
     hp::http::StaticFileService service(options.root);
     hp::net::TcpServer server(options.port, hp::app::make_http_factory(service),
-                              hp::http::max_request_bytes, options.threads);
+                              hp::http::max_request_bytes, options.threads, options.timeouts);
     const std::string port_text = std::to_string(server.bound_port());
     hp::base::info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");
     hp::base::info("Listening on TCP port " + port_text + ".");

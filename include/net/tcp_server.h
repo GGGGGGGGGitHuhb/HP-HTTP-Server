@@ -10,13 +10,15 @@ class TcpServer final : private base::NonCopyable {
 public:
     using MessageCallbackFactory = std::function<TcpConnection::MessageCallback()>;
     explicit TcpServer(std::uint16_t requested_port, MessageCallbackFactory factory = {},
-                       std::size_t max_input_bytes = 0, std::size_t worker_count = 0);
+                       std::size_t max_input_bytes = 0, std::size_t worker_count = 0,
+                       ConnectionTimeouts timeouts = {});
     ~TcpServer() noexcept;
     [[nodiscard]] std::uint16_t bound_port() const noexcept;
     void run();
     // Thread-safe immediate stop, not signal-safe or graceful HTTP draining.
     void request_stop();
 private:
+    friend struct ConnectionTimeoutTestAccess;
     friend struct TcpServerTestAccess;
     void add_connection(Socket socket);
     void shutdown();
@@ -24,6 +26,7 @@ private:
     MessageCallbackFactory callback_factory_;
     std::size_t max_input_bytes_;
     const std::size_t worker_count_;
+    const ConnectionTimeouts timeouts_;
     std::size_t next_worker_{0};
     std::atomic<bool> stopping_{false}, worker_failed_{false};
     bool ran_{false};

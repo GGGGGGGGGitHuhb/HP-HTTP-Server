@@ -1,5 +1,7 @@
 #pragma once
 #include "net/channel.h"
+#include <chrono>
+#include <optional>
 #include "net/connection_io.h"
 
 namespace hp::net {
@@ -25,6 +27,7 @@ public:
     void close_after_flush();
     void pause_reading();
     void resume_reading();
+    void set_idle_wait(bool waiting);
     using WriteCompleteCallback = std::function<void(TcpConnection&)>;
     void set_write_complete_callback(WriteCompleteCallback callback);
     [[nodiscard]] std::span<const std::byte> input_view() const noexcept { return io_.input_view(); }
@@ -36,6 +39,7 @@ public:
     [[nodiscard]] Identity identity() const noexcept { return identity_; }
     [[nodiscard]] State state() const noexcept { return state_; }
 private:
+    friend struct ConnectionTimeoutTestAccess;
     friend class TcpServer;
     friend class ConnectionRegistry;
     friend struct TcpConnectionTestAccess;
@@ -43,6 +47,11 @@ private:
     void update_interest();
     void read_messages();
     void flush_output();
+    std::function<void(TcpConnection&, bool)> activity_callback_;
+    bool idle_waiting_{false};
+    std::chrono::steady_clock::time_point last_progress_{};
+    std::optional<std::chrono::steady_clock::time_point> wait_since_;
+    std::uint64_t timeout_id_{0};
     ConnectionIo io_;
     MessageCallback message_callback_;
     const Identity identity_;
