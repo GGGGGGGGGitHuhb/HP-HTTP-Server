@@ -50,19 +50,19 @@ struct TcpServerTestAccess {
     }
 
     static auto& connection(TcpServer& s, int fd) {
-        return *s.connections_.at(fd);
+        return *s.main_registry_->connections_.at(fd);
     }
 
     static auto size(TcpServer& s) {
-        return s.connections_.size();
+        return s.main_registry_->connections_.size();
     }
 
     static void notice(TcpServer& s, int fd, TcpConnection::Identity id) {
-        s.connection_closed(fd, id);
+        s.main_registry_->connection_closed(fd, id);
     }
 
     static void drain(TcpServer& s) {
-        s.drain_closed_connections();
+        s.main_registry_->drain_closed_connections();
     }
 };
 
@@ -71,7 +71,7 @@ struct EventLoopTestAccess {
         loop.dispatch(token, EPOLLIN);
     }
 };
-}
+} // namespace hp::net
 
 namespace {
 using namespace hp;
@@ -536,7 +536,7 @@ void reset_new_message() {
               << " recv_bytes=" << result.bytes_read << " message_bytes=" << received.size()
               << " messages=" << messages << " closes=" << closed << '\n';
 }
-}
+} // namespace
 
 int main() {
     interleaved_and_eof();

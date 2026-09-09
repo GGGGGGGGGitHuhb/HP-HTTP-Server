@@ -15,6 +15,8 @@ add_library(hp_http_core STATIC
     src/net/tcp_connection.cpp
     src/net/connection_io.cpp
     src/net/channel.cpp
+    src/net/connection_registry.cpp
+    src/net/event_loop_thread_pool.cpp
     src/net/event_loop_thread.cpp
     src/net/event_loop.cpp
     src/net/epoller.cpp
@@ -136,4 +138,23 @@ if(BUILD_TESTING)
     enable_debug_warnings(event_loop_thread_tests)
     add_test(NAME event_loop_thread_tests COMMAND event_loop_thread_tests)
     set_tests_properties(event_loop_thread_tests PROPERTIES TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(event_loop_thread_pool_tests tests/event_loop_thread_pool_tests.cpp)
+    target_link_libraries(event_loop_thread_pool_tests PRIVATE hp_http_core)
+    enable_debug_warnings(event_loop_thread_pool_tests)
+    add_test(NAME event_loop_thread_pool_tests COMMAND event_loop_thread_pool_tests)
+    set_tests_properties(event_loop_thread_pool_tests PROPERTIES TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(multi_reactor_tests tests/multi_reactor_tests.cpp)
+    target_link_libraries(multi_reactor_tests PRIVATE hp_http_app)
+    target_link_options(multi_reactor_tests PRIVATE -Wl,--wrap=accept4 -Wl,--wrap=close
+        -Wl,--wrap=epoll_ctl -Wl,--wrap=_Znwm)
+    enable_debug_warnings(multi_reactor_tests)
+    add_test(NAME multi_reactor_tests COMMAND multi_reactor_tests $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(multi_reactor_tests PROPERTIES TIMEOUT 60
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
 endif()

@@ -2,12 +2,16 @@
 #include "http/http_response.h"
 #include "base/logger.h"
 #include <memory>
+#include <atomic>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
 
 namespace hp::app {
 namespace {
+using SessionObserver = void (*)(bool, const void*) noexcept;
+std::atomic<SessionObserver> session_observer{nullptr};
+
 struct Session {
     enum class Phase { reading, writing, closing };
     ResponseProvider provider;
@@ -15,6 +19,17 @@ struct Session {
     http::RequestParser parser;
     Phase phase{Phase::reading};
     bool completed{false}, close{false};
+
+    Session(ResponseProvider response_provider, HttpCallbackStats* callback_stats)
+        : provider(std::move(response_provider)), stats(callback_stats) {
+        if (auto observer = session_observer.load())
+            observer(true, this);
+    }
+
+    ~Session() {
+        if (auto observer = session_observer.load())
+            observer(false, this);
+    }
 
     void advance(net::TcpConnection& connection) {
         if (phase != Phase::reading)
@@ -98,18 +113,23 @@ struct Session {
         advance(connection);
     }
 };
+} // namespace
+
+// Narrow test-only observation seam; no scheduling or product behavior is injected.
+void set_session_observer_for_test(void (*observer)(bool, const void*) noexcept) {
+    session_observer.store(observer);
 }
 
 net::TcpConnection::MessageCallback make_http_callback(ResponseProvider provider,
                                                        HttpCallbackStats* stats) {
-    auto session = std::make_shared<Session>(Session{std::move(provider), stats, {}});
-    return [session, installed = false](net::TcpConnection& connection, std::span<const std::byte>,
-                                        bool) mutable {
-        if (!installed) {
+    // Factory runs on main; mutable parser/session state is born on the IO owner.
+    return [provider = std::move(provider), stats, session = std::shared_ptr<Session>{}](
+               net::TcpConnection& connection, std::span<const std::byte>, bool) mutable {
+        if (!session) {
+            session = std::make_shared<Session>(std::move(provider), stats);
             connection.set_write_complete_callback([session](net::TcpConnection& c) {
                 session->drained(c);
             });
-            installed = true;
         }
         if (session->stats)
             ++session->stats->callbacks;
@@ -125,4 +145,4 @@ net::TcpServer::MessageCallbackFactory make_http_factory(const http::StaticFileS
             });
     };
 }
-}
+} // namespace hp::app

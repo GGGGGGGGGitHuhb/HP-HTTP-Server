@@ -31,7 +31,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-"$server_path" --port 0 --root "$root" >"$log" 2>&1 &
+thread_args=()
+if [[ -n "${HP_HTTP_TEST_THREADS+x}" ]]; then
+    thread_args=(--threads "$HP_HTTP_TEST_THREADS")
+fi
+"$server_path" --port 0 --root "$root" "${thread_args[@]}" >"$log" 2>&1 &
 server_pid=$!
 
 port=""

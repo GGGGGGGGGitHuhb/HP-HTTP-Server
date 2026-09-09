@@ -79,22 +79,22 @@ struct TcpServerTestAccess {
     }
 
     static TcpConnection& connection(TcpServer& s, int fd) {
-        return *s.connections_.at(fd);
+        return *s.main_registry_->connections_.at(fd);
     }
 
     static auto size(TcpServer& s) {
-        return s.connections_.size();
+        return s.main_registry_->connections_.size();
     }
 
     static void close_notice(TcpServer& s, int fd, TcpConnection::Identity id) {
-        s.connection_closed(fd, id);
+        s.main_registry_->connection_closed(fd, id);
     }
 
     static void drain(TcpServer& s) {
-        s.drain_closed_connections();
+        s.main_registry_->drain_closed_connections();
     }
 };
-}
+} // namespace hp::net
 
 namespace {
 using namespace hp::net;
@@ -555,7 +555,7 @@ void real_reset() {
               << " so_error=" << result.socket_error << " recv_bytes=" << result.bytes_read
               << " close_notice=" << notices << '\n';
 }
-}
+} // namespace
 
 int main() {
     acceptor_delivery();

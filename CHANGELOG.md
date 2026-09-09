@@ -6,6 +6,9 @@
 
 ### 新增
 
+- V0.4/S2交付固定EventLoopThreadPool与生产main/sub Reactor：默认2个worker、`--threads 0`单Reactor兼容，连接轮转后终生owner固定，各ConnectionRegistry回调后回收；Session/parser在owner创建，静态文件服务安全共享。每worker池入口固定1024个未结束任务，满时关闭交接连接；提供立即停止、部分启动失败与worker异常时全部回收，不承诺响应排空或完整资源治理。
+- V0.4/S2于2026-09-09经独立Reviewer001 PASS、Leader003收口：Debug零告警、默认CTest18/18（11.57秒）、显式0旧服务回归3/3、双curl、三TSan及三ASan/UBSan/LSan目标通过；另有3worker/9连接、8×257停止交错与真实provider计数探针。仅S2完成，V0.4尚未完成，本条不代表提交或发布。
+
 - V0.4/S1 交付 EventLoop owner 约束、异步任务队列、eventfd 唤醒、停止排空与异常取消，以及 EventLoopThread 启动握手、清理、join 异常回传；注册 token 原子分配并锁存耗尽。生产 HTTP 保持单线程，任务队列仅受控有限投递，未交付线程池、容量治理或进程优雅关闭。
 - V0.4/S1 新增线程专项并保留原 15 个 CTest 身份；独立 Debug 零告警、CTest16/16（9.69 秒）、curl、TSan、ASan/UBSan/LSan 及 Reviewer 独立任务/捕获重入探针通过。2026-09-09 经 Reviewer001 PASS、Leader003 关闭 S1；V0.4 整体尚未完成，本记录不代表发布。
 

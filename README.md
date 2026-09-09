@@ -4,23 +4,23 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.4/S1 EventLoop 线程化，`已完成 / Completed`；设计及审查计划均为 Approved revision 1，PM 已于 2026-09-09 批准。单 loop 线程、异步投递、eventfd 唤醒与停止已实现，Builder001、独立 Reviewer001 PASS 与 Leader003 收口齐备。入口：`docs/leader/designs/V0.4/S1-design.md`、`docs/reviewer/reviews/V0.4/S1-review.md`、`docs/leader/reports/V0.4/S1-report-003.md`。
+- 当前阶段：V0.4/S2 主从 Reactor，`已完成 / Completed`；Builder001、独立Reviewer001 PASS与Leader003收口齐备；设计及审查计划为 Approved revision 1，PM 已于2026-09-09批准。入口：`docs/leader/designs/V0.4/S2-design.md`、`docs/reviewer/reviews/V0.4/S2-review.md`、`docs/leader/reports/V0.4/S2-report-003.md`。
 
 - S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
 - V0.3/S3 历史验收：独立全新Debug告警0、CTest15/15（4.88秒）、6REQ/8AC/8RV全部通过，parser状态与keep-alive组件ASan/UBSan/LSan无诊断。交付：`docs/builder/reports/V0.3/S3-report-001.md`、`docs/reviewer/reports/V0.3/S3-report-001.md`、`docs/leader/reports/V0.3/S3-report-004.md`。
 
-- 当前版本：`V0.3 HTTP 状态机与连接复用`已完成，S1/S2/S3均已完成；V0.1/V0.2已完成，V0.4整体尚未完成，S1已完成，S2/S3/S4未开始。本阶段未提交或推送。
+- 当前版本：`V0.3 HTTP 状态机与连接复用`已完成，S1/S2/S3均已完成；V0.1/V0.2已完成，V0.4整体尚未完成，S1已完成，S2已完成，S3/S4未开始。S1已合并至main并发布标签 `v0.4-s1`；S2已独立验收并收口，尚未合并至main或发布标签。
 - 前置版本状态：`V0.1 最小可运行 HTTP Server` 已完成；S1、S2、S3 均有 Approved 基线、Builder 实现证据与 Reviewer `PASS`。
-- 最近完成阶段：`V0.4/S1 EventLoop 线程化`；独立 Debug 告警 0、CTest 16/16（9.69 秒）、curl、TSan、ASan/UBSan/LSan 通过，7 REQ、9 AC、9 RV 全通过。交付：`docs/builder/reports/V0.4/S1-report-001.md`、`docs/reviewer/reports/V0.4/S1-report-001.md`、`docs/leader/reports/V0.4/S1-report-003.md`。
-- 真实运行入口现为单线程、单 epoll LT 的最小 HTTP/1.1 静态文件服务：严格要求 `--port` 与 `--root`，支持同连接连续无请求体 `GET`，默认返回 `Connection: keep-alive`，显式 close 优先；响应按请求顺序逐个排空。
+- 最近完成阶段：`V0.4/S2 主从 Reactor`；独立Debug告警0、默认CTest18/18（11.57秒）、显式0服务回归3/3、双模式curl及六项sanitizer通过，8REQ/12AC/12RV与11条生命周期契约全部通过。交付：`docs/builder/reports/V0.4/S2-report-001.md`、`docs/reviewer/reports/V0.4/S2-report-001.md`、`docs/leader/reports/V0.4/S2-report-003.md`。
+- 真实运行入口现为主从 Reactor 的受限 HTTP/1.1 静态文件服务（默认两个 worker，`--threads 0` 回退单 Reactor）：严格要求 `--port` 与 `--root`，支持同连接连续无请求体 `GET`，默认返回 `Connection: keep-alive`，显式 close 优先；响应按请求顺序逐个排空。
 - 已实现严格 CRLF/Host/request-line/Header 解析、16 KiB 请求上限、4 KiB 请求行上限、8 MiB 文件上限，以及 `200/400/403/404/405/500`。
 - 静态文件访问以启动时打开的 root fd 为锚点，逐组件使用 `openat`、`O_NOFOLLOW|O_CLOEXEC`，中间目录另用 `O_DIRECTORY`；拒绝 raw/encoded traversal、反斜杠、歧义组件与 symlink escape。
 - S2 的短写/EAGAIN 续传、半关闭、`EPOLLERR/SO_ERROR` 同批读取、稳定 identity guard（保留原 generation 防复用语义）、先 epoll DEL 后释放 fd 和连接错误隔离仍由回归测试保护。
 - V0.1/S3历史验收：Reviewer 已在全新的 `build-review-s3/` 中完成 Debug 独立构建且告警为 0，CTest `9/9`；REQ-01..08、AC-01..10、RV-01..10 全部通过，唯一结论为 `PASS`。真实集成摘要为 `200:35, 400:6, 403:6, 404:1, 405:1`，分段 `NeedMore=1`、生产写 EAGAIN `=1`、accept-drain `8/8`、reset 后续连接 `20/20`、secret 泄露 `0`。
 - V0.2/S1 验收：全新 `build-review-v0.2-s1/` Debug 构建告警 0，CTest `10/10`，REQ-01..08、AC-01..10、RV-01..10 全部通过；事件专项 ASan/UBSan 无报告，真实 HTTP 回归保持原行为。
 - V0.2/S2 已完成；其批准、实现、独立验收与关闭证据见 `docs/leader/reports/V0.2/S2-report-002.md`、`docs/builder/reports/V0.2/S2-report-001.md`、`docs/reviewer/reports/V0.2/S2-report-001.md`、`docs/leader/reports/V0.2/S2-report-003.md`。
-- 当前生产 listener/connection 通过非 fd owner 的 Channel 注册，由 EventLoop wait、按 registration token 分发完整 mask；Acceptor 独占监听与 accept-drain，TcpConnection 独占 ConnectionIo、Channel、事件诊断、interest 与本地关闭；TcpServer 持有连接集合，在回调返回后按稳定 identity 回收。
+- 当前生产 listener/connection 通过非 fd owner 的 Channel 注册，由 EventLoop wait、按 registration token 分发完整 mask；Acceptor 独占监听与 accept-drain，TcpConnection 独占 ConnectionIo、Channel、事件诊断、interest 与本地关闭；各 owner 的 ConnectionRegistry 持有连接集合，在本 owner 回调返回后按稳定 identity 回收；TcpServer 在 main 管理监听、固定线程池和轮转交接。
 - V0.2/S2 独立验收：全新 Debug 构建告警 0、CTest `11/11`、REQ-01..08/AC-01..10/RV-01..10 全通过；新增组件专项 ASan/UBSan 无诊断。
 - V0.2/S3 历史链路（S2会话已替代done）：TcpConnection 发布累计未消费输入/EOF；app 层 HTTP 适配器每连接独立 done，通过 send/consume/close_after_flush 发送并排空；ConnectionIo 仅管理字节读写和缓冲。实现报告见 `docs/builder/reports/V0.2/S3-report-001.md`。
 - V0.3/S1 实现：每连接独立 `RequestParser` 接收新字节，NeedMore 时立即消费已接收字节；RequestLine/Headers/Complete/Error 状态保留跨块 CR。`parse_request` 使用同一算法。请求行内容恰好 4096 字节的未结束前缀为 NeedMore，4097 内容字节为错误；完整请求头上限 16384 字节（含 CRLF）。
@@ -97,12 +97,13 @@ curl --http1.1 -i http://127.0.0.1:8080/missing.txt
 curl --http1.1 -i -X POST http://127.0.0.1:8080/
 ```
 
-预期信号包括 `15/15` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
+预期信号包括 `18/18` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
 
 ## 配置说明
 
 当前没有配置文件系统；CLI 必须各提供一次 `--port <0-65535>` 和 `--root <directory>`，二者顺序可交换。
 
+- `--threads <0-64>`：可选，默认2个worker；0为单Reactor，主线程不计入worker数。严格十进制，重复、缺值、符号、非数字、越界退出2；资源启动错误退出1。
 - `--port 8080 --root ./www`：监听显式端口并从 `./www` 只读提供文件。
 - `--port 0 --root ./www`：由内核分配临时端口，启动输出报告实际非零端口。
 - `--root` 必须在监听前成功打开为目录；缺失、非目录或不可打开时进程非零退出。
@@ -133,27 +134,27 @@ CMakeLists.txt
 可复现的验证命令：
 
 ```bash
-mkdir -p .cache/v0.3-s3/builder/tmp .cache/v0.3-s3/builder/cache
-export TMPDIR="$PWD/.cache/v0.3-s3/builder/tmp" TMP="$PWD/.cache/v0.3-s3/builder/tmp" TEMP="$PWD/.cache/v0.3-s3/builder/tmp"
-export XDG_CACHE_HOME="$PWD/.cache/v0.3-s3/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/v0.3-s3/builder/tests"
-cmake -S . -B build-v0.3-s3 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build build-v0.3-s3 --verbose
-ctest --test-dir build-v0.3-s3 --output-on-failure
-./build-v0.3-s3/http_connection_callback_tests
-./build-v0.3-s3/http_keep_alive_tests
-./build-v0.3-s3/http_keep_alive_integration_tests ./build-v0.3-s3/hp_http_server
-./build-v0.3-s3/acceptor_tcp_connection_tests
-./build-v0.3-s3/event_loop_channel_tests
-./build-v0.3-s3/connection_io_tests
-./build-v0.3-s3/http_parser_tests
-./build-v0.3-s3/http_parser_state_tests
-./build-v0.3-s3/static_file_tests
-./build-v0.3-s3/http_server_integration_tests ./build-v0.3-s3/hp_http_server
+mkdir -p .cache/v0.4-s2/builder/tmp .cache/v0.4-s2/builder/cache
+export TMPDIR="$PWD/.cache/v0.4-s2/builder/tmp" TMP="$PWD/.cache/v0.4-s2/builder/tmp" TEMP="$PWD/.cache/v0.4-s2/builder/tmp"
+export PYTHONDONTWRITEBYTECODE=1 XDG_CACHE_HOME="$PWD/.cache/v0.4-s2/builder/cache" HP_S3_TEST_TMP_ROOT="$PWD/.cache/v0.4-s2/builder/tests"
+cmake -S . -B build-v0.4-s2 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build-v0.4-s2 --verbose
+ctest --test-dir build-v0.4-s2 --output-on-failure
+./build-v0.4-s2/http_connection_callback_tests
+./build-v0.4-s2/http_keep_alive_tests
+./build-v0.4-s2/http_keep_alive_integration_tests ./build-v0.4-s2/hp_http_server
+./build-v0.4-s2/acceptor_tcp_connection_tests
+./build-v0.4-s2/event_loop_channel_tests
+./build-v0.4-s2/connection_io_tests
+./build-v0.4-s2/http_parser_tests
+./build-v0.4-s2/http_parser_state_tests
+./build-v0.4-s2/static_file_tests
+./build-v0.4-s2/http_server_integration_tests ./build-v0.4-s2/hp_http_server
 NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
-  bash tests/http_smoke_test.sh ./build-v0.3-s3/hp_http_server
+  bash tests/http_smoke_test.sh ./build-v0.4-s2/hp_http_server
 ```
 
-当前 CTest 共 16 项（V0.4/S1 保留原 15 项身份，新增线程专项）：
+当前 CTest 共 18 项（S2保留原16项身份，新增pool及真实主从专项）：
 
 - `http_keep_alive_tests`：小发送缓冲真实EAGAIN、单响应积压、628请求与容量稳定、framing/close/EOF、服务400终止、策略违规500、非递归drain及回调后销毁；S3新增14个具名首/第二请求拒绝及52个FIN截断位置的单次关闭/provider隔离检查。
 - `http_keep_alive_integration_tests`：真实生产binary的逐次/粘包三请求、部分第三请求、FIN、服务400后缀终止、403/404复用、暂停时reset及20个后续连接；S3新增7类拒绝的首/第二位置、52个逐前缀FIN，以及不完整请求RST后20连接/fd回收，等待状态采用截止时间。
@@ -161,6 +162,8 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
 - `http_parser_state_tests`：原19类与新增26类 framing/Connection 矩阵的全 split 点/逐字节输入、CRLF 跨块、精确消费、粘包剩余/reset、终态零消费、4 KiB/16 KiB 边界和线性扫描/缓存计数；S3再加入66个具名独立预期、9个长边界样本，共6629种调度（短样本全部两段切分、逐字节、两种固定seed），含多短Header累计上限与pending-CR reset。
 - `http_connection_callback_tests`：新增两连接各三段增量 feed/consume 与空 HTTP EOF；保留交错分段/EOF/上限、应用异常500、临时响应所有权与真实EAGAIN、显式close后的pipeline单响应、工厂/消息异常、旧身份及新消息路径真实reset。
 - `acceptor_tcp_connection_tests`：真实单轮 8 客户端 accept-drain、交付/注册/MOD 失败与恢复、缓冲 EAGAIN 后逐字节续写、回调后销毁、fd/token/关闭 identity 隔离及经 TcpConnection 的真实 ERR|IN。
+- `event_loop_thread_pool_tests`：固定0/1/2、启动回滚/就绪、1024含执行者精确上限、异常取消归还及析构重入。
+- `multi_reactor_tests`：同进程真实生产factory/service上的owner路由、Session生命周期、并发HTTP、安全路径、交接失败、满worker故障通知及100轮回收；CTest另检查生产CLI默认/0/1/2的OS线程数。
 - `event_loop_thread_tests`：owner、任务顺序与嵌套异步、真实 eventfd 唤醒、停止竞态、异常取消与清理、100 次资源回收及 token 并发/耗尽。
 - `event_loop_channel_tests`：真实 wait、ADD/MOD/DEL、读写 interest、回调后销毁、同批 stale token、fd reuse、失败回滚以及经 Channel 的真实 ERR|IN/SO_ERROR/recv。
 - `base_tests`、`socket_tests`、`network_primitives_tests`、`connection_io_tests`：保护 S1/S2 fd、epoll、短写/EAGAIN、EINTR、半关闭和组合错误路径。
@@ -185,6 +188,41 @@ ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ./build-v0.3-s3-asan/h
 ```
 
 V0.3/S1增量解析、生产回调及旧Reactor/HTTP回归已由Reviewer在全新 `build-review-v0.3-s1/` 独立验证，CTest13/13，唯一PASS。解析状态和生产回调两项ASan/UBSan/LSan无诊断，详见 `docs/reviewer/reports/V0.3/S1-report-001.md`。
+
+### V0.4/S2 主从 Reactor 与专项验证
+
+main执行accept和callback factory；未注册Socket按0→1→…固定轮转交给worker。
+连接、Channel、Session/parser及连接表在该owner创建/访问/销毁，连接不迁移；HTTP Session在首次owner回调时惰性构造。
+共享StaticFileService只读root fd，每请求独立打开文件；service及自定义provider依赖必须活到所有worker join和callback释放之后。
+自定义共享provider/stats由调用者同步，生产默认factory不共享可变统计对象。
+
+池每worker最多1024个已接受但未结束的任务（**含正在执行的任务**）。满/停止时拒绝，交接socket关闭，不重试其他worker或发送额外HTTP状态。
+这是固定交接边界；活跃连接仍没有总量上限或空闲超时，S4的一般任务治理尚未实现。
+S1独立EventLoopThread接口继续无容量上限。
+
+`TcpServer::request_stop()` 可跨普通线程调用，立即停止接收并回收所有worker/活动连接，不保证响应排空，也不是信号安全或进程优雅关闭。
+server构造/run/析构由main owner执行，stop调用者需在server析构前结束。任意worker致命失败会通过独立停止通知唤醒main，所有worker join后run再上报错误。
+C++ TcpServer末尾worker_count默认0，旧组件调用保持单Reactor；app显式传入默认2。
+
+```bash
+HP_HTTP_TEST_THREADS=0 ctest --test-dir build-v0.4-s2 --output-on-failure --timeout 60 -R '^(http_server_integration_tests|server_integration_tests|http_keep_alive_integration_tests)$'
+NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost bash tests/http_smoke_test.sh ./build-v0.4-s2/hp_http_server
+HP_HTTP_TEST_THREADS=0 NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost bash tests/http_smoke_test.sh ./build-v0.4-s2/hp_http_server
+cmake -S . -B build-v0.4-s2-tsan -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer'
+cmake --build build-v0.4-s2-tsan --target event_loop_thread_pool_tests multi_reactor_tests event_loop_thread_tests -j4
+TSAN_OPTIONS=halt_on_error=1 setarch x86_64 -R timeout 60s ./build-v0.4-s2-tsan/event_loop_thread_pool_tests
+TSAN_OPTIONS=halt_on_error=1 setarch x86_64 -R timeout 60s ./build-v0.4-s2-tsan/multi_reactor_tests
+TSAN_OPTIONS=halt_on_error=1 setarch x86_64 -R timeout 60s ./build-v0.4-s2-tsan/event_loop_thread_tests
+cmake -S . -B build-v0.4-s2-asan -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer'
+cmake --build build-v0.4-s2-asan --target event_loop_thread_pool_tests multi_reactor_tests event_loop_channel_tests -j4
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 timeout 60s ./build-v0.4-s2-asan/event_loop_thread_pool_tests
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 timeout 60s ./build-v0.4-s2-asan/multi_reactor_tests
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 timeout 60s ./build-v0.4-s2-asan/event_loop_channel_tests
+```
+
+先沿用上节任务本地tmp/cache环境。`HP_HTTP_TEST_THREADS`只由旧测试fixture和smoke脚本读取，生产程序不读取；不设置时验证真实默认2。
+`multi_reactor_tests`不带参数执行完整同进程生产server/factory/service插桩；可选传入server二进制再检查CLI子进程。
+CTest自动传入当前server，sanitizer命令保持整个同进程网络/HTTP路径插桩，不把仅客户端检测冒充生产检测。
 
 ### V0.4/S1 线程原语与专项验证
 
@@ -224,6 +262,8 @@ Agent 执行真实 socket/HTTP、系统跟踪或受限 sanitizer 时遵守仓库
 
 ## 文档索引
 
+- V0.4/S2批准包：`docs/leader/designs/V0.4/S2-design.md`、`docs/reviewer/reviews/V0.4/S2-review.md`、`docs/leader/reports/V0.4/S2-report-003.md`（Approved，待审查）。
+
 - V0.3/S2交付：`docs/leader/designs/V0.3/S2-design.md`、`docs/reviewer/reviews/V0.3/S2-review.md`、`docs/leader/reworks/V0.3/S2-rework-001.md`及Leader关闭报告 `docs/leader/reports/V0.3/S2-report-004.md`。
 
 - `AGENTS.md`：仓库级 Agent 规则、文档权威和完成门槛。
@@ -258,9 +298,9 @@ Agent 执行真实 socket/HTTP、系统跟踪或受限 sanitizer 时遵守仓库
 - 不解析 request body 或 chunked，不支持并发/乱序pipelining、Range、压缩、缓存协商、目录列表或 URL decode。
 - 任何 `%` 编码请求返回 `400`；歧义路径、反斜杠和 symlink 返回 `403`。
 - 每请求累计上限 16 KiB、请求行上限 4 KiB、文件上限 8 MiB。
-- 生产仍为单线程单 epoll LT 服务。EventLoop 绑定构造线程；所有注册、更新、移除、poll、cleanup 设置及销毁始终由该 owner 执行（启动前也不例外）。Channel 不关闭 fd，所有者必须先 remove，回调返回后再销毁 Channel 和 fd owner。
+- 生产默认main监听、两个worker处理连接，显式 `--threads 0` 保留单 Reactor。EventLoop 绑定构造线程；所有注册、更新、移除、poll、cleanup 设置及销毁始终由该 owner 执行（启动前也不例外）。Channel 不关闭 fd，所有者必须先 remove，回调返回后再销毁 Channel 和 fd owner。
 - 消息 span 只在回调期间借用，consume 后不再使用旧视图；send 在返回前复制字节，close_after_flush 立即停止新输入通知并保留待写尾部。HTTP会话在上个响应实际排空后才解析下个请求；pause与永久关闭分离。旧 ApplicationHandler/Result 生产接口已移除。
-- 已有 eventfd 唤醒，但没有线程池、定时器、空闲超时、进程优雅关闭、全局连接上限或慢连接治理；空闲保活连接继续占用fd，资源治理仍按V0.4推进。
+- 已有固定 EventLoopThreadPool 与 eventfd 唤醒，但没有定时器、空闲超时、进程优雅关闭、全局连接上限或慢连接治理；空闲保活连接继续占用fd，资源治理仍按V0.4推进。
 - 文件采用读入内存后复用输出缓冲，不使用 `sendfile`，不作生产安全、容量或性能承诺。
 - 只承诺 Linux / WSL2 方向；HTTP/2、TLS、数据库、代理、L4LB、XDP 和 DPDK 均不在当前范围。
 
