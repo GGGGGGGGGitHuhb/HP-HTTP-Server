@@ -6,6 +6,9 @@
 
 ### 新增
 
+- V0.4/S1 交付 EventLoop owner 约束、异步任务队列、eventfd 唤醒、停止排空与异常取消，以及 EventLoopThread 启动握手、清理、join 异常回传；注册 token 原子分配并锁存耗尽。生产 HTTP 保持单线程，任务队列仅受控有限投递，未交付线程池、容量治理或进程优雅关闭。
+- V0.4/S1 新增线程专项并保留原 15 个 CTest 身份；独立 Debug 零告警、CTest16/16（9.69 秒）、curl、TSan、ASan/UBSan/LSan 及 Reviewer 独立任务/捕获重入探针通过。2026-09-09 经 Reviewer001 PASS、Leader003 关闭 S1；V0.4 整体尚未完成，本记录不代表发布。
+
 - V0.3/S3完成既有协议异常回归：66具名短语料、9长边界及6629调度，首/第二请求14真实拒绝、52逐前缀FIN、两类RST隔离与fd回收；保留原15个CTest身份。仅扩充测试及README，无生产协议或接口变化。
 - V0.3/S3独立Debug告警0、CTest15/15（4.88秒）、额外4语料/463调度、curl及两项ASan/UBSan/LSan通过，Reviewer001唯一PASS，Leader004核对版本条件并完成V0.3收口。完成日期2026-09-09，当前仍记Unreleased，不代表发布。
 

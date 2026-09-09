@@ -4,8 +4,8 @@
 
 ## 当前概况
 
-- 当前检查：V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
-- 最近完成：V0.3/S3及V0.3版本，S1/S2/S3均已完成；V0.1/V0.2已完成，V0.4未开始。
+- 当前检查：V0.4/S1 Approved revision 1 已交付，Builder001、Reviewer001 PASS 与 Leader003 齐备；P3-01 及 TD-005 本阶段检查点关闭；TD-005 持续 Open，无新增债务或延期。上一阶段 V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
+- 最近完成阶段：V0.4/S1；V0.4 整体尚未完成，S2/S3/S4 未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
 - P3-01根状态同步完成；TD-003按既定V0.3退出条件关闭，TD-005本阶段检查点完成且持续Open。无新增债务、未批准延期或必需未验证项。
 - S2已有单响应积压控制、暂停读取及排空恢复；S3只补充回归，不新增治理能力。全局配额、空闲超时继续既定V0.4范围，不形成生产安全或性能承诺。
 - 本文档不跟踪本地协作文档是否进入版本控制或远程发布。
@@ -126,7 +126,7 @@ V1.0 已完成，用户明确批准 V1.1，且 Approved 设计包含禁止范围
 
 当前决定：
 
-使用 `Draft/Approved/Superseded` 生命周期和 `REQ/AC/RV` 追溯。Builder 报告必须记录设计差异，Reviewer 必须检查文档一致性，阶段通过后由 Leader 同步状态文档。`2026-09-01` 的 S2 与 `2026-09-03` 的 S3 检查点均已按此流程完成。V0.2/S1 revision 1 已建立一致的 8 REQ、10 AC、10 RV 与根状态，并于 `2026-09-07` 登记为 Approved；现有 Builder 001、Reviewer 001 唯一 PASS 及 Leader 003 同步收口证据，本阶段 P3-01 与 TD-005 同步检查点已关闭。V0.2/S2 同样已于 `2026-09-08` 具备 Approved、Builder 001、Reviewer 001 PASS 与 Leader 003 收口证据，S2 同步检查点关闭。V0.2/S3及版本收口也已形成Approved、Builder001、Reviewer001 PASS及Leader003，P3-01/P3-02关闭；TD-005 继续作为跨阶段治理风险保持 `Open`。
+使用 `Draft/Approved/Superseded` 生命周期和 `REQ/AC/RV` 追溯。Builder 报告必须记录设计差异，Reviewer 必须检查文档一致性，阶段通过后由 Leader 同步状态文档。`2026-09-01` 的 S2 与 `2026-09-03` 的 S3 检查点均已按此流程完成。V0.2/S1 revision 1 已建立一致的 8 REQ、10 AC、10 RV 与根状态，并于 `2026-09-07` 登记为 Approved；现有 Builder 001、Reviewer 001 唯一 PASS 及 Leader 003 同步收口证据，本阶段 P3-01 与 TD-005 同步检查点已关闭。V0.2/S2 同样已于 `2026-09-08` 具备 Approved、Builder 001、Reviewer 001 PASS 与 Leader 003 收口证据，S2 同步检查点关闭。V0.2/S3及版本收口也已形成Approved、Builder001、Reviewer001 PASS及Leader003，P3-01/P3-02关闭；TD-005 继续作为跨阶段治理风险保持 `Open`。V0.4/S1 于 2026-09-09 具备 Approved、Builder001、独立 Reviewer001 PASS 与 Leader003，同步检查点及 P3-01 关闭，无新增债务或风险豁免。
 
 退出标准：
 
@@ -230,6 +230,8 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 
 ## 变更记录
 
+- `2026-09-09`：准备 V0.4/S1 Draft revision 1，TD-005 持续 Open；未新增债务或批准延期，任务容量治理保留 S4 范围。
+
 - `2026-09-09`：依据S3 Builder001、独立Reviewer001 PASS及Leader004关闭S3、V0.3与P3-01；TD-003按退出条件Closed，TD-005当前检查点完成并持续Open；V0.4未开始。
 
 - `2026-09-09`：依据PM“批准，开始工作”及Leader V0.3/S3-report-002登记S3 revision1 Approved、待实现；范围及既有架构不变，未新增验收或债务关闭声明。
@@ -270,3 +272,7 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 - `2026-08-24`：将文档重构为跨阶段技术债与风险清单；同步 S1 为待实现；标准化类型、状态和退出标准；移除不属于技术债范围且与用户本地协作策略冲突的旧条目。
 - `2026-05-25`：同步初始 S1 设计状态。
 - `2026-05-21`：初始化 TD-001 至 TD-005 和风险观察。
+
+- `2026-09-09`：依据 PM 批准与 Leader V0.4/S1-report-002 登记 S1 Approved revision 1；TD-005 持续 Open，无新增债务、风险豁免或延期。
+
+- `2026-09-09`：V0.4/S1 经 Reviewer001 PASS、Leader003 完成，关闭 P3-01 与 TD-005 当前检查点，TD-005 持续 Open；队列容量治理保留 S4，未新增债务或必需未验证项。

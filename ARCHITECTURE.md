@@ -6,13 +6,17 @@
 
 ## 当前状态与目标架构
 
+V0.4/S1 已批准设计入口：`docs/leader/designs/V0.4/S1-design.md`。已交付单个事件循环线程、任务投递及唤醒/停止生命周期；当前生产仍在原线程运行，主从 Reactor 和进程优雅关闭保持后续范围。
+
 V0.3/S2已完成：http判定零body请求边界与连接策略，app驱动串行会话，net提供通用读暂停/恢复与非递归排空通知。原设计 `docs/leader/designs/V0.3/S2-design.md` 与Approved `docs/leader/reworks/V0.3/S2-rework-001.md`共同定义已交付契约；Reviewer001唯一PASS，Leader004完成收口。
 
-当前V0.1/V0.2及V0.3/S1/S2均已完成；S2独立Debug告警0、CTest15/15、全部12AC与专项sanitizer通过。V0.3/S3及V0.3已完成：S3独立Debug告警0、CTest15/15、8AC/RV与双专项sanitizer通过，Reviewer001 PASS、Leader004完成收口。S3仅新增测试和文档，不改变已交付架构；V0.4未开始。当前生产每连接持有RequestParser，逐段feed新输入并立即consume accepted_bytes，包括NeedMore；每个响应实际排空后才重置parser并处理下一请求。
+当前V0.1/V0.2及V0.3/S1/S2均已完成；S2独立Debug告警0、CTest15/15、全部12AC与专项sanitizer通过。V0.3/S3及V0.3已完成：S3独立Debug告警0、CTest15/15、8AC/RV与双专项sanitizer通过，Reviewer001 PASS、Leader004完成收口。S3仅新增测试和文档，不改变已交付架构；V0.4/S1已完成，Approved revision 1、Builder001、Reviewer001 PASS 与 Leader003 齐备；独立 Debug 零告警、CTest16/16 和必需 sanitizer 通过。当前生产每连接持有RequestParser，逐段feed新输入并立即consume accepted_bytes，包括NeedMore；每个响应实际排空后才重置parser并处理下一请求。
 
 本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1`、`S2`、`S3` 均已完成；以下为V0.1历史交付：当时已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、集中式单线程单 epoll LT、连接表、输出缓冲与短写续传、半关闭和连接错误隔离，以及有界的单请求 HTTP/1.1 `GET` 解析和静态文件响应。S3 以 root fd 为锚逐组件使用 `openat` 与 no-follow 约束，响应后统一关闭连接；不支持 body/chunked、keep-alive、第二个 pipelined 响应、URL decode 或 symlink 服务。Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建、CTest `9/9` 与 RV-01 至 RV-10，唯一结论为 `PASS`。这些证据只证明 V0.1 的最小闭环，不构成生产安全、容量或性能承诺。
 
-S1 已交付的 EventLoop/Channel 保持注册 token 分发与 stale 过滤。当前，Acceptor 独占 listener Socket/Channel，负责 accept-drain 并移动交付 Socket；TcpServer 建立并持有 TcpConnection 集合。TcpConnection 独占 ConnectionIo/Channel，处理完整事件、interest、诊断及一次关闭通知；先 remove/token 失效，TcpServer 在回调返回后校验 fd+稳定 identity 并回收，EventLoop 最后销毁。Channel 不拥有 fd。旧ApplicationHandler/Result生产路径已移除；TcpConnection发布通用消息，app适配器处理HTTP，S2已增加HTTP串行复用；线程/wakeup/timer仍未实现。
+S1 已交付的 EventLoop/Channel 保持注册 token 分发与 stale 过滤。当前，Acceptor 独占 listener Socket/Channel，负责 accept-drain 并移动交付 Socket；TcpServer 建立并持有 TcpConnection 集合。TcpConnection 独占 ConnectionIo/Channel，处理完整事件、interest、诊断及一次关闭通知；先 remove/token 失效，TcpServer 在回调返回后校验 fd+稳定 identity 并回收，EventLoop 最后销毁。Channel 不拥有 fd。旧ApplicationHandler/Result生产路径已移除；TcpConnection发布通用消息，app适配器处理HTTP，S2已增加HTTP串行复用；V0.4/S1 已交付线程与 eventfd 唤醒原语，timer 仍未实现。
+
+V0.4/S1 的 EventLoop 在构造线程绑定 owner，Channel 操作及清理只在 owner 执行；跨线程入口限于任务投递、停止和不可变线程身份。EventLoopThread 在 worker 构造/销毁 loop，以同步握手发布可用状态，正常停止排空已接收任务，失败取消并在 owner 释放，join 回传首次异常。内部唤醒 fd 按 remove、销毁 Channel、close 顺序回收；token 原子分配并在耗尽后锁存。任务队列尚无容量上限，仅用于受控有限投递；本阶段未把生产连接移入线程，也未交付进程优雅关闭。
 
 阅读本文档时应区分：
 
@@ -539,6 +543,8 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 
 ## 变更记录
 
+- `2026-09-09`：登记 V0.4/S1 Draft 准备入口；新增能力未实现，现行生产架构不变。
+
 - `2026-09-09`：依据S3 Builder001、独立Reviewer001 PASS及Leader004关闭S3、V0.3与P3-01；TD-003按退出条件Closed，TD-005当前检查点完成并持续Open；V0.4未开始。
 
 - `2026-09-09`：依据PM“批准，开始工作”及Leader V0.3/S3-report-002登记S3 revision1 Approved、待实现；范围及既有架构不变，未新增验收或债务关闭声明。
@@ -577,3 +583,7 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 - `2026-08-25`：依据独立 Reviewer `PASS` 同步 S1 已完成状态、当前已落地边界和 S2 设计前置条件。
 - `2026-08-24`：区分当前实现状态与长期目标架构，补充 metrics 依赖边界、`EventLoopThreadPool` 定义和信号驱动的优雅关闭约束。
 - `2026-05-21`：初始化长期架构文档，明确 C++20、Linux、epoll、HTTP/1.1、Reactor、静态文件服务和 L7 Gateway 扩展边界。
+
+- `2026-09-09`：依据 PM 批准与 Leader V0.4/S1-report-002 登记 S1 Approved revision 1；待实现，现行生产架构不变。
+
+- `2026-09-09`：依据 V0.4/S1 Reviewer001 PASS 与 Leader003 同步已交付线程原语和生命周期；生产 HTTP 仍单线程，线程池/定时器/治理继续后续阶段。

@@ -15,12 +15,15 @@ add_library(hp_http_core STATIC
     src/net/tcp_connection.cpp
     src/net/connection_io.cpp
     src/net/channel.cpp
+    src/net/event_loop_thread.cpp
     src/net/event_loop.cpp
     src/net/epoller.cpp
     src/net/socket.cpp
     src/net/tcp_server.cpp
 )
 target_include_directories(hp_http_core PUBLIC include)
+find_package(Threads REQUIRED)
+target_link_libraries(hp_http_core PUBLIC Threads::Threads)
 
 add_library(hp_http_app STATIC app/http_connection_handler.cpp)
 target_include_directories(hp_http_app PUBLIC app)
@@ -122,4 +125,15 @@ if(BUILD_TESTING)
     add_test(NAME http_keep_alive_integration_tests COMMAND http_keep_alive_integration_tests $<TARGET_FILE:hp_http_server>)
     set_tests_properties(http_keep_alive_tests http_keep_alive_integration_tests PROPERTIES
         TIMEOUT 60 ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(event_loop_thread_tests tests/event_loop_thread_tests.cpp)
+    target_link_libraries(event_loop_thread_tests PRIVATE hp_http_core)
+    target_link_options(event_loop_thread_tests PRIVATE
+        -Wl,--wrap=eventfd -Wl,--wrap=epoll_ctl -Wl,--wrap=epoll_wait
+        -Wl,--wrap=read -Wl,--wrap=write)
+    enable_debug_warnings(event_loop_thread_tests)
+    add_test(NAME event_loop_thread_tests COMMAND event_loop_thread_tests)
+    set_tests_properties(event_loop_thread_tests PROPERTIES TIMEOUT 60)
 endif()

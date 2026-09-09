@@ -133,8 +133,10 @@ class ServerProcess {
           output_(std::move(output)) {}
 
     ~ServerProcess() { stop(); }
+
     ServerProcess(const ServerProcess&) = delete;
     ServerProcess& operator=(const ServerProcess&) = delete;
+
     ServerProcess(ServerProcess&& other) noexcept
         : pid_(std::exchange(other.pid_, -1)),
           output_fd_(std::exchange(other.output_fd_, -1)),
@@ -142,7 +144,9 @@ class ServerProcess {
           output_(std::move(other.output_)) {}
 
     [[nodiscard]] std::uint16_t port() const noexcept { return port_; }
+
     [[nodiscard]] const std::string& output() const noexcept { return output_; }
+
     [[nodiscard]] bool running() const noexcept {
         return pid_ > 0 && ::kill(pid_, 0) == 0;
     }

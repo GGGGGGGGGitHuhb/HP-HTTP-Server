@@ -105,6 +105,7 @@ int run(int argc, char* argv[]) {
     std::cout << "V0.1 / S3 minimal HTTP static file server listening on port "
               << port_text << "." << std::endl;
     server.run();
+    return 0;
 }
 
 }  // namespace
