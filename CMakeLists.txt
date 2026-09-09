@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(hp_http_core STATIC
     src/base/logger.cpp
+    src/timer/timer_queue.cpp
     src/http/http_request.cpp
     src/http/http_response.cpp
     src/http/static_file_service.cpp
@@ -156,5 +157,25 @@ if(BUILD_TESTING)
     enable_debug_warnings(multi_reactor_tests)
     add_test(NAME multi_reactor_tests COMMAND multi_reactor_tests $<TARGET_FILE:hp_http_server>)
     set_tests_properties(multi_reactor_tests PROPERTIES TIMEOUT 60
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(timer_queue_tests tests/timer_queue_tests.cpp)
+    target_link_libraries(timer_queue_tests PRIVATE hp_http_core)
+    target_link_options(timer_queue_tests PRIVATE -Wl,--wrap=_Znwm -Wl,--wrap=epoll_wait)
+    enable_debug_warnings(timer_queue_tests)
+    add_test(NAME timer_queue_tests COMMAND timer_queue_tests)
+    set_tests_properties(timer_queue_tests PROPERTIES TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(connection_timeout_tests tests/connection_timeout_tests.cpp)
+    target_link_libraries(connection_timeout_tests PRIVATE hp_http_app)
+    target_link_options(connection_timeout_tests PRIVATE -Wl,--wrap=accept4 -Wl,--wrap=close
+        -Wl,--wrap=epoll_ctl -Wl,--wrap=_Znwm)
+    enable_debug_warnings(connection_timeout_tests)
+    add_test(NAME connection_timeout_tests COMMAND connection_timeout_tests)
+    set_tests_properties(connection_timeout_tests PROPERTIES TIMEOUT 60
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
 endif()

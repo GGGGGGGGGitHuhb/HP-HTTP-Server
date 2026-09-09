@@ -50,6 +50,8 @@ void TcpConnection::start() {
 void TcpConnection::stop() noexcept {
     state_ = State::closing;
     channel_.remove();
+    if (activity_callback_)
+        activity_callback_(*this, false);
 }
 
 void TcpConnection::request_close() noexcept {
@@ -110,6 +112,14 @@ void TcpConnection::resume_reading() {
         update_interest();
 }
 
+void TcpConnection::set_idle_wait(bool waiting) {
+    if (idle_waiting_ == waiting)
+        return;
+    idle_waiting_ = waiting;
+    if (activity_callback_)
+        activity_callback_(*this, false);
+}
+
 void TcpConnection::update_interest() {
     std::uint32_t events =
         !input_stopped_ && !read_paused_ && io_.accepts_input() ? EPOLLIN | EPOLLRDHUP : 0U;
@@ -121,6 +131,11 @@ void TcpConnection::update_interest() {
 void TcpConnection::read_messages() {
     while (state_ == State::active && !input_stopped_ && !read_paused_) {
         const auto read = io_.read_once();
+        if (read.bytes_read) {
+            idle_waiting_ = false;
+            if (activity_callback_)
+                activity_callback_(*this, true);
+        }
         last_result_.bytes_read += read.bytes_read;
         last_result_.read_error = read.error_number;
         if (read.bytes_read || (read.peer_closed && !eof_notified_)) {
@@ -142,6 +157,8 @@ void TcpConnection::read_messages() {
 void TcpConnection::flush_output() {
     while (state_ == State::active && io_.has_pending_output()) {
         const auto written = io_.write_available();
+        if (written.bytes_written && activity_callback_)
+            activity_callback_(*this, true);
         last_result_.bytes_written += written.bytes_written;
         last_result_.write_would_block = written.would_block;
         last_result_.write_error = written.error_number;

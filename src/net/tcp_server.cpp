@@ -5,21 +5,24 @@
 
 namespace hp::net {
 TcpServer::TcpServer(std::uint16_t requested_port, MessageCallbackFactory factory,
-                     std::size_t max_input_bytes, std::size_t worker_count)
+                     std::size_t max_input_bytes, std::size_t worker_count, ConnectionTimeouts timeouts)
     : callback_factory_(std::move(factory)), max_input_bytes_(max_input_bytes),
-      worker_count_(worker_count), registries_(worker_count <= 64 ? worker_count : 0),
+      worker_count_(worker_count), timeouts_(timeouts), registries_(worker_count <= 64 ? worker_count : 0),
       acceptor_(loop_, requested_port, [this](Socket socket) {
           add_connection(std::move(socket));
       }) {
+    if (timeouts.idle.count() < 0 || timeouts.keep_alive.count() < 0 ||
+        timeouts.idle.count() > 86400000 || timeouts.keep_alive.count() > 86400000)
+        throw std::invalid_argument("timeout outside 0-86400000ms");
     if (worker_count > 64)
         throw std::invalid_argument("worker count exceeds 64");
     if (worker_count == 0) {
-        main_registry_ = std::make_unique<ConnectionRegistry>(loop_, max_input_bytes_);
+        main_registry_ = std::make_unique<ConnectionRegistry>(loop_, max_input_bytes_, timeouts_);
     } else {
         pool_.start(
             worker_count,
             [this](std::size_t index, EventLoop& loop) {
-                registries_[index] = std::make_unique<ConnectionRegistry>(loop, max_input_bytes_);
+                registries_[index] = std::make_unique<ConnectionRegistry>(loop, max_input_bytes_, timeouts_);
             },
             [this](std::size_t index, EventLoop&) {
                 if (!stopping_.exchange(true)) {

@@ -52,6 +52,8 @@ struct TcpServerTestAccess {
 } // namespace hp::net
 
 namespace {
+thread_local int timer_allocation_failure = -1;
+thread_local int fail_after_registration = -1;
 std::mutex socket_probe_mutex;
 std::set<int> accepted_fds;
 std::atomic<int> accepted_sockets{}, closed_sockets{}, invalid_closes{}, reject_registration{},
@@ -95,12 +97,23 @@ int __wrap_epoll_ctl(int fd, int operation, int observed_fd, epoll_event* event)
             return -1;
         }
     }
-    return __real_epoll_ctl(fd, operation, observed_fd, event);
+    const int result = __real_epoll_ctl(fd, operation, observed_fd, event);
+    if (result == 0 && operation == EPOLL_CTL_ADD && fail_after_registration >= 0) {
+        timer_allocation_failure = fail_after_registration;
+        fail_after_registration = -1;
+    }
+    return result;
 }
 
 void* __real__Znwm(std::size_t);
 
 void* __wrap__Znwm(std::size_t size) {
+    if (timer_allocation_failure == 0) {
+        timer_allocation_failure = -1;
+        throw std::bad_alloc();
+    }
+    if (timer_allocation_failure > 0)
+        --timer_allocation_failure;
     if (size == sizeof(TcpConnection) && reject_allocation.exchange(0))
         throw std::bad_alloc();
     return __real__Znwm(size);
@@ -168,10 +181,10 @@ struct ServerHarness {
     std::exception_ptr error;
 
     ServerHarness(const hp::http::StaticFileService& service, std::size_t workers,
-                  Probe* probe = nullptr) {
+                  Probe* probe = nullptr, ConnectionTimeouts timeouts = {}) {
         std::promise<void> ready;
         auto result = ready.get_future();
-        control = std::thread([&, workers, probe] {
+        control = std::thread([&, workers, probe, timeouts] {
             bool published = false;
             try {
                 auto production = hp::app::make_http_factory(service);
@@ -203,7 +216,7 @@ struct ServerHarness {
                                 callback(connection, bytes, eof);
                             });
                     },
-                    hp::http::max_request_bytes, workers);
+                    hp::http::max_request_bytes, workers, timeouts);
                 if (probe)
                     probe->main = std::this_thread::get_id();
                 server = &instance;
@@ -336,8 +349,8 @@ void owners(const hp::http::StaticFileService& service, std::size_t workers) {
     std::cout << '\n';
 }
 
-void protocols(const hp::http::StaticFileService& service) {
-    ServerHarness harness(service, 2);
+void protocols(const hp::http::StaticFileService& service, ConnectionTimeouts timeouts = {}) {
+    ServerHarness harness(service, 2, nullptr, timeouts);
     std::barrier begin(3);
     std::exception_ptr errors[2];
     std::thread clients[2];
@@ -564,7 +577,10 @@ void cli_modes(const char* executable, const Fixture& fixture) {
 
 } // namespace
 
-int main(int argc, char** argv) {
+#ifndef HP_MULTI_REACTOR_ENTRY
+#define HP_MULTI_REACTOR_ENTRY main
+#endif
+int HP_MULTI_REACTOR_ENTRY(int argc, char** argv) {
     try {
         Fixture fixture;
         auto service_owner = std::make_unique<hp::http::StaticFileService>(fixture.root.string());

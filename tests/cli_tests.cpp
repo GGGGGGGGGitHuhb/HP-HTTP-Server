@@ -209,6 +209,25 @@ int main(int argc, char* argv[]) {
             run_process(argv[1], {"--port", "0", "--root", missing, "--threads", "64"}).exit_code ==
                 1,
             "64 parses before resource failure without starting threads");
+        for (const auto option : {"--idle-timeout-ms", "--keep-alive-timeout-ms"}) {
+            for (const auto value : {"86400001", "-1", "+1", "", "1x", "184467440737095516160"}) {
+                expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
+                                            option, value}).exit_code == 2,
+                       "invalid timeout exits 2");
+            }
+            expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
+                                        option}).exit_code == 2, "missing timeout exits 2");
+            expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
+                                        option, "0", option, "0"}).exit_code == 2,
+                   "duplicate timeout exits 2");
+            for (const auto value : {"0", "1", "86400000"}) {
+                expect(run_process(argv[1], {"--port", "0", "--root", missing,
+                                            option, value}).exit_code == 1,
+                       "valid timeout reaches resource validation exit 1");
+            }
+        }
+        expect_contains(help.output, "defaults to 30000", "help ordinary timeout default");
+        expect_contains(help.output, "defaults to 15000", "help keep-alive timeout default");
         const RunResult missing_root = run_process(argv[1], {"--port", "0", "--root", missing});
         expect(missing_root.exit_code != 0, "missing root must fail before serving");
         expect_contains(missing_root.output, "static root is unavailable",

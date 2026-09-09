@@ -6,6 +6,9 @@
 
 ### 新增
 
+- V0.4/S3交付owner单调TimerQueue、EventLoop最近截止调度、一连接一timer及实际recv/send进展续期；生产idle默认30000ms、keep-alive等待15000ms，各0禁用、组合取早。到期静默关闭，可截断响应而不发送408；不包含最低速率、总请求时限、阻塞抢占或S4高水位/优雅关闭。
+- 2026-09-09经S3 Reviewer001独立PASS、Leader003收口：零告警、CTest20/20（14.20秒）、threads0服务3/3、双curl、四TSan与三ASan/UBSan/LSan通过；独立三worker六连接、真实截断前缀、CLI与RST/stop探针通过。S3完成，V0.4未完成，本条不代表提交或发布。
+
 - V0.4/S2交付固定EventLoopThreadPool与生产main/sub Reactor：默认2个worker、`--threads 0`单Reactor兼容，连接轮转后终生owner固定，各ConnectionRegistry回调后回收；Session/parser在owner创建，静态文件服务安全共享。每worker池入口固定1024个未结束任务，满时关闭交接连接；提供立即停止、部分启动失败与worker异常时全部回收，不承诺响应排空或完整资源治理。
 - V0.4/S2于2026-09-09经独立Reviewer001 PASS、Leader003收口：Debug零告警、默认CTest18/18（11.57秒）、显式0旧服务回归3/3、双curl、三TSan及三ASan/UBSan/LSan目标通过；另有3worker/9连接、8×257停止交错与真实provider计数探针。仅S2完成，V0.4尚未完成，本条不代表提交或发布。
 

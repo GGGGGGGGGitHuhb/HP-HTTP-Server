@@ -65,6 +65,7 @@ EventLoop::~EventLoop() noexcept {
         std::lock_guard lock(mutex_);
         state_ = State::Stopped;
     }
+    timers_.clear();
     tasks_.clear();
     wake_channel_->remove();
     wake_channel_.reset();
@@ -144,6 +145,7 @@ void EventLoop::fail(std::exception_ptr error) {
         failure_observed_ = true;
         cancelled.swap(tasks_);
     }
+    timers_.clear();
     // Captures are destroyed on owner, outside mutex (destructors may post).
 }
 
@@ -226,6 +228,49 @@ void EventLoop::dispatch(std::uint64_t token, std::uint32_t mask) {
         after_dispatch_();
 }
 
+bool EventLoop::timers_allowed() {
+    std::lock_guard lock(mutex_);
+    return state_ == State::Ready || state_ == State::Running;
+}
+
+EventLoop::TimerId EventLoop::add_timer(timer::TimerQueue::TimePoint deadline, Task task) {
+    require_owner();
+    if (!timers_allowed())
+        throw std::logic_error("timer on stopping EventLoop");
+    if (!task)
+        throw std::invalid_argument("empty timer task");
+    return timers_.add(deadline, [this, task = std::move(task)] {
+        if (!timers_allowed())
+            return;
+        try {
+            task();
+        } catch (...) {
+            if (after_dispatch_)
+                after_dispatch_();
+            throw;
+        }
+        if (after_dispatch_)
+            after_dispatch_();
+    });
+}
+
+bool EventLoop::reschedule_timer(TimerId id, timer::TimerQueue::TimePoint deadline) {
+    require_owner();
+    if (!timers_allowed())
+        return false;
+    return timers_.reschedule(id, deadline);
+}
+
+bool EventLoop::cancel_timer(TimerId id) {
+    require_owner();
+    return timers_.cancel(id);
+}
+
+std::size_t EventLoop::timer_count() const {
+    require_owner();
+    return timers_.size();
+}
+
 void EventLoop::poll_once(int timeout_ms) {
     require_owner();
     if (polling_)
@@ -236,6 +281,7 @@ void EventLoop::poll_once(int timeout_ms) {
             return;
     }
     polling_ = true;
+    const auto timer_cutoff = timers_.last_id();
     std::deque<Task> batch;
     try {
         {
@@ -249,6 +295,16 @@ void EventLoop::poll_once(int timeout_ms) {
         }
         if (timeout_ms < 0 || timeout_ms > 1000)
             timeout_ms = 1000;
+        if (auto deadline = timers_.next_deadline()) {
+            const auto remaining = *deadline - timer::TimerQueue::Clock::now();
+            if (remaining <= timer::TimerQueue::Clock::duration::zero()) {
+                timeout_ms = 0;
+            } else {
+                const auto millis = std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
+                if (millis < timeout_ms)
+                    timeout_ms = static_cast<int>(millis);
+            }
+        }
         const auto events = epoller_.wait(timeout_ms);
         for (const auto& event : events)
             dispatch(event.data.u64, event.events);
@@ -267,6 +323,10 @@ void EventLoop::poll_once(int timeout_ms) {
             task();
             task = {};
         }
+        if (timers_allowed())
+            timers_.run_due(timer::TimerQueue::Clock::now(), timer_cutoff);
+        if (!timers_allowed())
+            timers_.clear();
         {
             std::lock_guard lock(mutex_);
             if (state_ == State::Stopping && tasks_.empty())
