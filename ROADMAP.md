@@ -18,7 +18,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 使用 `sendfile`、异步日志、Buffer 优化和压测分析支撑高性能叙事。
 - 在 HTTP Server 内核稳定后，扩展轻量 L7 Reverse Proxy / Gateway 能力，减少普通 WebServer 项目的同质化。
 
-当前项目已完成 V0.1 最小可运行 HTTP Server 和 V0.2 Reactor 抽象重构；V0.2 的 S1/S2/S3 均有 Approved、实现、独立 Reviewer PASS 与 Leader 收口证据。V0.3/S1增量HTTP Parser已完成并独立PASS；V0.3已完成，S1/S2/S3全部具备Approved、实现、独立Reviewer PASS及Leader收口；V0.4/S1已完成，S2/S3/S4未开始。
+当前项目已完成 V0.1 最小可运行 HTTP Server 和 V0.2 Reactor 抽象重构；V0.2 的 S1/S2/S3 均有 Approved、实现、独立 Reviewer PASS 与 Leader 收口证据。V0.3/S1增量HTTP Parser已完成并独立PASS；V0.3已完成，S1/S2/S3全部具备Approved、实现、独立Reviewer PASS及Leader收口；V0.4/S1已完成，S2已完成，S3/S4未开始。
 
 总体技术方向：
 
@@ -73,7 +73,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ## 推进与完成规则
 
-- V0.1、V0.2 均已完成；V0.2/S3 于2026-09-08取得独立 Reviewer PASS并收口。V0.3/S1已完成，V0.3已完成，S1/S2/S3全部具备Approved、实现、独立Reviewer PASS及Leader收口；V0.4/S1已完成，S2/S3/S4未开始。
+- V0.1、V0.2 均已完成；V0.2/S3 于2026-09-08取得独立 Reviewer PASS并收口。V0.3/S1已完成，V0.3已完成，S1/S2/S3全部具备Approved、实现、独立Reviewer PASS及Leader收口；V0.4/S1已完成，S2已完成，S3/S4未开始。
 - 阶段状态统一使用：`未开始`、`设计中`、`待实现`、`实现中`、`待审查`、`返工中`、`已完成`、`阻塞`。
 - 阶段设计和审查计划必须处于 `Approved`，Builder 才能开始实现。
 - 阶段只有在实现证据完整，且 Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT` 后，才能标记为 `已完成`。
@@ -244,7 +244,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.4 并发模型与资源治理
 
-状态：进行中，版本尚未完成；S1 Approved revision 1 已实现并经独立 Reviewer PASS、Leader003 收口；S2/S3/S4 未开始。
+状态：进行中，版本尚未完成；S1 Approved revision 1 已实现并经独立 Reviewer PASS、Leader003 收口；S2 已完成，S3/S4 未开始。
 
 前置条件：
 
@@ -276,7 +276,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 阶段划分：
 
 - `S1 EventLoop 线程化`（`已完成`，Approved revision 1）：建立事件循环线程封装和跨线程唤醒机制。设计文档：`docs/leader/designs/V0.4/S1-design.md`。
-- `S2 主从 Reactor`：实现由 `EventLoopThreadPool` 持有 sub reactor，main reactor 接收连接并按固定策略分配。设计文档：`docs/leader/designs/V0.4/S2-design.md`。
+- `S2 主从 Reactor`（`已完成`，Approved revision 1）：实现由 `EventLoopThreadPool` 持有 sub reactor，main reactor 接收连接并按固定策略分配。设计文档：`docs/leader/designs/V0.4/S2-design.md`。
 - `S3 定时器与连接超时`：实现空闲连接超时、keep-alive 超时和定时清理。设计文档：`docs/leader/designs/V0.4/S3-design.md`。
 - `S4 资源上限与优雅关闭`：加入输出高水位、跨线程任务上限、信号停止通知和关闭流程验证。设计文档：`docs/leader/designs/V0.4/S4-design.md`。
 
@@ -521,7 +521,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 ### V0.4 阶段摘要
 
 - `S1 EventLoop 线程化`（`已完成`，Approved revision 1）：产出事件循环线程和跨线程唤醒机制；涉及 `net`、`base`.
-- `S2 主从 Reactor`：产出由固定 `EventLoopThreadPool` 持有 sub reactor 的连接分发模型；涉及 `net`。
+- `S2 主从 Reactor`（`已完成`，Approved revision 1）：产出由固定 `EventLoopThreadPool` 持有 sub reactor 的连接分发模型；涉及 `net`。
 - `S3 定时器与连接超时`：产出空闲连接清理和超时策略；涉及 `timer`、`net`。
 - `S4 资源上限与优雅关闭`：产出高水位、跨线程任务上限、信号停止通知和关闭流程验证；涉及 `net`、`base`。
 
@@ -569,6 +569,9 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 用户明确希望继续扩展，而不是优先准备简历材料或面试讲解。
 
 ## 变更记录
+
+- `2026-09-09`：确认 S1 PR #10 合并提交 fb09f1d，发布并核对 v0.4-s1 标签；准备 S2 Draft revision 1 设计、审查与Leader001。S2设计中，S3/S4未开始，未实现主从Reactor。
+
 
 - `2026-09-09`：准备 V0.4/S1 Draft revision 1 设计、审查计划及 Leader001；S1 设计中，S2/S3/S4 未开始。生产仍单线程，未实现新能力。
 
@@ -620,3 +623,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - `2026-09-09`：依据 PM 批准与 Leader V0.4/S1-report-002 登记 S1 Approved revision 1，待实现 / Ready for Builder；范围与后续阶段边界不变。
 
 - `2026-09-09`：依据 V0.4/S1 Builder001、Reviewer001 PASS 与 Leader003 关闭 S1 和 P3-01；V0.4 整体尚未完成，S2/S3/S4 未开始。
+
+- `2026-09-09`：依据 PM“批准，工作吧”及 Leader V0.4/S2-report-002 登记 S2 Approved revision 1，待实现；S1已完成，S3/S4未开始。
+
+- `2026-09-09`：依据 V0.4/S2 Builder001、Reviewer001 PASS 与 Leader003 关闭 S2/P3-01；S1/S2已完成，V0.4尚未完成，S3/S4未开始。

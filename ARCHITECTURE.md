@@ -6,7 +6,9 @@
 
 ## 当前状态与目标架构
 
-V0.4/S1 已批准设计入口：`docs/leader/designs/V0.4/S1-design.md`。已交付单个事件循环线程、任务投递及唤醒/停止生命周期；当前生产仍在原线程运行，主从 Reactor 和进程优雅关闭保持后续范围。
+V0.4/S2 已完成，Approved设计入口 `docs/leader/designs/V0.4/S2-design.md`。生产由main接收并按round-robin交接，固定worker各自持有ConnectionRegistry；默认2个worker，显式0回退main上的同一registry算法。每worker最多1024个未结束池任务（含执行者），满时关闭交接连接。Builder001、独立Reviewer001 PASS与Leader003齐备，默认CTest18/18、显式0回归3/3与全部必需sanitizer通过。
+
+V0.4/S1 已批准设计入口：`docs/leader/designs/V0.4/S1-design.md`。已交付单个事件循环线程、任务投递及唤醒/停止生命周期；该S1交付时生产仍单线程；主从Reactor已在S2交付，进程优雅关闭仍属S4。
 
 V0.3/S2已完成：http判定零body请求边界与连接策略，app驱动串行会话，net提供通用读暂停/恢复与非递归排空通知。原设计 `docs/leader/designs/V0.3/S2-design.md` 与Approved `docs/leader/reworks/V0.3/S2-rework-001.md`共同定义已交付契约；Reviewer001唯一PASS，Leader004完成收口。
 
@@ -14,9 +16,9 @@ V0.3/S2已完成：http判定零body请求边界与连接策略，app驱动串�
 
 本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1`、`S2`、`S3` 均已完成；以下为V0.1历史交付：当时已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、集中式单线程单 epoll LT、连接表、输出缓冲与短写续传、半关闭和连接错误隔离，以及有界的单请求 HTTP/1.1 `GET` 解析和静态文件响应。S3 以 root fd 为锚逐组件使用 `openat` 与 no-follow 约束，响应后统一关闭连接；不支持 body/chunked、keep-alive、第二个 pipelined 响应、URL decode 或 symlink 服务。Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建、CTest `9/9` 与 RV-01 至 RV-10，唯一结论为 `PASS`。这些证据只证明 V0.1 的最小闭环，不构成生产安全、容量或性能承诺。
 
-S1 已交付的 EventLoop/Channel 保持注册 token 分发与 stale 过滤。当前，Acceptor 独占 listener Socket/Channel，负责 accept-drain 并移动交付 Socket；TcpServer 建立并持有 TcpConnection 集合。TcpConnection 独占 ConnectionIo/Channel，处理完整事件、interest、诊断及一次关闭通知；先 remove/token 失效，TcpServer 在回调返回后校验 fd+稳定 identity 并回收，EventLoop 最后销毁。Channel 不拥有 fd。旧ApplicationHandler/Result生产路径已移除；TcpConnection发布通用消息，app适配器处理HTTP，S2已增加HTTP串行复用；V0.4/S1 已交付线程与 eventfd 唤醒原语，timer 仍未实现。
+S1 已交付的 EventLoop/Channel 保持注册 token 分发与 stale 过滤。当前，Acceptor 独占 listener Socket/Channel，负责 accept-drain 并移动交付 Socket；各owner的ConnectionRegistry建立并持有TcpConnection集合，main的TcpServer只管理监听、池和轮转交接。TcpConnection 独占 ConnectionIo/Channel，处理完整事件、interest、诊断及一次关闭通知；先 remove/token 失效，ConnectionRegistry 在本owner回调返回后校验 fd+稳定 identity 并回收，EventLoop 最后销毁。Channel 不拥有 fd。旧ApplicationHandler/Result生产路径已移除；TcpConnection发布通用消息，app适配器处理HTTP，S2已增加HTTP串行复用；V0.4/S1 已交付线程与 eventfd 唤醒原语，timer 仍未实现。
 
-V0.4/S1 的 EventLoop 在构造线程绑定 owner，Channel 操作及清理只在 owner 执行；跨线程入口限于任务投递、停止和不可变线程身份。EventLoopThread 在 worker 构造/销毁 loop，以同步握手发布可用状态，正常停止排空已接收任务，失败取消并在 owner 释放，join 回传首次异常。内部唤醒 fd 按 remove、销毁 Channel、close 顺序回收；token 原子分配并在耗尽后锁存。任务队列尚无容量上限，仅用于受控有限投递；本阶段未把生产连接移入线程，也未交付进程优雅关闭。
+V0.4/S1 的 EventLoop 在构造线程绑定 owner，Channel 操作及清理只在 owner 执行；跨线程入口限于任务投递、停止和不可变线程身份。EventLoopThread 在 worker 构造/销毁 loop，以同步握手发布可用状态，正常停止排空已接收任务，失败取消并在 owner 释放，join 回传首次异常。内部唤醒 fd 按 remove、销毁 Channel、close 顺序回收；token 原子分配并在耗尽后锁存。S1独立线程API的任务队列仍无容量上限，仅用于受控有限投递；S2池入口另有固定1024边界，不允许绕过池直接投递生产交接。当前生产连接已移入worker，尚未交付进程优雅关闭。
 
 阅读本文档时应区分：
 
@@ -164,7 +166,7 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 `net` 模块是网络事件和连接生命周期的核心。
 
-当前实现边界：EventLoop注册分发、Channel观察fd、Acceptor监听、TcpConnection消息/发送/消费/暂停恢复/写完成通知/排空关闭，TcpServer工厂/集合/identity回收。ConnectionIo只拥有Socket和输入/输出/发送游标，不调用应用；send复制响应存储，consume使旧span失效，close_after_flush停读并排空后关闭。net无HTTP规则，纯http无连接fd/epoll依赖；StaticFileService保留root文件fd/openat。
+当前实现边界：EventLoop注册分发、Channel观察fd、Acceptor监听、TcpConnection消息/发送/消费/暂停恢复/写完成通知/排空关闭，TcpServer主线程factory/轮转交接、各owner ConnectionRegistry集合/identity回收。ConnectionIo只拥有Socket和输入/输出/发送游标，不调用应用；send复制响应存储，consume使旧span失效，close_after_flush停读并排空后关闭。net无HTTP规则，纯http无连接fd/epoll依赖；StaticFileService保留root文件fd/openat。
 
 主要职责：
 
@@ -467,7 +469,7 @@ HTTP 接口必须限制请求头大小、路径解析范围和连接生命周期
 
 ## 并发、状态与资源管理
 
-当前S2为单线程LT，每连接parser固定16KiB，transport未消费逻辑输入≤16KiB，最多一个未排空响应，文件≤8MiB。Writing暂停新的recv，实际排空后再推进缓存，EAGAIN退出等事件；暂停、peerEOF、永久关闭相互独立。临时复制允许固定倍数单响应内存，容量不随请求次数增长。初始空EOF/部分请求EOF为400关闭，已完成请求后的空闲EOF静默关闭；完整缓存请求在FIN后仍顺序排空。无空闲超时或全局配额，不声称生产抗DoS。
+当前生产HTTP沿用V0.3/S2复用契约，由V0.4/S2固定worker各自执行LT事件循环（显式0为单Reactor），每连接parser固定16KiB，transport未消费逻辑输入≤16KiB，最多一个未排空响应，文件≤8MiB。Writing暂停新的recv，实际排空后再推进缓存，EAGAIN退出等事件；暂停、peerEOF、永久关闭相互独立。临时复制允许固定倍数单响应内存，容量不随请求次数增长。初始空EOF/部分请求EOF为400关闭，已完成请求后的空闲EOF静默关闭；完整缓存请求在FIN后仍顺序排空。无空闲超时或全局配额，不声称生产抗DoS。
 
 项目长期以非阻塞 IO 和 Reactor 模型作为并发基础。
 
@@ -486,7 +488,7 @@ HTTP 接口必须限制请求头大小、路径解析范围和连接生命周期
 
 优雅关闭由 `V0.4 / S4` 负责。进程至少响应 `SIGINT` 和 `SIGTERM`，信号处理路径只触发异步安全的停止通知，实际停止监听、唤醒事件循环、排空或终止连接、回收线程和关闭 fd 均在正常控制流中完成。具体采用 `signalfd`、self-pipe 或等价机制，由阶段设计决定。
 
-当前阶段若尚未实现多线程，文档和代码仍应避免引入阻碍后续主从 Reactor 的全局状态。
+生产factory在main串行生成每连接callback，Session/parser在owner首次使用时创建；共享StaticFileService只读root fd、每请求独立文件fd，所有worker及callback释放后才销毁service。立即停止与worker故障会停止接收并回收全部worker，不保证活动响应排空。避免引入无同步共享可变状态。
 
 ## 测试架构
 
@@ -543,6 +545,8 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 
 ## 变更记录
 
+- `2026-09-09`：增加 V0.4/S2 Draft 准备入口，主从Reactor、owner registry与池投递界限均为待批准方案；现行生产实现不变。
+
 - `2026-09-09`：登记 V0.4/S1 Draft 准备入口；新增能力未实现，现行生产架构不变。
 
 - `2026-09-09`：依据S3 Builder001、独立Reviewer001 PASS及Leader004关闭S3、V0.3与P3-01；TD-003按退出条件Closed，TD-005当前检查点完成并持续Open；V0.4未开始。
@@ -587,3 +591,7 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 - `2026-09-09`：依据 PM 批准与 Leader V0.4/S1-report-002 登记 S1 Approved revision 1；待实现，现行生产架构不变。
 
 - `2026-09-09`：依据 V0.4/S1 Reviewer001 PASS 与 Leader003 同步已交付线程原语和生命周期；生产 HTTP 仍单线程，线程池/定时器/治理继续后续阶段。
+
+- `2026-09-09`：依据 PM 明确批准及 Leader V0.4/S2-report-002 登记 S2 Approved revision 1；尚未实现，不改变当前生产能力说明。
+
+- `2026-09-09`：依据 V0.4/S2 Reviewer001 PASS与Leader003同步主从Reactor、owner registry及固定池边界；S2已完成，超时和优雅治理仍留S3/S4。

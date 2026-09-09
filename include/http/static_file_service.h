@@ -24,6 +24,7 @@ class StaticFileService final : private base::NonCopyable {
         const HttpRequest& request, ConnectionPolicy policy = ConnectionPolicy::close) const;
 
    private:
+    friend struct StaticFileServiceTestAccess;
     int root_fd_{-1};
 };
 

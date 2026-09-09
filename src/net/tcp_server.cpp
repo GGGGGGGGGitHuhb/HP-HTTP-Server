@@ -1,81 +1,133 @@
 #include "net/tcp_server.h"
-#include <limits>
+#include "base/logger.h"
 #include <stdexcept>
 #include <utility>
 
 namespace hp::net {
 TcpServer::TcpServer(std::uint16_t requested_port, MessageCallbackFactory factory,
-                     std::size_t max_input_bytes)
+                     std::size_t max_input_bytes, std::size_t worker_count)
     : callback_factory_(std::move(factory)), max_input_bytes_(max_input_bytes),
+      worker_count_(worker_count), registries_(worker_count <= 64 ? worker_count : 0),
       acceptor_(loop_, requested_port, [this](Socket socket) {
           add_connection(std::move(socket));
       }) {
-    loop_.set_after_dispatch([this] {
-        drain_closed_connections();
-    });
-    acceptor_.start();
+    if (worker_count > 64)
+        throw std::invalid_argument("worker count exceeds 64");
+    if (worker_count == 0) {
+        main_registry_ = std::make_unique<ConnectionRegistry>(loop_, max_input_bytes_);
+    } else {
+        pool_.start(
+            worker_count,
+            [this](std::size_t index, EventLoop& loop) {
+                registries_[index] = std::make_unique<ConnectionRegistry>(loop, max_input_bytes_);
+            },
+            [this](std::size_t index, EventLoop&) {
+                if (!stopping_.exchange(true)) {
+                    worker_failed_ = true;
+                    loop_.request_stop();
+                }
+                registries_[index].reset();
+            });
+    }
+    try {
+        acceptor_.start();
+    } catch (...) {
+        auto error = std::current_exception();
+        try {
+            shutdown();
+        } catch (...) {
+        }
+        std::rethrow_exception(error);
+    }
 }
 
 TcpServer::~TcpServer() noexcept {
-    acceptor_.stop();
-    for (auto& [fd, connection] : connections_) {
-        (void)fd;
-        connection->stop();
+    try {
+        shutdown();
+    } catch (const std::exception& error) {
+        base::error(error.what());
+    } catch (...) {
+        base::error("unobserved TcpServer failure");
     }
-    connections_.clear();
 }
 
 std::uint16_t TcpServer::bound_port() const noexcept {
     return acceptor_.bound_port();
 }
 
+void TcpServer::request_stop() {
+    stopping_ = true;
+    loop_.request_stop();
+}
+
+void TcpServer::shutdown() {
+    stopping_ = true;
+    acceptor_.stop();
+    pool_.request_stop();
+    std::exception_ptr error;
+    try {
+        pool_.join();
+    } catch (...) {
+        error = std::current_exception();
+    }
+    main_registry_.reset();
+    if (error)
+        std::rethrow_exception(error);
+}
+
 void TcpServer::run() {
-    loop_.loop();
+    if (ran_)
+        throw std::logic_error("TcpServer cannot restart");
+    ran_ = true;
+    std::exception_ptr error;
+    try {
+        loop_.loop();
+    } catch (...) {
+        error = std::current_exception();
+    }
+    try {
+        shutdown();
+    } catch (...) {
+        if (!error)
+            error = std::current_exception();
+    }
+    if (error)
+        std::rethrow_exception(error);
+    if (worker_failed_)
+        throw std::runtime_error("worker stopped unexpectedly");
 }
 
 void TcpServer::add_connection(Socket socket) {
-    if (next_identity_ == 0)
-        throw std::overflow_error("connection identity exhausted");
-    const auto identity = next_identity_;
-    next_identity_ =
-        identity == std::numeric_limits<TcpConnection::Identity>::max() ? 0 : identity + 1;
-    const int fd = socket.fd();
-    auto connection = std::make_unique<TcpConnection>(
-        loop_, std::move(socket), identity,
-        callback_factory_ ? callback_factory_() : TcpConnection::MessageCallback{},
-        max_input_bytes_, [this](int closed_fd, TcpConnection::Identity id) noexcept {
-            connection_closed(closed_fd, id);
-        });
-    auto [position, inserted] = connections_.try_emplace(fd, std::move(connection));
-    if (!inserted)
-        throw std::logic_error("duplicate connection fd");
-    try {
-        position->second->start();
-    } catch (...) {
-        connections_.erase(position);
-        throw;
-    }
-}
-
-void TcpServer::connection_closed(int fd, TcpConnection::Identity identity) noexcept {
-    const auto found = connections_.find(fd);
-    if (found == connections_.end() || found->second->identity() != identity)
+    if (stopping_) {
+        acceptor_.stop();
         return;
-    auto& connection = *found->second;
-    if (connection.queued_for_recovery_)
-        return;
-    connection.queued_for_recovery_ = true;
-    connection.next_closing_ = closing_head_;
-    closing_head_ = &connection;
-}
-
-void TcpServer::drain_closed_connections() noexcept {
-    while (closing_head_) {
-        auto* connection = closing_head_;
-        closing_head_ = connection->next_closing_;
-        const auto found = connections_.find(connection->fd());
-        if (found != connections_.end() && found->second->identity() == connection->identity())
-            connections_.erase(found);
     }
+    auto callback = callback_factory_ ? callback_factory_() : TcpConnection::MessageCallback{};
+    if (worker_count_ == 0) {
+        main_registry_->add(std::move(socket), std::move(callback));
+        return;
+    }
+    const auto index = next_worker_;
+    next_worker_ = (next_worker_ + 1) % worker_count_;
+
+    struct Handoff {
+        Socket socket;
+        TcpConnection::MessageCallback callback;
+    };
+
+    auto handoff = std::make_shared<Handoff>(Handoff{std::move(socket), std::move(callback)});
+    pool_.post(index, [this, index, handoff](EventLoop&) {
+        if (stopping_)
+            return;
+        try {
+            registries_[index]->add(std::move(handoff->socket), std::move(handoff->callback));
+        } catch (const std::bad_alloc&) {
+            throw;
+        } catch (const std::exception& error) {
+            base::warn(error.what());
+        } catch (...) {
+            base::warn("connection adoption failed");
+        }
+    });
 }
-}
+} // namespace hp::net

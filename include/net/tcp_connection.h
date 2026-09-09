@@ -37,6 +37,7 @@ public:
     [[nodiscard]] State state() const noexcept { return state_; }
 private:
     friend class TcpServer;
+    friend class ConnectionRegistry;
     friend struct TcpConnectionTestAccess;
     void handle_event(std::uint32_t mask) noexcept;
     void update_interest();
