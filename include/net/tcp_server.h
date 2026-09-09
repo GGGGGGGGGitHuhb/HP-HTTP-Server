@@ -14,7 +14,7 @@ public:
                        std::size_t max_input_bytes = 0);
     ~TcpServer() noexcept;
     [[nodiscard]] std::uint16_t bound_port() const noexcept;
-    [[noreturn]] void run();
+    void run();
 private:
     friend struct TcpServerTestAccess;
     void add_connection(Socket socket);

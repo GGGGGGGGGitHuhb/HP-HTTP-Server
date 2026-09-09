@@ -12,6 +12,7 @@ Channel::Channel(EventLoop& loop, int fd, Callback callback)
 }
 
 Channel::~Channel() noexcept {
+    assert(loop_.is_in_loop_thread());
     assert(!registered());
 }
 

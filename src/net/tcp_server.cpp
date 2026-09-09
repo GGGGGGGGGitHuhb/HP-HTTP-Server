@@ -29,7 +29,7 @@ std::uint16_t TcpServer::bound_port() const noexcept {
     return acceptor_.bound_port();
 }
 
-[[noreturn]] void TcpServer::run() {
+void TcpServer::run() {
     loop_.loop();
 }
 

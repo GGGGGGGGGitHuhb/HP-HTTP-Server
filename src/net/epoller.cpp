@@ -17,12 +17,10 @@ namespace {
 }  // namespace
 
 Epoller::Epoller(std::size_t initial_capacity)
-    : fd_(::epoll_create1(EPOLL_CLOEXEC)), events_(initial_capacity) {
+    : events_(initial_capacity == 0 ? 1 : initial_capacity) {
+    fd_ = ::epoll_create1(EPOLL_CLOEXEC);
     if (fd_ == -1) {
         throw_system_error("epoll_create1");
-    }
-    if (events_.empty()) {
-        events_.resize(1);
     }
 }
 

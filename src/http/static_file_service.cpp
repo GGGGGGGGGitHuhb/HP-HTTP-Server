@@ -18,14 +18,18 @@ namespace {
 class UniqueFd final {
    public:
     explicit UniqueFd(int fd = -1) noexcept : fd_(fd) {}
+
     ~UniqueFd() {
         if (fd_ >= 0) {
             ::close(fd_);
         }
     }
+
     UniqueFd(const UniqueFd&) = delete;
     UniqueFd& operator=(const UniqueFd&) = delete;
+
     UniqueFd(UniqueFd&& other) noexcept : fd_(std::exchange(other.fd_, -1)) {}
+
     UniqueFd& operator=(UniqueFd&& other) noexcept {
         if (this != &other) {
             if (fd_ >= 0) {
@@ -35,6 +39,7 @@ class UniqueFd final {
         }
         return *this;
     }
+
     [[nodiscard]] int get() const noexcept { return fd_; }
 
    private:

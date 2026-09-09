@@ -6,7 +6,7 @@
 namespace hp::net {
 class EventLoop;
 // Non-owning observer. Remove before destruction; keep alive until callback returns.
-// All operations must run on the loop thread (or before the loop starts).
+// All operations must run on the loop thread (including before the loop starts).
 class Channel final : private base::NonCopyable {
 public:
     using Callback = std::function<void(std::uint32_t)>;
