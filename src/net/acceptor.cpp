@@ -34,6 +34,11 @@ void Acceptor::start() {
     channel_.set_interest(EPOLLIN);
 }
 
+void Acceptor::close() noexcept {
+    stop();
+    listener_.reset();
+}
+
 void Acceptor::stop() noexcept {
     channel_.remove();
 }

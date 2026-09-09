@@ -18,6 +18,7 @@
 
 using namespace hp::net;
 using namespace std::chrono_literals;
+
 namespace hp::net {
 struct EventLoopTestAccess {
     static void token(std::uint64_t v) {
@@ -25,6 +26,7 @@ struct EventLoopTestAccess {
     }
 };
 } // namespace hp::net
+
 namespace {
 std::atomic<int> create_error{}, register_error{}, read_fault{}, write_fault{};
 std::atomic<int> reads{}, writes{}, read_eintr{}, write_eintr{}, read_eagain{}, write_eagain{},
@@ -66,6 +68,7 @@ std::size_t count(const char* path) {
     return static_cast<std::size_t>(std::distance(std::filesystem::directory_iterator(path), {}));
 }
 } // namespace
+
 extern "C" {
 int __real_eventfd(unsigned int, int);
 
@@ -151,6 +154,7 @@ ssize_t __wrap_write(int fd, const void* data, size_t size) {
     return __real_write(fd, data, size);
 }
 }
+
 namespace {
 void owner_and_ready() {
     EventLoop loop;
@@ -202,14 +206,19 @@ void producers() {
     for (int p = 0; p < 4; ++p)
         producers.emplace_back([&, p] {
             gate.arrive_and_wait();
-            for (int i = 0; i < 1000; ++i)
-                if (worker.post([&, p, i](EventLoop& loop) {
-                        check(loop.is_in_loop_thread(), "owner execution");
-                        check(next[p]++ == i, "producer order");
-                        ++seen[p * 1000 + i];
-                        ++executed;
-                    }))
-                    ++accepted;
+            for (int i = 0; i < 1000; ++i) {
+                const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+                while (!worker.post([&, p, i](EventLoop& loop) {
+                    check(loop.is_in_loop_thread(), "owner execution");
+                    check(next[p]++ == i, "producer order");
+                    ++seen[p * 1000 + i];
+                    ++executed;
+                })) {
+                    check(std::chrono::steady_clock::now() < deadline, "bounded task retry deadline");
+                    std::this_thread::yield();
+                }
+                ++accepted;
+            }
         });
     gate.arrive_and_wait();
     for (auto& t : producers)
@@ -344,6 +353,7 @@ void failures() {
     std::promise<void> entered, release;
     auto gate = release.get_future().share();
     int executed = 0, cancelled = 0;
+
     struct Capture {
         int& count;
         std::thread::id owner;
@@ -354,6 +364,7 @@ void failures() {
             ++count;
         }
     };
+
     std::thread::id owner;
     worker.start([&](EventLoop&) { owner = std::this_thread::get_id(); },
                  [&](EventLoop&) { ++cleanup; });
@@ -451,6 +462,7 @@ void io_failure_and_fairness() {
     EventLoopThread worker;
     std::unique_ptr<Channel> channel;
     int fd = -1, dispatch_cleanup = 0, cleanup = 0, cancelled = 0;
+
     struct Capture {
         int& cancelled;
         std::thread::id owner;
@@ -460,6 +472,7 @@ void io_failure_and_fairness() {
             ++cancelled;
         }
     };
+
     worker.start(
         [&](EventLoop& loop) {
             fd = ::eventfd(1, EFD_NONBLOCK);
@@ -509,6 +522,7 @@ void io_failure_and_fairness() {
 void snapshot_cancellation() {
     EventLoopThread worker;
     int executed = 0, cancelled = 0;
+
     struct Capture {
         int& count;
         std::thread::id owner;
@@ -518,6 +532,7 @@ void snapshot_cancellation() {
             ++count;
         }
     };
+
     worker.start([&](EventLoop& loop) {
         loop.queue_in_loop([&] {
             ++executed;

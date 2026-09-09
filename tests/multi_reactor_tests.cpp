@@ -12,6 +12,7 @@
 #include <set>
 #include <optional>
 #include <thread>
+#include <source_location>
 
 using namespace hp::net;
 using namespace std::chrono_literals;
@@ -54,6 +55,8 @@ struct TcpServerTestAccess {
 namespace {
 thread_local int timer_allocation_failure = -1;
 thread_local int fail_after_registration = -1;
+thread_local bool reject_any_registration = false;
+thread_local unsigned int registration_injections = 0;
 std::mutex socket_probe_mutex;
 std::set<int> accepted_fds;
 std::atomic<int> accepted_sockets{}, closed_sockets{}, invalid_closes{}, reject_registration{},
@@ -90,6 +93,11 @@ int __wrap_close(int fd) {
 int __real_epoll_ctl(int, int, int, epoll_event*);
 
 int __wrap_epoll_ctl(int fd, int operation, int observed_fd, epoll_event* event) {
+    if (operation == EPOLL_CTL_ADD && std::exchange(reject_any_registration, false)) {
+        ++registration_injections;
+        errno = EIO;
+        return -1;
+    }
     if (operation == EPOLL_CTL_ADD && reject_registration.load()) {
         std::lock_guard lock(socket_probe_mutex);
         if (accepted_fds.contains(observed_fd) && reject_registration.exchange(0)) {
@@ -126,10 +134,19 @@ void require(bool value, const char* message) {
         throw std::runtime_error(message);
 }
 
-template <class F> void await(F predicate) {
+template <class F>
+void await(F predicate, std::source_location caller = std::source_location::current()) {
     const auto deadline = std::chrono::steady_clock::now() + 3s;
     while (!predicate()) {
-        require(std::chrono::steady_clock::now() < deadline, "deadline");
+        try {
+            require(std::chrono::steady_clock::now() < deadline, "deadline");
+        } catch (...) {
+            const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() - (deadline - 3s));
+            std::cerr << "await deadline file=" << caller.file_name() << " line=" << caller.line()
+                      << " elapsed_us=" << elapsed.count() << std::endl;
+            throw;
+        }
         std::this_thread::yield();
     }
 }
@@ -179,6 +196,9 @@ struct ServerHarness {
     TcpServer* server{};
     std::uint16_t port{};
     std::exception_ptr error;
+    std::mutex lifetime_mutex;
+    std::condition_variable lifetime_ready;
+    bool release_owner{false};
 
     ServerHarness(const hp::http::StaticFileService& service, std::size_t workers,
                   Probe* probe = nullptr, ConnectionTimeouts timeouts = {}) {
@@ -223,7 +243,15 @@ struct ServerHarness {
                 port = instance.bound_port();
                 published = true;
                 ready.set_value();
-                instance.run();
+                try {
+                    instance.run();
+                } catch (...) {
+                    error = std::current_exception();
+                }
+                // Keep the borrowed server alive until the caller ends all API calls.
+                // Destruction still occurs on this owner, after explicit join release.
+                std::unique_lock lifetime_lock(lifetime_mutex);
+                lifetime_ready.wait(lifetime_lock, [this] { return release_owner; });
             } catch (...) {
                 error = std::current_exception();
                 if (!published)
@@ -234,7 +262,7 @@ struct ServerHarness {
             require(result.wait_for(3s) == std::future_status::ready, "server ready deadline");
             result.get();
         } catch (...) {
-            control.join();
+            join();
             throw;
         }
     }
@@ -242,19 +270,28 @@ struct ServerHarness {
     ~ServerHarness() {
         if (control.joinable()) {
             server->request_stop();
-            control.join();
+            join();
         }
+    }
+
+    void join() {
+        {
+            std::lock_guard lock(lifetime_mutex);
+            release_owner = true;
+        }
+        lifetime_ready.notify_all();
+        control.join();
     }
 
     void stop() {
         server->request_stop();
-        control.join();
+        join();
         if (error)
             std::rethrow_exception(error);
     }
 
     void failed(const char* message) {
-        control.join();
+        join();
         require(error != nullptr, "server must report failure");
         try {
             std::rethrow_exception(error);
@@ -512,7 +549,7 @@ void adoption_failures(const hp::http::StaticFileService& service) {
         reject_allocation = 1;
         Stream rejected(harness.port);
         rejected.eof();
-        harness.control.join();
+        harness.join();
         require(harness.error != nullptr, "allocation failure propagated");
         bool bad_alloc = false;
         try {
@@ -560,7 +597,18 @@ void cli_modes(const char* executable, const Fixture& fixture) {
         else
             ::setenv("HP_HTTP_TEST_THREADS", std::to_string(count).c_str(), 1);
         auto server = start_server(executable, fixture.root);
-        const auto expected = static_cast<std::size_t>((count < 0 ? 2 : count) + 1);
+#if defined(__SANITIZE_THREAD__)
+        const std::size_t sanitizer_threads = count == 0 ? 0 : 1;
+        constexpr std::size_t controller_helper = 1;
+#else
+        constexpr std::size_t sanitizer_threads = 0;
+        constexpr std::size_t controller_helper = 0;
+#endif
+        require(resources("/proc/self/task") == 1 + controller_helper,
+                "controller thread baseline matches instrumentation");
+        const auto expected = static_cast<std::size_t>((count < 0 ? 2 : count) + 1) + sanitizer_threads;
+        std::cout << "CLI instrumentation_threads=" << sanitizer_threads << " expected=" << expected
+                  << " observed=" << server.thread_count() << '\n';
         require(server.thread_count() == expected, "production CLI OS thread count");
         Stream client(server.port());
         client.send(query("/note.txt", true));

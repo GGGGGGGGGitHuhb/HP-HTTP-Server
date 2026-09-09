@@ -28,7 +28,7 @@ target_include_directories(hp_http_core PUBLIC include)
 find_package(Threads REQUIRED)
 target_link_libraries(hp_http_core PUBLIC Threads::Threads)
 
-add_library(hp_http_app STATIC app/http_connection_handler.cpp)
+add_library(hp_http_app STATIC app/http_connection_handler.cpp app/signal_watcher.cpp)
 target_include_directories(hp_http_app PUBLIC app)
 target_link_libraries(hp_http_app PUBLIC hp_http_core)
 
@@ -177,5 +177,27 @@ if(BUILD_TESTING)
     enable_debug_warnings(connection_timeout_tests)
     add_test(NAME connection_timeout_tests COMMAND connection_timeout_tests)
     set_tests_properties(connection_timeout_tests PROPERTIES TIMEOUT 60
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(resource_limits_tests tests/resource_limits_tests.cpp)
+    target_link_libraries(resource_limits_tests PRIVATE hp_http_app)
+    target_link_options(resource_limits_tests PRIVATE -Wl,--wrap=accept4 -Wl,--wrap=close
+        -Wl,--wrap=epoll_ctl -Wl,--wrap=_Znwm)
+    enable_debug_warnings(resource_limits_tests)
+    add_test(NAME resource_limits_tests COMMAND resource_limits_tests)
+    set_tests_properties(resource_limits_tests PROPERTIES TIMEOUT 60
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(graceful_shutdown_tests tests/graceful_shutdown_tests.cpp)
+    target_link_libraries(graceful_shutdown_tests PRIVATE hp_http_app)
+    target_link_options(graceful_shutdown_tests PRIVATE -Wl,--wrap=accept4 -Wl,--wrap=close
+        -Wl,--wrap=epoll_ctl -Wl,--wrap=_Znwm)
+    enable_debug_warnings(graceful_shutdown_tests)
+    add_test(NAME graceful_shutdown_tests COMMAND graceful_shutdown_tests $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(graceful_shutdown_tests PROPERTIES TIMEOUT 60
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
 endif()

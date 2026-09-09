@@ -13,6 +13,8 @@ class EventLoopThread final : private base::NonCopyable {
     void start(Callback init = {}, Callback cleanup = {});
     bool post(Callback task);
     void request_stop();
+    void request_drain(EventLoop::Deadline deadline);
+    void request_force();
     void join();
 
   private:

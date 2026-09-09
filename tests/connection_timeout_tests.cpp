@@ -517,6 +517,7 @@ void options_boundaries() {
         return parse_options(static_cast<int>(argv.size()), argv.data());
     };
     const auto defaults = parse({"server", "--port", "0", "--root", "."});
+    require(defaults.shutdown_timeout == 5000ms, "actual production shutdown default");
     require(defaults.timeouts.idle == 30000ms && defaults.timeouts.keep_alive == 15000ms,
             "actual production parser defaults");
     TcpServer component(0);

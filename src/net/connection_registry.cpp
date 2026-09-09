@@ -21,7 +21,26 @@ ConnectionRegistry::~ConnectionRegistry() noexcept {
     loop_.set_after_dispatch({});
 }
 
+void ConnectionRegistry::set_drained_callback(EventLoop::Task callback) {
+    drained_callback_ = std::move(callback);
+}
+
+void ConnectionRegistry::begin_drain(bool force) {
+    draining_ = true;
+    for (auto& [fd, connection] : connections_) {
+        (void)fd;
+        cancel_timeout(*connection);
+        if (force)
+            connection->request_close();
+        else
+            connection->begin_drain();
+    }
+    drain_closed_connections();
+}
+
 void ConnectionRegistry::add(Socket socket, TcpConnection::MessageCallback callback) {
+    if (draining_)
+        return;
     if (next_identity_ == 0)
         throw std::overflow_error("connection identity exhausted");
     const auto identity = next_identity_;
@@ -59,7 +78,7 @@ void ConnectionRegistry::cancel_timeout(TcpConnection& connection) noexcept {
 }
 
 void ConnectionRegistry::update_timeout(TcpConnection& connection, bool progress) {
-    if (connection.state() == TcpConnection::State::closing) {
+    if (draining_ || connection.state() == TcpConnection::State::closing) {
         cancel_timeout(connection);
         return;
     }
@@ -99,6 +118,8 @@ void ConnectionRegistry::update_timeout(TcpConnection& connection, bool progress
 }
 
 void ConnectionRegistry::expire(int fd, TcpConnection::Identity identity) {
+    if (draining_)
+        return;
     const auto found = connections_.find(fd);
     if (found == connections_.end() || found->second->identity() != identity)
         return;
@@ -125,6 +146,11 @@ void ConnectionRegistry::drain_closed_connections() noexcept {
         const auto found = connections_.find(connection->fd());
         if (found != connections_.end() && found->second->identity() == connection->identity())
             connections_.erase(found);
+    }
+    if (draining_ && connections_.empty() && !notified_) {
+        notified_ = true;
+        if (drained_callback_)
+            drained_callback_();
     }
 }
 } // namespace hp::net

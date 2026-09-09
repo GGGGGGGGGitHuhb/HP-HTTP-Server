@@ -12,6 +12,7 @@ public:
     ~Acceptor() noexcept;
     void start();
     void stop() noexcept;
+    void close() noexcept;
     [[nodiscard]] std::uint16_t bound_port() const noexcept { return bound_port_; }
 private:
     friend struct AcceptorTestAccess;

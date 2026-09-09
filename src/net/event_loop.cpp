@@ -66,7 +66,7 @@ EventLoop::~EventLoop() noexcept {
         state_ = State::Stopped;
     }
     timers_.clear();
-    tasks_.clear();
+    release_tasks(tasks_);
     wake_channel_->remove();
     wake_channel_.reset();
     ::close(wake_fd_);
@@ -120,11 +120,86 @@ bool EventLoop::enqueue(Task& task) {
     if (!task)
         throw std::invalid_argument("empty EventLoop task");
     std::lock_guard lock(mutex_);
-    if (state_ == State::Stopping || state_ == State::Stopped || state_ == State::Failed)
+    if (state_ == State::Stopping || state_ == State::Stopped || state_ == State::Failed ||
+        outstanding_ == task_capacity)
         return false;
     tasks_.push_back(std::move(task));
+    ++outstanding_;
     wake_locked();
     return true;
+}
+
+void EventLoop::release_task(Task& task) {
+    if (!task)
+        return;
+    task = {}; // User captures may reenter; count includes their destruction.
+    std::lock_guard lock(mutex_);
+    --outstanding_;
+}
+
+void EventLoop::release_tasks(std::deque<Task>& tasks) {
+    for (auto& task : tasks)
+        release_task(task);
+    tasks.clear();
+}
+
+void EventLoop::set_control_callback(ControlCallback callback) {
+    require_owner();
+    if (polling_)
+        throw std::logic_error("cannot replace control callback during dispatch");
+    control_callback_ = std::move(callback);
+}
+
+bool EventLoop::failed() const {
+    std::lock_guard lock(mutex_);
+    return state_ == State::Failed;
+}
+
+void EventLoop::request_drain(Deadline deadline) {
+    std::lock_guard lock(mutex_);
+    if (state_ == State::Stopped || state_ == State::Failed || control_ == Control::force)
+        return;
+    if (control_ == Control::none || deadline < control_deadline_)
+        control_deadline_ = deadline;
+    control_ = Control::drain;
+    control_pending_ = true;
+    wake_locked();
+}
+
+void EventLoop::request_force() {
+    std::lock_guard lock(mutex_);
+    if (state_ == State::Stopped || state_ == State::Failed)
+        return;
+    control_ = Control::force;
+    control_pending_ = true;
+    wake_locked();
+}
+
+void EventLoop::notify_control() {
+    std::lock_guard lock(mutex_);
+    if (state_ == State::Stopped || state_ == State::Failed)
+        return;
+    control_pending_ = true;
+    wake_locked();
+}
+
+void EventLoop::dispatch_control() {
+    Control control;
+    Deadline deadline;
+    {
+        std::lock_guard lock(mutex_);
+        if (control_ == Control::drain && timer::TimerQueue::Clock::now() >= control_deadline_) {
+            control_ = Control::force;
+            control_pending_ = true;
+        }
+        if (!control_pending_)
+            return;
+        control_pending_ = false;
+        control = control_;
+        deadline = control_deadline_;
+    }
+    if (control_callback_)
+        control_callback_(control, deadline);
 }
 
 void EventLoop::request_stop() {
@@ -146,6 +221,7 @@ void EventLoop::fail(std::exception_ptr error) {
         cancelled.swap(tasks_);
     }
     timers_.clear();
+    release_tasks(cancelled);
     // Captures are destroyed on owner, outside mutex (destructors may post).
 }
 
@@ -240,6 +316,7 @@ EventLoop::TimerId EventLoop::add_timer(timer::TimerQueue::TimePoint deadline, T
     if (!task)
         throw std::invalid_argument("empty timer task");
     return timers_.add(deadline, [this, task = std::move(task)] {
+        dispatch_control();
         if (!timers_allowed())
             return;
         try {
@@ -284,13 +361,14 @@ void EventLoop::poll_once(int timeout_ms) {
     const auto timer_cutoff = timers_.last_id();
     std::deque<Task> batch;
     try {
+        dispatch_control();
         {
             std::lock_guard lock(mutex_);
             if (failure_)
                 std::rethrow_exception(failure_);
             if (state_ == State::Stopped)
                 throw std::logic_error("EventLoop stopped");
-            if (!tasks_.empty() || state_ == State::Stopping)
+            if (!tasks_.empty() || state_ == State::Stopping || control_pending_)
                 timeout_ms = 0;
         }
         if (timeout_ms < 0 || timeout_ms > 1000)
@@ -305,9 +383,20 @@ void EventLoop::poll_once(int timeout_ms) {
                     timeout_ms = static_cast<int>(millis);
             }
         }
+        {
+            std::lock_guard lock(mutex_);
+            if (control_ == Control::drain) {
+                const auto remaining = control_deadline_ - timer::TimerQueue::Clock::now();
+                const auto millis = std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
+                timeout_ms = static_cast<int>(std::max<std::int64_t>(0, std::min<std::int64_t>(timeout_ms, millis)));
+            }
+        }
         const auto events = epoller_.wait(timeout_ms);
-        for (const auto& event : events)
+        dispatch_control();
+        for (const auto& event : events) {
+            dispatch_control();
             dispatch(event.data.u64, event.events);
+        }
         {
             std::lock_guard lock(mutex_);
             if (failure_)
@@ -315,14 +404,16 @@ void EventLoop::poll_once(int timeout_ms) {
             batch.swap(tasks_);
         }
         for (auto& task : batch) {
+            dispatch_control();
             {
                 std::lock_guard lock(mutex_);
                 if (failure_)
                     std::rethrow_exception(failure_);
             }
             task();
-            task = {};
+            release_task(task);
         }
+        dispatch_control();
         if (timers_allowed())
             timers_.run_due(timer::TimerQueue::Clock::now(), timer_cutoff);
         if (!timers_allowed())
@@ -334,6 +425,7 @@ void EventLoop::poll_once(int timeout_ms) {
         }
     } catch (...) {
         fail(std::current_exception());
+        release_tasks(batch);
         polling_ = false;
         std::exception_ptr error;
         {

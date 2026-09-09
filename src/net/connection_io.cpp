@@ -113,7 +113,21 @@ WriteResult ConnectionIo::write_available() {
     return result;
 }
 
+bool ConnectionIo::output_fits(std::size_t pending, std::size_t incoming) noexcept {
+    return pending <= output_limit && incoming <= output_limit - pending;
+}
+
 void ConnectionIo::queue_output(std::span<const std::byte> bytes) {
+    if (!output_fits(pending_bytes(), bytes.size()))
+        throw std::length_error("connection output limit exceeded");
+    if (write_offset_) {
+        output_.erase(output_.begin(), output_.begin() + static_cast<std::ptrdiff_t>(write_offset_));
+        write_offset_ = 0;
+    }
+    // A reserve chosen explicitly avoids an implementation-dependent growth factor.
+    const auto required = output_.size() + bytes.size();
+    if (required > output_.capacity())
+        output_.reserve(std::min(output_limit, std::max(required, output_.capacity() * 2)));
     output_.insert(output_.end(), bytes.begin(), bytes.end());
 }
 

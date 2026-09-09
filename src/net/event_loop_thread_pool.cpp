@@ -49,9 +49,15 @@ void EventLoopThreadPool::start(std::size_t count, Callback init, Callback clean
                         init(i, loop);
                 },
                 [this, cleanup, i](EventLoop& loop) {
-                    // A worker ending without pool stop is a pool failure. Notify
-                    // every peer without using the bounded ordinary task queue.
-                    request_stop();
+                    // Planned drain may finish one owner before its peers. A fatal
+                    // still stops every peer without using the ordinary queue.
+                    bool planned;
+                    {
+                        std::lock_guard lock(mutex_);
+                        planned = draining_;
+                    }
+                    if (!planned || loop.failed())
+                        request_stop();
                     if (cleanup)
                         cleanup(i, loop);
                 });
@@ -120,6 +126,24 @@ void EventLoopThreadPool::finish_forward() noexcept {
 void EventLoopThreadPool::stop_workers() {
     for (auto& worker : workers_)
         worker->request_stop();
+}
+
+void EventLoopThreadPool::request_drain(EventLoop::Deadline deadline) {
+    {
+        std::lock_guard lock(mutex_);
+        draining_ = true;
+    }
+    for (auto& worker : workers_)
+        worker->request_drain(deadline);
+}
+
+void EventLoopThreadPool::request_force() {
+    {
+        std::lock_guard lock(mutex_);
+        draining_ = true;
+    }
+    for (auto& worker : workers_)
+        worker->request_force();
 }
 
 void EventLoopThreadPool::request_stop() {

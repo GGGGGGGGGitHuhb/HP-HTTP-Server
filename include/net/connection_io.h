@@ -34,6 +34,8 @@ struct ConnectionEventResult {
 
 class ConnectionIo final : private base::NonCopyable {
    public:
+    static constexpr std::size_t output_limit = 9U * 1024U * 1024U;
+    static bool output_fits(std::size_t pending, std::size_t incoming) noexcept;
     explicit ConnectionIo(Socket socket, std::size_t max_input_bytes = 0) noexcept;
     ConnectionIo(ConnectionIo&&) noexcept = default;
     ConnectionIo& operator=(ConnectionIo&&) noexcept = default;

@@ -12,15 +12,20 @@ class ConnectionRegistry final : private base::NonCopyable {
 public:
     ConnectionRegistry(EventLoop& loop, std::size_t max_input_bytes, ConnectionTimeouts timeouts = {});
     ~ConnectionRegistry() noexcept;
+    void set_drained_callback(EventLoop::Task callback);
+    void begin_drain(bool force = false);
     void add(Socket socket, TcpConnection::MessageCallback callback);
     void connection_closed(int fd, TcpConnection::Identity identity) noexcept;
     void drain_closed_connections() noexcept;
 private:
+    friend struct GracefulShutdownTestAccess;
     friend struct ConnectionTimeoutTestAccess;
     friend struct TcpServerTestAccess;
     void update_timeout(TcpConnection& connection, bool progress);
     void cancel_timeout(TcpConnection& connection) noexcept;
     void expire(int fd, TcpConnection::Identity identity);
+    bool draining_{false}, notified_{false};
+    EventLoop::Task drained_callback_;
     const ConnectionTimeouts timeouts_;
     EventLoop& loop_;
     std::size_t max_input_bytes_;

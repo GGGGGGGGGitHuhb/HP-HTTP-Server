@@ -6,6 +6,8 @@
 
 ## 当前状态与目标架构
 
+V0.4/S4及V0.4已完成，Approved revision1、Builder002、Reviewer002 PASS与Leader003齐备。每连接逻辑待发送上限9MiB，超限关闭；每loop普通未完成任务最多1024，含batch/执行者，固定控制通知绕过普通名额。应用signalfd接收SIGINT/SIGTERM，停止接收并仅排空已有输出，默认5000ms统一绝对截止（0立即、最大60000），再次观察信号强关；不推进pipeline后缀。
+
 V0.4/S3已完成，Approved设计 `docs/leader/designs/V0.4/S3-design.md`、Builder001、独立Reviewer001 PASS与Leader003齐备。owner单调定时队列缩短EventLoop等待，net按实际IO进展及app复用等待状态执行超时；timer只依赖base/标准库，不关闭fd或决定HTTP响应。默认idle30000/keep-alive15000ms，各0禁用对应策略，取较早截止；静默关闭可能截断未排空响应，不发送408。独立CTest20/20及全部必需sanitizer通过。
 
 V0.4/S2 已完成，Approved设计入口 `docs/leader/designs/V0.4/S2-design.md`。生产由main接收并按round-robin交接，固定worker各自持有ConnectionRegistry；默认2个worker，显式0回退main上的同一registry算法。每worker最多1024个未结束池任务（含执行者），满时关闭交接连接。Builder001、独立Reviewer001 PASS与Leader003齐备，默认CTest18/18、显式0回归3/3与全部必需sanitizer通过。
@@ -20,7 +22,7 @@ V0.3/S2已完成：http判定零body请求边界与连接策略，app驱动串�
 
 S1 已交付的 EventLoop/Channel 保持注册 token 分发与 stale 过滤。当前，Acceptor 独占 listener Socket/Channel，负责 accept-drain 并移动交付 Socket；各owner的ConnectionRegistry建立并持有TcpConnection集合，main的TcpServer只管理监听、池和轮转交接。TcpConnection 独占 ConnectionIo/Channel，处理完整事件、interest、诊断及一次关闭通知；先 remove/token 失效，ConnectionRegistry 在本owner回调返回后校验 fd+稳定 identity 并回收，EventLoop 最后销毁。Channel 不拥有 fd。旧ApplicationHandler/Result生产路径已移除；TcpConnection发布通用消息，app适配器处理HTTP，S2已增加HTTP串行复用；V0.4/S1 已交付线程与 eventfd 唤醒原语，V0.4/S3已接入owner定时队列与连接超时。
 
-V0.4/S1 的 EventLoop 在构造线程绑定 owner，Channel 操作及清理只在 owner 执行；跨线程入口限于任务投递、停止和不可变线程身份。EventLoopThread 在 worker 构造/销毁 loop，以同步握手发布可用状态，正常停止排空已接收任务，失败取消并在 owner 释放，join 回传首次异常。内部唤醒 fd 按 remove、销毁 Channel、close 顺序回收；token 原子分配并在耗尽后锁存。S1独立线程API的任务队列仍无容量上限，仅用于受控有限投递；S2池入口另有固定1024边界，不允许绕过池直接投递生产交接。当前生产连接已移入worker，尚未交付进程优雅关闭。
+V0.4/S1 的 EventLoop 在构造线程绑定 owner，Channel 操作及清理只在 owner 执行；跨线程入口限于任务投递、停止和不可变线程身份。EventLoopThread 在 worker 构造/销毁 loop，以同步握手发布可用状态，正常停止排空已接收任务，失败取消并在 owner 释放，join 回传首次异常。内部唤醒 fd 按 remove、销毁 Channel、close 顺序回收；token 原子分配并在耗尽后锁存。S1交付时独立线程API无上限；当前S4统一普通任务1024上限；S2池入口另有固定1024边界，不允许绕过池直接投递生产交接。当前生产连接已移入worker，S4已交付有限截止的进程优雅关闭。
 
 阅读本文档时应区分：
 
@@ -492,7 +494,7 @@ HTTP 接口必须限制请求头大小、路径解析范围和连接生命周期
 
 生产factory在main串行生成每连接callback，Session/parser在owner首次使用时创建；共享StaticFileService只读root fd、每请求独立文件fd，所有worker及callback释放后才销毁service。立即停止与worker故障会停止接收并回收全部worker，不保证活动响应排空。避免引入无同步共享可变状态。
 
-每连接最多一个活跃timer，100000次续期不累积历史条目；同poll先IO/任务后按最新截止重验，到期回调走request_close与after_dispatch，纯timer也回收。停止或失败取消timer/callback后再销毁registry/loop；持续少量字节可续期，阻塞provider不能被同owner timer抢占。S4输出高水位与优雅排空仍未实现。
+每连接最多一个活跃timer，100000次续期不累积历史条目；同poll先IO/任务后按最新截止重验，到期回调走request_close与after_dispatch，纯timer也回收。停止或失败取消timer/callback后再销毁registry/loop；持续少量字节可续期，阻塞provider不能被同owner timer抢占。S4已有输出界限及优雅排空；drain取消普通idle/keepalive，只使用全局关闭截止。
 
 ## 测试架构
 
@@ -603,3 +605,5 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 - `2026-09-09`：依据PM批准与Leader V0.4/S3-report-002登记S3 Approved；当前生产仍为S2已交付能力，超时尚未实现。
 
 - `2026-09-09`：依据V0.4/S3 Reviewer001 PASS与Leader003同步timer/超时实际能力，S4及V0.4退出条件尚未完成。
+
+- 2026-09-09：S4 Reviewer002 PASS与Leader003关闭V0.4，六条退出条件满足；全局连接/内存配额、阻塞抢占与硬实时承诺仍不包含。
