@@ -4,7 +4,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.5/S1 sendfile 文件传输，`已完成 / Completed`；设计与审查计划为 Approved revision1，Builder002、独立Reviewer002 PASS与Leader003收口齐备；S1尚未合并或发布标签，V0.5未完成。批准摘要：`docs/leader/reports/V0.5/S1-report-002.md`；设计：`docs/leader/designs/V0.5/S1-design.md`；审查计划：`docs/reviewer/reviews/V0.5/S1-review.md`。前置V0.4/S4经PR #13合并至main，标签 `v0.4-s4` 已推送并核对。
+- 当前阶段：V0.5/S2 异步日志与 IO 路径减负，`已完成 / Completed`；Approved revision1、Builder001、独立Reviewer001 PASS及Leader003收口齐备。设计：`docs/leader/designs/V0.5/S2-design.md`；审查计划：`docs/reviewer/reviews/V0.5/S2-review.md`；实现：`docs/builder/reports/V0.5/S2-report-001.md`；验收：`docs/reviewer/reports/V0.5/S2-report-001.md`；收口：`docs/leader/reports/V0.5/S2-report-003.md`。已核实S1经PR #14合并至main `70b866b`，与分支基线 `4c628e5`树一致；S2尚未提交或推送，V0.5未完成，S3/S4未开始。
 
 - S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
@@ -12,7 +12,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 - 当前版本：`V0.3 HTTP 状态机与连接复用`已完成，S1/S2/S3均已完成；V0.1/V0.2已完成，V0.4已完成，S1已完成，S2已完成，S3已完成，S4已完成（Approved）。S1已合并至main并发布标签 `v0.4-s1`；S2已独立验收、收口并经PR #11合并至main，标签 `v0.4-s2` 已推送。
 - 前置版本状态：`V0.1 最小可运行 HTTP Server` 已完成；S1、S2、S3 均有 Approved 基线、Builder 实现证据与 Reviewer `PASS`。
-- 最近完成阶段：`V0.5/S1 sendfile文件传输`；独立零告警、23/23（17.68秒）、threads0旧3/3（4.98秒）、双curl、三TSan/三ASan、三配置probe和13反证通过，P2-01关闭。审查：`docs/reviewer/reports/V0.5/S1-report-002.md`；收口：`docs/leader/reports/V0.5/S1-report-003.md`。S2/S3/S4未开始。
+- 最近完成阶段：`V0.5/S2 异步日志`；独立Debug零告警、25/25（16.92秒）、threads0旧3/3、默认/0双curl、三TSan/三ASan、四项精确反证及新进程启动失败探针通过。8REQ/8AC/8RV全部通过，P3-01和TD-002已关闭；TD-005本检查点完成并持续Open。
 
 - V0.4/S4历史验收：`V0.4/S4 资源上限与优雅关闭`；独立Debug零告警、22/22（15.70秒）、threads0旧3/3（6.00秒）、双curl、四TSan/三ASan及独立正负探针通过。Reviewer002关闭两项P2，Leader003按ROADMAP六项条件关闭V0.4；S4已合并并发布v0.4-s4；V0.5/S1已完成sendfile验收。报告：`docs/reviewer/reports/V0.4/S4-report-002.md`、`docs/leader/reports/V0.4/S4-report-003.md`。
 
@@ -131,7 +131,7 @@ curl --http1.1 -i http://127.0.0.1:8080/missing.txt
 curl --http1.1 -i -X POST http://127.0.0.1:8080/
 ```
 
-预期信号包括 `23/23` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
+预期信号包括 `25/25` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
 
 ## 配置说明
 
@@ -150,6 +150,12 @@ curl --http1.1 -i -X POST http://127.0.0.1:8080/
 - 普通错误不会回显 root 的绝对路径。
 
 每个参数只有在实现、测试和 README 命令同时成立时，才视为可用接口。
+
+### 异步日志
+
+生产启动后保留 `info/warn/error` 和 `[LEVEL] message` stderr格式，由唯一后台消费者逐条写出并flush。固定1024个槽位、正文最多1024字节，超长在上限内追加 `...[truncated]`；消息复制后提交，所有等级队列满时丢新，无ERROR同步回退。统计快照提供提交、接受、丢弃、停止拒绝、截断、成功、失败及含在途记录的pending。
+
+LoggerSession先于服务对象启动，server/worker/callback销毁后停止接收、排空并join。可返回的sink错误计failed，不递归记录、不无限重试。健康stderr保证排空；**阻塞stderr可能拖延最终日志join，HTTP `--shutdown-timeout-ms` 不保证整个进程限时退出**。不修改共享stderr标志，也不强制取消/分离线程。启动失败在监听前退出非零；CLI帮助、参数错误及stdout就绪行通道不变。没有会话的旧库调用仍同步；生产会话停止后不会自动恢复同步。
 
 ## 项目结构
 
@@ -193,7 +199,10 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
   bash tests/http_smoke_test.sh ./build-v0.4-s2/hp_http_server
 ```
 
-当前 CTest 共 23 项（保留V0.4的22项身份，新增文件传输专项）：
+当前 CTest 共 25 项（保留原23项身份，新增日志实例及生产入口专项）：
+
+- `async_logger_tests`：固定容量与消息边界、所有权、4×1000条FIFO、满队列丢新、write/flush/异常失败、100轮生命周期、并发stop与精确启动失败。
+- `async_logger_production_tests`：真实main组合的0/1/2 worker，握手阻塞消费者期间完整HTTP/EOF、控制退出、worker先join、唯一消费者写日志、fatal及信号mask恢复；实例测试不替代该生产路径。
 
 - `sendfile_tests`：真实sendfile/offset/短写/预算、默认SIGPIPE与mask/pending、文件fd身份、生产无read正文、0/1/2 worker及100轮未完成文件回收。
 
@@ -416,4 +425,4 @@ cmake --build build-v0.5-s1-asan -j4
 ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 timeout 60s ./build-v0.5-s1-asan/sendfile_tests
 ```
 
-这一步验证传输机制与资源边界；不提供QPS结论，V0.5后续日志、Buffer与wrk阶段尚未实施。
+这一步验证传输机制与资源边界；不提供QPS结论，V0.5/S2日志已完成，Buffer与wrk阶段尚未实施。

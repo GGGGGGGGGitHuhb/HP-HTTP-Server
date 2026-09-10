@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(hp_http_core STATIC
     src/base/logger.cpp
+    src/base/async_logger.cpp
     src/base/file_region.cpp
     src/timer/timer_queue.cpp
     src/http/http_request.cpp
@@ -212,5 +213,29 @@ if(BUILD_TESTING)
     enable_debug_warnings(sendfile_tests)
     add_test(NAME sendfile_tests COMMAND sendfile_tests)
     set_tests_properties(sendfile_tests PROPERTIES TIMEOUT 60
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(async_logger_tests tests/async_logger_tests.cpp)
+    target_link_libraries(async_logger_tests PRIVATE hp_http_core)
+    # Test-only GNU thread-start wrapper needs the library private state type.
+    target_compile_options(async_logger_tests PRIVATE -fno-access-control)
+    target_link_options(async_logger_tests PRIVATE -Wl,--wrap=_Znwm
+        -Wl,--wrap=_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE)
+    enable_debug_warnings(async_logger_tests)
+    add_test(NAME async_logger_tests COMMAND async_logger_tests)
+    set_tests_properties(async_logger_tests PROPERTIES TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(async_logger_production_tests tests/async_logger_production_tests.cpp)
+    target_link_libraries(async_logger_production_tests PRIVATE hp_http_app)
+    target_compile_options(async_logger_production_tests PRIVATE -fno-access-control)
+    target_link_options(async_logger_production_tests PRIVATE -Wl,--wrap=_Znwm
+        -Wl,--wrap=_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE)
+    enable_debug_warnings(async_logger_production_tests)
+    add_test(NAME async_logger_production_tests COMMAND async_logger_production_tests)
+    set_tests_properties(async_logger_production_tests PROPERTIES TIMEOUT 60
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
 endif()

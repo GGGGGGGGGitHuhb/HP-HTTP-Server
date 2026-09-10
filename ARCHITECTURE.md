@@ -6,6 +6,10 @@
 
 ## 当前状态与目标架构
 
+V0.5/S2已完成：Approved revision1、Builder001、独立Reviewer001 PASS和Leader003齐备。生产日志使用1024槽×最多1024字节正文的有界队列，单消费者在状态锁外写stderr并逐条flush；所有等级满队列丢新，无同步回退，计数包含在途记录。消息在提交返回前复制；固定槽和一个在途Record的当前ABI记录存储为1,066,000字节，另有固定对象及线程资源。flush不等于fsync或掉电持久化；没有QPS提升承诺。
+
+LoggerSession先于服务资源创建，服务/worker/callback销毁及fatal记录后才停止接收、排空并join；共享引用覆盖每次提交，stop后的调用仅拒绝计数。无会话旧库调用保留同步兼容。入口先以当前线程RAII屏蔽SIGINT/SIGTERM，让消费者继承，再创建服务信号消费器；日志join后恢复原mask。健康sink排空，可返回的写/flush失败计failed并继续消费。**阻塞stderr可能拖延最终join；HTTP shutdown_timeout不保证整个进程限时退出**，不detach、不改共享stderr标志。
+
 V0.5/S1已完成，Approved revision1、Builder002、Reviewer002 PASS及Leader003齐备。生产prepare_response提供小内存头和拥有型文件区域，transport先头后sendfile正文；保留8MiB文件、9MiB逻辑待发送上限及超时/关闭语义。旧物化接口仅显式兼容，生产正文read/pread为0；不据此承诺QPS提升。
 
 V0.4/S4及V0.4已完成，Approved revision1、Builder002、Reviewer002 PASS与Leader003齐备。每连接逻辑待发送上限9MiB，超限关闭；每loop普通未完成任务最多1024，含batch/执行者，固定控制通知绕过普通名额。应用signalfd接收SIGINT/SIGTERM，停止接收并仅排空已有输出，默认5000ms统一绝对截止（0立即、最大60000），再次观察信号强关；不推进pipeline后缀。
@@ -157,7 +161,7 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 主要职责：
 
 - RAII 工具和不可拷贝基类。
-- 日志接口，同步日志和后续异步日志实现。
+- 日志兼容接口、已交付有界异步实例及显式会话生命周期。
 - Buffer 抽象，用于连接输入输出缓冲。
 - 线程、线程池、任务队列和时间工具。
 - 通用错误处理辅助函数。
@@ -385,7 +389,7 @@ metrics
 - `net`、`http` 和 `proxy` 可以依赖稳定的 `metrics` 接口，但不得依赖具体展示或报告逻辑。
 - `http` 不得依赖 `net`，HTTP 解析和响应构造必须可以脱离真实 socket 做单元测试。
 - `proxy` 可以依赖 `http` 和 `net`，但不能绕过 `net` 直接管理独立事件循环。
-- `app` 负责组合并注入配置、日志和指标对象；禁止用全局可变单例跨层传递状态。
+- `app` 负责组合并注入配置、日志和指标对象；禁止用全局可变单例跨层传递业务状态。Approved V0.5/S2 REQ-01/05明确保留base日志兼容入口：仅发布当前LoggerSession的共享引用，锁内取引用、锁外提交，单进程至多一个活动会话；不得借此传递连接、请求、配置或其他跨层业务状态。该限定按高权威阶段设计澄清原通用措辞，不扩张全局状态许可。
 - 生产代码不得依赖 `tests` 或 `benchmark`。
 - 不允许循环依赖。
 - 不允许通过全局可变状态跨层传递连接、请求或配置。
@@ -617,3 +621,5 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 文件须保持内容稳定，更新采用原子替换名称；增长只发送初始长度，截短提前EOF或unsupported/发送错误关闭连接，不自动read降级、不补第二响应。冷文件仍可能阻塞owner，不提供并发原地修改快照或性能保证。S2日志、S3通用Buffer、S4压测未开始。
 
 - 2026-09-10：依据Reviewer002 PASS与Leader003关闭V0.5/S1；版本整体未完成。
+
+- 2026-09-10：依据V0.5/S2 Reviewer001 PASS与Leader003记录已交付日志队列、共享会话、信号mask及阻塞stderr关闭边界；澄清Approved日志兼容入口限定，S3/S4未开始。
