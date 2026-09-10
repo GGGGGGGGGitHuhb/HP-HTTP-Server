@@ -24,7 +24,7 @@ class HookTests(unittest.TestCase):
         self.run_git('config', 'core.hooksPath', '.githooks')
         self.run_git('config', 'commit.gpgsign', 'false')
         self.file = self.root / 'name with spaces.cpp'
-        self.file.write_text('int value() {\n    return 1;\n}\n')
+        self.file.write_text('int value() { return 1; }\n')
         self.run_git('add', '.')
         self.assertEqual(self.commit().returncode, 0)
 
@@ -68,7 +68,7 @@ class HookTests(unittest.TestCase):
         self.file.write_text('int value(){return 4;}\n')
         self.assertNotEqual(self.commit().returncode, 0)
         self.assertEqual(untracked.read_bytes(), vendor.read_bytes())
-        self.assertIn(b'    return 4;', self.file.read_bytes())
+        self.assertEqual(b'int value() { return 4; }\n', self.file.read_bytes())
 
     def test_unstaged_config_blocks_before_writing(self):
         config = self.root / '.clang-format'
