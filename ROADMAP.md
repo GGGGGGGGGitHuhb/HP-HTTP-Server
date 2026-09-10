@@ -297,7 +297,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.5 性能优化与静态文件传输增强
 
-状态：计划中。
+状态：S1已完成（Approved revision1），S2/S3/S4未开始，版本尚未完成。
 
 前置条件：
 
@@ -327,7 +327,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 阶段划分：
 
-- `S1 sendfile 文件传输`：实现静态文件零拷贝传输和短写续传。设计文档：`docs/leader/designs/V0.5/S1-design.md`。
+- `S1 sendfile 文件传输`（`已完成`，Approved revision1）：实现静态文件零拷贝传输和短写续传。设计文档：`docs/leader/designs/V0.5/S1-design.md`。
 - `S2 异步日志与 IO 路径减负`：实现或选定日志升级方案，避免热路径同步阻塞。设计文档：`docs/leader/designs/V0.5/S2-design.md`。
 - `S3 Buffer 与背压优化`：优化输入输出 Buffer、高水位和慢连接策略。设计文档：`docs/leader/designs/V0.5/S3-design.md`。
 - `S4 压测基线`：建立 wrk 压测脚本、环境记录和基础对比结果。设计文档：`docs/leader/designs/V0.5/S4-design.md`。
@@ -527,7 +527,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.5 阶段摘要
 
-- `S1 sendfile 文件传输`：产出零拷贝静态文件路径；涉及 `http`、`net`。
+- `S1 sendfile 文件传输`（`已完成`，Approved revision1）：产出零拷贝静态文件路径；涉及 `http`、`net`。
 - `S2 异步日志与 IO 路径减负`：产出日志升级方案；涉及 `base`。
 - `S3 Buffer 与背压优化`：产出缓冲区和慢连接治理能力；涉及 `base`、`net`。
 - `S4 压测基线`：产出 wrk 脚本和基础性能记录；涉及 `benchmark`。
@@ -637,3 +637,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 2026-09-09：依据PM批准及Leader V0.4/S4-report-002登记S4 Approved、待实现；V0.4尚未完成。
 
 - 2026-09-09：依据S4 Reviewer002 PASS与Leader003关闭S4和V0.4；ROADMAP实际六项完成条件均有证据，历史“七项”为计数勘误；V0.5未开始。
+
+- 2026-09-10：依据PM批准与Leader V0.5/S1-report-002登记S1 Approved、待实现；M0→M3顺序执行，后续阶段未开始。
+
+- 2026-09-10：依据V0.5/S1 Reviewer002 PASS与Leader003关闭S1；V0.5未完成，S2/S3/S4未开始，sendfile机制不替代性能基线。

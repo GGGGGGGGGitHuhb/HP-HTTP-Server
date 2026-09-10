@@ -4,8 +4,8 @@
 
 ## 当前概况
 
-- 当前检查：V0.4/S4 Approved、Builder002、Reviewer002 PASS及Leader003齐备，S4/V0.4已完成；两项P2及P3-01关闭，TD-005本检查点关闭但风险持续Open，无新债务。历史前置：V0.4/S3 Approved revision1已实现、独立Reviewer001 PASS并由Leader003收口；定时记录有界、owner取消/回收及超时兼容性列入必验，无新增债务或批准延期。V0.4/S2 Approved revision 1 已交付，Builder001、独立Reviewer001 PASS与Leader003齐备；8REQ/12AC/12RV及容量/所有权/失败回收全部通过，无新增债务或批准延期。S1前置证据：V0.4/S1 Approved revision 1 已交付，Builder001、Reviewer001 PASS 与 Leader003 齐备；S1 的 P3-01 及 TD-005 检查点关闭；TD-005 持续 Open，无新增债务或延期。上一阶段 V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
-- 最近完成阶段：V0.4/S4；V0.4 已完成，S1/S2 已完成，S3已完成，S4已完成（Approved），V0.5未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
+- 当前检查：V0.5/S1 Approved、Builder002、Reviewer002 PASS与Leader003齐备，P2-01/P3-01及TD-005本阶段检查点关闭，风险持续Open，无新债务。历史前置：V0.4/S4 Approved、Builder002、Reviewer002 PASS及Leader003齐备，S4/V0.4已完成；两项P2及P3-01关闭，TD-005本检查点关闭但风险持续Open，无新债务。历史前置：V0.4/S3 Approved revision1已实现、独立Reviewer001 PASS并由Leader003收口；定时记录有界、owner取消/回收及超时兼容性列入必验，无新增债务或批准延期。V0.4/S2 Approved revision 1 已交付，Builder001、独立Reviewer001 PASS与Leader003齐备；8REQ/12AC/12RV及容量/所有权/失败回收全部通过，无新增债务或批准延期。S1前置证据：V0.4/S1 Approved revision 1 已交付，Builder001、Reviewer001 PASS 与 Leader003 齐备；S1 的 P3-01 及 TD-005 检查点关闭；TD-005 持续 Open，无新增债务或延期。上一阶段 V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
+- 最近完成阶段：V0.5/S1；V0.4 已完成，S1/S2 已完成，S3已完成，S4已完成（Approved），V0.5/S1已完成（Approved），V0.5未完成，S2/S3/S4未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
 - S1的P3-01根状态同步完成，TD-005的S1检查点完成且风险持续Open；TD-003按V0.3退出条件关闭。S2的P3-01及TD-005当前检查点也已由Leader003关闭，无新增债务或批准延期。
 - V0.3/S2已有单响应积压控制、暂停读取及排空恢复；V0.3/S3只补充回归，不新增治理能力。S3已交付空闲超时，S4已交付局部输出/任务界限与关闭；全局配额仍不包含，不形成生产安全或性能承诺。
 - 本文档不跟踪本地协作文档是否进入版本控制或远程发布。
@@ -308,3 +308,17 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 ## V0.4/S4与版本关闭检查点
 
 - 2026-09-09：Reviewer002独立PASS、两P2关闭；Leader003完成P3-01同步及“七项”计数勘误，按ROADMAP实际六条满足退出条件，关闭S4/V0.4。TD-005阶段检查点关闭、风险持续Open，无新增债务/延期；V0.5未开始。
+
+## V0.5/S1 准备检查点（设计中）
+
+- 2026-09-10：前置v0.4-s4已发布，S1设计/审查为Draft revision1，见Leader V0.5/S1-report-001。TD-005持续Open，当前阶段待批准、实现和独立验收，无新增债务或批准延期。
+- TD-001保留V0.5/S4压测检查点，TD-002保留S2日志检查点；sendfile机制验证不替代性能数据。
+- S4的测试有效性修复已完成，不另登记为未关闭债务；本次M0明确稳定TID/owner握手、注入负对照和准备时限隔离，避免重复同类夹具问题。
+
+## V0.5/S1 批准检查点
+
+- 2026-09-10：PM批准design/review revision1及Leader001，登记见Leader002；当前待实现，TD-001留S4、TD-002留S2、TD-005持续Open，无新增债务或风险豁免。
+
+## V0.5/S1 关闭检查点
+
+- 2026-09-10：Reviewer002 PASS、Leader003收口，P2-01和P3-01关闭；TD-005本阶段检查点完成但风险持续Open，无新增债务。TD-001保持S4压测、TD-002保持S2日志，均不由sendfile机制提前关闭。

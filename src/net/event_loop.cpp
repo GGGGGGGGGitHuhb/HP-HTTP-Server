@@ -1,466 +1,433 @@
 #include "net/event_loop.h"
-#include "net/channel.h"
-#include <cassert>
-#include <atomic>
-#include <cerrno>
-#include <system_error>
+
 #include <sys/eventfd.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cassert>
+#include <cerrno>
 #include <limits>
 #include <stdexcept>
+#include <system_error>
 #include <utility>
+
+#include "net/channel.h"
 
 namespace hp::net {
 namespace {
 std::atomic<std::uint64_t> next_token{1};
 
 std::uint64_t allocate_token() {
-    auto token = next_token.load(std::memory_order_relaxed);
-    do {
-        if (!token)
-            throw std::overflow_error("Channel token exhausted");
-    } while (!next_token.compare_exchange_weak(
-        token, token == std::numeric_limits<std::uint64_t>::max() ? 0 : token + 1,
-        std::memory_order_relaxed));
-    return token;
+  auto token = next_token.load(std::memory_order_relaxed);
+  do {
+    if (!token) throw std::overflow_error("Channel token exhausted");
+  } while (!next_token.compare_exchange_weak(
+      token, token == std::numeric_limits<std::uint64_t>::max() ? 0 : token + 1,
+      std::memory_order_relaxed));
+  return token;
 }
 
 void syscall_error(const char* operation) {
-    throw std::system_error(errno, std::generic_category(), operation);
+  throw std::system_error(errno, std::generic_category(), operation);
 }
-} // namespace
+}  // namespace
 
 std::uint64_t EventLoop::exchange_next_token_for_test(std::uint64_t value) {
-    return next_token.exchange(value);
+  return next_token.exchange(value);
 }
 
 bool EventLoop::is_in_loop_thread() const noexcept {
-    return owner_ == std::this_thread::get_id();
+  return owner_ == std::this_thread::get_id();
 }
 
 void EventLoop::require_owner() const {
-    if (!is_in_loop_thread())
-        throw std::logic_error("EventLoop wrong owner thread");
+  if (!is_in_loop_thread())
+    throw std::logic_error("EventLoop wrong owner thread");
 }
 
 EventLoop::EventLoop() {
-    wake_fd_ = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-    if (wake_fd_ < 0)
-        syscall_error("eventfd");
-    try {
-        wake_channel_ =
-            std::make_unique<Channel>(*this, wake_fd_, [this](std::uint32_t) { drain_wakeup(); });
-        wake_channel_->set_interest(EPOLLIN);
-        counters_ = {};
-    } catch (...) {
-        wake_channel_.reset();
-        ::close(wake_fd_);
-        throw;
-    }
+  wake_fd_ = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+  if (wake_fd_ < 0) syscall_error("eventfd");
+  try {
+    wake_channel_ = std::make_unique<Channel>(
+        *this, wake_fd_, [this](std::uint32_t) { drain_wakeup(); });
+    wake_channel_->set_interest(EPOLLIN);
+    counters_ = {};
+  } catch (...) {
+    wake_channel_.reset();
+    ::close(wake_fd_);
+    throw;
+  }
 }
 
 EventLoop::~EventLoop() noexcept {
-    assert(is_in_loop_thread());
-    {
-        std::lock_guard lock(mutex_);
-        state_ = State::Stopped;
-    }
-    timers_.clear();
-    release_tasks(tasks_);
-    wake_channel_->remove();
-    wake_channel_.reset();
-    ::close(wake_fd_);
-    assert(channels_.empty());
+  assert(is_in_loop_thread());
+  {
+    std::lock_guard lock(mutex_);
+    state_ = State::Stopped;
+  }
+  timers_.clear();
+  release_tasks(tasks_);
+  wake_channel_->remove();
+  wake_channel_.reset();
+  ::close(wake_fd_);
+  assert(channels_.empty());
 }
 
 void EventLoop::wake_locked() {
-    const std::uint64_t one = 1;
-    for (;;) {
-        auto n = ::write(wake_fd_, &one, sizeof(one));
-        if (n == sizeof(one))
-            return;
-        if (n < 0 && errno == EINTR)
-            continue;
-        if (n < 0 && errno == EAGAIN)
-            return;
-        try {
-            if (n >= 0)
-                throw std::runtime_error("short eventfd write");
-            syscall_error("eventfd write");
-        } catch (...) {
-            if (!failure_)
-                failure_ = std::current_exception();
-            state_ = State::Failed;
-        }
-        return; // Accepted task remains owned by loop; owner observes failure.
+  const std::uint64_t one = 1;
+  for (;;) {
+    auto n = ::write(wake_fd_, &one, sizeof(one));
+    if (n == sizeof(one)) return;
+    if (n < 0 && errno == EINTR) continue;
+    if (n < 0 && errno == EAGAIN) return;
+    try {
+      if (n >= 0) throw std::runtime_error("short eventfd write");
+      syscall_error("eventfd write");
+    } catch (...) {
+      if (!failure_) failure_ = std::current_exception();
+      state_ = State::Failed;
     }
+    return;  // Accepted task remains owned by loop; owner observes failure.
+  }
 }
 
 void EventLoop::drain_wakeup() {
-    std::uint64_t value;
-    for (;;) {
-        auto n = ::read(wake_fd_, &value, sizeof(value));
-        if (n == sizeof(value))
-            continue;
-        if (n < 0 && errno == EINTR)
-            continue;
-        if (n < 0 && errno == EAGAIN)
-            return;
-        if (n >= 0)
-            throw std::runtime_error("short eventfd read");
-        syscall_error("eventfd read");
-    }
+  std::uint64_t value;
+  for (;;) {
+    auto n = ::read(wake_fd_, &value, sizeof(value));
+    if (n == sizeof(value)) continue;
+    if (n < 0 && errno == EINTR) continue;
+    if (n < 0 && errno == EAGAIN) return;
+    if (n >= 0) throw std::runtime_error("short eventfd read");
+    syscall_error("eventfd read");
+  }
 }
 
-bool EventLoop::queue_in_loop(Task task) {
-    return enqueue(task);
-}
+bool EventLoop::queue_in_loop(Task task) { return enqueue(task); }
 
 bool EventLoop::enqueue(Task& task) {
-    if (!task)
-        throw std::invalid_argument("empty EventLoop task");
-    std::lock_guard lock(mutex_);
-    if (state_ == State::Stopping || state_ == State::Stopped || state_ == State::Failed ||
-        outstanding_ == task_capacity)
-        return false;
-    tasks_.push_back(std::move(task));
-    ++outstanding_;
-    wake_locked();
-    return true;
+  if (!task) throw std::invalid_argument("empty EventLoop task");
+  std::lock_guard lock(mutex_);
+  if (state_ == State::Stopping || state_ == State::Stopped ||
+      state_ == State::Failed || outstanding_ == task_capacity)
+    return false;
+  tasks_.push_back(std::move(task));
+  ++outstanding_;
+  wake_locked();
+  return true;
 }
 
 void EventLoop::release_task(Task& task) {
-    if (!task)
-        return;
-    task = {}; // User captures may reenter; count includes their destruction.
-    std::lock_guard lock(mutex_);
-    --outstanding_;
+  if (!task) return;
+  task = {};  // User captures may reenter; count includes their destruction.
+  std::lock_guard lock(mutex_);
+  --outstanding_;
 }
 
 void EventLoop::release_tasks(std::deque<Task>& tasks) {
-    for (auto& task : tasks)
-        release_task(task);
-    tasks.clear();
+  for (auto& task : tasks) release_task(task);
+  tasks.clear();
 }
 
 void EventLoop::set_control_callback(ControlCallback callback) {
-    require_owner();
-    if (polling_)
-        throw std::logic_error("cannot replace control callback during dispatch");
-    control_callback_ = std::move(callback);
+  require_owner();
+  if (polling_)
+    throw std::logic_error("cannot replace control callback during dispatch");
+  control_callback_ = std::move(callback);
 }
 
 bool EventLoop::failed() const {
-    std::lock_guard lock(mutex_);
-    return state_ == State::Failed;
+  std::lock_guard lock(mutex_);
+  return state_ == State::Failed;
 }
 
 void EventLoop::request_drain(Deadline deadline) {
-    std::lock_guard lock(mutex_);
-    if (state_ == State::Stopped || state_ == State::Failed || control_ == Control::force)
-        return;
-    if (control_ == Control::none || deadline < control_deadline_)
-        control_deadline_ = deadline;
-    control_ = Control::drain;
-    control_pending_ = true;
-    wake_locked();
+  std::lock_guard lock(mutex_);
+  if (state_ == State::Stopped || state_ == State::Failed ||
+      control_ == Control::force)
+    return;
+  if (control_ == Control::none || deadline < control_deadline_)
+    control_deadline_ = deadline;
+  control_ = Control::drain;
+  control_pending_ = true;
+  wake_locked();
 }
 
 void EventLoop::request_force() {
-    std::lock_guard lock(mutex_);
-    if (state_ == State::Stopped || state_ == State::Failed)
-        return;
-    control_ = Control::force;
-    control_pending_ = true;
-    wake_locked();
+  std::lock_guard lock(mutex_);
+  if (state_ == State::Stopped || state_ == State::Failed) return;
+  control_ = Control::force;
+  control_pending_ = true;
+  wake_locked();
 }
 
 void EventLoop::notify_control() {
-    std::lock_guard lock(mutex_);
-    if (state_ == State::Stopped || state_ == State::Failed)
-        return;
-    control_pending_ = true;
-    wake_locked();
+  std::lock_guard lock(mutex_);
+  if (state_ == State::Stopped || state_ == State::Failed) return;
+  control_pending_ = true;
+  wake_locked();
 }
 
 void EventLoop::dispatch_control() {
-    Control control;
-    Deadline deadline;
-    {
-        std::lock_guard lock(mutex_);
-        if (control_ == Control::drain && timer::TimerQueue::Clock::now() >= control_deadline_) {
-            control_ = Control::force;
-            control_pending_ = true;
-        }
-        if (!control_pending_)
-            return;
-        control_pending_ = false;
-        control = control_;
-        deadline = control_deadline_;
+  Control control;
+  Deadline deadline;
+  {
+    std::lock_guard lock(mutex_);
+    if (control_ == Control::drain &&
+        timer::TimerQueue::Clock::now() >= control_deadline_) {
+      control_ = Control::force;
+      control_pending_ = true;
     }
-    if (control_callback_)
-        control_callback_(control, deadline);
+    if (!control_pending_) return;
+    control_pending_ = false;
+    control = control_;
+    deadline = control_deadline_;
+  }
+  if (control_callback_) control_callback_(control, deadline);
 }
 
 void EventLoop::request_stop() {
-    std::lock_guard lock(mutex_);
-    if (state_ == State::Stopped || state_ == State::Failed || state_ == State::Stopping)
-        return;
-    state_ = State::Stopping;
-    wake_locked();
+  std::lock_guard lock(mutex_);
+  if (state_ == State::Stopped || state_ == State::Failed ||
+      state_ == State::Stopping)
+    return;
+  state_ = State::Stopping;
+  wake_locked();
 }
 
 void EventLoop::fail(std::exception_ptr error) {
-    std::deque<Task> cancelled;
-    {
-        std::lock_guard lock(mutex_);
-        if (!failure_)
-            failure_ = error;
-        state_ = State::Failed;
-        failure_observed_ = true;
-        cancelled.swap(tasks_);
-    }
-    timers_.clear();
-    release_tasks(cancelled);
-    // Captures are destroyed on owner, outside mutex (destructors may post).
+  std::deque<Task> cancelled;
+  {
+    std::lock_guard lock(mutex_);
+    if (!failure_) failure_ = error;
+    state_ = State::Failed;
+    failure_observed_ = true;
+    cancelled.swap(tasks_);
+  }
+  timers_.clear();
+  release_tasks(cancelled);
+  // Captures are destroyed on owner, outside mutex (destructors may post).
 }
 
 void EventLoop::set_after_dispatch(std::function<void()> cleanup) {
-    require_owner();
-    if (polling_)
-        throw std::logic_error("cannot replace cleanup during dispatch");
-    after_dispatch_ = std::move(cleanup);
+  require_owner();
+  if (polling_)
+    throw std::logic_error("cannot replace cleanup during dispatch");
+  after_dispatch_ = std::move(cleanup);
 }
 
 void EventLoop::update_channel(Channel& c, std::uint32_t interest) {
-    require_owner();
-    if (&c.loop_ != this)
-        throw std::invalid_argument("Channel belongs to another loop");
-    if (c.registered()) {
-        if (interest == c.interest_)
-            return;
-        epoller_.modify(c.fd_, interest, c.token_);
-        c.interest_ = interest;
-        ++counters_.mods;
-        return;
-    }
-    if (interest == 0)
-        return;
-    if (fds_.contains(c.fd_))
-        throw std::logic_error("fd already registered");
-    const auto token = allocate_token();
-    // Allocate registry storage before ADD, roll back on failure; no throwing work
-    // remains after the kernel successfully registers the fd.
-    channels_.emplace(token, &c);
-    try {
-        fds_.emplace(c.fd_, token);
-        epoller_.add(c.fd_, interest, token);
-    } catch (...) {
-        fds_.erase(c.fd_);
-        channels_.erase(token);
-        throw;
-    }
-    c.token_ = token;
+  require_owner();
+  if (&c.loop_ != this)
+    throw std::invalid_argument("Channel belongs to another loop");
+  if (c.registered()) {
+    if (interest == c.interest_) return;
+    epoller_.modify(c.fd_, interest, c.token_);
     c.interest_ = interest;
-    ++counters_.adds;
+    ++counters_.mods;
+    return;
+  }
+  if (interest == 0) return;
+  if (fds_.contains(c.fd_)) throw std::logic_error("fd already registered");
+  const auto token = allocate_token();
+  // Allocate registry storage before ADD, roll back on failure; no throwing
+  // work remains after the kernel successfully registers the fd.
+  channels_.emplace(token, &c);
+  try {
+    fds_.emplace(c.fd_, token);
+    epoller_.add(c.fd_, interest, token);
+  } catch (...) {
+    fds_.erase(c.fd_);
+    channels_.erase(token);
+    throw;
+  }
+  c.token_ = token;
+  c.interest_ = interest;
+  ++counters_.adds;
 }
 
 void EventLoop::remove_channel(Channel& c) noexcept {
-    assert(is_in_loop_thread());
-    assert(&c.loop_ == this);
-    if (&c.loop_ != this || !c.registered())
-        return;
-    epoller_.remove(c.fd_);
-    channels_.erase(c.token_);
-    fds_.erase(c.fd_);
-    c.token_ = 0;
-    c.interest_ = 0;
-    if (&c != wake_channel_.get())
-        ++counters_.removes;
+  assert(is_in_loop_thread());
+  assert(&c.loop_ == this);
+  if (&c.loop_ != this || !c.registered()) return;
+  epoller_.remove(c.fd_);
+  channels_.erase(c.token_);
+  fds_.erase(c.fd_);
+  c.token_ = 0;
+  c.interest_ = 0;
+  if (&c != wake_channel_.get()) ++counters_.removes;
 }
 
 void EventLoop::dispatch(std::uint64_t token, std::uint32_t mask) {
-    const auto found = channels_.find(token);
-    if (found == channels_.end()) {
-        ++counters_.stale;
-        return;
-    }
-    Channel& c = *found->second;
-    if (&c == wake_channel_.get()) {
-        c.callback_(mask);
-        return;
-    }
-    c.revents_ = mask;
-    ++counters_.dispatches;
-    try {
-        c.callback_(mask);
-    } catch (...) {
-        if (after_dispatch_)
-            after_dispatch_();
-        throw;
-    }
-    // Never access c after callback: cleanup may now destroy it and its fd owner.
-    if (after_dispatch_)
-        after_dispatch_();
+  const auto found = channels_.find(token);
+  if (found == channels_.end()) {
+    ++counters_.stale;
+    return;
+  }
+  Channel& c = *found->second;
+  if (&c == wake_channel_.get()) {
+    c.callback_(mask);
+    return;
+  }
+  c.revents_ = mask;
+  ++counters_.dispatches;
+  try {
+    c.callback_(mask);
+  } catch (...) {
+    if (after_dispatch_) after_dispatch_();
+    throw;
+  }
+  // Never access c after callback: cleanup may now destroy it and its fd owner.
+  if (after_dispatch_) after_dispatch_();
 }
 
 bool EventLoop::timers_allowed() {
-    std::lock_guard lock(mutex_);
-    return state_ == State::Ready || state_ == State::Running;
+  std::lock_guard lock(mutex_);
+  return state_ == State::Ready || state_ == State::Running;
 }
 
-EventLoop::TimerId EventLoop::add_timer(timer::TimerQueue::TimePoint deadline, Task task) {
-    require_owner();
-    if (!timers_allowed())
-        throw std::logic_error("timer on stopping EventLoop");
-    if (!task)
-        throw std::invalid_argument("empty timer task");
-    return timers_.add(deadline, [this, task = std::move(task)] {
-        dispatch_control();
-        if (!timers_allowed())
-            return;
-        try {
-            task();
-        } catch (...) {
-            if (after_dispatch_)
-                after_dispatch_();
-            throw;
-        }
-        if (after_dispatch_)
-            after_dispatch_();
-    });
+EventLoop::TimerId EventLoop::add_timer(timer::TimerQueue::TimePoint deadline,
+                                        Task task) {
+  require_owner();
+  if (!timers_allowed()) throw std::logic_error("timer on stopping EventLoop");
+  if (!task) throw std::invalid_argument("empty timer task");
+  return timers_.add(deadline, [this, task = std::move(task)] {
+    dispatch_control();
+    if (!timers_allowed()) return;
+    try {
+      task();
+    } catch (...) {
+      if (after_dispatch_) after_dispatch_();
+      throw;
+    }
+    if (after_dispatch_) after_dispatch_();
+  });
 }
 
-bool EventLoop::reschedule_timer(TimerId id, timer::TimerQueue::TimePoint deadline) {
-    require_owner();
-    if (!timers_allowed())
-        return false;
-    return timers_.reschedule(id, deadline);
+bool EventLoop::reschedule_timer(TimerId id,
+                                 timer::TimerQueue::TimePoint deadline) {
+  require_owner();
+  if (!timers_allowed()) return false;
+  return timers_.reschedule(id, deadline);
 }
 
 bool EventLoop::cancel_timer(TimerId id) {
-    require_owner();
-    return timers_.cancel(id);
+  require_owner();
+  return timers_.cancel(id);
 }
 
 std::size_t EventLoop::timer_count() const {
-    require_owner();
-    return timers_.size();
+  require_owner();
+  return timers_.size();
 }
 
 void EventLoop::poll_once(int timeout_ms) {
-    require_owner();
-    if (polling_)
-        throw std::logic_error("recursive EventLoop poll");
+  require_owner();
+  if (polling_) throw std::logic_error("recursive EventLoop poll");
+  {
+    std::lock_guard lock(mutex_);
+    if (state_ == State::Stopped ||
+        (state_ == State::Failed && failure_observed_))
+      return;
+  }
+  polling_ = true;
+  const auto timer_cutoff = timers_.last_id();
+  std::deque<Task> batch;
+  try {
+    dispatch_control();
     {
+      std::lock_guard lock(mutex_);
+      if (failure_) std::rethrow_exception(failure_);
+      if (state_ == State::Stopped) throw std::logic_error("EventLoop stopped");
+      if (!tasks_.empty() || state_ == State::Stopping || control_pending_)
+        timeout_ms = 0;
+    }
+    if (timeout_ms < 0 || timeout_ms > 1000) timeout_ms = 1000;
+    if (auto deadline = timers_.next_deadline()) {
+      const auto remaining = *deadline - timer::TimerQueue::Clock::now();
+      if (remaining <= timer::TimerQueue::Clock::duration::zero()) {
+        timeout_ms = 0;
+      } else {
+        const auto millis =
+            std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
+        if (millis < timeout_ms) timeout_ms = static_cast<int>(millis);
+      }
+    }
+    {
+      std::lock_guard lock(mutex_);
+      if (control_ == Control::drain) {
+        const auto remaining =
+            control_deadline_ - timer::TimerQueue::Clock::now();
+        const auto millis =
+            std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
+        timeout_ms = static_cast<int>(std::max<std::int64_t>(
+            0, std::min<std::int64_t>(timeout_ms, millis)));
+      }
+    }
+    const auto events = epoller_.wait(timeout_ms);
+    dispatch_control();
+    for (const auto& event : events) {
+      dispatch_control();
+      dispatch(event.data.u64, event.events);
+    }
+    {
+      std::lock_guard lock(mutex_);
+      if (failure_) std::rethrow_exception(failure_);
+      batch.swap(tasks_);
+    }
+    for (auto& task : batch) {
+      dispatch_control();
+      {
         std::lock_guard lock(mutex_);
-        if (state_ == State::Stopped || (state_ == State::Failed && failure_observed_))
-            return;
+        if (failure_) std::rethrow_exception(failure_);
+      }
+      task();
+      release_task(task);
     }
-    polling_ = true;
-    const auto timer_cutoff = timers_.last_id();
-    std::deque<Task> batch;
-    try {
-        dispatch_control();
-        {
-            std::lock_guard lock(mutex_);
-            if (failure_)
-                std::rethrow_exception(failure_);
-            if (state_ == State::Stopped)
-                throw std::logic_error("EventLoop stopped");
-            if (!tasks_.empty() || state_ == State::Stopping || control_pending_)
-                timeout_ms = 0;
-        }
-        if (timeout_ms < 0 || timeout_ms > 1000)
-            timeout_ms = 1000;
-        if (auto deadline = timers_.next_deadline()) {
-            const auto remaining = *deadline - timer::TimerQueue::Clock::now();
-            if (remaining <= timer::TimerQueue::Clock::duration::zero()) {
-                timeout_ms = 0;
-            } else {
-                const auto millis = std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
-                if (millis < timeout_ms)
-                    timeout_ms = static_cast<int>(millis);
-            }
-        }
-        {
-            std::lock_guard lock(mutex_);
-            if (control_ == Control::drain) {
-                const auto remaining = control_deadline_ - timer::TimerQueue::Clock::now();
-                const auto millis = std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
-                timeout_ms = static_cast<int>(std::max<std::int64_t>(0, std::min<std::int64_t>(timeout_ms, millis)));
-            }
-        }
-        const auto events = epoller_.wait(timeout_ms);
-        dispatch_control();
-        for (const auto& event : events) {
-            dispatch_control();
-            dispatch(event.data.u64, event.events);
-        }
-        {
-            std::lock_guard lock(mutex_);
-            if (failure_)
-                std::rethrow_exception(failure_);
-            batch.swap(tasks_);
-        }
-        for (auto& task : batch) {
-            dispatch_control();
-            {
-                std::lock_guard lock(mutex_);
-                if (failure_)
-                    std::rethrow_exception(failure_);
-            }
-            task();
-            release_task(task);
-        }
-        dispatch_control();
-        if (timers_allowed())
-            timers_.run_due(timer::TimerQueue::Clock::now(), timer_cutoff);
-        if (!timers_allowed())
-            timers_.clear();
-        {
-            std::lock_guard lock(mutex_);
-            if (state_ == State::Stopping && tasks_.empty())
-                state_ = State::Stopped;
-        }
-    } catch (...) {
-        fail(std::current_exception());
-        release_tasks(batch);
-        polling_ = false;
-        std::exception_ptr error;
-        {
-            std::lock_guard lock(mutex_);
-            error = failure_;
-        }
-        std::rethrow_exception(error);
+    dispatch_control();
+    if (timers_allowed())
+      timers_.run_due(timer::TimerQueue::Clock::now(), timer_cutoff);
+    if (!timers_allowed()) timers_.clear();
+    {
+      std::lock_guard lock(mutex_);
+      if (state_ == State::Stopping && tasks_.empty()) state_ = State::Stopped;
     }
+  } catch (...) {
+    fail(std::current_exception());
+    release_tasks(batch);
     polling_ = false;
+    std::exception_ptr error;
+    {
+      std::lock_guard lock(mutex_);
+      error = failure_;
+    }
+    std::rethrow_exception(error);
+  }
+  polling_ = false;
 }
 
 void EventLoop::loop() {
-    require_owner();
+  require_owner();
+  {
+    std::lock_guard lock(mutex_);
+    if (state_ == State::Running || state_ == State::Stopped)
+      throw std::logic_error("EventLoop cannot restart");
+    if (failure_) std::rethrow_exception(failure_);
+    if (state_ == State::Ready) state_ = State::Running;
+  }
+  for (;;) {
+    poll_once(-1);
+    std::exception_ptr error;
     {
-        std::lock_guard lock(mutex_);
-        if (state_ == State::Running || state_ == State::Stopped)
-            throw std::logic_error("EventLoop cannot restart");
-        if (failure_)
-            std::rethrow_exception(failure_);
-        if (state_ == State::Ready)
-            state_ = State::Running;
+      std::lock_guard lock(mutex_);
+      if (state_ == State::Stopped) return;
+      error = failure_;
     }
-    for (;;) {
-        poll_once(-1);
-        std::exception_ptr error;
-        {
-            std::lock_guard lock(mutex_);
-            if (state_ == State::Stopped)
-                return;
-            error = failure_;
-        }
-        if (error) {
-            fail(error);
-            std::rethrow_exception(error);
-        }
+    if (error) {
+      fail(error);
+      std::rethrow_exception(error);
     }
+  }
 }
-} // namespace hp::net
+}  // namespace hp::net

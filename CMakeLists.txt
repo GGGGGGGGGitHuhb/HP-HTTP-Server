@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(hp_http_core STATIC
     src/base/logger.cpp
+    src/base/file_region.cpp
     src/timer/timer_queue.cpp
     src/http/http_request.cpp
     src/http/http_response.cpp
@@ -199,5 +200,17 @@ if(BUILD_TESTING)
     enable_debug_warnings(graceful_shutdown_tests)
     add_test(NAME graceful_shutdown_tests COMMAND graceful_shutdown_tests $<TARGET_FILE:hp_http_server>)
     set_tests_properties(graceful_shutdown_tests PROPERTIES TIMEOUT 60
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(sendfile_tests tests/sendfile_tests.cpp)
+    target_link_libraries(sendfile_tests PRIVATE hp_http_app)
+    target_link_options(sendfile_tests PRIVATE -Wl,--wrap=accept4 -Wl,--wrap=close
+        -Wl,--wrap=epoll_ctl -Wl,--wrap=_Znwm -Wl,--wrap=openat -Wl,--wrap=fstat
+        -Wl,--wrap=read -Wl,--wrap=pread -Wl,--wrap=sendfile -Wl,--wrap=pthread_sigmask)
+    enable_debug_warnings(sendfile_tests)
+    add_test(NAME sendfile_tests COMMAND sendfile_tests)
+    set_tests_properties(sendfile_tests PROPERTIES TIMEOUT 60
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
 endif()
