@@ -78,6 +78,23 @@ void TcpConnection::send(std::span<const std::byte> bytes) {
     }
 }
 
+void TcpConnection::send_file(std::span<const std::byte> header, base::FileRegion file) {
+    if (state_ == State::closing || draining_)
+        throw std::logic_error("send on closed or draining connection");
+    try {
+        io_.queue_file(header, std::move(file));
+        if (!handling_event_ && state_ == State::active) {
+            if (!write_complete_callback_)
+                flush_output();
+            if (state_ == State::active)
+                update_interest();
+        }
+    } catch (...) {
+        request_close();
+        throw;
+    }
+}
+
 void TcpConnection::consume(std::size_t count) {
     io_.consume(count);
 }
@@ -194,6 +211,8 @@ void TcpConnection::flush_output() {
             write_complete_callback_(*this);
         } else
             break;
+        if (written.file_transfer)
+            break; // Do not spend another file budget through a reentrant HTTP callback.
     }
     if (input_stopped_ && !io_.has_pending_output())
         last_result_.close_requested = true;

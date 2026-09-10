@@ -71,6 +71,7 @@ struct Session {
         phase = Phase::writing;
         connection.pause_reading();
         std::vector<std::byte> response;
+        std::optional<base::FileRegion> file;
         try {
             switch (parsed.status) {
             case http::ParseStatus::need_more:
@@ -86,15 +87,20 @@ struct Session {
                     throw std::logic_error("provider relaxed terminal connection policy");
                 close = result.effective_policy == http::ConnectionPolicy::close;
                 response = std::move(result.bytes);
+                file = std::move(result.file);
                 break;
             }
             }
         } catch (...) {
             close = true;
+            file.reset();
             response = http::make_error_response(http::Status::internal_server_error,
                                                  http::ConnectionPolicy::close);
         }
-        connection.send(response);
+        if (file)
+            connection.send_file(response, std::move(*file));
+        else
+            connection.send(response);
         completed = true;
         if (stats)
             ++stats->responses;
@@ -144,7 +150,7 @@ net::TcpServer::MessageCallbackFactory make_http_factory(const http::StaticFileS
     return [&service] {
         return make_http_callback(
             [&service](const http::HttpRequest& request, http::ConnectionPolicy policy) {
-                return service.handle_response(request, policy);
+                return service.prepare_response(request, policy);
             });
     };
 }

@@ -23,6 +23,7 @@ public:
     void watch_control_fd(int fd, Channel::Callback callback);
 private:
     friend struct GracefulShutdownTestAccess;
+    friend struct SendfileTestAccess;
     friend struct ConnectionTimeoutTestAccess;
     friend struct TcpServerTestAccess;
     void add_connection(Socket socket);

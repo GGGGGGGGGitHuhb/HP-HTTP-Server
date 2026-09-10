@@ -24,6 +24,30 @@ struct GracefulShutdownTestAccess {
         return registry.draining_;
     }
 
+    struct ConnectionSnapshot {
+        int fd, peer_error;
+        TcpConnection::Identity identity;
+        sockaddr_in peer;
+        TcpConnection::State state;
+        std::size_t pending, input;
+        std::thread::id owner;
+    };
+
+    static std::vector<ConnectionSnapshot> snapshot(TcpServer& server, std::size_t index) {
+        auto& registry = server.worker_count_ ? *server.registries_[index] : *server.main_registry_;
+        std::vector<ConnectionSnapshot> result;
+        for (auto& [fd, connection] : registry.connections_) {
+            sockaddr_in peer{};
+            socklen_t size = sizeof(peer);
+            const int error = ::getpeername(fd, reinterpret_cast<sockaddr*>(&peer), &size) == 0
+                                ? 0 : errno;
+            result.push_back({fd, error, connection->identity(), peer, connection->state(),
+                              connection->pending_bytes(), connection->input_view().size(),
+                              std::this_thread::get_id()});
+        }
+        return result;
+    }
+
     static std::size_t pending(TcpServer& server, std::size_t index) {
         auto& registry = server.worker_count_ ? *server.registries_[index] : *server.main_registry_;
         std::size_t result = 0;
@@ -87,21 +111,171 @@ void join_graceful(ServerHarness& harness) {
         std::rethrow_exception(harness.error);
 }
 
-void library_drain(const hp::http::StaticFileService& service, const Fixture& fixture) {
+enum class DrainProbe { normal, reordered, legacy, no_input, wrong_peer };
+
+sockaddr_in client_endpoint(int fd) {
+    sockaddr_in address{};
+    socklen_t size = sizeof(address);
+    require(::getsockname(fd, reinterpret_cast<sockaddr*>(&address), &size) == 0,
+            "partial client endpoint");
+    return address;
+}
+
+std::vector<ShutdownAccess::ConnectionSnapshot> owner_connections(ServerHarness& harness,
+                                                                 std::size_t workers) {
+    std::vector<ShutdownAccess::ConnectionSnapshot> all;
+    for (std::size_t index = 0; index < std::max(workers, std::size_t{1}); ++index) {
+        auto done = std::make_shared<std::promise<std::vector<ShutdownAccess::ConnectionSnapshot>>>();
+        auto result = done->get_future();
+        auto inspect = [done, server = harness.server, index] {
+            done->set_value(ShutdownAccess::snapshot(*server, index));
+        };
+        const bool accepted = workers
+            ? TcpServerTestAccess::post(*harness.server, index, [inspect](EventLoop&) { inspect(); })
+            : TcpServerTestAccess::main_post(*harness.server, inspect);
+        require(accepted, "connection snapshot accepted");
+        require(result.wait_for(3s) == std::future_status::ready, "connection snapshot deadline");
+        auto rows = result.get();
+        all.insert(all.end(), rows.begin(), rows.end());
+    }
+    return all;
+}
+
+std::size_t writing_pending(ServerHarness& harness, std::size_t workers, const Stream& writing) {
+    const auto expected = client_endpoint(writing.fd);
+    const auto connections = owner_connections(harness, workers);
+    std::size_t matches = 0, pending_bytes = 0;
+    for (const auto& connection : connections) {
+        if (connection.peer_error == 0 && connection.peer.sin_port == expected.sin_port &&
+            connection.peer.sin_addr.s_addr == expected.sin_addr.s_addr) {
+            ++matches;
+            pending_bytes = connection.pending;
+        }
+    }
+    require(matches <= 1, "writing endpoint unique");
+    return pending_bytes;
+}
+
+void partial_handshake(ServerHarness& harness, Probe& probe, std::size_t workers,
+                       Stream& partial, const sockaddr_in& expected, DrainProbe mode) {
+    const std::string marker = "GET /note.txt HTTP/1.1\r\nHost:";
+    auto inspect = [&] {
+        std::lock_guard lock(probe.mutex);
+        if (mode == DrainProbe::legacy)
+            return probe.owners.size() == 3 && probe.owners[2] != std::thread::id{};
+        std::size_t matches = 0;
+        for (const auto& message : probe.messages) {
+            if (message.peer_error == 0 && message.peer.sin_addr.s_addr == expected.sin_addr.s_addr &&
+                message.peer.sin_port == expected.sin_port && message.owner != std::thread::id{} &&
+                message.completed && message.state == TcpConnection::State::active &&
+                !message.eof && message.input == marker)
+                ++matches;
+        }
+        return probe.owners.size() == 3 && matches == 1 && !harness.run_ended.load();
+    };
+    try {
+        await(inspect);
+    } catch (...) {
+        const auto failure = std::current_exception();
+        int error = 0;
+        socklen_t size = sizeof(error);
+        const int error_result = ::getsockopt(partial.fd, SOL_SOCKET, SO_ERROR, &error, &size);
+        char byte;
+        const auto received = ::recv(partial.fd, &byte, 1, MSG_PEEK | MSG_DONTWAIT);
+        const int receive_error = received < 0 ? errno : 0;
+        std::cerr << "partial_failure workers=" << workers << " client_fd=" << partial.fd
+                  << " expected_peer=" << ntohl(expected.sin_addr.s_addr) << ':'
+                  << ntohs(expected.sin_port) << " run_ended=" << harness.run_ended.load()
+                  << " run_failed=" << harness.run_failed.load() << " socket_error_result="
+                  << error_result << " socket_error=" << error << " peek=" << received
+                  << " peek_error=" << receive_error << '\n';
+        {
+            std::lock_guard lock(probe.mutex);
+            std::cerr << "partial_slots count=" << probe.owners.size()
+                      << " owner_errors=" << probe.owner_errors << '\n';
+            for (std::size_t i = 0; i < probe.messages.size(); ++i) {
+                const auto& message = probe.messages[i];
+                std::cerr << "partial_slot index=" << i << " fd=" << message.fd
+                          << " identity=" << message.identity << " peer="
+                          << ntohl(message.peer.sin_addr.s_addr) << ':' << ntohs(message.peer.sin_port)
+                          << " peer_error=" << message.peer_error << " owner=" << message.owner
+                          << " state=" << static_cast<int>(message.state) << " eof=" << message.eof
+                          << " completed=" << message.completed << " calls=" << message.calls
+                          << " bytes=" << message.input.size() << " marker="
+                          << (message.input == marker) << '\n';
+            }
+        }
+        try {
+            for (const auto& connection : owner_connections(harness, workers)) {
+                std::cerr << "partial_registry fd=" << connection.fd
+                          << " identity=" << connection.identity << " peer="
+                          << ntohl(connection.peer.sin_addr.s_addr) << ':'
+                          << ntohs(connection.peer.sin_port) << " owner=" << connection.owner
+                          << " state=" << static_cast<int>(connection.state)
+                          << " pending=" << connection.pending << " input=" << connection.input
+                          << " peer_error=" << connection.peer_error << '\n';
+            }
+        } catch (const std::exception& diagnostic) {
+            std::cerr << "partial_registry unavailable=" << diagnostic.what() << '\n';
+        }
+        harness.server->request_stop();
+        harness.join();
+        std::cerr << "partial_terminal joined=1 error=" << (harness.error != nullptr) << '\n';
+        if (harness.error) {
+            try {
+                std::rethrow_exception(harness.error);
+            } catch (const std::exception& error) {
+                std::cerr << "partial_terminal reason=" << error.what() << '\n';
+            }
+        }
+        std::rethrow_exception(failure);
+    }
+    std::lock_guard lock(probe.mutex);
+    for (std::size_t i = 0; i < probe.messages.size(); ++i) {
+        const auto& message = probe.messages[i];
+        if (message.peer.sin_port == expected.sin_port)
+            std::cout << "partial_ready workers=" << workers << " slot=" << i
+                      << " fd=" << message.fd << " identity=" << message.identity
+                      << " peer_port=" << ntohs(expected.sin_port) << " owner=" << message.owner
+                      << " bytes=" << message.input.size() << " completed=" << message.completed
+                      << '\n';
+    }
+}
+
+void library_drain(const hp::http::StaticFileService& service, const Fixture& fixture,
+                   DrainProbe mode = DrainProbe::normal) {
     for (std::size_t workers : {0U, 1U, 2U}) {
         Probe probe;
         // Preparation has no idle deadline; deadline_drain separately verifies idle cancellation.
         ServerHarness harness(service, workers, &probe);
-        Stream writing(harness.port), idle(harness.port), partial(harness.port);
-        partial.send("GET /note.txt HTTP/1.1\r\nHost:");
-        await([&] {
-            std::lock_guard lock(probe.mutex);
-            return probe.owners.size() == 3 && probe.owners[2] != std::thread::id{};
-        });
+        std::optional<Stream> first;
+        if (mode != DrainProbe::normal)
+            first.emplace(harness.port);
+        Stream writing(harness.port), idle(harness.port);
+        std::optional<Stream> last;
+        if (!first)
+            last.emplace(harness.port);
+        Stream& partial = first ? *first : *last;
+        if (mode == DrainProbe::reordered) {
+            const auto endpoint = client_endpoint(partial.fd);
+            partial.send("GET /note");
+            await([&] {
+                std::lock_guard lock(probe.mutex);
+                return std::any_of(probe.messages.begin(), probe.messages.end(), [&](const auto& row) {
+                    return row.peer.sin_port == endpoint.sin_port && row.completed &&
+                           row.input == "GET /note";
+                });
+            });
+            partial.send(".txt HTTP/1.1\r\nHost:");
+        } else if (mode != DrainProbe::no_input) {
+            partial.send("GET /note.txt HTTP/1.1\r\nHost:");
+        }
+        const auto endpoint = client_endpoint(mode == DrainProbe::wrong_peer ? idle.fd : partial.fd);
+        partial_handshake(harness, probe, workers, partial, endpoint, mode);
         writing.send(query("/large.bin") + query("/note.txt"));
         std::size_t bytes = 0;
         await([&] {
-            bytes = pending(harness, workers);
+            bytes = writing_pending(harness, workers, writing);
             return bytes > 0;
         });
         harness.server->request_graceful_shutdown(Clock::now() + 2s);
@@ -620,7 +794,10 @@ void process_signals(const char* executable, const Fixture& fixture) {
 }
 } // namespace
 
-int main(int argc, char** argv) {
+#ifndef HP_GRACEFUL_ENTRY
+#define HP_GRACEFUL_ENTRY main
+#endif
+int HP_GRACEFUL_ENTRY(int argc, char** argv) {
     try {
         if (argc == 2 && std::string_view(argv[1]) == "--mask-no-startup-fault") {
             mask_lifetime(false, true);
@@ -634,6 +811,15 @@ int main(int argc, char** argv) {
         hp::http::StaticFileService service(fixture.root.string());
         watched_root = hp::http::StaticFileServiceTestAccess::root_fd(service);
         hp::app::set_session_observer_for_test(session_event);
+        if (argc == 2 && std::string_view(argv[1]).starts_with("--drain-")) {
+            const std::string_view option(argv[1]);
+            const auto mode = option == "--drain-legacy" ? DrainProbe::legacy
+                            : option == "--drain-no-input" ? DrainProbe::no_input
+                            : option == "--drain-wrong-peer" ? DrainProbe::wrong_peer
+                            : DrainProbe::reordered;
+            library_drain(service, fixture, mode);
+            return 0;
+        }
         library_drain(service, fixture);
         deadline_drain(service, fixture);
         provider_drain(service, fixture);

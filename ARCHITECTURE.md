@@ -6,6 +6,8 @@
 
 ## 当前状态与目标架构
 
+V0.5/S1已完成，Approved revision1、Builder002、Reviewer002 PASS及Leader003齐备。生产prepare_response提供小内存头和拥有型文件区域，transport先头后sendfile正文；保留8MiB文件、9MiB逻辑待发送上限及超时/关闭语义。旧物化接口仅显式兼容，生产正文read/pread为0；不据此承诺QPS提升。
+
 V0.4/S4及V0.4已完成，Approved revision1、Builder002、Reviewer002 PASS与Leader003齐备。每连接逻辑待发送上限9MiB，超限关闭；每loop普通未完成任务最多1024，含batch/执行者，固定控制通知绕过普通名额。应用signalfd接收SIGINT/SIGTERM，停止接收并仅排空已有输出，默认5000ms统一绝对截止（0立即、最大60000），再次观察信号强关；不推进pipeline后缀。
 
 V0.4/S3已完成，Approved设计 `docs/leader/designs/V0.4/S3-design.md`、Builder001、独立Reviewer001 PASS与Leader003齐备。owner单调定时队列缩短EventLoop等待，net按实际IO进展及app复用等待状态执行超时；timer只依赖base/标准库，不关闭fd或决定HTTP响应。默认idle30000/keep-alive15000ms，各0禁用对应策略，取较早截止；静默关闭可能截断未排空响应，不发送408。独立CTest20/20及全部必需sanitizer通过。
@@ -300,9 +302,9 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 ### 静态文件请求流
 
-当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::read_messages -> MessageCallback -> app Session -> RequestParser/HTTP`。每个factory创建共享会话Reading/Writing/Closing及独立parser；feed新字节后立即consume并丢弃旧view。解析成功后暂停读取，service.handle_response返回拥有bytes/effective_policy的ResponseResult；策略先决定再序列化，服务400收紧close，旧handle委托以保持兼容。app保存最终策略再send，write-complete排空通知后close或reset并优先处理缓存后缀，无须新socket事件。Session不拥有连接/service，ConnectionIo只读写字节；service生命周期覆盖回调并保留root文件fd。
+当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::read_messages -> MessageCallback -> app Session -> RequestParser/HTTP`。每个factory创建共享会话Reading/Writing/Closing及独立parser；feed新字节后立即consume并丢弃旧view。解析成功后暂停读取，生产service.prepare_response返回内存头/拥有型文件区域或内存响应及effective_policy；策略先决定再序列化，服务400收紧close，旧handle委托以保持兼容。app保存最终策略并移动提交完整响应，write-complete排空通知后close或reset并优先处理缓存后缀，无须新socket事件。Session不拥有连接/service，ConnectionIo只读写字节；service生命周期覆盖回调并保留root文件fd。
 
-以下请求流包含已交付连接复用与长期扩展；sendfile和完整指标仍非当前交付能力：
+以下请求流包含已交付连接复用与长期扩展；sendfile已交付，完整指标仍非当前能力：
 
 1. 用户通过浏览器、curl 或 wrk 发起 HTTP 请求。
 2. Linux 内核将监听 fd 或连接 fd 标记为就绪。
@@ -607,3 +609,11 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 - `2026-09-09`：依据V0.4/S3 Reviewer001 PASS与Leader003同步timer/超时实际能力，S4及V0.4退出条件尚未完成。
 
 - 2026-09-09：S4 Reviewer002 PASS与Leader003关闭V0.4，六条退出条件满足；全局连接/内存配额、阻塞抢占与硬实时承诺仍不包含。
+
+## V0.5/S1 文件传输已交付边界
+
+文件区域move-only且每响应独占CLOEXEC fd，文件完成/取消先释放再推进HTTP；内存输出只保存头或显式内存响应，文件remaining计入逻辑pending。每轮有限调用和最多256KiB文件预算，offset只按实际进展更新；文件未排空不触发后缀或keep-alive等待。默认SIGPIPE路径以窄线程guard保持宿主原mask/pending语义，不全局改信号处置。
+
+文件须保持内容稳定，更新采用原子替换名称；增长只发送初始长度，截短提前EOF或unsupported/发送错误关闭连接，不自动read降级、不补第二响应。冷文件仍可能阻塞owner，不提供并发原地修改快照或性能保证。S2日志、S3通用Buffer、S4压测未开始。
+
+- 2026-09-10：依据Reviewer002 PASS与Leader003关闭V0.5/S1；版本整体未完成。

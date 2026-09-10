@@ -23,6 +23,9 @@ class StaticFileService final : private base::NonCopyable {
     [[nodiscard]] ResponseResult handle_response(
         const HttpRequest& request, ConnectionPolicy policy = ConnectionPolicy::close) const;
 
+    [[nodiscard]] ResponseResult prepare_response(
+        const HttpRequest& request, ConnectionPolicy policy = ConnectionPolicy::close) const;
+
    private:
     friend struct StaticFileServiceTestAccess;
     int root_fd_{-1};

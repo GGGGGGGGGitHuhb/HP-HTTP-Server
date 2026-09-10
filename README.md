@@ -4,7 +4,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.4/S4 资源上限与优雅关闭，`已完成 / Completed`；设计与审查计划为 Approved revision1，Builder002返工已获独立Reviewer002 PASS，Leader003完成S4与V0.4收口；返工报告：`docs/builder/reports/V0.4/S4-report-002.md`。批准摘要：`docs/leader/reports/V0.4/S4-report-002.md`；设计：`docs/leader/designs/V0.4/S4-design.md`；审查计划：`docs/reviewer/reviews/V0.4/S4-review.md`。前置阶段S3经PR #12合并至main，标签 `v0.4-s3` 已推送并核对。
+- 当前阶段：V0.5/S1 sendfile 文件传输，`已完成 / Completed`；设计与审查计划为 Approved revision1，Builder002、独立Reviewer002 PASS与Leader003收口齐备；S1尚未合并或发布标签，V0.5未完成。批准摘要：`docs/leader/reports/V0.5/S1-report-002.md`；设计：`docs/leader/designs/V0.5/S1-design.md`；审查计划：`docs/reviewer/reviews/V0.5/S1-review.md`。前置V0.4/S4经PR #13合并至main，标签 `v0.4-s4` 已推送并核对。
 
 - S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
@@ -12,7 +12,9 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 - 当前版本：`V0.3 HTTP 状态机与连接复用`已完成，S1/S2/S3均已完成；V0.1/V0.2已完成，V0.4已完成，S1已完成，S2已完成，S3已完成，S4已完成（Approved）。S1已合并至main并发布标签 `v0.4-s1`；S2已独立验收、收口并经PR #11合并至main，标签 `v0.4-s2` 已推送。
 - 前置版本状态：`V0.1 最小可运行 HTTP Server` 已完成；S1、S2、S3 均有 Approved 基线、Builder 实现证据与 Reviewer `PASS`。
-- 最近完成阶段：`V0.4/S4 资源上限与优雅关闭`；独立Debug零告警、22/22（15.70秒）、threads0旧3/3（6.00秒）、双curl、四TSan/三ASan及独立正负探针通过。Reviewer002关闭两项P2，Leader003按ROADMAP六项条件关闭V0.4；S4尚未合并或发布标签，V0.5未开始。报告：`docs/reviewer/reports/V0.4/S4-report-002.md`、`docs/leader/reports/V0.4/S4-report-003.md`。
+- 最近完成阶段：`V0.5/S1 sendfile文件传输`；独立零告警、23/23（17.68秒）、threads0旧3/3（4.98秒）、双curl、三TSan/三ASan、三配置probe和13反证通过，P2-01关闭。审查：`docs/reviewer/reports/V0.5/S1-report-002.md`；收口：`docs/leader/reports/V0.5/S1-report-003.md`。S2/S3/S4未开始。
+
+- V0.4/S4历史验收：`V0.4/S4 资源上限与优雅关闭`；独立Debug零告警、22/22（15.70秒）、threads0旧3/3（6.00秒）、双curl、四TSan/三ASan及独立正负探针通过。Reviewer002关闭两项P2，Leader003按ROADMAP六项条件关闭V0.4；S4已合并并发布v0.4-s4；V0.5/S1已完成sendfile验收。报告：`docs/reviewer/reports/V0.4/S4-report-002.md`、`docs/leader/reports/V0.4/S4-report-003.md`。
 
 - V0.4/S3历史验收：`V0.4/S3 定时器与连接超时`；独立Debug零告警、CTest20/20（14.20秒）、threads0服务3/3（4.31秒）、双curl、四TSan及三ASan/UBSan/LSan通过。8REQ/12AC/RV与8条生命周期全部通过；审查：`docs/reviewer/reports/V0.4/S3-report-001.md`，收口：`docs/leader/reports/V0.4/S3-report-003.md`。
 
@@ -101,7 +103,7 @@ curl --http1.1 -i http://127.0.0.1:8080/missing.txt
 curl --http1.1 -i -X POST http://127.0.0.1:8080/
 ```
 
-预期信号包括 `22/22` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
+预期信号包括 `23/23` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
 
 ## 配置说明
 
@@ -163,7 +165,9 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
   bash tests/http_smoke_test.sh ./build-v0.4-s2/hp_http_server
 ```
 
-当前 CTest 共 22 项（保留S3的20项身份，新增容量与优雅关闭专项）：
+当前 CTest 共 23 项（保留V0.4的22项身份，新增文件传输专项）：
+
+- `sendfile_tests`：真实sendfile/offset/短写/预算、默认SIGPIPE与mask/pending、文件fd身份、生产无read正文、0/1/2 worker及100轮未完成文件回收。
 
 - `timer_queue_tests`：单调截止、稳定ID、取消/续期、重入、异常安全、100000次更新占用与EventLoop调度。
 - `connection_timeout_tests`：实际IO进展、复用等待、静默超时/截断、0/1/2 owner、失败取消与资源回收。
@@ -317,7 +321,7 @@ Agent 执行真实 socket/HTTP、系统跟踪或受限 sanitizer 时遵守仓库
 - 生产默认main监听、两个worker处理连接，显式 `--threads 0` 保留单 Reactor。EventLoop 绑定构造线程；所有注册、更新、移除、poll、cleanup 设置及销毁始终由该 owner 执行（启动前也不例外）。Channel 不关闭 fd，所有者必须先 remove，回调返回后再销毁 Channel 和 fd owner。
 - 消息 span 只在回调期间借用，consume 后不再使用旧视图；send 在返回前复制字节，close_after_flush 立即停止新输入通知并保留待写尾部。HTTP会话在上个响应实际排空后才解析下个请求；pause与永久关闭分离。旧 ApplicationHandler/Result 生产接口已移除。
 - 已有 owner 定时队列、连接超时、输出上限和进程优雅关闭；尚无全局连接/内存配额或总请求时限。持续发送少量字节可刷新 idle，阻塞 provider 不能被同 owner timer 抢占，因此这些超时不等同于完整 slowloris/慢读防护。
-- 文件采用读入内存后复用输出缓冲，不使用 `sendfile`，不作生产安全、容量或性能承诺。
+- 生产静态文件采用小内存响应头与独占fd的sendfile正文；错误/自定义内存响应仍使用输出缓冲。旧handle/handle_response是显式物化兼容入口，生产factory使用prepare_response。不据机制验证承诺性能涨幅。
 - 只承诺 Linux / WSL2 方向；HTTP/2、TLS、数据库、代理、L4LB、XDP 和 DPDK 均不在当前范围。
 
 ## 许可证
@@ -359,3 +363,29 @@ ctest --test-dir build-v0.4-s4 --output-on-failure --timeout 60
 ```
 
 新增 `resource_limits_tests`、`graceful_shutdown_tests`，保留原20个身份。真实网络/自有子进程signal测试在受控提升下运行；sanitizer必须同时使用同构建的服务二进制。首轮实现命令、退出码、资源计数和各AC证据见 `docs/builder/reports/V0.4/S4-report-001.md`；线程身份基线、信号故障负对照和最终返工复测见 `docs/builder/reports/V0.4/S4-report-002.md`。当前Builder验证不代替独立Reviewer与Leader收口。
+
+
+## V0.5/S1 文件传输
+
+生产静态正文通过 Linux `sendfile` 发送，先排完响应头，再按拥有型文件区域推进。每个响应独立打开CLOEXEC文件fd；文件上限仍为8MiB，头与未发送文件的逻辑总量仍受9MiB上限约束。正文不进入用户输出vector，输出缓冲只保存小响应头。一次 `write_available` 最多推进256KiB文件并限制调用次数，回调重入不能继续消耗下一份文件预算。
+
+文件传输期间禁止再追加输出；文件和头全部排空后才推进pipeline、write-complete与keep-alive等待。实际sendfile正字节刷新idle，EAGAIN不刷新；现有SIGINT/TERM排空、统一截止和强关语义保持。不支持sendfile或传输错误会关闭当前连接，不自动read降级，也不在已开始的响应后追加500。没有新增CLI开关。
+
+传输期间文件内容必须保持稳定。部署更新应写入新文件再原子替换名称：已打开响应继续使用原inode，之后请求取得新文件。原地增长不会超过初始Content-Length；截短可能提前EOF并截断响应。不承诺原地并发写的内容快照，也不承诺冷文件缺页不会阻塞owner。
+
+沿用本仓库任务局部tmp/cache及受控真实网络执行路线，专项命令如下（完整命令、负对照和证据映射见 `docs/builder/reports/V0.5/S1-report-001.md`；共享夹具身份握手返工见 `docs/builder/reports/V0.5/S1-report-002.md`）：
+
+```bash
+cmake -S . -B build-v0.5-s1 -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-v0.5-s1 -j4
+ctest --test-dir build-v0.5-s1 --output-on-failure --timeout 60
+./build-v0.5-s1/sendfile_tests
+cmake -S . -B build-v0.5-s1-tsan -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer'
+cmake --build build-v0.5-s1-tsan -j4
+TSAN_OPTIONS=halt_on_error=1 setarch x86_64 -R timeout 60s ./build-v0.5-s1-tsan/sendfile_tests
+cmake -S . -B build-v0.5-s1-asan -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer'
+cmake --build build-v0.5-s1-asan -j4
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 timeout 60s ./build-v0.5-s1-asan/sendfile_tests
+```
+
+这一步验证传输机制与资源边界；不提供QPS结论，V0.5后续日志、Buffer与wrk阶段尚未实施。

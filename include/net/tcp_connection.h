@@ -23,6 +23,7 @@ public:
     void start();
     void request_close() noexcept;
     void send(std::span<const std::byte> bytes);
+    void send_file(std::span<const std::byte> header, base::FileRegion file);
     void consume(std::size_t count);
     void close_after_flush();
     void begin_drain();
@@ -41,6 +42,7 @@ public:
     [[nodiscard]] State state() const noexcept { return state_; }
 private:
     friend struct GracefulShutdownTestAccess;
+    friend struct SendfileTestAccess;
     friend struct ConnectionTimeoutTestAccess;
     friend class TcpServer;
     friend class ConnectionRegistry;

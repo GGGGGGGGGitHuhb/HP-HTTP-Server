@@ -4,6 +4,8 @@
 #include <span>
 #include <vector>
 #include "base/non_copyable.h"
+#include "base/file_region.h"
+#include <optional>
 #include "net/socket.h"
 
 namespace hp::net {
@@ -16,6 +18,7 @@ struct ReadResult {
 
 struct WriteResult {
     std::size_t bytes_written{0};
+    bool file_transfer{false};
     bool would_block{false};
     int error_number{0};
 };
@@ -35,6 +38,8 @@ struct ConnectionEventResult {
 class ConnectionIo final : private base::NonCopyable {
    public:
     static constexpr std::size_t output_limit = 9U * 1024U * 1024U;
+    static constexpr std::size_t file_write_budget = 256U * 1024U;
+    static constexpr std::size_t file_call_budget = 16;
     static bool output_fits(std::size_t pending, std::size_t incoming) noexcept;
     explicit ConnectionIo(Socket socket, std::size_t max_input_bytes = 0) noexcept;
     ConnectionIo(ConnectionIo&&) noexcept = default;
@@ -48,6 +53,7 @@ class ConnectionIo final : private base::NonCopyable {
     [[nodiscard]] std::span<const std::byte> input_view() const noexcept;
     void consume(std::size_t count);
     void queue_output(std::span<const std::byte> bytes);
+    void queue_file(std::span<const std::byte> header, base::FileRegion file);
     void mark_peer_half_closed() noexcept;
     [[nodiscard]] bool peer_half_closed() const noexcept;
     [[nodiscard]] bool has_pending_output() const noexcept;
@@ -62,6 +68,7 @@ class ConnectionIo final : private base::NonCopyable {
     std::vector<std::byte> input_;
     std::vector<std::byte> output_;
     std::size_t write_offset_{0};
+    std::optional<base::FileRegion> file_;
     bool peer_half_closed_{false};
 };
 

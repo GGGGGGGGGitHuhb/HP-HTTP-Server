@@ -49,12 +49,12 @@ std::span<const std::byte> as_bytes(std::string_view text) {
 
 } // namespace
 
-std::vector<std::byte> make_response(Status status, std::span<const std::byte> body,
+std::vector<std::byte> make_response_header(Status status, std::size_t content_length,
                                      std::string_view content_type, bool include_allow_get,
                                      ConnectionPolicy policy) {
     std::string header = "HTTP/1.1 " + std::to_string(static_cast<int>(status)) + " " +
                          std::string(reason_phrase(status)) + "\r\n";
-    header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+    header += "Content-Length: " + std::to_string(content_length) + "\r\n";
     header += "Content-Type: " + std::string(content_type) + "\r\n";
     header +=
         policy == ConnectionPolicy::close ? "Connection: close\r\n" : "Connection: keep-alive\r\n";
@@ -63,10 +63,15 @@ std::vector<std::byte> make_response(Status status, std::span<const std::byte> b
     }
     header += "\r\n";
 
-    std::vector<std::byte> response;
-    response.reserve(header.size() + body.size());
-    const auto header_bytes = as_bytes(header);
-    response.insert(response.end(), header_bytes.begin(), header_bytes.end());
+    const auto bytes = as_bytes(header);
+    return {bytes.begin(), bytes.end()};
+}
+
+std::vector<std::byte> make_response(Status status, std::span<const std::byte> body,
+                                     std::string_view content_type, bool include_allow_get,
+                                     ConnectionPolicy policy) {
+    auto response = make_response_header(status, body.size(), content_type, include_allow_get, policy);
+    response.reserve(response.size() + body.size());
     response.insert(response.end(), body.begin(), body.end());
     return response;
 }

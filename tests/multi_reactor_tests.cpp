@@ -155,10 +155,23 @@ std::size_t resources(const char* path) {
     return static_cast<std::size_t>(std::distance(std::filesystem::directory_iterator(path), {}));
 }
 
+struct MessageObservation {
+    int fd{-1};
+    TcpConnection::Identity identity{};
+    sockaddr_in peer{};
+    int peer_error{};
+    std::thread::id owner;
+    TcpConnection::State state{TcpConnection::State::unregistered};
+    bool eof{}, completed{};
+    std::size_t calls{};
+    std::string input;
+};
+
 struct Probe {
     std::mutex mutex;
     std::thread::id main;
     std::vector<std::thread::id> factories, owners;
+    std::vector<MessageObservation> messages;
     std::map<const void*, std::thread::id> sessions;
     int created{}, destroyed{}, owner_errors{}, callback_releases{};
 };
@@ -199,6 +212,7 @@ struct ServerHarness {
     std::mutex lifetime_mutex;
     std::condition_variable lifetime_ready;
     bool release_owner{false};
+    std::atomic<bool> run_ended{false}, run_failed{false};
 
     ServerHarness(const hp::http::StaticFileService& service, std::size_t workers,
                   Probe* probe = nullptr, ConnectionTimeouts timeouts = {}) {
@@ -220,6 +234,7 @@ struct ServerHarness {
                             probe->factories.push_back(std::this_thread::get_id());
                             id = probe->owners.size();
                             probe->owners.push_back({});
+                            probe->messages.emplace_back();
                         }
                         return TcpConnection::MessageCallback(
                             [callback = std::move(callback), probe,
@@ -232,8 +247,28 @@ struct ServerHarness {
                                         owner != std::this_thread::get_id())
                                         ++probe->owner_errors;
                                     owner = std::this_thread::get_id();
+                                    auto& message = probe->messages[id];
+                                    message.fd = connection.fd();
+                                    message.identity = connection.identity();
+                                    socklen_t size = sizeof(message.peer);
+                                    message.peer_error = ::getpeername(message.fd,
+                                        reinterpret_cast<sockaddr*>(&message.peer), &size) == 0
+                                        ? 0 : errno;
+                                    message.owner = owner;
+                                    message.state = connection.state();
+                                    message.eof = eof;
+                                    message.completed = false;
+                                    ++message.calls;
+                                    if (!bytes.empty())
+                                        message.input.append(reinterpret_cast<const char*>(bytes.data()),
+                                            std::min(bytes.size(), std::size_t{128} - message.input.size()));
                                 }
                                 callback(connection, bytes, eof);
+                                {
+                                    std::lock_guard lock(probe->mutex);
+                                    probe->messages[id].completed = true;
+                                    probe->messages[id].state = connection.state();
+                                }
                             });
                     },
                     hp::http::max_request_bytes, workers, timeouts);
@@ -248,6 +283,8 @@ struct ServerHarness {
                 } catch (...) {
                     error = std::current_exception();
                 }
+                run_failed = error != nullptr;
+                run_ended = true;
                 // Keep the borrowed server alive until the caller ends all API calls.
                 // Destruction still occurs on this owner, after explicit join release.
                 std::unique_lock lifetime_lock(lifetime_mutex);

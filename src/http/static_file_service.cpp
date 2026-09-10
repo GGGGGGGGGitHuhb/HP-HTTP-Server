@@ -15,43 +15,11 @@
 namespace hp::http {
 namespace {
 
-class UniqueFd final {
-   public:
-    explicit UniqueFd(int fd = -1) noexcept : fd_(fd) {}
-
-    ~UniqueFd() {
-        if (fd_ >= 0) {
-            ::close(fd_);
-        }
-    }
-
-    UniqueFd(const UniqueFd&) = delete;
-    UniqueFd& operator=(const UniqueFd&) = delete;
-
-    UniqueFd(UniqueFd&& other) noexcept : fd_(std::exchange(other.fd_, -1)) {}
-
-    UniqueFd& operator=(UniqueFd&& other) noexcept {
-        if (this != &other) {
-            if (fd_ >= 0) {
-                ::close(fd_);
-            }
-            fd_ = std::exchange(other.fd_, -1);
-        }
-        return *this;
-    }
-
-    [[nodiscard]] int get() const noexcept { return fd_; }
-
-   private:
-    int fd_;
-};
-
-std::span<const std::byte> byte_span(const std::vector<std::byte>& bytes) {
-    return {bytes.data(), bytes.size()};
-}
+using base::UniqueFd;
 
 ResponseResult error_response(Status status, ConnectionPolicy policy) {
-    if (status == Status::bad_request || status == Status::method_not_allowed) policy = ConnectionPolicy::close;
+    if (status == Status::bad_request || status == Status::method_not_allowed)
+        policy = ConnectionPolicy::close;
     return {make_error_response(status, policy), policy};
 }
 
@@ -118,7 +86,7 @@ PathResult validate_path(std::string_view target) {
     return result;
 }
 
-ResponseResult read_file_response(int file_fd,
+ResponseResult prepare_file_response(UniqueFd file,
                                           std::string_view relative_path,
                                           const struct stat& metadata, ConnectionPolicy policy) {
     if (!S_ISREG(metadata.st_mode)) {
@@ -132,22 +100,9 @@ ResponseResult read_file_response(int file_fd,
         return error_response(Status::forbidden, policy);
     }
 
-    std::vector<std::byte> body(static_cast<std::size_t>(size));
-    std::size_t offset = 0;
-    while (offset < body.size()) {
-        const ssize_t count =
-            ::read(file_fd, body.data() + offset, body.size() - offset);
-        if (count > 0) {
-            offset += static_cast<std::size_t>(count);
-            continue;
-        }
-        if (count == -1 && errno == EINTR) {
-            continue;
-        }
-        return error_response(Status::internal_server_error, policy);
-    }
-    return {make_response(Status::ok, byte_span(body),
-                         content_type_for_path(relative_path), false, policy), policy};
+    const auto length = static_cast<std::size_t>(size);
+    return {make_response_header(Status::ok, length, content_type_for_path(relative_path), false, policy),
+            policy, base::FileRegion(std::move(file), 0, length)};
 }
 
 }  // namespace
@@ -182,6 +137,33 @@ std::vector<std::byte> StaticFileService::handle(
 
 ResponseResult StaticFileService::handle_response(
     const HttpRequest& request, ConnectionPolicy policy) const {
+    auto result = prepare_response(request, policy);
+    if (!result.file)
+        return result;
+    try {
+        const auto header = result.bytes.size();
+        result.bytes.resize(header + result.file->remaining());
+        std::size_t offset = header;
+        while (offset < result.bytes.size()) {
+            const auto count = ::read(result.file->fd(), result.bytes.data() + offset,
+                                      result.bytes.size() - offset);
+            if (count > 0) {
+                offset += static_cast<std::size_t>(count);
+                continue;
+            }
+            if (count < 0 && errno == EINTR)
+                continue;
+            return error_response(Status::internal_server_error, policy);
+        }
+        result.file.reset();
+        return result;
+    } catch (...) {
+        return error_response(Status::internal_server_error, policy);
+    }
+}
+
+ResponseResult StaticFileService::prepare_response(
+    const HttpRequest& request, ConnectionPolicy policy) const {
     try {
         const PathResult validated = validate_path(request.target);
         if (validated.status != Status::ok) {
@@ -215,7 +197,7 @@ ResponseResult StaticFileService::handle_response(
         if (::fstat(file.get(), &metadata) == -1) {
             return error_response(Status::internal_server_error, policy);
         }
-        return read_file_response(file.get(), validated.path, metadata, policy);
+        return prepare_file_response(std::move(file), validated.path, metadata, policy);
     } catch (...) {
         return error_response(Status::internal_server_error, policy);
     }
