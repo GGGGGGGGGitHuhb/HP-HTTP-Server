@@ -228,6 +228,23 @@ int main(int argc, char* argv[]) {
         }
         expect_contains(help.output, "defaults to 30000", "help ordinary timeout default");
         expect_contains(help.output, "defaults to 15000", "help keep-alive timeout default");
+        for (const auto value : {"60001", "-1", "+1", "", "x", "184467440737095516160"}) {
+            expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
+                                        "--shutdown-timeout-ms", value}).exit_code == 2,
+                   "invalid shutdown timeout exits 2");
+        }
+        expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
+                                    "--shutdown-timeout-ms"}).exit_code == 2,
+               "missing shutdown timeout exits 2");
+        expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
+                                    "--shutdown-timeout-ms", "1", "--shutdown-timeout-ms", "0"}).exit_code == 2,
+               "duplicate shutdown timeout exits 2");
+        for (const auto value : {"0", "1", "60000"}) {
+            expect(run_process(argv[1], {"--port", "0", "--root", missing,
+                                        "--shutdown-timeout-ms", value}).exit_code == 1,
+                   "valid shutdown timeout reaches resource validation");
+        }
+        expect_contains(help.output, "defaults to 5000", "help shutdown default");
         const RunResult missing_root = run_process(argv[1], {"--port", "0", "--root", missing});
         expect(missing_root.exit_code != 0, "missing root must fail before serving");
         expect_contains(missing_root.output, "static root is unavailable",

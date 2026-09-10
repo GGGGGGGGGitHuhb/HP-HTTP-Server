@@ -62,8 +62,8 @@ void TcpConnection::request_close() noexcept {
 }
 
 void TcpConnection::send(std::span<const std::byte> bytes) {
-    if (state_ == State::closing)
-        throw std::logic_error("send on closed connection");
+    if (state_ == State::closing || draining_)
+        throw std::logic_error("send on closed or draining connection");
     try {
         io_.queue_output(bytes); // Take independent storage before returning.
         if (!handling_event_ && state_ == State::active) {
@@ -80,6 +80,23 @@ void TcpConnection::send(std::span<const std::byte> bytes) {
 
 void TcpConnection::consume(std::size_t count) {
     io_.consume(count);
+}
+
+void TcpConnection::begin_drain() {
+    if (state_ == State::closing || draining_)
+        return;
+    draining_ = true;
+    input_stopped_ = true;
+    read_paused_ = true;
+    idle_waiting_ = false;
+    // Suppress Session::drained before any future write can finish a response.
+    write_complete_callback_ = {};
+    if (activity_callback_)
+        activity_callback_(*this, false);
+    if (!io_.has_pending_output())
+        request_close();
+    else
+        update_interest();
 }
 
 void TcpConnection::close_after_flush() {

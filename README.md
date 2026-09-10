@@ -4,15 +4,17 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.4/S3 定时器与连接超时，`已完成 / Completed`；设计与审查计划为Approved revision1，已于2026-09-09批准，Builder001、独立Reviewer001 PASS及Leader003收口齐备。实现证据：`docs/builder/reports/V0.4/S3-report-001.md`。决策摘要：`docs/leader/reports/V0.4/S3-report-003.md`。最近已完成阶段为S3，S3尚未合并至main或发布标签。
+- 当前阶段：V0.4/S4 资源上限与优雅关闭，`已完成 / Completed`；设计与审查计划为 Approved revision1，Builder002返工已获独立Reviewer002 PASS，Leader003完成S4与V0.4收口；返工报告：`docs/builder/reports/V0.4/S4-report-002.md`。批准摘要：`docs/leader/reports/V0.4/S4-report-002.md`；设计：`docs/leader/designs/V0.4/S4-design.md`；审查计划：`docs/reviewer/reviews/V0.4/S4-review.md`。前置阶段S3经PR #12合并至main，标签 `v0.4-s3` 已推送并核对。
 
 - S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
 - V0.3/S3 历史验收：独立全新Debug告警0、CTest15/15（4.88秒）、6REQ/8AC/8RV全部通过，parser状态与keep-alive组件ASan/UBSan/LSan无诊断。交付：`docs/builder/reports/V0.3/S3-report-001.md`、`docs/reviewer/reports/V0.3/S3-report-001.md`、`docs/leader/reports/V0.3/S3-report-004.md`。
 
-- 当前版本：`V0.3 HTTP 状态机与连接复用`已完成，S1/S2/S3均已完成；V0.1/V0.2已完成，V0.4整体尚未完成，S1已完成，S2已完成，S3已完成，S4未开始。S1已合并至main并发布标签 `v0.4-s1`；S2已独立验收、收口并经PR #11合并至main，标签 `v0.4-s2` 已推送。
+- 当前版本：`V0.3 HTTP 状态机与连接复用`已完成，S1/S2/S3均已完成；V0.1/V0.2已完成，V0.4已完成，S1已完成，S2已完成，S3已完成，S4已完成（Approved）。S1已合并至main并发布标签 `v0.4-s1`；S2已独立验收、收口并经PR #11合并至main，标签 `v0.4-s2` 已推送。
 - 前置版本状态：`V0.1 最小可运行 HTTP Server` 已完成；S1、S2、S3 均有 Approved 基线、Builder 实现证据与 Reviewer `PASS`。
-- 最近完成阶段：`V0.4/S3 定时器与连接超时`；独立Debug零告警、CTest20/20（14.20秒）、threads0服务3/3（4.31秒）、双curl、四TSan及三ASan/UBSan/LSan通过。8REQ/12AC/RV与8条生命周期全部通过；审查：`docs/reviewer/reports/V0.4/S3-report-001.md`，收口：`docs/leader/reports/V0.4/S3-report-003.md`。
+- 最近完成阶段：`V0.4/S4 资源上限与优雅关闭`；独立Debug零告警、22/22（15.70秒）、threads0旧3/3（6.00秒）、双curl、四TSan/三ASan及独立正负探针通过。Reviewer002关闭两项P2，Leader003按ROADMAP六项条件关闭V0.4；S4尚未合并或发布标签，V0.5未开始。报告：`docs/reviewer/reports/V0.4/S4-report-002.md`、`docs/leader/reports/V0.4/S4-report-003.md`。
+
+- V0.4/S3历史验收：`V0.4/S3 定时器与连接超时`；独立Debug零告警、CTest20/20（14.20秒）、threads0服务3/3（4.31秒）、双curl、四TSan及三ASan/UBSan/LSan通过。8REQ/12AC/RV与8条生命周期全部通过；审查：`docs/reviewer/reports/V0.4/S3-report-001.md`，收口：`docs/leader/reports/V0.4/S3-report-003.md`。
 
 - V0.4/S2历史验收：`V0.4/S2 主从 Reactor`；独立Debug告警0、默认CTest18/18（11.57秒）、显式0服务回归3/3、双模式curl及六项sanitizer通过，8REQ/12AC/12RV与11条生命周期契约全部通过。交付：`docs/builder/reports/V0.4/S2-report-001.md`、`docs/reviewer/reports/V0.4/S2-report-001.md`、`docs/leader/reports/V0.4/S2-report-003.md`。
 - 真实运行入口现为主从 Reactor 的受限 HTTP/1.1 静态文件服务（默认两个 worker，`--threads 0` 回退单 Reactor）：严格要求 `--port` 与 `--root`，支持同连接连续无请求体 `GET`，默认返回 `Connection: keep-alive`，显式 close 优先；响应按请求顺序逐个排空。
@@ -99,13 +101,14 @@ curl --http1.1 -i http://127.0.0.1:8080/missing.txt
 curl --http1.1 -i -X POST http://127.0.0.1:8080/
 ```
 
-预期信号包括 `20/20` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
+预期信号包括 `22/22` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
 
 ## 配置说明
 
 当前没有配置文件系统；CLI 必须各提供一次 `--port <0-65535>` 和 `--root <directory>`，二者顺序可交换。
 
 - `--threads <0-64>`：可选，默认2个worker；0为单Reactor，主线程不计入worker数。严格十进制，重复、缺值、符号、非数字、越界退出2；资源启动错误退出1。
+- `--shutdown-timeout-ms <0-60000>`：默认5000。SIGINT/SIGTERM触发停止监听和当前输出排空，0立即关闭；再次观察到信号强关，不延长第一次观察时确定的steady_clock绝对截止。参数重复、缺值、符号、非数字或越界退出2；正常信号退出（含期限截断）退出0，资源/worker异常退出1。
 - `--idle-timeout-ms <0-86400000>`：默认30000。从 owner 注册连接开始，只按实际 recv/send 正数字节刷新；EAGAIN、伪事件和只入缓冲均不刷新。
 - `--keep-alive-timeout-ms <0-86400000>`：默认15000。一个响应实际排空、无缓存后缀且 parser 无部分下一请求时开始等待；新输入退出等待，重复等待通知不延长截止。
 - 两项0分别禁用对应策略，两项都0恢复无超时；同时适用取较早截止。严格无符号十进制；符号、空值、重复、缺值、溢出/越界退出2。到期静默关闭，不发送408，未排空响应可能截断。C++ `TcpServer` 末尾 `ConnectionTimeouts` 默认0/0，app明确传入上述CLI默认值。
@@ -160,7 +163,7 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
   bash tests/http_smoke_test.sh ./build-v0.4-s2/hp_http_server
 ```
 
-当前 CTest 共 20 项（S3保留原18项身份，新增定时队列和连接超时专项）：
+当前 CTest 共 22 项（保留S3的20项身份，新增容量与优雅关闭专项）：
 
 - `timer_queue_tests`：单调截止、稳定ID、取消/续期、重入、异常安全、100000次更新占用与EventLoop调度。
 - `connection_timeout_tests`：实际IO进展、复用等待、静默超时/截断、0/1/2 owner、失败取消与资源回收。
@@ -171,6 +174,8 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
 - `http_parser_state_tests`：原19类与新增26类 framing/Connection 矩阵的全 split 点/逐字节输入、CRLF 跨块、精确消费、粘包剩余/reset、终态零消费、4 KiB/16 KiB 边界和线性扫描/缓存计数；S3再加入66个具名独立预期、9个长边界样本，共6629种调度（短样本全部两段切分、逐字节、两种固定seed），含多短Header累计上限与pending-CR reset。
 - `http_connection_callback_tests`：新增两连接各三段增量 feed/consume 与空 HTTP EOF；保留交错分段/EOF/上限、应用异常500、临时响应所有权与真实EAGAIN、显式close后的pipeline单响应、工厂/消息异常、旧身份及新消息路径真实reset。
 - `acceptor_tcp_connection_tests`：真实单轮 8 客户端 accept-drain、交付/注册/MOD 失败与恢复、缓冲 EAGAIN 后逐字节续写、回调后销毁、fd/token/关闭 identity 隔离及经 TcpConnection 的真实 ERR|IN。
+- `resource_limits_tests`：9MiB输出边界、1000轮真实EAGAIN/存储压缩、1024含batch/执行者、分配失败/析构重入及连接隔离。
+- `graceful_shutdown_tests`：0/1/2 worker排空、8MiB完整字节/截断前缀、provider后缀隔离、满队列控制、100轮回收及真实生产SIGINT/SIGTERM。
 - `event_loop_thread_pool_tests`：固定0/1/2、启动回滚/就绪、1024含执行者精确上限、异常取消归还及析构重入。
 - `multi_reactor_tests`：同进程真实生产factory/service上的owner路由、Session生命周期、并发HTTP、安全路径、交接失败、满worker故障通知及100轮回收；CTest另检查生产CLI默认/0/1/2的OS线程数。
 - `event_loop_thread_tests`：owner、任务顺序与嵌套异步、真实 eventfd 唤醒、停止竞态、异常取消与清理、100 次资源回收及 token 并发/耗尽。
@@ -206,8 +211,8 @@ main执行accept和callback factory；未注册Socket按0→1→…固定轮转�
 自定义共享provider/stats由调用者同步，生产默认factory不共享可变统计对象。
 
 池每worker最多1024个已接受但未结束的任务（**含正在执行的任务**）。满/停止时拒绝，交接socket关闭，不重试其他worker或发送额外HTTP状态。
-这是固定交接边界；活跃连接仍没有总量上限；S3已提供普通idle及keep-alive等待超时，S4的一般任务治理尚未实现。
-S1独立EventLoopThread接口继续无容量上限。
+这是固定交接边界；活跃连接仍没有总量上限；S3已提供普通idle及keep-alive等待超时，S4已将所有普通EventLoop入口统一限制为1024个尚未完成/释放的任务，含batch和执行者。
+S1独立EventLoopThread接口现在也遵守1024上限，返回false后调用者可在自身截止内重试或放弃。
 
 `TcpServer::request_stop()` 可跨普通线程调用，立即停止接收并回收所有worker/活动连接，不保证响应排空，也不是信号安全或进程优雅关闭。
 server构造/run/析构由main owner执行，stop调用者需在server析构前结束。任意worker致命失败会通过独立停止通知唤醒main，所有worker join后run再上报错误。
@@ -244,7 +249,7 @@ cleanup 在 init 开始后的退出路径各一次，由 owner 移除外部 Chan
 仅 `queue_in_loop`、`request_stop` 与不可变线程身份可跨线程访问 EventLoop。
 正常停止排空已接收任务，异常则取消未执行任务并在 owner 释放捕获；失败不等于正常排空。
 每次 poll 执行当前任务快照，嵌套投递进入后续轮次。终态 `poll_once` 不推进，loop 不可重启。
-任务队列**无容量上限**，仅适用于受控有限投递；停止单 loop **不是生产 HTTP 的优雅关闭**。
+S1历史上普通任务队列无容量上限；当前S4每loop限制1024个未完成任务。单loop的普通request_stop仍排空已接受任务，HTTP优雅关闭使用独立控制路径。
 健康阻塞由 eventfd 唤醒；1000 ms 有限等待只作为坏唤醒的故障兜底，不是定时器。
 
 ```bash
@@ -311,7 +316,7 @@ Agent 执行真实 socket/HTTP、系统跟踪或受限 sanitizer 时遵守仓库
 - 每请求累计上限 16 KiB、请求行上限 4 KiB、文件上限 8 MiB。
 - 生产默认main监听、两个worker处理连接，显式 `--threads 0` 保留单 Reactor。EventLoop 绑定构造线程；所有注册、更新、移除、poll、cleanup 设置及销毁始终由该 owner 执行（启动前也不例外）。Channel 不关闭 fd，所有者必须先 remove，回调返回后再销毁 Channel 和 fd owner。
 - 消息 span 只在回调期间借用，consume 后不再使用旧视图；send 在返回前复制字节，close_after_flush 立即停止新输入通知并保留待写尾部。HTTP会话在上个响应实际排空后才解析下个请求；pause与永久关闭分离。旧 ApplicationHandler/Result 生产接口已移除。
-- 已有 owner 定时队列与连接超时；尚无进程优雅关闭、全局连接上限、写缓冲高水位或总请求时限。持续发送少量字节可刷新 idle，阻塞 provider 不能被同 owner timer 抢占，因此这些超时不等同于完整 slowloris/慢读防护。
+- 已有 owner 定时队列、连接超时、输出上限和进程优雅关闭；尚无全局连接/内存配额或总请求时限。持续发送少量字节可刷新 idle，阻塞 provider 不能被同 owner timer 抢占，因此这些超时不等同于完整 slowloris/慢读防护。
 - 文件采用读入内存后复用输出缓冲，不使用 `sendfile`，不作生产安全、容量或性能承诺。
 - 只承诺 Linux / WSL2 方向；HTTP/2、TLS、数据库、代理、L4LB、XDP 和 DPDK 均不在当前范围。
 
@@ -333,3 +338,24 @@ ctest --test-dir build-v0.4-s3 --output-on-failure --timeout 60
 ```
 
 真实socket/HTTP和sanitizer测试按仓库AGENTS使用受控提升。S3独立插桩目标：TSan为timer_queue、connection_timeout、multi_reactor与event_loop_thread；ASan/UBSan/LSan为timer_queue、connection_timeout与event_loop_channel。具体构建参数、单进程 `setarch x86_64 -R` TSan路线和原始日志见 `docs/builder/reports/V0.4/S3-report-001.md`。Builder验证不替代Reviewer结论。
+
+## V0.4/S4 资源边界与关闭
+
+每连接最多9437184字节（9 MiB）逻辑待发送输出；恰好上限可用，超限整次拒绝并关闭该连接，不追加错误响应。追加前压缩已发送前缀，vector存储受固定上限约束。合法8 MiB静态文件仍可完整发送。临时provider结果、内核缓冲、活跃连接总量及任意任务捕获对象另计，这不是进程RSS配额。
+
+每EventLoop最多1024个已接受且未执行/释放完的普通任务，包括本地batch和执行者；直接queue_in_loop、EventLoopThread与pool均受限。drain/force/完成通知使用固定控制状态，不占普通任务额度。HTTP仍一次一个响应并在Writing停读。
+
+优雅关闭停止并关闭listener，未adopt的handoff释放fd。owner观察drain后不再读取/解析新请求或调用后续provider；idle/partial立即关闭，已有响应排空后EOF，不继续缓存pipeline。排空期间取消idle/keep-alive计时，所有owner共享关闭绝对截止；到期可能截断原响应。已发送的keep-alive头不改写。同步provider或用户回调必须有限返回，截止不能抢占阻塞代码，也不承诺硬实时或完整抗DoS。
+
+库调用 `TcpServer::request_graceful_shutdown(steady_clock::time_point)` 发起排空，`force_shutdown()`强关；原`request_stop()`继续表示立即停止。库不接管宿主信号；应用的SignalWatcher在创建worker前阻塞信号，server回收Channel并join后恢复原mask。
+
+```bash
+mkdir -p .cache/v0.4-s4/builder/{tmp,cache}
+export TMPDIR="$PWD/.cache/v0.4-s4/builder/tmp" TMP="$PWD/.cache/v0.4-s4/builder/tmp" TEMP="$PWD/.cache/v0.4-s4/builder/tmp"
+export XDG_CACHE_HOME="$PWD/.cache/v0.4-s4/builder/cache" PYTHONDONTWRITEBYTECODE=1
+cmake -S . -B build-v0.4-s4 -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-v0.4-s4 -j4
+ctest --test-dir build-v0.4-s4 --output-on-failure --timeout 60
+```
+
+新增 `resource_limits_tests`、`graceful_shutdown_tests`，保留原20个身份。真实网络/自有子进程signal测试在受控提升下运行；sanitizer必须同时使用同构建的服务二进制。首轮实现命令、退出码、资源计数和各AC证据见 `docs/builder/reports/V0.4/S4-report-001.md`；线程身份基线、信号故障负对照和最终返工复测见 `docs/builder/reports/V0.4/S4-report-002.md`。当前Builder验证不代替独立Reviewer与Leader收口。

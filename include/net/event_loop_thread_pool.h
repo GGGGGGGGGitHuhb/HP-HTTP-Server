@@ -15,6 +15,8 @@ public:
     void start(std::size_t count, Callback init = {}, Callback cleanup = {});
     bool post(std::size_t index, EventLoopThread::Callback task);
     void request_stop();
+    void request_drain(EventLoop::Deadline deadline);
+    void request_force();
     void join();
 private:
     friend struct EventLoopThreadPoolTestAccess;
@@ -26,6 +28,7 @@ private:
     std::vector<std::unique_ptr<EventLoopThread>> workers_;
     std::vector<std::size_t> outstanding_;
     std::size_t forwarding_{0};
+    bool draining_{false};
     bool started_{false}, ready_{false}, stopping_{false};
 };
 }

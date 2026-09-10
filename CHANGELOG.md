@@ -6,6 +6,9 @@
 
 ### 新增
 
+- V0.4/S4交付9MiB每连接输出边界、压缩及1024每loop普通任务上限；固定控制通知不受普通队列满阻挡。SIGINT/SIGTERM触发停止接收并排空已有输出，统一默认5000ms截止、0立即、重复信号可强关；关闭后不推进pipeline，不补额外响应。
+- 2026-09-09经S4 Reviewer002独立PASS与Leader003关闭S4及V0.4：Debug零告警、22/22、threads0旧3/3、双curl、四TSan/三ASan与三worker九连接及负对照通过。Reviewer001 FAIL和Builder返工记录保留，两项P2已关闭，无新增债务。仍为Unreleased，不代表合并或标签发布。
+
 - V0.4/S3交付owner单调TimerQueue、EventLoop最近截止调度、一连接一timer及实际recv/send进展续期；生产idle默认30000ms、keep-alive等待15000ms，各0禁用、组合取早。到期静默关闭，可截断响应而不发送408；不包含最低速率、总请求时限、阻塞抢占或S4高水位/优雅关闭。
 - 2026-09-09经S3 Reviewer001独立PASS、Leader003收口：零告警、CTest20/20（14.20秒）、threads0服务3/3、双curl、四TSan与三ASan/UBSan/LSan通过；独立三worker六连接、真实截断前缀、CLI与RST/stop探针通过。S3完成，V0.4未完成，本条不代表提交或发布。
 

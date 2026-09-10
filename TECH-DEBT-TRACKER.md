@@ -4,10 +4,10 @@
 
 ## 当前概况
 
-- 当前检查：V0.4/S3 Approved revision1已实现、独立Reviewer001 PASS并由Leader003收口；定时记录有界、owner取消/回收及超时兼容性列入必验，无新增债务或批准延期。V0.4/S2 Approved revision 1 已交付，Builder001、独立Reviewer001 PASS与Leader003齐备；8REQ/12AC/12RV及容量/所有权/失败回收全部通过，无新增债务或批准延期。S1前置证据：V0.4/S1 Approved revision 1 已交付，Builder001、Reviewer001 PASS 与 Leader003 齐备；S1 的 P3-01 及 TD-005 检查点关闭；TD-005 持续 Open，无新增债务或延期。上一阶段 V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
-- 最近完成阶段：V0.4/S3；V0.4 整体尚未完成，S1/S2 已完成，S3已完成，S4未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
+- 当前检查：V0.4/S4 Approved、Builder002、Reviewer002 PASS及Leader003齐备，S4/V0.4已完成；两项P2及P3-01关闭，TD-005本检查点关闭但风险持续Open，无新债务。历史前置：V0.4/S3 Approved revision1已实现、独立Reviewer001 PASS并由Leader003收口；定时记录有界、owner取消/回收及超时兼容性列入必验，无新增债务或批准延期。V0.4/S2 Approved revision 1 已交付，Builder001、独立Reviewer001 PASS与Leader003齐备；8REQ/12AC/12RV及容量/所有权/失败回收全部通过，无新增债务或批准延期。S1前置证据：V0.4/S1 Approved revision 1 已交付，Builder001、Reviewer001 PASS 与 Leader003 齐备；S1 的 P3-01 及 TD-005 检查点关闭；TD-005 持续 Open，无新增债务或延期。上一阶段 V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
+- 最近完成阶段：V0.4/S4；V0.4 已完成，S1/S2 已完成，S3已完成，S4已完成（Approved），V0.5未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
 - S1的P3-01根状态同步完成，TD-005的S1检查点完成且风险持续Open；TD-003按V0.3退出条件关闭。S2的P3-01及TD-005当前检查点也已由Leader003关闭，无新增债务或批准延期。
-- V0.3/S2已有单响应积压控制、暂停读取及排空恢复；V0.3/S3只补充回归，不新增治理能力。全局配额、空闲超时继续既定V0.4范围，不形成生产安全或性能承诺。
+- V0.3/S2已有单响应积压控制、暂停读取及排空恢复；V0.3/S3只补充回归，不新增治理能力。S3已交付空闲超时，S4已交付局部输出/任务界限与关闭；全局配额仍不包含，不形成生产安全或性能承诺。
 - 本文档不跟踪本地协作文档是否进入版本控制或远程发布。
 
 ## 类型与状态
@@ -294,3 +294,17 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 ## V0.4/S3 关闭检查点
 
 - 2026-09-09：Approved、Builder001、Reviewer001 PASS与Leader003齐备，8REQ/12AC/RV和8条生命周期通过，P3-01及TD-005本阶段检查点关闭。TD-005持续Open，无新增债务、风险豁免或必需未验证项；S4未开始，V0.4未完成。
+
+## V0.4/S4 准备检查点（设计中）
+
+- 2026-09-09：S3经PR #12合并，v0.4-s3已发布并核对；S4 design/review为Draft revision1，见Leader S4-report-001。
+- TD-005持续Open，S3检查点保持关闭；S4待批准、实现、独立审查与收口。本阶段输出上限、任务边界和关闭验证属于正常阶段任务，无新增债务或批准延期。
+- ROADMAP当前未开始快照暂保留，实际已进入Draft设计中；批准后同步全局状态。无全局连接/捕获字节配额、阻塞回调不可抢占等限制必须在最终说明中保留。
+
+## V0.4/S4 批准检查点
+
+- 2026-09-09：PM批准design/review revision1，见Leader S4-report-002；当前待实现，无新增债务或风险豁免，TD-005持续Open。实现/独立验收/收口后才更新完成检查点。
+
+## V0.4/S4与版本关闭检查点
+
+- 2026-09-09：Reviewer002独立PASS、两P2关闭；Leader003完成P3-01同步及“七项”计数勘误，按ROADMAP实际六条满足退出条件，关闭S4/V0.4。TD-005阶段检查点关闭、风险持续Open，无新增债务/延期；V0.5未开始。

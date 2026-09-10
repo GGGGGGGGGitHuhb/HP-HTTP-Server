@@ -25,6 +25,7 @@ public:
     void send(std::span<const std::byte> bytes);
     void consume(std::size_t count);
     void close_after_flush();
+    void begin_drain();
     void pause_reading();
     void resume_reading();
     void set_idle_wait(bool waiting);
@@ -39,6 +40,7 @@ public:
     [[nodiscard]] Identity identity() const noexcept { return identity_; }
     [[nodiscard]] State state() const noexcept { return state_; }
 private:
+    friend struct GracefulShutdownTestAccess;
     friend struct ConnectionTimeoutTestAccess;
     friend class TcpServer;
     friend class ConnectionRegistry;
@@ -58,6 +60,7 @@ private:
     CloseCallback close_callback_;
     Channel channel_;
     bool input_stopped_{false};
+    bool draining_{false};
     bool read_paused_{false};
     WriteCompleteCallback write_complete_callback_;
     bool handling_event_{false};

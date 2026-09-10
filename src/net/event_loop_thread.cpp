@@ -48,8 +48,22 @@ bool EventLoopThread::post(Callback task) {
     if (!loop_)
         return false;
     EventLoop* target = loop_;
-    queued = [target, task = std::move(task)] { task(*target); };
+    queued = [target, task = std::move(task)] {
+        task(*target);
+    };
     return target->enqueue(queued);
+}
+
+void EventLoopThread::request_drain(EventLoop::Deadline deadline) {
+    std::lock_guard lock(mutex_);
+    if (loop_)
+        loop_->request_drain(deadline);
+}
+
+void EventLoopThread::request_force() {
+    std::lock_guard lock(mutex_);
+    if (loop_)
+        loop_->request_force();
 }
 
 void EventLoopThread::request_stop() {
