@@ -5,7 +5,7 @@
 ## 当前概况
 
 - 当前检查：V0.5/S1 Approved、Builder002、Reviewer002 PASS与Leader003齐备，P2-01/P3-01及TD-005本阶段检查点关闭，风险持续Open，无新债务。历史前置：V0.4/S4 Approved、Builder002、Reviewer002 PASS及Leader003齐备，S4/V0.4已完成；两项P2及P3-01关闭，TD-005本检查点关闭但风险持续Open，无新债务。历史前置：V0.4/S3 Approved revision1已实现、独立Reviewer001 PASS并由Leader003收口；定时记录有界、owner取消/回收及超时兼容性列入必验，无新增债务或批准延期。V0.4/S2 Approved revision 1 已交付，Builder001、独立Reviewer001 PASS与Leader003齐备；8REQ/12AC/12RV及容量/所有权/失败回收全部通过，无新增债务或批准延期。S1前置证据：V0.4/S1 Approved revision 1 已交付，Builder001、Reviewer001 PASS 与 Leader003 齐备；S1 的 P3-01 及 TD-005 检查点关闭；TD-005 持续 Open，无新增债务或延期。上一阶段 V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
-- 最近完成阶段：V0.5/S1；V0.4 已完成，S1/S2 已完成，S3已完成，S4已完成（Approved），V0.5/S1已完成（Approved），V0.5未完成，S2/S3/S4未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
+- 最近完成阶段：V0.5/S1；V0.4 已完成，S1/S2 已完成，S3已完成，S4已完成（Approved），V0.5/S1已完成（Approved），V0.5未完成，S2设计中，S3/S4未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
 - S1的P3-01根状态同步完成，TD-005的S1检查点完成且风险持续Open；TD-003按V0.3退出条件关闭。S2的P3-01及TD-005当前检查点也已由Leader003关闭，无新增债务或批准延期。
 - V0.3/S2已有单响应积压控制、暂停读取及排空恢复；V0.3/S3只补充回归，不新增治理能力。S3已交付空闲超时，S4已交付局部输出/任务界限与关闭；全局配额仍不包含，不形成生产安全或性能承诺。
 - 本文档不跟踪本地协作文档是否进入版本控制或远程发布。
@@ -53,7 +53,7 @@ V1.0 前存在一份环境完整、命令可复现的性能报告；若无法原
 ### TD-002 异步日志延期到性能阶段
 
 - 类型：`Approved Deferral`
-- 状态：`Scheduled`
+- 状态：`Closed`
 - 影响范围：`V0.1` 至 `V0.5`
 - 责任角色：Leader、Builder
 - 目标检查点：`V0.5 / S2`
@@ -62,13 +62,15 @@ V1.0 前存在一份环境完整、命令可复现的性能报告；若无法原
 
 过早实现异步日志会引入线程、队列、刷盘、丢弃和关闭语义，干扰 Reactor、连接管理和 HTTP 主线。
 
-当前决定：
+历史决定（保留形成依据）：
 
 S1 只实现简单同步日志接口；早期热路径避免高频日志。V0.5/S2 根据已有压测和观测证据决定简化自研方案或继续保持同步。
 
 退出标准：
 
 V0.5/S2 形成 Approved 设计并完成 Reviewer 验收，明确队列上限、过载策略、刷盘与关闭语义，或者用数据证明无需异步化并记录决定。
+
+关闭记录（2026-09-10）：Approved revision1明确1024槽、1024字节正文、全等级丢新、逐条flush和健康sink排空；Reviewer001独立8AC/RV、25/25、六sanitizer及四反证通过，Leader003关闭本条。阻塞stderr最终join不保证受HTTP截止限制为PM整体批准边界；flush不承诺fsync。没有采用无数据的“保留同步”替代，也没有宣称吞吐提升。
 
 ### TD-003 HTTP Parser 范围膨胀风险
 
@@ -322,3 +324,18 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 ## V0.5/S1 关闭检查点
 
 - 2026-09-10：Reviewer002 PASS、Leader003收口，P2-01和P3-01关闭；TD-005本阶段检查点完成但风险持续Open，无新增债务。TD-001保持S4压测、TD-002保持S2日志，均不由sendfile机制提前关闭。
+
+## V0.5/S2 准备检查点（设计中）
+
+- 2026-09-10：S2 design/review为Draft revision1，见Leader S2-report-001。TD-002持续Open：拟有界异步队列、满队列丢新、健康sink排空；阻塞stderr可能拖延最终join的边界尚待设计批准，未批准风险豁免。
+- TD-002只能在Approved与独立验收后关闭；TD-005持续Open，TD-001仍留S4，本轮无新增批准延期。
+
+### V0.5/S2 批准登记
+
+- 2026-09-10：PM整体批准design/review revision1，登记见Leader S2-report-002；当前待实现 / Ready for Builder。阻塞stderr可能拖延最终join是已批准方案边界，不豁免HTTP drain及其余生命周期验收。
+- TD-002仍Open，须实现、独立验收及Leader收口才关闭；TD-005持续Open，TD-001保留S4。新增延期债务：None。
+
+## V0.5/S2 关闭检查点
+
+- 2026-09-10：Reviewer001 PASS、Leader003完成根状态及架构兼容入口澄清，P3-01与TD-002关闭。TD-005本阶段检查点完成，持续风险仍Open；TD-001留S4。
+- 新增债务、延期或风险豁免：None。S3/S4未开始，V0.5未完成；S2提交及推送由父协调者在收口后执行。

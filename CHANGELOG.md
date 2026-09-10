@@ -6,6 +6,8 @@
 
 ### 新增
 
+- V0.5/S2交付有界异步日志：1024槽、1024字节正文上限及截断，所有等级满队列丢新并计数；单消费者写stderr/flush，拥有消息，生产RAII及并发stop安全回收。健康sink排空；阻塞stderr可能拖延最终join，HTTP shutdown_timeout不保证整个进程退出上限。原接口/诊断及HTTP行为保持，没有吞吐增益承诺。独立Reviewer001 PASS、Debug25/25及三TSan/三ASan、四反证通过，Leader003关闭S2及TD-002；V0.5未完成，Unreleased不表示已发布。
+
 - V0.5/S1交付生产小内存头+拥有型fd/sendfile正文，保持8MiB文件/9MiB逻辑输出及安全路径、HTTP、超时和排空。正文不进入用户输出vector；unsupported/发送错误关闭，不自动read降级、不追加第二响应。要求稳定文件内容，不据机制证据宣称性能提升。
 - 2026-09-10经S1 Reviewer002 PASS、Leader003收口：独立23/23、旧3/3、双curl、三TSan/三ASan与三配置probe、13精确反证通过。P2-01已关闭，首FAIL及返工历史保留；仅S1完成，V0.5未完成，本条不代表合并/tag发布。
 

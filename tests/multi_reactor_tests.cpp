@@ -645,7 +645,7 @@ void cli_modes(const char* executable, const Fixture& fixture) {
       ::setenv("HP_HTTP_TEST_THREADS", std::to_string(count).c_str(), 1);
     auto server = start_server(executable, fixture.root);
 #if defined(__SANITIZE_THREAD__)
-    const std::size_t sanitizer_threads = count == 0 ? 0 : 1;
+    constexpr std::size_t sanitizer_threads = 1;
     constexpr std::size_t controller_helper = 1;
 #else
     constexpr std::size_t sanitizer_threads = 0;
@@ -654,10 +654,10 @@ void cli_modes(const char* executable, const Fixture& fixture) {
     require(resources("/proc/self/task") == 1 + controller_helper,
             "controller thread baseline matches instrumentation");
     const auto expected =
-        static_cast<std::size_t>((count < 0 ? 2 : count) + 1) +
+        static_cast<std::size_t>((count < 0 ? 2 : count) + 1) + 1 +
         sanitizer_threads;
-    std::cout << "CLI instrumentation_threads=" << sanitizer_threads
-              << " expected=" << expected
+    std::cout << "CLI logger_threads=1 instrumentation_threads="
+              << sanitizer_threads << " expected=" << expected
               << " observed=" << server.thread_count() << '\n';
     require(server.thread_count() == expected,
             "production CLI OS thread count");

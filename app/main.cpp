@@ -1,3 +1,5 @@
+#include <pthread.h>
+
 #include <charconv>
 #include <cstdint>
 #include <exception>
@@ -8,6 +10,7 @@
 #include <system_error>
 #include <utility>
 
+#include "base/async_logger.h"
 #include "base/logger.h"
 #include "http/http_request.h"
 #include "http/http_response.h"
@@ -17,6 +20,27 @@
 #include "signal_watcher.h"
 
 namespace {
+
+// The logger starts before SignalWatcher, so every background thread must
+// already inherit the shutdown mask. Restore only after logger join.
+class ShutdownSignalMask {
+ public:
+  ShutdownSignalMask() {
+    sigset_t signals;
+    ::sigemptyset(&signals);
+    ::sigaddset(&signals, SIGINT);
+    ::sigaddset(&signals, SIGTERM);
+    const int result = ::pthread_sigmask(SIG_BLOCK, &signals, &previous_);
+    if (result)
+      throw std::system_error(result, std::generic_category(),
+                              "block logger shutdown signals");
+  }
+
+  ~ShutdownSignalMask() { ::pthread_sigmask(SIG_SETMASK, &previous_, nullptr); }
+
+ private:
+  sigset_t previous_{};
+};
 
 void print_usage(std::ostream& output) {
   output << "Usage: hp_http_server --port <0-65535> --root <directory> "
@@ -153,32 +177,41 @@ int run(int argc, char* argv[]) {
     return 2;
   }
 
-  hp::http::StaticFileService service(options.root);
-  hp::app::SignalWatcher signals;
-  hp::net::TcpServer server(options.port, hp::app::make_http_factory(service),
-                            hp::http::max_request_bytes, options.threads,
-                            options.timeouts);
-  bool draining = false;
-  server.watch_control_fd(signals.fd(), [&](std::uint32_t) {
-    while (const int signal = signals.next()) {
-      if (draining) {
-        server.force_shutdown();
-      } else {
-        draining = true;
-        server.request_graceful_shutdown(hp::timer::TimerQueue::Clock::now() +
-                                         options.shutdown_timeout);
+  ShutdownSignalMask mask;
+  hp::base::LoggerSession logging;
+  try {
+    hp::http::StaticFileService service(options.root);
+    hp::app::SignalWatcher signals;
+    hp::net::TcpServer server(options.port, hp::app::make_http_factory(service),
+                              hp::http::max_request_bytes, options.threads,
+                              options.timeouts);
+    bool draining = false;
+    server.watch_control_fd(signals.fd(), [&](std::uint32_t) {
+      while (const int signal = signals.next()) {
+        if (draining) {
+          server.force_shutdown();
+        } else {
+          draining = true;
+          server.request_graceful_shutdown(hp::timer::TimerQueue::Clock::now() +
+                                           options.shutdown_timeout);
+        }
+        hp::base::info("Shutdown signal observed: " + std::to_string(signal) +
+                       ".");
       }
-      hp::base::info("Shutdown signal observed: " + std::to_string(signal) +
-                     ".");
-    }
-  });
-  const std::string port_text = std::to_string(server.bound_port());
-  hp::base::info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");
-  hp::base::info("Listening on TCP port " + port_text + ".");
-  std::cout << "V0.1 / S3 minimal HTTP static file server listening on port "
-            << port_text << "." << std::endl;
-  server.run();
-  return 0;
+    });
+    const std::string port_text = std::to_string(server.bound_port());
+    hp::base::info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");
+    hp::base::info("Listening on TCP port " + port_text + ".");
+    std::cout << "V0.1 / S3 minimal HTTP static file server listening on port "
+              << port_text << "." << std::endl;
+    server.run();
+    return 0;
+  } catch (const std::exception& error) {
+    hp::base::error(error.what());
+  } catch (...) {
+    hp::base::error("Unknown fatal error.");
+  }
+  return 1;
 }
 
 }  // namespace
