@@ -4,8 +4,8 @@
 
 ## 当前概况
 
-- 当前检查：V0.5/S1 Approved、Builder002、Reviewer002 PASS与Leader003齐备，P2-01/P3-01及TD-005本阶段检查点关闭，风险持续Open，无新债务。历史前置：V0.4/S4 Approved、Builder002、Reviewer002 PASS及Leader003齐备，S4/V0.4已完成；两项P2及P3-01关闭，TD-005本检查点关闭但风险持续Open，无新债务。历史前置：V0.4/S3 Approved revision1已实现、独立Reviewer001 PASS并由Leader003收口；定时记录有界、owner取消/回收及超时兼容性列入必验，无新增债务或批准延期。V0.4/S2 Approved revision 1 已交付，Builder001、独立Reviewer001 PASS与Leader003齐备；8REQ/12AC/12RV及容量/所有权/失败回收全部通过，无新增债务或批准延期。S1前置证据：V0.4/S1 Approved revision 1 已交付，Builder001、Reviewer001 PASS 与 Leader003 齐备；S1 的 P3-01 及 TD-005 检查点关闭；TD-005 持续 Open，无新增债务或延期。上一阶段 V0.3/S3 Approved revision1、Builder001、Reviewer001唯一PASS与Leader004齐备；独立Debug告警0、CTest15/15、6REQ/8AC/8RV全部通过。
-- 最近完成阶段：V0.5/S1；V0.4 已完成，S1/S2 已完成，S3已完成，S4已完成（Approved），V0.5/S1已完成（Approved），V0.5未完成，S2设计中，S3/S4未开始。前置 V0.1/V0.2/V0.3 均已完成，V0.3/S1/S2/S3 完成记录保留。
+- 当前检查：V0.5/S3 Approved revision1、Builder001/002、Reviewer002最终PASS与Leader003齐备；P2-01格式问题及P3-01状态同步关闭，TD-005本阶段检查点完成、风险持续Open，无新增债务。此前各阶段检查点及失败/修复依据保留在下方历史记录。
+- 最近完成阶段：V0.5/S3已完成，尚未提交推送；S2已发布v0.5-s2，S4未开始，V0.5未完成。V0.1/V0.2/V0.3/V0.4已完成，历史完成记录保留。
 - S1的P3-01根状态同步完成，TD-005的S1检查点完成且风险持续Open；TD-003按V0.3退出条件关闭。S2的P3-01及TD-005当前检查点也已由Leader003关闭，无新增债务或批准延期。
 - V0.3/S2已有单响应积压控制、暂停读取及排空恢复；V0.3/S3只补充回归，不新增治理能力。S3已交付空闲超时，S4已交付局部输出/任务界限与关闭；全局配额仍不包含，不形成生产安全或性能承诺。
 - 本文档不跟踪本地协作文档是否进入版本控制或远程发布。
@@ -339,3 +339,18 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 
 - 2026-09-10：Reviewer001 PASS、Leader003完成根状态及架构兼容入口澄清，P3-01与TD-002关闭。TD-005本阶段检查点完成，持续风险仍Open；TD-001留S4。
 - 新增债务、延期或风险豁免：None。S3/S4未开始，V0.5未完成；S2提交及推送由父协调者在收口后执行。
+
+## V0.5/S3 准备检查点
+
+- 2026-09-10：S3 design/review Draft revision1及Leader001决策包已准备，待整体批准。当前计划优化Buffer复制与空闲容量保留并验证已有背压，不新增全局配额/最低速率或S4性能要求。
+- TD-002保持Closed，TD-001留S4，TD-005持续Open；S2检查点保持完成，S3待批准、实现、独立审查及收口。新增延期债务或风险豁免：None。
+
+## V0.5/S3 批准登记
+
+- 2026-09-10：PM整体批准S3 design/review revision1，见Leader S3-report-002；当前待实现 / Ready for Builder，>64KiB完全空闲输出释放/重复大输出重分配为已批准取舍。
+- TD-002保持Closed，TD-001留S4，TD-005持续Open；S3检查点待实现、独立验收及收口。新增延期债务或风险豁免：None。
+
+## V0.5/S3 关闭检查点
+
+- 2026-09-10：Reviewer002以精确两换行及其他源/二进制/证据不变关闭P2-01并给出最终PASS；Leader003同步根文档与阶段状态，P3-01及TD-005本检查点完成。001 FAIL历史保留，不把八sanitizer或27/27称作002重新执行。
+- TD-005风险持续Open，TD-002保持Closed，TD-001留S4；新增延期债务、风险豁免和未验证必需项：None。64KiB取舍及原cold-file/阻塞stderr边界保持，S4未开始，V0.5未完成。

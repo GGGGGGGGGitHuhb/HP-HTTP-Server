@@ -10,6 +10,7 @@ add_library(hp_http_core STATIC
     src/base/logger.cpp
     src/base/async_logger.cpp
     src/base/file_region.cpp
+    src/base/buffer.cpp
     src/timer/timer_queue.cpp
     src/http/http_request.cpp
     src/http/http_response.cpp
@@ -237,5 +238,26 @@ if(BUILD_TESTING)
     enable_debug_warnings(async_logger_production_tests)
     add_test(NAME async_logger_production_tests COMMAND async_logger_production_tests)
     set_tests_properties(async_logger_production_tests PROPERTIES TIMEOUT 60
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(buffer_tests tests/buffer_tests.cpp)
+    target_link_libraries(buffer_tests PRIVATE hp_http_core)
+    target_link_options(buffer_tests PRIVATE -Wl,--wrap=_Znwm -Wl,--wrap=recv -Wl,--wrap=send -Wl,--wrap=close)
+    enable_debug_warnings(buffer_tests)
+    add_test(NAME buffer_tests COMMAND buffer_tests)
+    set_tests_properties(buffer_tests PROPERTIES TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(buffer_backpressure_tests tests/buffer_backpressure_tests.cpp)
+    target_link_libraries(buffer_backpressure_tests PRIVATE hp_http_app)
+    target_link_options(buffer_backpressure_tests PRIVATE -Wl,--wrap=accept4 -Wl,--wrap=close
+        -Wl,--wrap=epoll_ctl -Wl,--wrap=_Znwm -Wl,--wrap=openat -Wl,--wrap=fstat
+        -Wl,--wrap=read -Wl,--wrap=pread -Wl,--wrap=sendfile -Wl,--wrap=pthread_sigmask -Wl,--wrap=recv)
+    enable_debug_warnings(buffer_backpressure_tests)
+    add_test(NAME buffer_backpressure_tests COMMAND buffer_backpressure_tests)
+    set_tests_properties(buffer_backpressure_tests PROPERTIES TIMEOUT 60
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp")
 endif()

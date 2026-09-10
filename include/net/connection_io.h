@@ -1,10 +1,11 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <span>
-#include <vector>
 
+#include "base/buffer.h"
 #include "base/file_region.h"
 #include "base/non_copyable.h"
 #include "net/socket.h"
@@ -76,10 +77,9 @@ class ConnectionIo final : private base::NonCopyable {
   Socket socket_;
 
   std::size_t max_input_bytes_{0};
-  std::vector<std::byte> input_;
+  base::Buffer input_;
 
-  std::vector<std::byte> output_;
-  std::size_t write_offset_{0};
+  base::Buffer output_{output_limit};
   std::optional<base::FileRegion> file_;
 
   bool peer_half_closed_{false};

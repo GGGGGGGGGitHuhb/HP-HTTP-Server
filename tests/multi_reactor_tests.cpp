@@ -176,6 +176,8 @@ struct MessageObservation {
 
 struct Probe {
   std::mutex mutex;
+  std::function<void(TcpConnection&, std::span<const std::byte>, bool)>
+      before_message;
   std::thread::id main;
   std::vector<std::thread::id> factories, owners;
   std::vector<MessageObservation> messages;
@@ -275,6 +277,8 @@ struct ServerHarness {
                             std::min(bytes.size(),
                                      std::size_t{128} - message.input.size()));
                     }
+                    if (probe->before_message)
+                      probe->before_message(connection, bytes, eof);
                     callback(connection, bytes, eof);
                     {
                       std::lock_guard lock(probe->mutex);

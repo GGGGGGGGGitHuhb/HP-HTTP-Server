@@ -11,7 +11,9 @@ struct ResourceLimitsTestAccess {
 };
 
 struct ConnectionIoTestAccess {
-  static std::size_t size(const ConnectionIo& io) { return io.output_.size(); }
+  static std::size_t size(const ConnectionIo& io) {
+    return io.output_.readable_bytes();
+  }
 
   static std::size_t capacity(const ConnectionIo& io) {
     return io.output_.capacity();

@@ -6,6 +6,12 @@
 
 ## 当前状态与目标架构
 
+V0.5/S3已完成：Approved revision1、Builder001/002、Reviewer002最终PASS与Leader003收口齐备。base Buffer使用独占连续字节块和读/写/prepare游标，consume不搬移后缀；ConnectionIo直接recv到持有尾区，成功只commit实际字节。构造不分配，首次懒分配4KiB，生产输入容量≤16KiB；通用max_input=0仍无输入硬限。尾区不足才整理或增长，新块成功后转移所有权，失败保留原字节/游标。
+
+输出复用小header与尾空间，pending仍含file remaining且≤9MiB，file pending禁止普通追加。queue_file仍复制header并持有FileRegion，先验证/分配，失败文件销毁一次；先头后sendfile、offset及预算不变。只有内存和文件都排空时，容量>64KiB释放为0、≤64KiB保留；这不是响应拒绝或读暂停门槛，重复大内存输出可能重新分配。单Buffer增长最多旧+新两块，生产输入瞬时≤32KiB、内存输出≤18MiB，另计parser/调用方/分配器等，不能视为进程RSS上限。
+
+既有HTTP单响应Writing暂停读取、完整排空后处理pipeline后缀、真实IO进展续期、idle/drain/RST回收均保持；Buffer整理/释放不是网络进展。独立真实0/1/2慢读及同owner健康控制、300轮回收和八sanitizer通过；机制减少复制和容量保留，不宣称QPS/RSS比例改善，无新通用高低水位或全局配额。
+
 V0.5/S2已完成：Approved revision1、Builder001、独立Reviewer001 PASS和Leader003齐备。生产日志使用1024槽×最多1024字节正文的有界队列，单消费者在状态锁外写stderr并逐条flush；所有等级满队列丢新，无同步回退，计数包含在途记录。消息在提交返回前复制；固定槽和一个在途Record的当前ABI记录存储为1,066,000字节，另有固定对象及线程资源。flush不等于fsync或掉电持久化；没有QPS提升承诺。
 
 LoggerSession先于服务资源创建，服务/worker/callback销毁及fatal记录后才停止接收、排空并join；共享引用覆盖每次提交，stop后的调用仅拒绝计数。无会话旧库调用保留同步兼容。入口先以当前线程RAII屏蔽SIGINT/SIGTERM，让消费者继承，再创建服务信号消费器；日志join后恢复原mask。健康sink排空，可返回的写/flush失败计failed并继续消费。**阻塞stderr可能拖延最终join；HTTP shutdown_timeout不保证整个进程限时退出**，不detach、不改共享stderr标志。
@@ -162,7 +168,7 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 - RAII 工具和不可拷贝基类。
 - 日志兼容接口、已交付有界异步实例及显式会话生命周期。
-- Buffer 抽象，用于连接输入输出缓冲。
+- 已交付连续游标Buffer，用于ConnectionIo输入输出缓冲、持有可写尾区及空闲容量回收。
 - 线程、线程池、任务队列和时间工具。
 - 通用错误处理辅助函数。
 
@@ -618,8 +624,10 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 
 文件区域move-only且每响应独占CLOEXEC fd，文件完成/取消先释放再推进HTTP；内存输出只保存头或显式内存响应，文件remaining计入逻辑pending。每轮有限调用和最多256KiB文件预算，offset只按实际进展更新；文件未排空不触发后缀或keep-alive等待。默认SIGPIPE路径以窄线程guard保持宿主原mask/pending语义，不全局改信号处置。
 
-文件须保持内容稳定，更新采用原子替换名称；增长只发送初始长度，截短提前EOF或unsupported/发送错误关闭连接，不自动read降级、不补第二响应。冷文件仍可能阻塞owner，不提供并发原地修改快照或性能保证。S2日志、S3通用Buffer、S4压测未开始。
+文件须保持内容稳定，更新采用原子替换名称；增长只发送初始长度，截短提前EOF或unsupported/发送错误关闭连接，不自动read降级、不补第二响应。冷文件仍可能阻塞owner，不提供并发原地修改快照或性能保证。S2日志已完成并发布v0.5-s2；S3 Buffer已完成并经Reviewer002 PASS，S4压测未开始。
 
 - 2026-09-10：依据Reviewer002 PASS与Leader003关闭V0.5/S1；版本整体未完成。
 
 - 2026-09-10：依据V0.5/S2 Reviewer001 PASS与Leader003记录已交付日志队列、共享会话、信号mask及阻塞stderr关闭边界；澄清Approved日志兼容入口限定，S3/S4未开始。
+
+- 2026-09-10：依据V0.5/S3 Reviewer002最终PASS及Leader003同步已交付Buffer、直接recv、64KiB保留取舍和异常/瞬时存储界；HTTP背压及S2日志关闭限制保持。S4未开始。

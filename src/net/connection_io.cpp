@@ -6,7 +6,6 @@
 #include <sys/socket.h>
 
 #include <algorithm>
-#include <array>
 #include <cerrno>
 #include <stdexcept>
 #include <system_error>
@@ -50,22 +49,20 @@ FileWrite send_file(int socket, int file, off_t* offset,
 }  // namespace
 
 ConnectionIo::ConnectionIo(Socket socket, std::size_t max_input_bytes) noexcept
-    : socket_(std::move(socket)), max_input_bytes_(max_input_bytes) {}
+    : socket_(std::move(socket)),
+      max_input_bytes_(max_input_bytes),
+      input_(max_input_bytes ? max_input_bytes
+                             : std::numeric_limits<std::size_t>::max()) {}
 
 int ConnectionIo::fd() const noexcept { return socket_.fd(); }
 
 int ConnectionIo::socket_error() const { return socket_.socket_error(); }
 
 std::span<const std::byte> ConnectionIo::input_view() const noexcept {
-  return input_;
+  return input_.readable_view();
 }
 
-void ConnectionIo::consume(std::size_t count) {
-  if (count > input_.size())
-    throw std::out_of_range("input consumption exceeds buffered bytes");
-  input_.erase(input_.begin(),
-               input_.begin() + static_cast<std::ptrdiff_t>(count));
-}
+void ConnectionIo::consume(std::size_t count) { input_.consume(count); }
 
 ReadResult ConnectionIo::read_once() {
   ReadResult result;
@@ -73,19 +70,21 @@ ReadResult ConnectionIo::read_once() {
     result.peer_closed = true;
     return result;
   }
-  std::array<std::byte, 16 * 1024> buffer{};
-  std::size_t size = buffer.size();
+  std::size_t budget = 16U * 1024U;
   if (max_input_bytes_) {
-    if (input_.size() >= max_input_bytes_) {
+    if (input_.readable_bytes() >= max_input_bytes_) {
       result.error_number = EMSGSIZE;
       return result;
     }
-    size = std::min(size, max_input_bytes_ - input_.size());
+    budget = std::min(budget, max_input_bytes_ - input_.readable_bytes());
   }
+  const auto available = input_.writable_bytes();
+  const auto size = std::min(budget, available ? available : std::size_t{4096});
+  auto tail = input_.prepare(size);
   while (true) {
-    const auto count = ::recv(fd(), buffer.data(), size, 0);
+    const auto count = ::recv(fd(), tail.data(), tail.size(), 0);
     if (count > 0) {
-      input_.insert(input_.end(), buffer.begin(), buffer.begin() + count);
+      input_.commit(static_cast<std::size_t>(count));
       result.bytes_read = static_cast<std::size_t>(count);
       return result;
     }
@@ -120,14 +119,14 @@ WriteResult ConnectionIo::write_available() {
   WriteResult result;
   result.file_transfer = file_.has_value();
   std::size_t calls = 0;
-  while (write_offset_ < output_.size()) {
+  while (output_.readable_bytes()) {
     if (result.file_transfer && calls++ == file_call_budget) return result;
-    const auto* data = output_.data() + write_offset_;
-    const std::size_t remaining = output_.size() - write_offset_;
+    const auto* data = output_.readable_view().data();
+    const std::size_t remaining = output_.readable_bytes();
     const ssize_t count = ::send(socket_.fd(), data, remaining, MSG_NOSIGNAL);
     if (count > 0) {
       const auto byte_count = static_cast<std::size_t>(count);
-      write_offset_ += byte_count;
+      output_.consume(byte_count);
       result.bytes_written += byte_count;
       continue;
     }
@@ -146,8 +145,6 @@ WriteResult ConnectionIo::write_available() {
     return result;
   }
 
-  output_.clear();
-  write_offset_ = 0;
   std::size_t progress = 0;
   while (file_ && file_->remaining()) {
     if (calls++ >= file_call_budget || progress == file_write_budget)
@@ -173,6 +170,7 @@ WriteResult ConnectionIo::write_available() {
     }
   }
   file_.reset();
+  output_.release_empty(64U * 1024U);
   return result;
 }
 
@@ -185,18 +183,7 @@ void ConnectionIo::queue_output(std::span<const std::byte> bytes) {
   if (file_) throw std::logic_error("append while file output is pending");
   if (!output_fits(pending_bytes(), bytes.size()))
     throw std::length_error("connection output limit exceeded");
-  if (write_offset_) {
-    output_.erase(output_.begin(),
-                  output_.begin() + static_cast<std::ptrdiff_t>(write_offset_));
-    write_offset_ = 0;
-  }
-  // A reserve chosen explicitly avoids an implementation-dependent growth
-  // factor.
-  const auto required = output_.size() + bytes.size();
-  if (required > output_.capacity())
-    output_.reserve(
-        std::min(output_limit, std::max(required, output_.capacity() * 2)));
-  output_.insert(output_.end(), bytes.begin(), bytes.end());
+  output_.append(bytes);
 }
 
 void ConnectionIo::queue_file(std::span<const std::byte> header,
@@ -208,9 +195,7 @@ void ConnectionIo::queue_file(std::span<const std::byte> header,
   if (!output_fits(header.size(), file.remaining()))
     throw std::length_error("connection output limit exceeded");
   // Allocate before taking the region; failure destroys the by-value owner.
-  std::vector<std::byte> prepared(header.begin(), header.end());
-  output_.swap(prepared);
-  write_offset_ = 0;
+  output_.append(header);
   file_.emplace(std::move(file));
   if (!file_->remaining()) file_.reset();
 }
@@ -224,13 +209,13 @@ bool ConnectionIo::peer_half_closed() const noexcept {
 }
 
 bool ConnectionIo::has_pending_output() const noexcept {
-  return write_offset_ < output_.size() || (file_ && file_->remaining());
+  return output_.readable_bytes() != 0 || (file_ && file_->remaining());
 }
 
 bool ConnectionIo::accepts_input() const noexcept { return !peer_half_closed_; }
 
 std::size_t ConnectionIo::pending_bytes() const noexcept {
-  return output_.size() - write_offset_ + (file_ ? file_->remaining() : 0);
+  return output_.readable_bytes() + (file_ ? file_->remaining() : 0);
 }
 
 bool ConnectionIo::ready_to_close() const noexcept {
