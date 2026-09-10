@@ -10,21 +10,24 @@ namespace hp::net {
 namespace {
 std::string error_message(int fd, const char* operation, int error) {
     return "connection fd " + std::to_string(fd) + " " + operation +
-           " failed: " + std::generic_category().message(error) + " (" + std::to_string(error) +
-           ")";
+           " failed: " + std::generic_category().message(error) + " (" +
+           std::to_string(error) + ")";
 }
 }
 
 TcpConnection::TcpConnection(EventLoop& loop, Socket socket, Identity identity,
-                             MessageCallback handler, std::size_t max_input_bytes,
+                             MessageCallback handler,
+                             std::size_t max_input_bytes,
                              CloseCallback close_callback)
-    : io_(std::move(socket), max_input_bytes), message_callback_(std::move(handler)),
-      identity_(identity), close_callback_(std::move(close_callback)),
-      channel_(loop, io_.fd(), [this](std::uint32_t mask) {
-          handle_event(mask);
-      }) {
+    : io_(std::move(socket), max_input_bytes),
+      message_callback_(std::move(handler)),
+      identity_(identity),
+      close_callback_(std::move(close_callback)),
+      channel_(loop, io_.fd(),
+               [this](std::uint32_t mask) { handle_event(mask); }) {
     if (!message_callback_)
-        message_callback_ = [](TcpConnection& c, std::span<const std::byte> input, bool eof) {
+        message_callback_ = [](TcpConnection& c,
+                               std::span<const std::byte> input, bool eof) {
             c.send(input);
             c.consume(input.size());
             if (eof)
@@ -65,7 +68,7 @@ void TcpConnection::send(std::span<const std::byte> bytes) {
     if (state_ == State::closing || draining_)
         throw std::logic_error("send on closed or draining connection");
     try {
-        io_.queue_output(bytes); // Take independent storage before returning.
+        io_.queue_output(bytes);  // Take independent storage before returning.
         if (!handling_event_ && state_ == State::active) {
             if (!write_complete_callback_)
                 flush_output();
@@ -78,7 +81,8 @@ void TcpConnection::send(std::span<const std::byte> bytes) {
     }
 }
 
-void TcpConnection::send_file(std::span<const std::byte> header, base::FileRegion file) {
+void TcpConnection::send_file(std::span<const std::byte> header,
+                              base::FileRegion file) {
     if (state_ == State::closing || draining_)
         throw std::logic_error("send on closed or draining connection");
     try {
@@ -130,7 +134,8 @@ void TcpConnection::close_after_flush() {
     }
 }
 
-void TcpConnection::set_write_complete_callback(WriteCompleteCallback callback) {
+void TcpConnection::set_write_complete_callback(
+    WriteCompleteCallback callback) {
     write_complete_callback_ = std::move(callback);
 }
 
@@ -156,7 +161,9 @@ void TcpConnection::set_idle_wait(bool waiting) {
 
 void TcpConnection::update_interest() {
     std::uint32_t events =
-        !input_stopped_ && !read_paused_ && io_.accepts_input() ? EPOLLIN | EPOLLRDHUP : 0U;
+        !input_stopped_ && !read_paused_ && io_.accepts_input()
+            ? EPOLLIN | EPOLLRDHUP
+            : 0U;
     if (io_.has_pending_output())
         events |= EPOLLOUT;
     channel_.set_interest(events);
@@ -202,17 +209,18 @@ void TcpConnection::flush_output() {
         }
         if (written.would_block) {
             base::info("S3 evidence: connection write reached EAGAIN with " +
-                       std::to_string(io_.pending_bytes()) + " response bytes pending.");
+                       std::to_string(io_.pending_bytes()) +
+                       " response bytes pending.");
             break;
         }
-        if (!io_.has_pending_output() && written.bytes_written && write_complete_callback_ &&
-            !input_stopped_) {
+        if (!io_.has_pending_output() && written.bytes_written &&
+            write_complete_callback_ && !input_stopped_) {
             // Callback send only queues: the outer loop drives the next response.
             write_complete_callback_(*this);
         } else
             break;
         if (written.file_transfer)
-            break; // Do not spend another file budget through a reentrant HTTP callback.
+            break;  // Do not spend another file budget through a reentrant HTTP callback.
     }
     if (input_stopped_ && !io_.has_pending_output())
         last_result_.close_requested = true;
@@ -247,8 +255,8 @@ void TcpConnection::handle_event(std::uint32_t mask) noexcept {
         if (result.socket_error_observed && result.socket_error)
             base::warn(error_message(fd(), "SO_ERROR", result.socket_error));
         if (result.socket_error_query_error)
-            base::warn(
-                error_message(fd(), "getsockopt(SO_ERROR)", result.socket_error_query_error));
+            base::warn(error_message(fd(), "getsockopt(SO_ERROR)",
+                                     result.socket_error_query_error));
         if (result.read_error)
             base::warn(error_message(fd(), "recv", result.read_error));
         if (result.write_error)

@@ -18,7 +18,7 @@ TimerQueue::Id allocate_id() {
                                             std::memory_order_relaxed));
     return id;
 }
-} // namespace
+}  // namespace
 
 TimerQueue::Id TimerQueue::exchange_next_id_for_test(Id value) {
     return next_id.exchange(value);
@@ -41,7 +41,8 @@ TimerQueue::Id TimerQueue::add(TimePoint deadline, Task callback) {
     if (!callback)
         throw std::invalid_argument("empty timer callback");
     const auto id = allocate_id();
-    auto [position, inserted] = records_.emplace(id, Record{deadline, std::move(callback)});
+    auto [position, inserted] =
+        records_.emplace(id, Record{deadline, std::move(callback)});
     (void)inserted;
     try {
         ordered_.emplace(deadline, id);
@@ -60,7 +61,8 @@ bool TimerQueue::reschedule(Id id, TimePoint deadline) {
         return false;
     if (found->second.deadline == deadline)
         return true;
-    ordered_.emplace(deadline, id); // Allocation failure preserves both old indices.
+    ordered_.emplace(deadline,
+                     id);  // Allocation failure preserves both old indices.
     ordered_.erase({found->second.deadline, id});
     found->second.deadline = deadline;
     return true;
@@ -72,7 +74,8 @@ bool TimerQueue::cancel(Id id) {
     if (found == records_.end())
         return false;
     ordered_.erase({found->second.deadline, id});
-    auto cancelled = records_.extract(found); // Destroy captures only after both indices agree.
+    auto cancelled = records_.extract(
+        found);  // Destroy captures only after both indices agree.
     return true;
 }
 
@@ -133,4 +136,4 @@ void TimerQueue::clear() noexcept {
     }
     clearing_ = false;
 }
-} // namespace hp::timer
+}  // namespace hp::timer

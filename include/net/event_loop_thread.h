@@ -6,7 +6,7 @@ namespace hp::net {
 // Control thread serializes start/join/destruction. Concurrent post/stop callers
 // must finish before destruction. No loop pointer escapes this wrapper.
 class EventLoopThread final : private base::NonCopyable {
-  public:
+public:
     using Callback = std::function<void(EventLoop&)>;
     EventLoopThread() = default;
     ~EventLoopThread() noexcept;
@@ -17,14 +17,15 @@ class EventLoopThread final : private base::NonCopyable {
     void request_force();
     void join();
 
-  private:
+private:
     void run(Callback init, Callback cleanup) noexcept;
     std::mutex mutex_;
     std::condition_variable ready_;
     std::thread thread_;
     std::thread::id worker_id_{};
     EventLoop* loop_{nullptr};
-    bool started_{false}, ready_flag_{false}, startup_succeeded_{false}, stop_{false};
+    bool started_{false}, ready_flag_{false}, startup_succeeded_{false},
+        stop_{false};
     std::exception_ptr failure_;
 };
-} // namespace hp::net
+}  // namespace hp::net

@@ -7,16 +7,19 @@
 
 namespace hp::net {
 struct TcpServerTestAccess;
+
 // One owner loop, one registry. The same recovery algorithm serves all modes.
 class ConnectionRegistry final : private base::NonCopyable {
 public:
-    ConnectionRegistry(EventLoop& loop, std::size_t max_input_bytes, ConnectionTimeouts timeouts = {});
+    ConnectionRegistry(EventLoop& loop, std::size_t max_input_bytes,
+                       ConnectionTimeouts timeouts = {});
     ~ConnectionRegistry() noexcept;
     void set_drained_callback(EventLoop::Task callback);
     void begin_drain(bool force = false);
     void add(Socket socket, TcpConnection::MessageCallback callback);
     void connection_closed(int fd, TcpConnection::Identity identity) noexcept;
     void drain_closed_connections() noexcept;
+
 private:
     friend struct GracefulShutdownTestAccess;
     friend struct ConnectionTimeoutTestAccess;

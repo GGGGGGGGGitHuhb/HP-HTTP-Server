@@ -4,6 +4,7 @@
 
 namespace hp::net {
 struct EventLoopThreadPoolTestAccess;
+
 // Fixed workers; start/join/destruction are serialized by the control thread.
 // Concurrent post/stop callers must finish before destruction.
 class EventLoopThreadPool final : private base::NonCopyable {
@@ -18,6 +19,7 @@ public:
     void request_drain(EventLoop::Deadline deadline);
     void request_force();
     void join();
+
 private:
     friend struct EventLoopThreadPoolTestAccess;
     struct Ticket;

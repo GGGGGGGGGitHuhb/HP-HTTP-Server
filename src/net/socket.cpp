@@ -21,13 +21,15 @@ namespace {
 
 }  // namespace
 
-Socket::Socket(int fd) noexcept : fd_(fd) {}
+Socket::Socket(int fd) noexcept : fd_(fd) {
+}
 
 Socket::~Socket() noexcept {
     reset();
 }
 
-Socket::Socket(Socket&& other) noexcept : fd_(other.release()) {}
+Socket::Socket(Socket&& other) noexcept : fd_(other.release()) {
+}
 
 Socket& Socket::operator=(Socket&& other) noexcept {
     if (this != &other) {
@@ -37,8 +39,8 @@ Socket& Socket::operator=(Socket&& other) noexcept {
 }
 
 Socket Socket::create_tcp() {
-    const int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-                            0);
+    const int fd =
+        ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if (fd == -1) {
         throw_system_error("socket(AF_INET, SOCK_STREAM)");
     }
@@ -80,8 +82,8 @@ void Socket::set_non_blocking() {
 
 void Socket::set_reuse_address(bool enabled) {
     const int option = enabled ? 1 : 0;
-    if (::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &option,
-                     sizeof(option)) == -1) {
+    if (::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) ==
+        -1) {
         throw_system_error("setsockopt(SO_REUSEADDR)");
     }
 }
@@ -138,8 +140,8 @@ std::uint16_t Socket::local_port() const {
 int Socket::socket_error() const {
     int error_number = 0;
     socklen_t error_length = sizeof(error_number);
-    if (::getsockopt(fd_, SOL_SOCKET, SO_ERROR, &error_number,
-                     &error_length) == -1) {
+    if (::getsockopt(fd_, SOL_SOCKET, SO_ERROR, &error_number, &error_length) ==
+        -1) {
         throw_system_error("getsockopt(SO_ERROR)");
     }
     return error_number;

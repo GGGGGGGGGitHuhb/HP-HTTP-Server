@@ -20,7 +20,8 @@ struct Session {
     Phase phase{Phase::reading};
     bool completed{false}, close{false};
 
-    Session(ResponseProvider response_provider, HttpCallbackStats* callback_stats)
+    Session(ResponseProvider response_provider,
+            HttpCallbackStats* callback_stats)
         : provider(std::move(response_provider)), stats(callback_stats) {
         if (auto observer = session_observer.load())
             observer(true, this);
@@ -41,13 +42,14 @@ struct Session {
             if (eof)
                 ++stats->eof_notifications;
         }
-        const auto parsed =
-            parser.feed({reinterpret_cast<const char*>(input.data()), input.size()});
+        const auto parsed = parser.feed(
+            {reinterpret_cast<const char*>(input.data()), input.size()});
         if (stats) {
             stats->submitted_bytes += input.size();
             stats->accepted_bytes += parsed.accepted_bytes;
         }
-        connection.consume(parsed.accepted_bytes); // Never use the borrowed input again.
+        connection.consume(
+            parsed.accepted_bytes);  // Never use the borrowed input again.
         if (stats)
             stats->consumed_bytes += parsed.accepted_bytes;
         if (parsed.status == http::ParseStatus::need_more && !eof) {
@@ -64,9 +66,10 @@ struct Session {
             connection.close_after_flush();
             return;
         }
-        close = parsed.status != http::ParseStatus::complete || parsed.request.close_requested;
-        const auto policy =
-            close ? http::ConnectionPolicy::close : http::ConnectionPolicy::keep_alive;
+        close = parsed.status != http::ParseStatus::complete ||
+                parsed.request.close_requested;
+        const auto policy = close ? http::ConnectionPolicy::close
+                                  : http::ConnectionPolicy::keep_alive;
         connection.set_idle_wait(false);
         phase = Phase::writing;
         connection.pause_reading();
@@ -74,28 +77,34 @@ struct Session {
         std::optional<base::FileRegion> file;
         try {
             switch (parsed.status) {
-            case http::ParseStatus::need_more:
-            case http::ParseStatus::bad_request:
-                response = http::make_error_response(http::Status::bad_request, policy);
-                break;
-            case http::ParseStatus::method_not_allowed:
-                response = http::make_error_response(http::Status::method_not_allowed, policy);
-                break;
-            case http::ParseStatus::complete: {
-                auto result = provider(parsed.request, policy);
-                if (close && result.effective_policy != http::ConnectionPolicy::close)
-                    throw std::logic_error("provider relaxed terminal connection policy");
-                close = result.effective_policy == http::ConnectionPolicy::close;
-                response = std::move(result.bytes);
-                file = std::move(result.file);
-                break;
-            }
+                case http::ParseStatus::need_more:
+                case http::ParseStatus::bad_request:
+                    response = http::make_error_response(
+                        http::Status::bad_request, policy);
+                    break;
+                case http::ParseStatus::method_not_allowed:
+                    response = http::make_error_response(
+                        http::Status::method_not_allowed, policy);
+                    break;
+                case http::ParseStatus::complete: {
+                    auto result = provider(parsed.request, policy);
+                    if (close && result.effective_policy !=
+                                     http::ConnectionPolicy::close)
+                        throw std::logic_error(
+                            "provider relaxed terminal connection policy");
+                    close = result.effective_policy ==
+                            http::ConnectionPolicy::close;
+                    response = std::move(result.bytes);
+                    file = std::move(result.file);
+                    break;
+                }
             }
         } catch (...) {
             close = true;
             file.reset();
-            response = http::make_error_response(http::Status::internal_server_error,
-                                                 http::ConnectionPolicy::close);
+            response =
+                http::make_error_response(http::Status::internal_server_error,
+                                          http::ConnectionPolicy::close);
         }
         if (file)
             connection.send_file(response, std::move(*file));
@@ -122,23 +131,25 @@ struct Session {
         advance(connection);
     }
 };
-} // namespace
+}  // namespace
 
 // Narrow test-only observation seam; no scheduling or product behavior is injected.
-void set_session_observer_for_test(void (*observer)(bool, const void*) noexcept) {
+void set_session_observer_for_test(void (*observer)(bool,
+                                                    const void*) noexcept) {
     session_observer.store(observer);
 }
 
-net::TcpConnection::MessageCallback make_http_callback(ResponseProvider provider,
-                                                       HttpCallbackStats* stats) {
+net::TcpConnection::MessageCallback make_http_callback(
+    ResponseProvider provider, HttpCallbackStats* stats) {
     // Factory runs on main; mutable parser/session state is born on the IO owner.
-    return [provider = std::move(provider), stats, session = std::shared_ptr<Session>{}](
-               net::TcpConnection& connection, std::span<const std::byte>, bool) mutable {
+    return [provider = std::move(provider), stats,
+            session = std::shared_ptr<Session>{}](
+               net::TcpConnection& connection, std::span<const std::byte>,
+               bool) mutable {
         if (!session) {
             session = std::make_shared<Session>(std::move(provider), stats);
-            connection.set_write_complete_callback([session](net::TcpConnection& c) {
-                session->drained(c);
-            });
+            connection.set_write_complete_callback(
+                [session](net::TcpConnection& c) { session->drained(c); });
         }
         if (session->stats)
             ++session->stats->callbacks;
@@ -146,12 +157,13 @@ net::TcpConnection::MessageCallback make_http_callback(ResponseProvider provider
     };
 }
 
-net::TcpServer::MessageCallbackFactory make_http_factory(const http::StaticFileService& service) {
+net::TcpServer::MessageCallbackFactory make_http_factory(
+    const http::StaticFileService& service) {
     return [&service] {
-        return make_http_callback(
-            [&service](const http::HttpRequest& request, http::ConnectionPolicy policy) {
-                return service.prepare_response(request, policy);
-            });
+        return make_http_callback([&service](const http::HttpRequest& request,
+                                             http::ConnectionPolicy policy) {
+            return service.prepare_response(request, policy);
+        });
     };
 }
-} // namespace hp::app
+}  // namespace hp::app

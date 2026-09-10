@@ -23,10 +23,10 @@ void EventLoopThread::start(Callback init, Callback cleanup) {
         throw std::logic_error("EventLoopThread already started");
     started_ = true;
     try {
-        thread_ =
-            std::thread([this, init = std::move(init), cleanup = std::move(cleanup)]() mutable {
-                run(std::move(init), std::move(cleanup));
-            });
+        thread_ = std::thread([this, init = std::move(init),
+                               cleanup = std::move(cleanup)]() mutable {
+            run(std::move(init), std::move(cleanup));
+        });
     } catch (...) {
         ready_flag_ = true;
         throw;
@@ -48,9 +48,7 @@ bool EventLoopThread::post(Callback task) {
     if (!loop_)
         return false;
     EventLoop* target = loop_;
-    queued = [target, task = std::move(task)] {
-        task(*target);
-    };
+    queued = [target, task = std::move(task)] { task(*target); };
     return target->enqueue(queued);
 }
 
@@ -139,4 +137,4 @@ void EventLoopThread::run(Callback init, Callback cleanup) noexcept {
     }
     ready_.notify_all();
 }
-} // namespace hp::net
+}  // namespace hp::net

@@ -39,7 +39,7 @@ void expect(bool condition, std::string_view message) {
 }
 
 class Fixture {
-   public:
+public:
     Fixture() {
         const char* configured = std::getenv("HP_S3_TEST_TMP_ROOT");
         const std::filesystem::path base =
@@ -78,7 +78,8 @@ class Fixture {
             ::ftruncate(fd, static_cast<off_t>(hp::http::max_file_bytes + 1)) ==
                 -1) {
             const int error_number = errno;
-            if (fd >= 0) ::close(fd);
+            if (fd >= 0)
+                ::close(fd);
             throw std::runtime_error(std::string("oversized fixture: ") +
                                      std::strerror(error_number));
         }
@@ -119,11 +120,16 @@ Response parse_response(const std::vector<std::byte>& bytes) {
         throw std::runtime_error("invalid response");
     }
     const int status = std::stoi(std::string(raw.substr(9, 3)));
-    if (status == 200) ++ok_hits;
-    if (status == 400) ++bad_request_hits;
-    if (status == 403) ++forbidden_hits;
-    if (status == 404) ++not_found_hits;
-    if (status == 500) ++internal_error_hits;
+    if (status == 200)
+        ++ok_hits;
+    if (status == 400)
+        ++bad_request_hits;
+    if (status == 403)
+        ++forbidden_hits;
+    if (status == 404)
+        ++not_found_hits;
+    if (status == 500)
+        ++internal_error_hits;
     return {status, std::string(raw.substr(0, boundary + 4)),
             std::vector<std::byte>(bytes.begin() + boundary + 4, bytes.end())};
 }
@@ -259,13 +265,28 @@ int main() {
     try {
         Fixture fixture;
         hp::http::StaticFileService service(fixture.root.string());
-        for (const auto& target : std::vector<std::string>{"/", "/missing", "/../sibling-secret.txt", "/bad%20target", "/" + std::string(300, 'x')}) {
-            const auto result = service.handle_response({"GET", target}, hp::http::ConnectionPolicy::keep_alive);
-            const std::string raw(reinterpret_cast<const char*>(result.bytes.data()), result.bytes.size());
-            const bool close = std::string_view(target).find('%') != std::string_view::npos;
-            expect(result.effective_policy == (close ? hp::http::ConnectionPolicy::close : hp::http::ConnectionPolicy::keep_alive), "service effective policy");
-            expect(raw.find(close ? "Connection: close\r\n" : "Connection: keep-alive\r\n") != std::string::npos, "service bytes and metadata agree");
-            expect(service.handle({"GET", target}, hp::http::ConnectionPolicy::keep_alive) == result.bytes, "legacy handle delegates without changing bytes");
+        for (const auto& target : std::vector<std::string>{
+                 "/", "/missing", "/../sibling-secret.txt", "/bad%20target",
+                 "/" + std::string(300, 'x')}) {
+            const auto result = service.handle_response(
+                {"GET", target}, hp::http::ConnectionPolicy::keep_alive);
+            const std::string raw(
+                reinterpret_cast<const char*>(result.bytes.data()),
+                result.bytes.size());
+            const bool close =
+                std::string_view(target).find('%') != std::string_view::npos;
+            expect(result.effective_policy ==
+                       (close ? hp::http::ConnectionPolicy::close
+                              : hp::http::ConnectionPolicy::keep_alive),
+                   "service effective policy");
+            expect(raw.find(close ? "Connection: close\r\n"
+                                  : "Connection: keep-alive\r\n") !=
+                       std::string::npos,
+                   "service bytes and metadata agree");
+            expect(service.handle({"GET", target},
+                                  hp::http::ConnectionPolicy::keep_alive) ==
+                       result.bytes,
+                   "legacy handle delegates without changing bytes");
         }
         test_success_and_mime(service);
         test_rejections(service);

@@ -29,14 +29,15 @@ enum class Status {
 
 [[nodiscard]] std::vector<std::byte> make_response_header(
     Status status, std::size_t content_length, std::string_view content_type,
-    bool include_allow_get = false, ConnectionPolicy policy = ConnectionPolicy::close);
+    bool include_allow_get = false,
+    ConnectionPolicy policy = ConnectionPolicy::close);
 
 [[nodiscard]] std::vector<std::byte> make_response(
     Status status, std::span<const std::byte> body,
     std::string_view content_type, bool include_allow_get = false,
     ConnectionPolicy policy = ConnectionPolicy::close);
-[[nodiscard]] std::vector<std::byte> make_error_response(Status status,
-    ConnectionPolicy policy = ConnectionPolicy::close);
+[[nodiscard]] std::vector<std::byte> make_error_response(
+    Status status, ConnectionPolicy policy = ConnectionPolicy::close);
 [[nodiscard]] std::string content_type_for_path(std::string_view path);
 
 }  // namespace hp::http

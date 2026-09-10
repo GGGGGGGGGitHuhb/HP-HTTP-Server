@@ -5,6 +5,7 @@
 
 namespace hp::net {
 class EventLoop;
+
 // Non-owning observer. Remove before destruction; keep alive until callback returns.
 // All operations must run on the loop thread (including before the loop starts).
 class Channel final : private base::NonCopyable {
@@ -14,11 +15,17 @@ public:
     ~Channel() noexcept;
     void set_interest(std::uint32_t events);
     void remove() noexcept;
+
     [[nodiscard]] int fd() const noexcept { return fd_; }
+
     [[nodiscard]] std::uint32_t interest() const noexcept { return interest_; }
+
     [[nodiscard]] std::uint32_t revents() const noexcept { return revents_; }
+
     [[nodiscard]] std::uint64_t token() const noexcept { return token_; }
+
     [[nodiscard]] bool registered() const noexcept { return token_ != 0; }
+
 private:
     friend class EventLoop;
     EventLoop& loop_;

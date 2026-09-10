@@ -12,12 +12,13 @@ using namespace std::chrono_literals;
 
 namespace hp::net {
 struct EventLoopThreadPoolTestAccess {
-    static std::size_t outstanding(EventLoopThreadPool& pool, std::size_t index) {
+    static std::size_t outstanding(EventLoopThreadPool& pool,
+                                   std::size_t index) {
         std::lock_guard lock(pool.mutex_);
         return pool.outstanding_.at(index);
     }
 };
-} // namespace hp::net
+}  // namespace hp::net
 
 namespace {
 void check(bool condition, const char* message) {
@@ -25,7 +26,8 @@ void check(bool condition, const char* message) {
         throw std::runtime_error(message);
 }
 
-template <class F> void throws(F function) {
+template <class F>
+void throws(F function) {
     bool caught = false;
     try {
         function();
@@ -35,7 +37,8 @@ template <class F> void throws(F function) {
     check(caught, "expected exception");
 }
 
-template <class F> void until(F predicate) {
+template <class F>
+void until(F predicate) {
     const auto end = std::chrono::steady_clock::now() + 3s;
     while (!predicate()) {
         check(std::chrono::steady_clock::now() < end, "deadline");
@@ -44,7 +47,8 @@ template <class F> void until(F predicate) {
 }
 
 std::size_t count(const char* path) {
-    return static_cast<std::size_t>(std::distance(std::filesystem::directory_iterator(path), {}));
+    return static_cast<std::size_t>(
+        std::distance(std::filesystem::directory_iterator(path), {}));
 }
 
 void modes_and_rollback() {
@@ -53,10 +57,7 @@ void modes_and_rollback() {
         std::atomic<int> init{}, cleanup{}, executed{};
         std::mutex mutex;
         std::set<std::thread::id> owners;
-        check(!pool.post(0,
-                         [](EventLoop&) {
-                         }),
-              "post before start");
+        check(!pool.post(0, [](EventLoop&) {}), "post before start");
         pool.request_stop();
         pool.start(
             count,
@@ -70,7 +71,8 @@ void modes_and_rollback() {
                 check(loop.is_in_loop_thread(), "cleanup owner");
                 ++cleanup;
             });
-        check(init == static_cast<int>(count) && owners.size() == count, "all ready fixed count");
+        check(init == static_cast<int>(count) && owners.size() == count,
+              "all ready fixed count");
         for (std::size_t i = 0; i < count; ++i)
             check(pool.post(i,
                             [&](EventLoop& loop) {
@@ -78,20 +80,17 @@ void modes_and_rollback() {
                                 ++executed;
                             }),
                   "post accepted");
-        check(!pool.post(count,
-                         [](EventLoop&) {
-                         }),
-              "invalid index rejects");
-        throws([&] {
-            pool.start(count);
-        });
+        check(!pool.post(count, [](EventLoop&) {}), "invalid index rejects");
+        throws([&] { pool.start(count); });
         pool.request_stop();
         pool.request_stop();
         pool.join();
         pool.join();
-        check(cleanup == static_cast<int>(count) && executed == static_cast<int>(count),
+        check(cleanup == static_cast<int>(count) &&
+                  executed == static_cast<int>(count),
               "stop drains all");
-        std::cout << "mode=" << count << " init=" << init << " cleanup=" << cleanup << '\n';
+        std::cout << "mode=" << count << " init=" << init
+                  << " cleanup=" << cleanup << '\n';
     }
     auto fds = count("/proc/self/fd");
     auto threads = count("/proc/self/task");
@@ -105,14 +104,11 @@ void modes_and_rollback() {
                 if (index == 1)
                     throw std::runtime_error("second init failure");
             },
-            [&](std::size_t, EventLoop&) {
-                ++cleanup;
-            });
+            [&](std::size_t, EventLoop&) { ++cleanup; });
     });
-    until([&] {
-        return count("/proc/self/task") == threads;
-    });
-    check(init == 2 && cleanup == 2 && count("/proc/self/fd") == fds, "rollback all workers");
+    until([&] { return count("/proc/self/task") == threads; });
+    check(init == 2 && cleanup == 2 && count("/proc/self/fd") == fds,
+          "rollback all workers");
     failed.join();
     std::cout << "second_start_failure: init=" << init << " cleanup=" << cleanup
               << " baseline_restored\n";
@@ -127,15 +123,15 @@ void readiness() {
         pool.start(2, [&](std::size_t index, EventLoop&) {
             if (index == 1) {
                 entered.set_value();
-                check(gate.wait_for(3s) == std::future_status::ready, "init gate timeout");
+                check(gate.wait_for(3s) == std::future_status::ready,
+                      "init gate timeout");
             }
         });
         returned = true;
     });
-    check(entered.get_future().wait_for(3s) == std::future_status::ready, "init reached");
-    check(!returned && !pool.post(0,
-                                  [](EventLoop&) {
-                                  }),
+    check(entered.get_future().wait_for(3s) == std::future_status::ready,
+          "init reached");
+    check(!returned && !pool.post(0, [](EventLoop&) {}),
           "pool unpublished before all ready");
     pool.request_stop();
     release.set_value();
@@ -154,12 +150,14 @@ void capacity(bool fail) {
                     [&](EventLoop&) {
                         ++executed;
                         entered.set_value();
-                        check(gate.wait_for(3s) == std::future_status::ready, "consumer gate");
+                        check(gate.wait_for(3s) == std::future_status::ready,
+                              "consumer gate");
                         if (fail)
                             throw std::runtime_error("fatal consumer");
                     }),
           "blocking task");
-    check(entered.get_future().wait_for(3s) == std::future_status::ready, "consumer entered");
+    check(entered.get_future().wait_for(3s) == std::future_status::ready,
+          "consumer entered");
 
     struct Capture {
         EventLoopThreadPool& pool;
@@ -169,62 +167,49 @@ void capacity(bool fail) {
         ~Capture() {
             ++released;
             pool.request_stop();
-            if (!pool.post(0, [](EventLoop&) {
-                }))
+            if (!pool.post(0, [](EventLoop&) {}))
                 ++reentrant;
         }
     };
 
     for (int i = 1; i < 1024; ++i) {
         if (fail) {
-            auto capture = std::shared_ptr<Capture>(new Capture{pool, cancelled, reentrant});
-            check(pool.post(0,
-                            [&, capture](EventLoop&) {
-                                ++executed;
-                            }),
+            auto capture = std::shared_ptr<Capture>(
+                new Capture{pool, cancelled, reentrant});
+            check(pool.post(0, [&, capture](EventLoop&) { ++executed; }),
                   "capacity accept cancellation capture");
         } else {
-            check(pool.post(0,
-                            [&](EventLoop&) {
-                                ++executed;
-                            }),
+            check(pool.post(0, [&](EventLoop&) { ++executed; }),
                   "capacity accept");
         }
     }
     const auto peak = EventLoopThreadPoolTestAccess::outstanding(pool, 0);
-    check(peak == 1024 && !pool.post(0,
-                                     [](EventLoop&) {
-                                     }),
+    check(peak == 1024 && !pool.post(0, [](EventLoop&) {}),
           "1025 rejected including executing task");
-    check(pool.post(1,
-                    [](EventLoop&) {
-                    }),
-          "per worker independent capacity");
+    check(pool.post(1, [](EventLoop&) {}), "per worker independent capacity");
     if (!fail) {
-        auto capture = std::shared_ptr<Capture>(new Capture{pool, cancelled, reentrant});
-        check(!pool.post(0,
-                         [capture](EventLoop&) {
-                         }),
-              "reentrant reject");
+        auto capture =
+            std::shared_ptr<Capture>(new Capture{pool, cancelled, reentrant});
+        check(!pool.post(0, [capture](EventLoop&) {}), "reentrant reject");
         capture.reset();
     }
     pool.request_stop();
     release.set_value();
     if (fail)
-        throws([&] {
-            pool.join();
-        });
+        throws([&] { pool.join(); });
     else
         pool.join();
-    check(EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 0, "all tickets returned");
-    check(fail ? executed == 1 && cancelled == 1023 : executed == 1024 && cancelled == 1,
+    check(EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 0,
+          "all tickets returned");
+    check(fail ? executed == 1 && cancelled == 1023
+               : executed == 1024 && cancelled == 1,
           "execute cancel accounting");
     check(cancelled == reentrant, "all capture destructors reentered safely");
-    std::cout << "capacity: fail=" << fail << " peak=" << peak << " executed=" << executed
-              << " captures_released=" << cancelled << " reentrant=" << reentrant
-              << " outstanding=0\n";
+    std::cout << "capacity: fail=" << fail << " peak=" << peak
+              << " executed=" << executed << " captures_released=" << cancelled
+              << " reentrant=" << reentrant << " outstanding=0\n";
 }
-} // namespace
+}  // namespace
 
 int main() {
     try {

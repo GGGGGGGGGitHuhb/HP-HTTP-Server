@@ -25,6 +25,7 @@ ResponseResult error_response(Status status, ConnectionPolicy policy) {
 
 bool is_symlink_at(int parent_fd, const std::string& component) {
     struct stat metadata {};
+
     return ::fstatat(parent_fd, component.c_str(), &metadata,
                      AT_SYMLINK_NOFOLLOW) == 0 &&
            S_ISLNK(metadata.st_mode);
@@ -87,8 +88,9 @@ PathResult validate_path(std::string_view target) {
 }
 
 ResponseResult prepare_file_response(UniqueFd file,
-                                          std::string_view relative_path,
-                                          const struct stat& metadata, ConnectionPolicy policy) {
+                                     std::string_view relative_path,
+                                     const struct stat& metadata,
+                                     ConnectionPolicy policy) {
     if (!S_ISREG(metadata.st_mode)) {
         return error_response(Status::not_found, policy);
     }
@@ -101,7 +103,9 @@ ResponseResult prepare_file_response(UniqueFd file,
     }
 
     const auto length = static_cast<std::size_t>(size);
-    return {make_response_header(Status::ok, length, content_type_for_path(relative_path), false, policy),
+    return {make_response_header(Status::ok, length,
+                                 content_type_for_path(relative_path), false,
+                                 policy),
             policy, base::FileRegion(std::move(file), 0, length)};
 }
 
@@ -114,7 +118,9 @@ StaticFileService::StaticFileService(const std::string& root_path) {
         throw std::system_error(errno, std::generic_category(),
                                 "static root is unavailable");
     }
+
     struct stat metadata {};
+
     if (::fstat(root_fd_, &metadata) == -1 || !S_ISDIR(metadata.st_mode)) {
         const int error_number = errno == 0 ? ENOTDIR : errno;
         ::close(root_fd_);
@@ -145,8 +151,9 @@ ResponseResult StaticFileService::handle_response(
         result.bytes.resize(header + result.file->remaining());
         std::size_t offset = header;
         while (offset < result.bytes.size()) {
-            const auto count = ::read(result.file->fd(), result.bytes.data() + offset,
-                                      result.bytes.size() - offset);
+            const auto count =
+                ::read(result.file->fd(), result.bytes.data() + offset,
+                       result.bytes.size() - offset);
             if (count > 0) {
                 offset += static_cast<std::size_t>(count);
                 continue;
@@ -193,11 +200,14 @@ ResponseResult StaticFileService::prepare_response(
             return error_response(
                 classify_open_error(parent_fd, filename, errno), policy);
         }
+
         struct stat metadata {};
+
         if (::fstat(file.get(), &metadata) == -1) {
             return error_response(Status::internal_server_error, policy);
         }
-        return prepare_file_response(std::move(file), validated.path, metadata, policy);
+        return prepare_file_response(std::move(file), validated.path, metadata,
+                                     policy);
     } catch (...) {
         return error_response(Status::internal_server_error, policy);
     }

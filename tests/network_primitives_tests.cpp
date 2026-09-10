@@ -52,8 +52,7 @@ void test_epoller_lifecycle_and_lt() {
     constexpr std::uint64_t token = 0x12345678ULL;
     epoller.add(pipe_fds[0], EPOLLIN, token);
     const char byte = 'x';
-    expect(::write(pipe_fds[1], &byte, 1) == 1,
-           "LT test byte must be written");
+    expect(::write(pipe_fds[1], &byte, 1) == 1, "LT test byte must be written");
 
     const auto first = epoller.wait(0);
     expect(first.size() == 1, "first LT wait must observe unread data");
@@ -92,10 +91,13 @@ extern "C" void count_signal(int) {
 
 void test_epoll_wait_retries_eintr() {
     struct sigaction action {};
+
     action.sa_handler = count_signal;
     ::sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
+
     struct sigaction old_action {};
+
     expect(::sigaction(SIGALRM, &action, &old_action) == 0,
            "SIGALRM handler must install");
 
@@ -139,10 +141,13 @@ void test_accept_retries_eintr() {
     listener.listen(4);
 
     struct sigaction action {};
+
     action.sa_handler = count_signal;
     ::sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
+
     struct sigaction old_action {};
+
     expect(::sigaction(SIGUSR2, &action, &old_action) == 0,
            "SIGUSR2 handler must install");
     signal_count = 0;
@@ -184,8 +189,7 @@ void test_accept_retries_eintr() {
 void test_listener_accept_drain_and_flags() {
     hp::net::Socket listener = hp::net::Socket::create_tcp();
     expect(is_non_blocking(listener.fd()), "listener must be non-blocking");
-    expect(is_close_on_exec(listener.fd()),
-           "listener must be close-on-exec");
+    expect(is_close_on_exec(listener.fd()), "listener must be close-on-exec");
     listener.set_reuse_address(true);
     listener.bind_any(0);
     listener.listen(16);
@@ -202,8 +206,8 @@ void test_listener_accept_drain_and_flags() {
     }
 
     std::vector<hp::net::Socket> accepted;
-    for (int readiness = 0;
-         readiness < 8 && accepted.size() < clients.size(); ++readiness) {
+    for (int readiness = 0; readiness < 8 && accepted.size() < clients.size();
+         ++readiness) {
         pollfd descriptor{listener.fd(), POLLIN, 0};
         const int poll_result = ::poll(&descriptor, 1, 250);
         if (poll_result == -1 && errno == EINTR) {
@@ -228,8 +232,9 @@ void test_listener_accept_drain_and_flags() {
             accepted.push_back(std::move(connection));
         }
     }
-    expect(accepted.size() == clients.size(),
-           "readiness-driven accept drains must consume every queued connection");
+    expect(
+        accepted.size() == clients.size(),
+        "readiness-driven accept drains must consume every queued connection");
     expect(!listener.accept_non_blocking().valid(),
            "drained listener must keep reporting EAGAIN as invalid Socket");
 
@@ -308,8 +313,7 @@ void test_combined_read_and_half_close_event() {
                 observed |= event.events;
             }
         }
-        if ((observed & (EPOLLIN | EPOLLRDHUP)) ==
-            (EPOLLIN | EPOLLRDHUP)) {
+        if ((observed & (EPOLLIN | EPOLLRDHUP)) == (EPOLLIN | EPOLLRDHUP)) {
             break;
         }
     }

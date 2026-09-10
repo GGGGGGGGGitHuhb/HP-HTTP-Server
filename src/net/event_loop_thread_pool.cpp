@@ -28,7 +28,8 @@ EventLoopThreadPool::~EventLoopThreadPool() noexcept {
     }
 }
 
-void EventLoopThreadPool::start(std::size_t count, Callback init, Callback cleanup) {
+void EventLoopThreadPool::start(std::size_t count, Callback init,
+                                Callback cleanup) {
     {
         std::lock_guard lock(mutex_);
         if (started_)
@@ -81,15 +82,16 @@ void EventLoopThreadPool::start(std::size_t count, Callback init, Callback clean
     }
 }
 
-bool EventLoopThreadPool::post(std::size_t index, EventLoopThread::Callback task) {
+bool EventLoopThreadPool::post(std::size_t index,
+                               EventLoopThread::Callback task) {
     if (!task)
         throw std::invalid_argument("empty pool task");
     auto ticket = std::make_shared<Ticket>(Ticket{*this, index});
     auto* reservation = ticket.get();
-    EventLoopThread::Callback queued = [ticket = std::move(ticket),
-                                        task = std::move(task)](EventLoop& loop) {
-        task(loop);
-    };
+    EventLoopThread::Callback queued =
+        [ticket = std::move(ticket), task = std::move(task)](EventLoop& loop) {
+            task(loop);
+        };
     {
         std::lock_guard lock(mutex_);
         if (!ready_ || stopping_ || index >= workers_.size() ||
@@ -162,9 +164,7 @@ void EventLoopThreadPool::request_stop() {
 void EventLoopThreadPool::join() {
     {
         std::unique_lock lock(mutex_);
-        forwarded_.wait(lock, [this] {
-            return forwarding_ == 0;
-        });
+        forwarded_.wait(lock, [this] { return forwarding_ == 0; });
     }
     std::exception_ptr error;
     for (auto& worker : workers_) {
@@ -178,4 +178,4 @@ void EventLoopThreadPool::join() {
     if (error)
         std::rethrow_exception(error);
 }
-} // namespace hp::net
+}  // namespace hp::net

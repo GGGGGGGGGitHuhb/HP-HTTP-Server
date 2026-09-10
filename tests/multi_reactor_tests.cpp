@@ -23,22 +23,25 @@ struct StaticFileServiceTestAccess {
         return service.root_fd_;
     }
 };
-} // namespace hp::http
+}  // namespace hp::http
 
 namespace hp::app {
-void set_session_observer_for_test(void (*observer)(bool, const void*) noexcept);
+void set_session_observer_for_test(void (*observer)(bool,
+                                                    const void*) noexcept);
 }
 
 namespace hp::net {
 struct EventLoopThreadPoolTestAccess {
-    static std::size_t outstanding(EventLoopThreadPool& pool, std::size_t index) {
+    static std::size_t outstanding(EventLoopThreadPool& pool,
+                                   std::size_t index) {
         std::lock_guard lock(pool.mutex_);
         return pool.outstanding_.at(index);
     }
 };
 
 struct TcpServerTestAccess {
-    static bool post(TcpServer& server, std::size_t index, EventLoopThread::Callback task) {
+    static bool post(TcpServer& server, std::size_t index,
+                     EventLoopThread::Callback task) {
         return server.pool_.post(index, std::move(task));
     }
 
@@ -50,7 +53,7 @@ struct TcpServerTestAccess {
         return server.loop_.queue_in_loop(std::move(task));
     }
 };
-} // namespace hp::net
+}  // namespace hp::net
 
 namespace {
 thread_local int timer_allocation_failure = -1;
@@ -59,9 +62,9 @@ thread_local bool reject_any_registration = false;
 thread_local unsigned int registration_injections = 0;
 std::mutex socket_probe_mutex;
 std::set<int> accepted_fds;
-std::atomic<int> accepted_sockets{}, closed_sockets{}, invalid_closes{}, reject_registration{},
-    reject_allocation{};
-} // namespace
+std::atomic<int> accepted_sockets{}, closed_sockets{}, invalid_closes{},
+    reject_registration{}, reject_allocation{};
+}  // namespace
 
 extern "C" {
 int __real_accept4(int, sockaddr*, socklen_t*, int);
@@ -92,21 +95,25 @@ int __wrap_close(int fd) {
 
 int __real_epoll_ctl(int, int, int, epoll_event*);
 
-int __wrap_epoll_ctl(int fd, int operation, int observed_fd, epoll_event* event) {
-    if (operation == EPOLL_CTL_ADD && std::exchange(reject_any_registration, false)) {
+int __wrap_epoll_ctl(int fd, int operation, int observed_fd,
+                     epoll_event* event) {
+    if (operation == EPOLL_CTL_ADD &&
+        std::exchange(reject_any_registration, false)) {
         ++registration_injections;
         errno = EIO;
         return -1;
     }
     if (operation == EPOLL_CTL_ADD && reject_registration.load()) {
         std::lock_guard lock(socket_probe_mutex);
-        if (accepted_fds.contains(observed_fd) && reject_registration.exchange(0)) {
+        if (accepted_fds.contains(observed_fd) &&
+            reject_registration.exchange(0)) {
             errno = EIO;
             return -1;
         }
     }
     const int result = __real_epoll_ctl(fd, operation, observed_fd, event);
-    if (result == 0 && operation == EPOLL_CTL_ADD && fail_after_registration >= 0) {
+    if (result == 0 && operation == EPOLL_CTL_ADD &&
+        fail_after_registration >= 0) {
         timer_allocation_failure = fail_after_registration;
         fail_after_registration = -1;
     }
@@ -135,15 +142,18 @@ void require(bool value, const char* message) {
 }
 
 template <class F>
-void await(F predicate, std::source_location caller = std::source_location::current()) {
+void await(F predicate,
+           std::source_location caller = std::source_location::current()) {
     const auto deadline = std::chrono::steady_clock::now() + 3s;
     while (!predicate()) {
         try {
             require(std::chrono::steady_clock::now() < deadline, "deadline");
         } catch (...) {
-            const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::steady_clock::now() - (deadline - 3s));
-            std::cerr << "await deadline file=" << caller.file_name() << " line=" << caller.line()
+            const auto elapsed =
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::steady_clock::now() - (deadline - 3s));
+            std::cerr << "await deadline file=" << caller.file_name()
+                      << " line=" << caller.line()
                       << " elapsed_us=" << elapsed.count() << std::endl;
             throw;
         }
@@ -152,7 +162,8 @@ void await(F predicate, std::source_location caller = std::source_location::curr
 }
 
 std::size_t resources(const char* path) {
-    return static_cast<std::size_t>(std::distance(std::filesystem::directory_iterator(path), {}));
+    return static_cast<std::size_t>(
+        std::distance(std::filesystem::directory_iterator(path), {}));
 }
 
 struct MessageObservation {
@@ -177,7 +188,8 @@ struct Probe {
 };
 
 std::atomic<Probe*> observed{nullptr};
-std::atomic<int> watched_root{-1}, root_checks{}, root_errors{}, live_sessions{};
+std::atomic<int> watched_root{-1}, root_checks{}, root_errors{},
+    live_sessions{};
 
 void session_event(bool created, const void* session) noexcept {
     ++root_checks;
@@ -190,8 +202,8 @@ void session_event(bool created, const void* session) noexcept {
     if (auto* probe = observed.load()) {
         std::lock_guard lock(probe->mutex);
         if (created) {
-            if (std::find(probe->owners.begin(), probe->owners.end(), std::this_thread::get_id()) ==
-                probe->owners.end())
+            if (std::find(probe->owners.begin(), probe->owners.end(),
+                          std::this_thread::get_id()) == probe->owners.end())
                 ++probe->owner_errors;
             probe->sessions.emplace(session, std::this_thread::get_id());
             ++probe->created;
@@ -214,8 +226,9 @@ struct ServerHarness {
     bool release_owner{false};
     std::atomic<bool> run_ended{false}, run_failed{false};
 
-    ServerHarness(const hp::http::StaticFileService& service, std::size_t workers,
-                  Probe* probe = nullptr, ConnectionTimeouts timeouts = {}) {
+    ServerHarness(const hp::http::StaticFileService& service,
+                  std::size_t workers, Probe* probe = nullptr,
+                  ConnectionTimeouts timeouts = {}) {
         std::promise<void> ready;
         auto result = ready.get_future();
         control = std::thread([&, workers, probe, timeouts] {
@@ -231,15 +244,17 @@ struct ServerHarness {
                         std::size_t id;
                         {
                             std::lock_guard lock(probe->mutex);
-                            probe->factories.push_back(std::this_thread::get_id());
+                            probe->factories.push_back(
+                                std::this_thread::get_id());
                             id = probe->owners.size();
                             probe->owners.push_back({});
                             probe->messages.emplace_back();
                         }
                         return TcpConnection::MessageCallback(
-                            [callback = std::move(callback), probe,
-                             id](TcpConnection& connection, std::span<const std::byte> bytes,
-                                 bool eof) mutable {
+                            [callback = std::move(callback), probe, id](
+                                TcpConnection& connection,
+                                std::span<const std::byte> bytes,
+                                bool eof) mutable {
                                 {
                                     std::lock_guard lock(probe->mutex);
                                     auto& owner = probe->owners[id];
@@ -251,23 +266,33 @@ struct ServerHarness {
                                     message.fd = connection.fd();
                                     message.identity = connection.identity();
                                     socklen_t size = sizeof(message.peer);
-                                    message.peer_error = ::getpeername(message.fd,
-                                        reinterpret_cast<sockaddr*>(&message.peer), &size) == 0
-                                        ? 0 : errno;
+                                    message.peer_error =
+                                        ::getpeername(
+                                            message.fd,
+                                            reinterpret_cast<sockaddr*>(
+                                                &message.peer),
+                                            &size) == 0
+                                            ? 0
+                                            : errno;
                                     message.owner = owner;
                                     message.state = connection.state();
                                     message.eof = eof;
                                     message.completed = false;
                                     ++message.calls;
                                     if (!bytes.empty())
-                                        message.input.append(reinterpret_cast<const char*>(bytes.data()),
-                                            std::min(bytes.size(), std::size_t{128} - message.input.size()));
+                                        message.input.append(
+                                            reinterpret_cast<const char*>(
+                                                bytes.data()),
+                                            std::min(bytes.size(),
+                                                     std::size_t{128} -
+                                                         message.input.size()));
                                 }
                                 callback(connection, bytes, eof);
                                 {
                                     std::lock_guard lock(probe->mutex);
                                     probe->messages[id].completed = true;
-                                    probe->messages[id].state = connection.state();
+                                    probe->messages[id].state =
+                                        connection.state();
                                 }
                             });
                     },
@@ -288,7 +313,8 @@ struct ServerHarness {
                 // Keep the borrowed server alive until the caller ends all API calls.
                 // Destruction still occurs on this owner, after explicit join release.
                 std::unique_lock lifetime_lock(lifetime_mutex);
-                lifetime_ready.wait(lifetime_lock, [this] { return release_owner; });
+                lifetime_ready.wait(lifetime_lock,
+                                    [this] { return release_owner; });
             } catch (...) {
                 error = std::current_exception();
                 if (!published)
@@ -296,7 +322,8 @@ struct ServerHarness {
             }
         });
         try {
-            require(result.wait_for(3s) == std::future_status::ready, "server ready deadline");
+            require(result.wait_for(3s) == std::future_status::ready,
+                    "server ready deadline");
             result.get();
         } catch (...) {
             join();
@@ -333,7 +360,8 @@ struct ServerHarness {
         try {
             std::rethrow_exception(error);
         } catch (const std::runtime_error& caught) {
-            require(std::string(caught.what()) == message, "first fatal exception preserved");
+            require(std::string(caught.what()) == message,
+                    "first fatal exception preserved");
         }
     }
 };
@@ -349,13 +377,9 @@ struct Stream {
 
     explicit Stream(std::uint16_t port) : fd(connect_client(port)) {}
 
-    ~Stream() {
-        ::close(fd);
-    }
+    ~Stream() { ::close(fd); }
 
-    void send(std::string_view data) {
-        send_all(fd, data);
-    }
+    void send(std::string_view data) { send_all(fd, data); }
 
     WireResponse next() {
         auto read = [&] {
@@ -375,12 +399,14 @@ struct Stream {
             read();
         auto body = pending.substr(boundary, length);
         pending.erase(0, boundary + length);
-        return {std::stoi(header.substr(9, 3)), std::move(header), std::move(body)};
+        return {std::stoi(header.substr(9, 3)), std::move(header),
+                std::move(body)};
     }
 
     void eof() {
         char byte;
-        require(pending.empty() && ::recv(fd, &byte, 1, 0) == 0, "terminal EOF");
+        require(pending.empty() && ::recv(fd, &byte, 1, 0) == 0,
+                "terminal EOF");
     }
 };
 
@@ -390,7 +416,8 @@ std::string query(std::string_view path, bool close = false) {
 }
 
 void response(const WireResponse& value, int status, std::string_view body) {
-    require(value.status == status && value.body == body, "exact response status/body");
+    require(value.status == status && value.body == body,
+            "exact response status/body");
 }
 
 void owners(const hp::http::StaticFileService& service, std::size_t workers) {
@@ -405,25 +432,31 @@ void owners(const hp::http::StaticFileService& service, std::size_t workers) {
     }
     harness.stop();
     observed = nullptr;
-    require(probe.factories.size() == 6 && probe.created == 6 && probe.destroyed == 6,
+    require(probe.factories.size() == 6 && probe.created == 6 &&
+                probe.destroyed == 6,
             "session accounting");
     for (int i = 0; i < 6; ++i) {
         require(probe.factories[i] == probe.main, "factory main owner");
-        require(probe.owners[i] == probe.owners[i % (workers ? workers : 1)], "fixed round robin");
-        require((probe.owners[i] == probe.main) == (workers == 0), "worker mode owner");
+        require(probe.owners[i] == probe.owners[i % (workers ? workers : 1)],
+                "fixed round robin");
+        require((probe.owners[i] == probe.main) == (workers == 0),
+                "worker mode owner");
     }
     if (workers == 2)
         require(probe.owners[0] != probe.owners[1], "two workers have real IO");
-    require(probe.owner_errors == 0 && probe.sessions.empty(), "session lifetime owner");
-    std::cout << "owners: workers=" << workers << " accepted=" << probe.factories.size()
-              << " session_created=" << probe.created << " destroyed=" << probe.destroyed
-              << " route=";
+    require(probe.owner_errors == 0 && probe.sessions.empty(),
+            "session lifetime owner");
+    std::cout << "owners: workers=" << workers
+              << " accepted=" << probe.factories.size()
+              << " session_created=" << probe.created
+              << " destroyed=" << probe.destroyed << " route=";
     for (auto owner : probe.owners)
         std::cout << (owner == probe.owners[0] ? '0' : '1');
     std::cout << '\n';
 }
 
-void protocols(const hp::http::StaticFileService& service, ConnectionTimeouts timeouts = {}) {
+void protocols(const hp::http::StaticFileService& service,
+               ConnectionTimeouts timeouts = {}) {
     ServerHarness harness(service, 2, nullptr, timeouts);
     std::barrier begin(3);
     std::exception_ptr errors[2];
@@ -437,8 +470,9 @@ void protocols(const hp::http::StaticFileService& service, ConnectionTimeouts ti
                 client.send(first.substr(0, first.size() - 1));
                 client.send(first.substr(first.size() - 1) + query("/missing") +
                             query("/note.txt"));
-                response(client.next(), 200,
-                         i ? "<h1>integration index</h1>\n" : "hello from S3\n");
+                response(
+                    client.next(), 200,
+                    i ? "<h1>integration index</h1>\n" : "hello from S3\n");
                 response(client.next(), 404, "404 Not Found\n");
                 response(client.next(), 200, "hello from S3\n");
                 client.send("GET / HTTP/1.1\r\nBad\r\n\r\n");
@@ -467,7 +501,8 @@ void protocols(const hp::http::StaticFileService& service, ConnectionTimeouts ti
         Stream reset(harness.port);
         reset.send("GET / HTTP/1.1\r\nHost:");
         linger immediate{1, 0};
-        ::setsockopt(reset.fd, SOL_SOCKET, SO_LINGER, &immediate, sizeof(immediate));
+        ::setsockopt(reset.fd, SOL_SOCKET, SO_LINGER, &immediate,
+                     sizeof(immediate));
     }
     for (auto path : {"/escape.txt", "/../sibling-secret.txt"}) {
         Stream client(harness.port);
@@ -480,8 +515,9 @@ void protocols(const hp::http::StaticFileService& service, ConnectionTimeouts ti
     response(survivor.next(), 200, "hello from S3\n");
     survivor.eof();
     harness.stop();
-    std::cout << "protocols: concurrent_pipeline=2 per_pipeline_responses=4 fin_responses=2 "
-                 "rst_survivor=1 security=2\n";
+    std::cout
+        << "protocols: concurrent_pipeline=2 per_pipeline_responses=4 fin_responses=2 "
+           "rst_survivor=1 security=2\n";
 }
 
 void lifecycle(const hp::http::StaticFileService& service) {
@@ -495,12 +531,11 @@ void lifecycle(const hp::http::StaticFileService& service) {
         harness.stop();
         client.eof();
     }
-    await([&] {
-        return resources("/proc/self/task") == threads;
-    });
+    await([&] { return resources("/proc/self/task") == threads; });
     require(resources("/proc/self/fd") == fd, "100 cycle fd baseline");
-    std::cout << "lifecycle: cycles=100 fd=" << fd << '/' << resources("/proc/self/fd")
-              << " threads=" << threads << '/' << resources("/proc/self/task") << '\n';
+    std::cout << "lifecycle: cycles=100 fd=" << fd << '/'
+              << resources("/proc/self/fd") << " threads=" << threads << '/'
+              << resources("/proc/self/task") << '\n';
 }
 
 void failures_and_pending(const hp::http::StaticFileService& service) {
@@ -512,7 +547,8 @@ void failures_and_pending(const hp::http::StaticFileService& service) {
                     *harness.server, 0,
                     [&](EventLoop&) {
                         entered.set_value();
-                        require(gate.wait_for(3s) == std::future_status::ready, "fatal gate");
+                        require(gate.wait_for(3s) == std::future_status::ready,
+                                "fatal gate");
                         throw std::runtime_error("fatal worker original");
                     }),
                 "fatal task accepted");
@@ -520,13 +556,11 @@ void failures_and_pending(const hp::http::StaticFileService& service) {
                 "fatal worker entered");
         for (int i = 1; i < 1024; ++i)
             require(TcpServerTestAccess::post(*harness.server, 0,
-                                              [](EventLoop&) {
-                                              }),
+                                              [](EventLoop&) {}),
                     "fill worker queue");
-        require(!TcpServerTestAccess::post(*harness.server, 0,
-                                           [](EventLoop&) {
-                                           }),
-                "full before failure");
+        require(
+            !TcpServerTestAccess::post(*harness.server, 0, [](EventLoop&) {}),
+            "full before failure");
         release.set_value();
         harness.failed("fatal worker original");
     }
@@ -546,7 +580,8 @@ void failures_and_pending(const hp::http::StaticFileService& service) {
         auto gate = release.get_future().share();
         TcpServerTestAccess::post(*harness.server, 1, [&](EventLoop&) {
             entered.set_value();
-            require(gate.wait_for(3s) == std::future_status::ready, "pending gate");
+            require(gate.wait_for(3s) == std::future_status::ready,
+                    "pending gate");
         });
         require(entered.get_future().wait_for(3s) == std::future_status::ready,
                 "pending worker blocked");
@@ -560,7 +595,8 @@ void failures_and_pending(const hp::http::StaticFileService& service) {
         active.eof();
         pending.eof();
     }
-    std::cout << "failure: full_worker_and_main_originals=2 pending_stop=1 all_joined\n";
+    std::cout
+        << "failure: full_worker_and_main_originals=2 pending_stop=1 all_joined\n";
 }
 
 void adoption_failures(const hp::http::StaticFileService& service) {
@@ -606,13 +642,14 @@ void adoption_failures(const hp::http::StaticFileService& service) {
         auto gate = release.get_future().share();
         TcpServerTestAccess::post(*harness.server, 0, [&](EventLoop&) {
             entered.set_value();
-            require(gate.wait_for(3s) == std::future_status::ready, "reject gate");
+            require(gate.wait_for(3s) == std::future_status::ready,
+                    "reject gate");
         });
-        require(entered.get_future().wait_for(3s) == std::future_status::ready, "reject entered");
+        require(entered.get_future().wait_for(3s) == std::future_status::ready,
+                "reject entered");
         for (int i = 1; i < 1024; ++i)
             require(TcpServerTestAccess::post(*harness.server, 0,
-                                              [](EventLoop&) {
-                                              }),
+                                              [](EventLoop&) {}),
                     "reject fill");
         Stream rejected(harness.port);
         rejected.eof();
@@ -621,13 +658,15 @@ void adoption_failures(const hp::http::StaticFileService& service) {
     }
     require(accepted_sockets - accepted == 1 && closed_sockets - closed == 1,
             "handoff rejection closes exactly once");
-    std::cout << "adoption: register_failure=1 allocation_failure=1 capacity_rejection=1 "
-                 "exact_close=verified\n";
+    std::cout
+        << "adoption: register_failure=1 allocation_failure=1 capacity_rejection=1 "
+           "exact_close=verified\n";
 }
 
 void cli_modes(const char* executable, const Fixture& fixture) {
     const char* configured = std::getenv("HP_HTTP_TEST_THREADS");
-    const auto previous = configured ? std::optional<std::string>(configured) : std::nullopt;
+    const auto previous =
+        configured ? std::optional<std::string>(configured) : std::nullopt;
     for (int count : {-1, 0, 1, 2}) {
         if (count < 0)
             ::unsetenv("HP_HTTP_TEST_THREADS");
@@ -643,16 +682,20 @@ void cli_modes(const char* executable, const Fixture& fixture) {
 #endif
         require(resources("/proc/self/task") == 1 + controller_helper,
                 "controller thread baseline matches instrumentation");
-        const auto expected = static_cast<std::size_t>((count < 0 ? 2 : count) + 1) + sanitizer_threads;
-        std::cout << "CLI instrumentation_threads=" << sanitizer_threads << " expected=" << expected
+        const auto expected =
+            static_cast<std::size_t>((count < 0 ? 2 : count) + 1) +
+            sanitizer_threads;
+        std::cout << "CLI instrumentation_threads=" << sanitizer_threads
+                  << " expected=" << expected
                   << " observed=" << server.thread_count() << '\n';
-        require(server.thread_count() == expected, "production CLI OS thread count");
+        require(server.thread_count() == expected,
+                "production CLI OS thread count");
         Stream client(server.port());
         client.send(query("/note.txt", true));
         response(client.next(), 200, "hello from S3\n");
         client.eof();
-        std::cout << "CLI: threads_option=" << count << " OS_threads=" << server.thread_count()
-                  << '\n';
+        std::cout << "CLI: threads_option=" << count
+                  << " OS_threads=" << server.thread_count() << '\n';
     }
     if (previous)
         ::setenv("HP_HTTP_TEST_THREADS", previous->c_str(), 1);
@@ -660,7 +703,7 @@ void cli_modes(const char* executable, const Fixture& fixture) {
         ::unsetenv("HP_HTTP_TEST_THREADS");
 }
 
-} // namespace
+}  // namespace
 
 #ifndef HP_MULTI_REACTOR_ENTRY
 #define HP_MULTI_REACTOR_ENTRY main
@@ -668,7 +711,8 @@ void cli_modes(const char* executable, const Fixture& fixture) {
 int HP_MULTI_REACTOR_ENTRY(int argc, char** argv) {
     try {
         Fixture fixture;
-        auto service_owner = std::make_unique<hp::http::StaticFileService>(fixture.root.string());
+        auto service_owner = std::make_unique<hp::http::StaticFileService>(
+            fixture.root.string());
         auto& service = *service_owner;
         watched_root = hp::http::StaticFileServiceTestAccess::root_fd(service);
         hp::app::set_session_observer_for_test(session_event);
@@ -688,12 +732,14 @@ int HP_MULTI_REACTOR_ENTRY(int argc, char** argv) {
         require(::fcntl(watched_root, F_GETFD) == -1 && errno == EBADF,
                 "service root closed after join");
         std::cout << "service_lifetime: session_events=" << root_checks
-                  << " premature_close=" << root_errors << " live_sessions=" << live_sessions
+                  << " premature_close=" << root_errors
+                  << " live_sessions=" << live_sessions
                   << " root_closed_after_join=1\n";
         require(invalid_closes == 0 && accepted_sockets == closed_sockets,
                 "accepted socket close accounting");
         std::cout << "socket_ownership: accepted=" << accepted_sockets
-                  << " closed=" << closed_sockets << " invalid_closes=" << invalid_closes << '\n';
+                  << " closed=" << closed_sockets
+                  << " invalid_closes=" << invalid_closes << '\n';
         std::cout << "multi_reactor_tests: PASS\n";
         return failures ? 1 : 0;
     } catch (const std::exception& error) {

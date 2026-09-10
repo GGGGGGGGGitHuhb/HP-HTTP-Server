@@ -4,33 +4,44 @@
 #include <utility>
 
 namespace hp::net {
-TcpServer::TcpServer(std::uint16_t requested_port, MessageCallbackFactory factory,
-                     std::size_t max_input_bytes, std::size_t worker_count, ConnectionTimeouts timeouts)
-    : callback_factory_(std::move(factory)), max_input_bytes_(max_input_bytes),
-      worker_count_(worker_count), timeouts_(timeouts), registries_(worker_count <= 64 ? worker_count : 0),
-      acceptor_(loop_, requested_port, [this](Socket socket) {
-          add_connection(std::move(socket));
-      }) {
+TcpServer::TcpServer(std::uint16_t requested_port,
+                     MessageCallbackFactory factory,
+                     std::size_t max_input_bytes, std::size_t worker_count,
+                     ConnectionTimeouts timeouts)
+    : callback_factory_(std::move(factory)),
+      max_input_bytes_(max_input_bytes),
+      worker_count_(worker_count),
+      timeouts_(timeouts),
+      registries_(worker_count <= 64 ? worker_count : 0),
+      acceptor_(loop_, requested_port,
+                [this](Socket socket) { add_connection(std::move(socket)); }) {
     if (timeouts.idle.count() < 0 || timeouts.keep_alive.count() < 0 ||
-        timeouts.idle.count() > 86400000 || timeouts.keep_alive.count() > 86400000)
+        timeouts.idle.count() > 86400000 ||
+        timeouts.keep_alive.count() > 86400000)
         throw std::invalid_argument("timeout outside 0-86400000ms");
     if (worker_count > 64)
         throw std::invalid_argument("worker count exceeds 64");
-    loop_.set_control_callback([this](EventLoop::Control kind, EventLoop::Deadline deadline) {
-        control(kind, deadline);
-    });
+    loop_.set_control_callback(
+        [this](EventLoop::Control kind, EventLoop::Deadline deadline) {
+            control(kind, deadline);
+        });
     if (worker_count == 0) {
-        main_registry_ = std::make_unique<ConnectionRegistry>(loop_, max_input_bytes_, timeouts_);
+        main_registry_ = std::make_unique<ConnectionRegistry>(
+            loop_, max_input_bytes_, timeouts_);
         main_registry_->set_drained_callback([this] { loop_.request_stop(); });
     } else {
         pool_.start(
             worker_count,
             [this](std::size_t index, EventLoop& loop) {
-                registries_[index] = std::make_unique<ConnectionRegistry>(loop, max_input_bytes_, timeouts_);
-                registries_[index]->set_drained_callback([&loop] { loop.request_stop(); });
-                loop.set_control_callback([this, index](EventLoop::Control kind, EventLoop::Deadline) {
+                registries_[index] = std::make_unique<ConnectionRegistry>(
+                    loop, max_input_bytes_, timeouts_);
+                registries_[index]->set_drained_callback(
+                    [&loop] { loop.request_stop(); });
+                loop.set_control_callback([this, index](EventLoop::Control kind,
+                                                        EventLoop::Deadline) {
                     if (kind != EventLoop::Control::none)
-                        registries_[index]->begin_drain(kind == EventLoop::Control::force);
+                        registries_[index]->begin_drain(
+                            kind == EventLoop::Control::force);
                 });
             },
             [this](std::size_t index, EventLoop& worker) {
@@ -85,7 +96,8 @@ void TcpServer::watch_control_fd(int fd, Channel::Callback callback) {
 }
 
 void TcpServer::request_graceful_shutdown(EventLoop::Deadline deadline) {
-    stopping_ = true; // Linearize handoff rejection before notifying any owner.
+    stopping_ =
+        true;  // Linearize handoff rejection before notifying any owner.
     loop_.request_drain(deadline);
 }
 
@@ -162,7 +174,8 @@ void TcpServer::add_connection(Socket socket) {
         acceptor_.stop();
         return;
     }
-    auto callback = callback_factory_ ? callback_factory_() : TcpConnection::MessageCallback{};
+    auto callback = callback_factory_ ? callback_factory_()
+                                      : TcpConnection::MessageCallback{};
     if (worker_count_ == 0) {
         main_registry_->add(std::move(socket), std::move(callback));
         return;
@@ -175,12 +188,14 @@ void TcpServer::add_connection(Socket socket) {
         TcpConnection::MessageCallback callback;
     };
 
-    auto handoff = std::make_shared<Handoff>(Handoff{std::move(socket), std::move(callback)});
+    auto handoff = std::make_shared<Handoff>(
+        Handoff{std::move(socket), std::move(callback)});
     pool_.post(index, [this, index, handoff](EventLoop&) {
         if (stopping_)
             return;
         try {
-            registries_[index]->add(std::move(handoff->socket), std::move(handoff->callback));
+            registries_[index]->add(std::move(handoff->socket),
+                                    std::move(handoff->callback));
         } catch (const std::bad_alloc&) {
             throw;
         } catch (const std::exception& error) {
@@ -190,4 +205,4 @@ void TcpServer::add_connection(Socket socket) {
         }
     });
 }
-} // namespace hp::net
+}  // namespace hp::net

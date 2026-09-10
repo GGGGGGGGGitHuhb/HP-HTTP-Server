@@ -23,8 +23,10 @@ void expect(bool condition, std::string_view message) {
 
 hp::http::ParseResult parse(std::string_view request) {
     const auto result = hp::http::parse_request(request);
-    if (result.status == hp::http::ParseStatus::need_more) ++need_more_hits;
-    if (result.status == hp::http::ParseStatus::bad_request) ++bad_request_hits;
+    if (result.status == hp::http::ParseStatus::need_more)
+        ++need_more_hits;
+    if (result.status == hp::http::ParseStatus::bad_request)
+        ++bad_request_hits;
     if (result.status == hp::http::ParseStatus::method_not_allowed) {
         ++method_not_allowed_hits;
     }
@@ -136,8 +138,11 @@ void test_limits() {
     exact_line += " HTTP/1.1\r\nHost: x\r\n\r\n";
     expect(exact_line.find("\r\n") == hp::http::max_request_line_bytes,
            "exact request-line fixture must be 4 KiB");
-    expect(parse(std::string_view(exact_line).substr(0, hp::http::max_request_line_bytes)).status == hp::http::ParseStatus::need_more,
-           "exact 4 KiB content prefix must await CRLF independent of chunking");
+    expect(
+        parse(std::string_view(exact_line)
+                  .substr(0, hp::http::max_request_line_bytes))
+                .status == hp::http::ParseStatus::need_more,
+        "exact 4 KiB content prefix must await CRLF independent of chunking");
     expect(parse(exact_line).status == hp::http::ParseStatus::complete,
            "a request line exactly at 4 KiB must be accepted");
 
@@ -178,21 +183,40 @@ void test_response_and_mime() {
     expect(internal.starts_with("HTTP/1.1 500 Internal Server Error\r\n"),
            "500 response construction must be covered");
 
-    for (auto policy : {hp::http::ConnectionPolicy::close, hp::http::ConnectionPolicy::keep_alive}) {
-        for (auto status : {hp::http::Status::ok, hp::http::Status::bad_request, hp::http::Status::forbidden,
-                            hp::http::Status::not_found, hp::http::Status::method_not_allowed, hp::http::Status::internal_server_error}) {
-            const auto raw = bytes_to_string(status == hp::http::Status::ok
-                ? hp::http::make_response(status, body, "application/octet-stream", false, policy)
-                : hp::http::make_error_response(status, policy));
+    for (auto policy : {hp::http::ConnectionPolicy::close,
+                        hp::http::ConnectionPolicy::keep_alive}) {
+        for (auto status :
+             {hp::http::Status::ok, hp::http::Status::bad_request,
+              hp::http::Status::forbidden, hp::http::Status::not_found,
+              hp::http::Status::method_not_allowed,
+              hp::http::Status::internal_server_error}) {
+            const auto raw = bytes_to_string(
+                status == hp::http::Status::ok
+                    ? hp::http::make_response(status, body,
+                                              "application/octet-stream", false,
+                                              policy)
+                    : hp::http::make_error_response(status, policy));
             const auto boundary = raw.find("\r\n\r\n") + 4;
-            const auto connection = raw.find("Connection: "), length = raw.find("Content-Length: ");
-            expect(connection != std::string::npos && raw.find("Connection: ", connection+1) == std::string::npos,
+            const auto connection = raw.find("Connection: "),
+                       length = raw.find("Content-Length: ");
+            expect(connection != std::string::npos &&
+                       raw.find("Connection: ", connection + 1) ==
+                           std::string::npos,
                    "one Connection on every status");
-            expect(length != std::string::npos && raw.find("Content-Length: ", length+1) == std::string::npos &&
-                   std::stoull(raw.substr(length+16)) == raw.size()-boundary, "one exact length on every status");
-            expect(raw.find(policy == hp::http::ConnectionPolicy::close ? "Connection: close\r\n" : "Connection: keep-alive\r\n") != std::string::npos,
+            expect(length != std::string::npos &&
+                       raw.find("Content-Length: ", length + 1) ==
+                           std::string::npos &&
+                       std::stoull(raw.substr(length + 16)) ==
+                           raw.size() - boundary,
+                   "one exact length on every status");
+            expect(raw.find(policy == hp::http::ConnectionPolicy::close
+                                ? "Connection: close\r\n"
+                                : "Connection: keep-alive\r\n") !=
+                       std::string::npos,
                    "explicit policy serialized for all statuses");
-            if (status == hp::http::Status::method_not_allowed) expect(raw.find("Allow: GET\r\n") != std::string::npos, "405 policy preserves Allow");
+            if (status == hp::http::Status::method_not_allowed)
+                expect(raw.find("Allow: GET\r\n") != std::string::npos,
+                       "405 policy preserves Allow");
         }
     }
     expect(

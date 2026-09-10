@@ -14,7 +14,8 @@ SignalWatcher::SignalWatcher() {
     ::sigaddset(&signals, SIGTERM);
     const int result = ::pthread_sigmask(SIG_BLOCK, &signals, &previous_);
     if (result)
-        throw std::system_error(result, std::generic_category(), "block shutdown signals");
+        throw std::system_error(result, std::generic_category(),
+                                "block shutdown signals");
     fd_ = ::signalfd(-1, &signals, SFD_NONBLOCK | SFD_CLOEXEC);
     if (fd_ < 0) {
         const int error = errno;
@@ -39,8 +40,9 @@ int SignalWatcher::next() {
         if (count < 0 && errno == EAGAIN)
             return 0;
         if (count < 0)
-            throw std::system_error(errno, std::generic_category(), "read signalfd");
+            throw std::system_error(errno, std::generic_category(),
+                                    "read signalfd");
         throw std::runtime_error("short signalfd read");
     }
 }
-} // namespace hp::app
+}  // namespace hp::app

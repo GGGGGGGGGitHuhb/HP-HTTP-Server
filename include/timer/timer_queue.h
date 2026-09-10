@@ -10,6 +10,7 @@
 
 namespace hp::timer {
 struct TimerQueueTestAccess;
+
 class TimerQueue final : private base::NonCopyable {
 public:
     using Clock = std::chrono::steady_clock;
@@ -26,14 +27,17 @@ public:
     Id last_id() const;
     void run_due(TimePoint now, Id cutoff = UINT64_MAX);
     void clear() noexcept;
+
 private:
     friend struct TimerQueueTestAccess;
     static Id exchange_next_id_for_test(Id value);
     void require_owner() const;
+
     struct Record {
         TimePoint deadline;
         Task callback;
     };
+
     const std::thread::id owner_{std::this_thread::get_id()};
     std::map<Id, Record> records_;
     std::set<std::pair<TimePoint, Id>> ordered_;

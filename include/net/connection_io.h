@@ -36,12 +36,13 @@ struct ConnectionEventResult {
 };
 
 class ConnectionIo final : private base::NonCopyable {
-   public:
+public:
     static constexpr std::size_t output_limit = 9U * 1024U * 1024U;
     static constexpr std::size_t file_write_budget = 256U * 1024U;
     static constexpr std::size_t file_call_budget = 16;
     static bool output_fits(std::size_t pending, std::size_t incoming) noexcept;
-    explicit ConnectionIo(Socket socket, std::size_t max_input_bytes = 0) noexcept;
+    explicit ConnectionIo(Socket socket,
+                          std::size_t max_input_bytes = 0) noexcept;
     ConnectionIo(ConnectionIo&&) noexcept = default;
     ConnectionIo& operator=(ConnectionIo&&) noexcept = default;
 
@@ -61,7 +62,7 @@ class ConnectionIo final : private base::NonCopyable {
     [[nodiscard]] std::size_t pending_bytes() const noexcept;
     [[nodiscard]] bool ready_to_close() const noexcept;
 
-   private:
+private:
     friend struct ConnectionIoTestAccess;
     Socket socket_;
     std::size_t max_input_bytes_{0};

@@ -20,7 +20,8 @@ std::uint64_t allocate_token() {
         if (!token)
             throw std::overflow_error("Channel token exhausted");
     } while (!next_token.compare_exchange_weak(
-        token, token == std::numeric_limits<std::uint64_t>::max() ? 0 : token + 1,
+        token,
+        token == std::numeric_limits<std::uint64_t>::max() ? 0 : token + 1,
         std::memory_order_relaxed));
     return token;
 }
@@ -28,7 +29,7 @@ std::uint64_t allocate_token() {
 void syscall_error(const char* operation) {
     throw std::system_error(errno, std::generic_category(), operation);
 }
-} // namespace
+}  // namespace
 
 std::uint64_t EventLoop::exchange_next_token_for_test(std::uint64_t value) {
     return next_token.exchange(value);
@@ -48,8 +49,8 @@ EventLoop::EventLoop() {
     if (wake_fd_ < 0)
         syscall_error("eventfd");
     try {
-        wake_channel_ =
-            std::make_unique<Channel>(*this, wake_fd_, [this](std::uint32_t) { drain_wakeup(); });
+        wake_channel_ = std::make_unique<Channel>(
+            *this, wake_fd_, [this](std::uint32_t) { drain_wakeup(); });
         wake_channel_->set_interest(EPOLLIN);
         counters_ = {};
     } catch (...) {
@@ -92,7 +93,7 @@ void EventLoop::wake_locked() {
                 failure_ = std::current_exception();
             state_ = State::Failed;
         }
-        return; // Accepted task remains owned by loop; owner observes failure.
+        return;  // Accepted task remains owned by loop; owner observes failure.
     }
 }
 
@@ -120,8 +121,8 @@ bool EventLoop::enqueue(Task& task) {
     if (!task)
         throw std::invalid_argument("empty EventLoop task");
     std::lock_guard lock(mutex_);
-    if (state_ == State::Stopping || state_ == State::Stopped || state_ == State::Failed ||
-        outstanding_ == task_capacity)
+    if (state_ == State::Stopping || state_ == State::Stopped ||
+        state_ == State::Failed || outstanding_ == task_capacity)
         return false;
     tasks_.push_back(std::move(task));
     ++outstanding_;
@@ -132,7 +133,7 @@ bool EventLoop::enqueue(Task& task) {
 void EventLoop::release_task(Task& task) {
     if (!task)
         return;
-    task = {}; // User captures may reenter; count includes their destruction.
+    task = {};  // User captures may reenter; count includes their destruction.
     std::lock_guard lock(mutex_);
     --outstanding_;
 }
@@ -146,7 +147,8 @@ void EventLoop::release_tasks(std::deque<Task>& tasks) {
 void EventLoop::set_control_callback(ControlCallback callback) {
     require_owner();
     if (polling_)
-        throw std::logic_error("cannot replace control callback during dispatch");
+        throw std::logic_error(
+            "cannot replace control callback during dispatch");
     control_callback_ = std::move(callback);
 }
 
@@ -157,7 +159,8 @@ bool EventLoop::failed() const {
 
 void EventLoop::request_drain(Deadline deadline) {
     std::lock_guard lock(mutex_);
-    if (state_ == State::Stopped || state_ == State::Failed || control_ == Control::force)
+    if (state_ == State::Stopped || state_ == State::Failed ||
+        control_ == Control::force)
         return;
     if (control_ == Control::none || deadline < control_deadline_)
         control_deadline_ = deadline;
@@ -188,7 +191,8 @@ void EventLoop::dispatch_control() {
     Deadline deadline;
     {
         std::lock_guard lock(mutex_);
-        if (control_ == Control::drain && timer::TimerQueue::Clock::now() >= control_deadline_) {
+        if (control_ == Control::drain &&
+            timer::TimerQueue::Clock::now() >= control_deadline_) {
             control_ = Control::force;
             control_pending_ = true;
         }
@@ -204,7 +208,8 @@ void EventLoop::dispatch_control() {
 
 void EventLoop::request_stop() {
     std::lock_guard lock(mutex_);
-    if (state_ == State::Stopped || state_ == State::Failed || state_ == State::Stopping)
+    if (state_ == State::Stopped || state_ == State::Failed ||
+        state_ == State::Stopping)
         return;
     state_ = State::Stopping;
     wake_locked();
@@ -309,7 +314,8 @@ bool EventLoop::timers_allowed() {
     return state_ == State::Ready || state_ == State::Running;
 }
 
-EventLoop::TimerId EventLoop::add_timer(timer::TimerQueue::TimePoint deadline, Task task) {
+EventLoop::TimerId EventLoop::add_timer(timer::TimerQueue::TimePoint deadline,
+                                        Task task) {
     require_owner();
     if (!timers_allowed())
         throw std::logic_error("timer on stopping EventLoop");
@@ -331,7 +337,8 @@ EventLoop::TimerId EventLoop::add_timer(timer::TimerQueue::TimePoint deadline, T
     });
 }
 
-bool EventLoop::reschedule_timer(TimerId id, timer::TimerQueue::TimePoint deadline) {
+bool EventLoop::reschedule_timer(TimerId id,
+                                 timer::TimerQueue::TimePoint deadline) {
     require_owner();
     if (!timers_allowed())
         return false;
@@ -354,7 +361,8 @@ void EventLoop::poll_once(int timeout_ms) {
         throw std::logic_error("recursive EventLoop poll");
     {
         std::lock_guard lock(mutex_);
-        if (state_ == State::Stopped || (state_ == State::Failed && failure_observed_))
+        if (state_ == State::Stopped ||
+            (state_ == State::Failed && failure_observed_))
             return;
     }
     polling_ = true;
@@ -368,7 +376,8 @@ void EventLoop::poll_once(int timeout_ms) {
                 std::rethrow_exception(failure_);
             if (state_ == State::Stopped)
                 throw std::logic_error("EventLoop stopped");
-            if (!tasks_.empty() || state_ == State::Stopping || control_pending_)
+            if (!tasks_.empty() || state_ == State::Stopping ||
+                control_pending_)
                 timeout_ms = 0;
         }
         if (timeout_ms < 0 || timeout_ms > 1000)
@@ -378,7 +387,9 @@ void EventLoop::poll_once(int timeout_ms) {
             if (remaining <= timer::TimerQueue::Clock::duration::zero()) {
                 timeout_ms = 0;
             } else {
-                const auto millis = std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
+                const auto millis =
+                    std::chrono::ceil<std::chrono::milliseconds>(remaining)
+                        .count();
                 if (millis < timeout_ms)
                     timeout_ms = static_cast<int>(millis);
             }
@@ -386,9 +397,13 @@ void EventLoop::poll_once(int timeout_ms) {
         {
             std::lock_guard lock(mutex_);
             if (control_ == Control::drain) {
-                const auto remaining = control_deadline_ - timer::TimerQueue::Clock::now();
-                const auto millis = std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
-                timeout_ms = static_cast<int>(std::max<std::int64_t>(0, std::min<std::int64_t>(timeout_ms, millis)));
+                const auto remaining =
+                    control_deadline_ - timer::TimerQueue::Clock::now();
+                const auto millis =
+                    std::chrono::ceil<std::chrono::milliseconds>(remaining)
+                        .count();
+                timeout_ms = static_cast<int>(std::max<std::int64_t>(
+                    0, std::min<std::int64_t>(timeout_ms, millis)));
             }
         }
         const auto events = epoller_.wait(timeout_ms);
@@ -463,4 +478,4 @@ void EventLoop::loop() {
         }
     }
 }
-} // namespace hp::net
+}  // namespace hp::net

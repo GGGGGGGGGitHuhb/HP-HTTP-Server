@@ -16,12 +16,13 @@ Socket Acceptor::create_listener(std::uint16_t port) {
     return listener;
 }
 
-Acceptor::Acceptor(EventLoop& loop, std::uint16_t port, AcceptedCallback callback)
-    : listener_(create_listener(port)), callback_(std::move(callback)),
+Acceptor::Acceptor(EventLoop& loop, std::uint16_t port,
+                   AcceptedCallback callback)
+    : listener_(create_listener(port)),
+      callback_(std::move(callback)),
       bound_port_(listener_.local_port()),
-      channel_(loop, listener_.fd(), [this](std::uint32_t mask) {
-          handle_event(mask);
-      }) {
+      channel_(loop, listener_.fd(),
+               [this](std::uint32_t mask) { handle_event(mask); }) {
     if (!callback_)
         throw std::invalid_argument("missing accepted callback");
 }
@@ -48,7 +49,8 @@ void Acceptor::handle_event(std::uint32_t mask) {
         accept_ready();
     if (mask & (EPOLLERR | EPOLLHUP)) {
         const int error = listener_.socket_error();
-        throw std::system_error(error == 0 ? EIO : error, std::generic_category(),
+        throw std::system_error(error == 0 ? EIO : error,
+                                std::generic_category(),
                                 "listener epoll event");
     }
 }

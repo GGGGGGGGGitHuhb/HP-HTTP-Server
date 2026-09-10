@@ -33,21 +33,35 @@ enum class ParserState { request_line, headers, complete, error };
 
 struct FeedResult {
     ParseStatus status{ParseStatus::need_more};
-    HttpRequest request; // Independent value; safe after reset or caller input release.
-    std::size_t accepted_bytes{0}; // Bytes accepted from this feed only.
-    std::size_t request_bytes{0};  // Cumulative, including the offending byte on error.
+    HttpRequest
+        request;  // Independent value; safe after reset or caller input release.
+    std::size_t accepted_bytes{0};  // Bytes accepted from this feed only.
+    std::size_t request_bytes{
+        0};  // Cumulative, including the offending byte on error.
 };
 
 class RequestParser final {
 public:
     [[nodiscard]] FeedResult feed(std::string_view new_bytes);
     void reset() noexcept;
+
     [[nodiscard]] ParserState state() const noexcept { return state_; }
+
     // Explicit byte visits in framing and completed-line validation loops.
-    [[nodiscard]] std::size_t scan_steps() const noexcept { return scan_steps_; }
-    [[nodiscard]] std::size_t buffered_bytes() const noexcept { return line_start_ + line_size_; }
-    [[nodiscard]] std::size_t peak_buffered_bytes() const noexcept { return peak_buffered_; }
+    [[nodiscard]] std::size_t scan_steps() const noexcept {
+        return scan_steps_;
+    }
+
+    [[nodiscard]] std::size_t buffered_bytes() const noexcept {
+        return line_start_ + line_size_;
+    }
+
+    [[nodiscard]] std::size_t peak_buffered_bytes() const noexcept {
+        return peak_buffered_;
+    }
+
     [[nodiscard]] bool pending_cr() const noexcept { return pending_cr_; }
+
 private:
     bool validate_request_line();
     bool validate_header();

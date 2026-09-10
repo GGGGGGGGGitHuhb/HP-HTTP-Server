@@ -74,6 +74,34 @@ S3 基线：
 
 当前工作环境已核对：CMake / CTest `3.28.3`、GCC `13.3.0`、Clang `18.1.3`、Ninja `1.11.1`、curl `8.5.0`。wrk、perf 属于后续阶段，不是 S3 工具或完成条件。
 
+## C++ 格式化与提交检查
+
+使用 Python 3 和固定版本 `clang-format 18.1.3`（优先查找 `clang-format-18`）。
+在每个新克隆的仓库中启用一次提交钩子：
+
+```bash
+chmod +x .githooks/pre-commit
+git config --local core.hooksPath .githooks
+```
+
+日常手动格式化与只读检查：
+
+```bash
+python3 scripts/format_cpp.py
+python3 scripts/format_cpp.py --check
+```
+
+钩子回归测试：`python3 scripts/test_format_hook.py`，只在临时仓库中创建测试提交。
+
+每次 `git commit` 前，钩子格式化所有 Git 跟踪的 `.cpp`、`.h`、`.cc`、`.hpp`、`.cxx`、`.hxx` 文件，
+排除 `build`、`build-*`、`.cache`、`third_party`、`vendor` 和 `generated` 目录。
+新文件先暂存才会纳入检查。格式化产生改动时中止提交，请查看差异、按需重新暂存后再次提交；钩子不会自动暂存。
+相关文件存在部分暂存、格式配置尚未暂存、合并冲突、工具缺失或版本不匹配时，先拒绝操作。
+提交前还会检查暂存区内容，避免工作区已格式化而提交的仍是旧内容。
+
+格式配置以 Google 为基础，保留项目四空格缩进，明确函数边界和访问标签间距。
+接口职责分组和函数内部逻辑分段仍须人工复核。本地钩子可以被绕过，不能替代服务端 CI 检查。
+
 ## 快速开始
 
 Shell：Bash

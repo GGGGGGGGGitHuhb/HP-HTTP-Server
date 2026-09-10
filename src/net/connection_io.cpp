@@ -17,7 +17,8 @@ struct FileWrite {
     int error;
 };
 
-FileWrite send_file(int socket, int file, off_t* offset, std::size_t length) noexcept {
+FileWrite send_file(int socket, int file, off_t* offset,
+                    std::size_t length) noexcept {
     sigset_t pipe, previous, pending;
     ::sigemptyset(&pipe);
     ::sigaddset(&pipe, SIGPIPE);
@@ -46,7 +47,7 @@ FileWrite send_file(int socket, int file, off_t* offset, std::size_t length) noe
         error = restored;
     return {count, error};
 }
-} // namespace
+}  // namespace
 
 ConnectionIo::ConnectionIo(Socket socket, std::size_t max_input_bytes) noexcept
     : socket_(std::move(socket)), max_input_bytes_(max_input_bytes) {
@@ -67,7 +68,8 @@ std::span<const std::byte> ConnectionIo::input_view() const noexcept {
 void ConnectionIo::consume(std::size_t count) {
     if (count > input_.size())
         throw std::out_of_range("input consumption exceeds buffered bytes");
-    input_.erase(input_.begin(), input_.begin() + static_cast<std::ptrdiff_t>(count));
+    input_.erase(input_.begin(),
+                 input_.begin() + static_cast<std::ptrdiff_t>(count));
 }
 
 ReadResult ConnectionIo::read_once() {
@@ -130,7 +132,8 @@ WriteResult ConnectionIo::write_available() {
             return result;
         const auto* data = output_.data() + write_offset_;
         const std::size_t remaining = output_.size() - write_offset_;
-        const ssize_t count = ::send(socket_.fd(), data, remaining, MSG_NOSIGNAL);
+        const ssize_t count =
+            ::send(socket_.fd(), data, remaining, MSG_NOSIGNAL);
         if (count > 0) {
             const auto byte_count = static_cast<std::size_t>(count);
             write_offset_ += byte_count;
@@ -159,7 +162,8 @@ WriteResult ConnectionIo::write_available() {
         if (calls++ >= file_call_budget || progress == file_write_budget)
             return result;
         off_t offset = file_->offset();
-        const auto count = std::min(file_->remaining(), file_write_budget - progress);
+        const auto count =
+            std::min(file_->remaining(), file_write_budget - progress);
         const auto written = send_file(fd(), file_->fd(), &offset, count);
         if (written.count > 0) {
             const auto bytes = static_cast<std::size_t>(written.count);
@@ -182,7 +186,8 @@ WriteResult ConnectionIo::write_available() {
     return result;
 }
 
-bool ConnectionIo::output_fits(std::size_t pending, std::size_t incoming) noexcept {
+bool ConnectionIo::output_fits(std::size_t pending,
+                               std::size_t incoming) noexcept {
     return pending <= output_limit && incoming <= output_limit - pending;
 }
 
@@ -192,17 +197,21 @@ void ConnectionIo::queue_output(std::span<const std::byte> bytes) {
     if (!output_fits(pending_bytes(), bytes.size()))
         throw std::length_error("connection output limit exceeded");
     if (write_offset_) {
-        output_.erase(output_.begin(), output_.begin() + static_cast<std::ptrdiff_t>(write_offset_));
+        output_.erase(
+            output_.begin(),
+            output_.begin() + static_cast<std::ptrdiff_t>(write_offset_));
         write_offset_ = 0;
     }
     // A reserve chosen explicitly avoids an implementation-dependent growth factor.
     const auto required = output_.size() + bytes.size();
     if (required > output_.capacity())
-        output_.reserve(std::min(output_limit, std::max(required, output_.capacity() * 2)));
+        output_.reserve(
+            std::min(output_limit, std::max(required, output_.capacity() * 2)));
     output_.insert(output_.end(), bytes.begin(), bytes.end());
 }
 
-void ConnectionIo::queue_file(std::span<const std::byte> header, base::FileRegion file) {
+void ConnectionIo::queue_file(std::span<const std::byte> header,
+                              base::FileRegion file) {
     if (file.fd() < 0)
         throw std::invalid_argument("submission of moved file region");
     if (has_pending_output() || file_)
@@ -242,4 +251,4 @@ bool ConnectionIo::ready_to_close() const noexcept {
     return peer_half_closed_ && !has_pending_output();
 }
 
-} // namespace hp::net
+}  // namespace hp::net

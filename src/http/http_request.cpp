@@ -6,7 +6,8 @@ namespace hp::http {
 namespace {
 bool token_character(unsigned char c) {
     constexpr std::string_view punctuation = "!#$%&'*+-.^_`|~";
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+           (c >= '0' && c <= '9') ||
            punctuation.find(static_cast<char>(c)) != std::string_view::npos;
 }
 }
@@ -79,23 +80,28 @@ bool RequestParser::validate_header() {
         if (c != ' ' && c != '\t')
             nonempty_value = true;
     }
-    const auto equal_ascii = [&](std::string_view value, std::string_view expected) {
+    const auto equal_ascii = [&](std::string_view value,
+                                 std::string_view expected) {
         if (value.size() != expected.size())
             return false;
         for (std::size_t i = 0; i < value.size(); ++i) {
             ++scan_steps_;
-            const char c = value[i] >= 'A' && value[i] <= 'Z' ? value[i] + ('a' - 'A') : value[i];
+            const char c = value[i] >= 'A' && value[i] <= 'Z'
+                               ? value[i] + ('a' - 'A')
+                               : value[i];
             if (c != expected[i])
                 return false;
         }
         return true;
     };
     const auto trim = [&](std::string_view value) {
-        while (!value.empty() && (value.front() == ' ' || value.front() == '\t')) {
+        while (!value.empty() &&
+               (value.front() == ' ' || value.front() == '\t')) {
             ++scan_steps_;
             value.remove_prefix(1);
         }
-        while (!value.empty() && (value.back() == ' ' || value.back() == '\t')) {
+        while (!value.empty() &&
+               (value.back() == ' ' || value.back() == '\t')) {
             ++scan_steps_;
             value.remove_suffix(1);
         }
@@ -117,7 +123,8 @@ bool RequestParser::validate_header() {
             if (c != '0')
                 return false;
         }
-    } else if (equal_ascii(name, "transfer-encoding") || equal_ascii(name, "expect")) {
+    } else if (equal_ascii(name, "transfer-encoding") ||
+               equal_ascii(name, "expect")) {
         return false;
     } else if (equal_ascii(name, "connection")) {
         std::size_t start = 0;
@@ -154,7 +161,8 @@ void RequestParser::finish_line() {
         }
         state_ = ParserState::complete;
         const std::string_view method(storage_.data(), method_size_);
-        status_ = method == "GET" ? ParseStatus::complete : ParseStatus::method_not_allowed;
+        status_ = method == "GET" ? ParseStatus::complete
+                                  : ParseStatus::method_not_allowed;
     } else if (!validate_header()) {
         state_ = ParserState::error;
     }
@@ -166,7 +174,8 @@ FeedResult RequestParser::result(std::size_t accepted) const {
     if (state_ == ParserState::complete) {
         result.request.close_requested = close_requested_;
         result.request.method.assign(storage_.data(), method_size_);
-        result.request.target.assign(storage_.data() + target_start_, target_size_);
+        result.request.target.assign(storage_.data() + target_start_,
+                                     target_size_);
     }
     return result;
 }
@@ -189,13 +198,15 @@ FeedResult RequestParser::feed(std::string_view bytes) {
             pending_cr_ = true;
         } else if (c == '\n' || c == '\0') {
             state_ = ParserState::error;
-        } else if (state_ == ParserState::request_line && line_size_ == max_request_line_bytes) {
+        } else if (state_ == ParserState::request_line &&
+                   line_size_ == max_request_line_bytes) {
             state_ = ParserState::error;
         } else {
             storage_[line_start_ + line_size_++] = c;
             peak_buffered_ = std::max(peak_buffered_, buffered_bytes());
         }
-        if (request_bytes_ == max_request_bytes && state_ != ParserState::complete)
+        if (request_bytes_ == max_request_bytes &&
+            state_ != ParserState::complete)
             state_ = ParserState::error;
         if (state_ == ParserState::error)
             status_ = ParseStatus::bad_request;

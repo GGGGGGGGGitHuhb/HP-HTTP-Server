@@ -68,8 +68,7 @@ void test_binary_read_echo_and_half_close() {
         expect(false, "binary payload must fit controlled socketpair");
         break;
     }
-    expect(::shutdown(fds[1], SHUT_WR) == 0,
-           "peer write half must shut down");
+    expect(::shutdown(fds[1], SHUT_WR) == 0, "peer write half must shut down");
 
     const hp::net::ReadResult read = connection.read_available();
     expect(read.bytes_read == payload.size(),
@@ -136,9 +135,8 @@ void test_short_write_and_eagain_resume() {
     std::vector<std::byte> received;
     received.reserve(payload.size());
     std::vector<std::byte> chunk(64 * 1024);
-    for (int attempt = 0;
-         attempt < 20000 &&
-         (connection.has_pending_output() || received.size() < payload.size());
+    for (int attempt = 0; attempt < 20000 && (connection.has_pending_output() ||
+                                              received.size() < payload.size());
          ++attempt) {
         while (true) {
             const ssize_t count = ::recv(fds[1], chunk.data(), chunk.size(), 0);
@@ -174,6 +172,7 @@ extern "C" void count_signal(int) {
 
 void install_signal_handler(struct sigaction& old_action) {
     struct sigaction action {};
+
     action.sa_handler = count_signal;
     ::sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
@@ -190,6 +189,7 @@ void test_read_retries_eintr() {
     }
 
     struct sigaction old_action {};
+
     install_signal_handler(old_action);
     const pid_t child = ::fork();
     expect(child >= 0, "read EINTR child must fork");
@@ -243,8 +243,8 @@ void test_write_retries_eintr() {
     std::vector<std::byte> filler(16 * 1024, std::byte{0x5a});
     std::size_t prefilled = 0;
     while (true) {
-        const ssize_t count = ::send(fds[0], filler.data(), filler.size(),
-                                     MSG_NOSIGNAL);
+        const ssize_t count =
+            ::send(fds[0], filler.data(), filler.size(), MSG_NOSIGNAL);
         if (count > 0) {
             prefilled += static_cast<std::size_t>(count);
             continue;
@@ -261,6 +261,7 @@ void test_write_retries_eintr() {
            "sender must return to blocking mode");
 
     struct sigaction old_action {};
+
     install_signal_handler(old_action);
     signal_count = 0;
     const auto payload = make_payload(512 * 1024 + 23);
@@ -275,7 +276,8 @@ void test_write_retries_eintr() {
         std::size_t total = 0;
         const std::size_t expected = prefilled + payload.size();
         while (total < expected) {
-            const ssize_t count = ::recv(fds[1], buffer.data(), buffer.size(), 0);
+            const ssize_t count =
+                ::recv(fds[1], buffer.data(), buffer.size(), 0);
             if (count > 0) {
                 total += static_cast<std::size_t>(count);
                 continue;
@@ -381,9 +383,8 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
     const auto payload = make_payload(1024 + 29);
     std::size_t sent = 0;
     while (sent < payload.size()) {
-        const ssize_t count =
-            ::send(client, payload.data() + sent, payload.size() - sent,
-                   MSG_NOSIGNAL);
+        const ssize_t count = ::send(client, payload.data() + sent,
+                                     payload.size() - sent, MSG_NOSIGNAL);
         if (count > 0) {
             sent += static_cast<std::size_t>(count);
             continue;
@@ -412,8 +413,9 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
     expect(peeked_bytes == static_cast<ssize_t>(payload.size()),
            "RST combination payload must be fully queued before reset");
     if (peeked_bytes == static_cast<ssize_t>(payload.size())) {
-        expect(std::equal(peeked.begin(), peeked.end(), payload.begin()),
-               "MSG_PEEK must observe the exact queued payload without consuming it");
+        expect(
+            std::equal(peeked.begin(), peeked.end(), payload.begin()),
+            "MSG_PEEK must observe the exact queued payload without consuming it");
     }
 
     // ERR/HUP are reported regardless of the requested interest. Suppress the
@@ -460,7 +462,8 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
            "real reset event must contain EPOLLERR");
 
     hp::net::EventLoop loop;
-    hp::net::TcpConnection connection(loop, std::move(accepted), 1, {}, 0, [](int, auto) {});
+    hp::net::TcpConnection connection(loop, std::move(accepted), 1, {}, 0,
+                                      [](int, auto) {});
     connection.start();
     const hp::net::ConnectionEventResult result =
         hp::net::TcpConnectionTestAccess::event(connection, observed_events);
@@ -468,8 +471,9 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
            "production event path must query SO_ERROR for EPOLLERR");
     expect(result.socket_error == ECONNRESET,
            "SO_ERROR must preserve the real ECONNRESET diagnosis");
-    expect(result.bytes_read == payload.size(),
-           "production event path must consume every same-batch byte before close");
+    expect(
+        result.bytes_read == payload.size(),
+        "production event path must consume every same-batch byte before close");
     expect(result.close_requested,
            "ERR/HUP production event path must request connection close");
     expect(connection.pending_bytes() + result.bytes_written == payload.size(),

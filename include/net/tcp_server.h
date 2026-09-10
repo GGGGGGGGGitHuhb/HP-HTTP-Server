@@ -6,11 +6,15 @@
 
 namespace hp::net {
 struct TcpServerTestAccess;
+
 class TcpServer final : private base::NonCopyable {
 public:
-    using MessageCallbackFactory = std::function<TcpConnection::MessageCallback()>;
-    explicit TcpServer(std::uint16_t requested_port, MessageCallbackFactory factory = {},
-                       std::size_t max_input_bytes = 0, std::size_t worker_count = 0,
+    using MessageCallbackFactory =
+        std::function<TcpConnection::MessageCallback()>;
+    explicit TcpServer(std::uint16_t requested_port,
+                       MessageCallbackFactory factory = {},
+                       std::size_t max_input_bytes = 0,
+                       std::size_t worker_count = 0,
                        ConnectionTimeouts timeouts = {});
     ~TcpServer() noexcept;
     [[nodiscard]] std::uint16_t bound_port() const noexcept;
@@ -21,6 +25,7 @@ public:
     void force_shutdown();
     // Owner-only attachment; server removes this Channel before destroying its loop.
     void watch_control_fd(int fd, Channel::Callback callback);
+
 private:
     friend struct GracefulShutdownTestAccess;
     friend struct SendfileTestAccess;

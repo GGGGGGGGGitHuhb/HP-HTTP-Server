@@ -13,14 +13,17 @@
 namespace hp::net {
 class Channel;
 struct EventLoopTestAccess;
+
 // Owner-thread registry; task/stop/control requests are synchronized cross-thread entry points.
 class EventLoop final : private base::NonCopyable {
-  public:
+public:
     static constexpr std::size_t task_capacity = 1024;
     using Task = std::function<void()>;
+
     struct Counters {
         std::size_t adds{}, mods{}, removes{}, dispatches{}, stale{};
     };
+
     EventLoop();
     ~EventLoop() noexcept;
     void loop();
@@ -44,12 +47,13 @@ class EventLoop final : private base::NonCopyable {
     void update_channel(Channel& channel, std::uint32_t interest);
     void remove_channel(Channel& channel) noexcept;
     void set_after_dispatch(std::function<void()> cleanup);
+
     [[nodiscard]] const Counters& counters() const noexcept {
         assert(is_in_loop_thread());
         return counters_;
     }
 
-  private:
+private:
     friend struct ConnectionTimeoutTestAccess;
     friend struct EventLoopTestAccess;
     friend struct ResourceLimitsTestAccess;
@@ -87,4 +91,4 @@ class EventLoop final : private base::NonCopyable {
     State state_{State::Ready};
     std::exception_ptr failure_;
 };
-} // namespace hp::net
+}  // namespace hp::net

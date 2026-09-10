@@ -25,19 +25,20 @@ struct EventLoopTestAccess {
         EventLoop::exchange_next_token_for_test(v);
     }
 };
-} // namespace hp::net
+}  // namespace hp::net
 
 namespace {
 std::atomic<int> create_error{}, register_error{}, read_fault{}, write_fault{};
-std::atomic<int> reads{}, writes{}, read_eintr{}, write_eintr{}, read_eagain{}, write_eagain{},
-    waits{};
+std::atomic<int> reads{}, writes{}, read_eintr{}, write_eintr{}, read_eagain{},
+    write_eagain{}, waits{};
 
 void check(bool ok, const char* message) {
     if (!ok)
         throw std::runtime_error(message);
 }
 
-template <class F> void throws(F f) {
+template <class F>
+void throws(F f) {
     bool caught = false;
     try {
         f();
@@ -47,7 +48,8 @@ template <class F> void throws(F f) {
     check(caught, "expected exception");
 }
 
-template <class F> void until(F f) {
+template <class F>
+void until(F f) {
     auto deadline = std::chrono::steady_clock::now() + 3s;
     while (!f()) {
         check(std::chrono::steady_clock::now() < deadline, "deadline");
@@ -65,9 +67,10 @@ void blocked(pid_t tid) {
 }
 
 std::size_t count(const char* path) {
-    return static_cast<std::size_t>(std::distance(std::filesystem::directory_iterator(path), {}));
+    return static_cast<std::size_t>(
+        std::distance(std::filesystem::directory_iterator(path), {}));
 }
-} // namespace
+}  // namespace
 
 extern "C" {
 int __real_eventfd(unsigned int, int);
@@ -191,7 +194,8 @@ void owner_and_ready() {
     check(n == 1, "prestop drains");
     loop.poll_once(0);
     throws([&] { loop.loop(); });
-    std::cout << "owner_ready: rejected=" << rejected << " executed=" << n << '\n';
+    std::cout << "owner_ready: rejected=" << rejected << " executed=" << n
+              << '\n';
 }
 
 void producers() {
@@ -207,14 +211,16 @@ void producers() {
         producers.emplace_back([&, p] {
             gate.arrive_and_wait();
             for (int i = 0; i < 1000; ++i) {
-                const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+                const auto deadline =
+                    std::chrono::steady_clock::now() + std::chrono::seconds(3);
                 while (!worker.post([&, p, i](EventLoop& loop) {
                     check(loop.is_in_loop_thread(), "owner execution");
                     check(next[p]++ == i, "producer order");
                     ++seen[p * 1000 + i];
                     ++executed;
                 })) {
-                    check(std::chrono::steady_clock::now() < deadline, "bounded task retry deadline");
+                    check(std::chrono::steady_clock::now() < deadline,
+                          "bounded task retry deadline");
                     std::this_thread::yield();
                 }
                 ++accepted;
@@ -235,10 +241,12 @@ void producers() {
         });
         --depth;
     });
-    check(nested.get_future().wait_for(3s) == std::future_status::ready, "nested deadline");
+    check(nested.get_future().wait_for(3s) == std::future_status::ready,
+          "nested deadline");
     worker.request_stop();
     worker.join();
-    check(accepted == 4000 && executed == accepted && max_depth == 1, "task accounting/depth");
+    check(accepted == 4000 && executed == accepted && max_depth == 1,
+          "task accounting/depth");
     for (auto n : seen)
         check(n == 1, "unique execution");
     std::cout << "producers: accepted=" << accepted << " executed=" << executed
@@ -248,7 +256,8 @@ void producers() {
 void wake() {
     EventLoopThread worker;
     pid_t tid{};
-    worker.start([&](EventLoop&) { tid = static_cast<pid_t>(::syscall(SYS_gettid)); });
+    worker.start(
+        [&](EventLoop&) { tid = static_cast<pid_t>(::syscall(SYS_gettid)); });
     blocked(tid);
     auto before = waits.load();
     auto start = std::chrono::steady_clock::now();
@@ -256,25 +265,30 @@ void wake() {
     write_fault = 1;
     read_fault = 1;
     worker.post([&](EventLoop&) { done.set_value(); });
-    check(done.get_future().wait_for(500ms) == std::future_status::ready, "eventfd post wake");
+    check(done.get_future().wait_for(500ms) == std::future_status::ready,
+          "eventfd post wake");
     blocked(tid);
     write_fault = 2;
     read_fault = 2;
     std::promise<void> again;
     worker.post([&](EventLoop&) { again.set_value(); });
-    check(again.get_future().wait_for(500ms) == std::future_status::ready, "EAGAIN wake");
+    check(again.get_future().wait_for(500ms) == std::future_status::ready,
+          "EAGAIN wake");
     blocked(tid);
     worker.request_stop();
     worker.join();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                        std::chrono::steady_clock::now() - start)
                        .count();
-    check(elapsed < 500 && waits - before < 10, "healthy wake before fallback/no spin");
-    check(read_eintr && write_eintr && read_eagain && write_eagain, "fault coverage");
+    check(elapsed < 500 && waits - before < 10,
+          "healthy wake before fallback/no spin");
+    check(read_eintr && write_eintr && read_eagain && write_eagain,
+          "fault coverage");
     std::cout << "wake: real_epoll_wait_handshake=3 elapsed_ms=" << elapsed
-              << " waits=" << waits - before << " reads=" << reads << " writes=" << writes
-              << " EINTR=" << read_eintr << '/' << write_eintr << " EAGAIN=" << read_eagain << '/'
-              << write_eagain << '\n';
+              << " waits=" << waits - before << " reads=" << reads
+              << " writes=" << writes << " EINTR=" << read_eintr << '/'
+              << write_eintr << " EAGAIN=" << read_eagain << '/' << write_eagain
+              << '\n';
 }
 
 void stop_race() {
@@ -301,7 +315,8 @@ void stop_race() {
         t.join();
     worker.join();
     worker.join();
-    check(accepted == executed && accepted + rejected == 4000, "stop accounting");
+    check(accepted == executed && accepted + rejected == 4000,
+          "stop accounting");
     check(!worker.post([](EventLoop&) {}), "after join rejects");
     throws([&] { worker.start(); });
     std::cout << "stop_race: accepted=" << accepted << " executed=" << executed
@@ -321,8 +336,9 @@ void lifecycle() {
     }
     until([&] { return count("/proc/self/task") == threads; });
     check(count("/proc/self/fd") == fds && cleanup == 100, "resource baseline");
-    std::cout << "lifecycle: cycles=" << cleanup << " fd=" << fds << '/' << count("/proc/self/fd")
-              << " threads=" << threads << '/' << count("/proc/self/task") << '\n';
+    std::cout << "lifecycle: cycles=" << cleanup << " fd=" << fds << '/'
+              << count("/proc/self/fd") << " threads=" << threads << '/'
+              << count("/proc/self/task") << '\n';
 }
 
 void failures() {
@@ -335,7 +351,8 @@ void failures() {
         init_fail.start(
             [&](EventLoop& loop) {
                 partial_fd = ::eventfd(0, EFD_NONBLOCK);
-                partial_channel = std::make_unique<Channel>(loop, partial_fd, [](std::uint32_t) {});
+                partial_channel = std::make_unique<Channel>(
+                    loop, partial_fd, [](std::uint32_t) {});
                 partial_channel->set_interest(EPOLLIN);
                 throw std::runtime_error("init");
             },
@@ -348,7 +365,8 @@ void failures() {
             });
     });
     init_fail.join();
-    check(cleanup == 1 && count("/proc/self/fd") == before_fds, "partial init cleanup once");
+    check(cleanup == 1 && count("/proc/self/fd") == before_fds,
+          "partial init cleanup once");
     EventLoopThread worker;
     std::promise<void> entered, release;
     auto gate = release.get_future().share();
@@ -374,14 +392,16 @@ void failures() {
         gate.wait();
         throw std::runtime_error("task");
     });
-    check(entered.get_future().wait_for(3s) == std::future_status::ready, "task entered");
+    check(entered.get_future().wait_for(3s) == std::future_status::ready,
+          "task entered");
     auto capture = std::shared_ptr<Capture>(new Capture{cancelled, owner});
     worker.post([capture](EventLoop&) {});
     capture.reset();
     release.set_value();
     throws([&] { worker.join(); });
     worker.join();
-    check(executed == 1 && cancelled == 1 && cleanup == 2, "failure cancellation accounting");
+    check(executed == 1 && cancelled == 1 && cleanup == 2,
+          "failure cancellation accounting");
     EventLoopThread self;
     self.start();
     self.post([&](EventLoop& loop) {
@@ -390,18 +410,20 @@ void failures() {
     });
     self.join();
     EventLoopThread bad_cleanup;
-    bad_cleanup.start({}, [](EventLoop&) { throw std::runtime_error("cleanup"); });
+    bad_cleanup.start({},
+                      [](EventLoop&) { throw std::runtime_error("cleanup"); });
     bad_cleanup.request_stop();
     throws([&] { bad_cleanup.join(); });
     {
         EventLoopThread unobserved;
         unobserved.start([](EventLoop& loop) {
-            loop.queue_in_loop(
-                [] { throw std::runtime_error("expected unobserved worker failure"); });
+            loop.queue_in_loop([] {
+                throw std::runtime_error("expected unobserved worker failure");
+            });
         });
     }
-    std::cout << "failures: accepted=2 executed=" << executed << " cancelled=" << cancelled
-              << " cleanup=" << cleanup << '\n';
+    std::cout << "failures: accepted=2 executed=" << executed
+              << " cancelled=" << cancelled << " cleanup=" << cleanup << '\n';
 }
 
 void start_stop() {
@@ -416,7 +438,8 @@ void start_stop() {
         });
         returned = true;
     });
-    check(init.get_future().wait_for(3s) == std::future_status::ready, "init handshake");
+    check(init.get_future().wait_for(3s) == std::future_status::ready,
+          "init handshake");
     check(!returned, "start waits for init");
     worker.request_stop();
     release.set_value();
@@ -442,20 +465,25 @@ void syscall_failures() {
         for (bool write : {false, true}) {
             EventLoopThread worker;
             pid_t tid{};
-            worker.start([&](EventLoop&) { tid = static_cast<pid_t>(::syscall(SYS_gettid)); });
+            worker.start([&](EventLoop&) {
+                tid = static_cast<pid_t>(::syscall(SYS_gettid));
+            });
             blocked(tid);
             if (write)
                 write_fault = fault;
             else
                 read_fault = fault;
             auto start = std::chrono::steady_clock::now();
-            check(worker.post([](EventLoop&) {}), "wake failure still accepted");
+            check(worker.post([](EventLoop&) {}),
+                  "wake failure still accepted");
             throws([&] { worker.join(); });
-            check(std::chrono::steady_clock::now() - start < 2s, "broken wake bounded");
+            check(std::chrono::steady_clock::now() - start < 2s,
+                  "broken wake bounded");
         }
     }
     check(count("/proc/self/fd") == fds, "failure rollback fd");
-    std::cout << "syscall_failures: create=1 register=1 permanent=2 short=2 rollback=verified\n";
+    std::cout
+        << "syscall_failures: create=1 register=1 permanent=2 short=2 rollback=verified\n";
 }
 
 void io_failure_and_fairness() {
@@ -476,15 +504,16 @@ void io_failure_and_fairness() {
     worker.start(
         [&](EventLoop& loop) {
             fd = ::eventfd(1, EFD_NONBLOCK);
-            channel = std::make_unique<Channel>(
-                loop, fd, [](std::uint32_t) { throw std::runtime_error("IO"); });
+            channel = std::make_unique<Channel>(loop, fd, [](std::uint32_t) {
+                throw std::runtime_error("IO");
+            });
             channel->set_interest(EPOLLIN);
             loop.set_after_dispatch([&] {
                 channel->remove();
                 ++dispatch_cleanup;
             });
-            auto capture =
-                std::shared_ptr<Capture>(new Capture{cancelled, std::this_thread::get_id()});
+            auto capture = std::shared_ptr<Capture>(
+                new Capture{cancelled, std::this_thread::get_id()});
             loop.queue_in_loop([capture] {});
         },
         [&](EventLoop&) {
@@ -495,7 +524,8 @@ void io_failure_and_fairness() {
         });
     // Successful init is distinct from a subsequent immediate IO failure.
     throws([&] { worker.join(); });
-    check(dispatch_cleanup == 1 && cleanup == 1 && cancelled == 1, "IO exceptional cleanup");
+    check(dispatch_cleanup == 1 && cleanup == 1 && cancelled == 1,
+          "IO exceptional cleanup");
     EventLoop loop;
     fd = ::eventfd(1, EFD_NONBLOCK);
     int io = 0, tasks = 0;
@@ -514,9 +544,10 @@ void io_failure_and_fairness() {
     check(tasks == 5 && io == 5, "IO advances with nested tasks");
     readable.remove();
     ::close(fd);
-    std::cout << "io_failure: task_accepted=1 executed=0 cancelled=" << cancelled
-              << " after_dispatch=" << dispatch_cleanup << " cleanup=" << cleanup
-              << " fairness_io=" << io << " tasks=" << tasks << '\n';
+    std::cout << "io_failure: task_accepted=1 executed=0 cancelled="
+              << cancelled << " after_dispatch=" << dispatch_cleanup
+              << " cleanup=" << cleanup << " fairness_io=" << io
+              << " tasks=" << tasks << '\n';
 }
 
 void snapshot_cancellation() {
@@ -536,18 +567,19 @@ void snapshot_cancellation() {
     worker.start([&](EventLoop& loop) {
         loop.queue_in_loop([&] {
             ++executed;
-            auto nested =
-                std::shared_ptr<Capture>(new Capture{cancelled, std::this_thread::get_id()});
+            auto nested = std::shared_ptr<Capture>(
+                new Capture{cancelled, std::this_thread::get_id()});
             loop.queue_in_loop([nested] {});
             throw std::runtime_error("snapshot");
         });
-        auto capture = std::shared_ptr<Capture>(new Capture{cancelled, std::this_thread::get_id()});
+        auto capture = std::shared_ptr<Capture>(
+            new Capture{cancelled, std::this_thread::get_id()});
         loop.queue_in_loop([capture] {});
     });
     throws([&] { worker.join(); });
     check(executed == 1 && cancelled == 2, "snapshot and pending cancelled");
-    std::cout << "snapshot_failure: accepted=3 executed=" << executed << " cancelled=" << cancelled
-              << '\n';
+    std::cout << "snapshot_failure: accepted=3 executed=" << executed
+              << " cancelled=" << cancelled << '\n';
 }
 
 void owner_assertions() {
@@ -559,7 +591,8 @@ void owner_assertions() {
             ::setrlimit(RLIMIT_CORE, &limit);
             auto loop = std::make_unique<EventLoop>();
             int fd = ::eventfd(0, EFD_NONBLOCK);
-            auto channel = std::make_unique<Channel>(*loop, fd, [](std::uint32_t) {});
+            auto channel =
+                std::make_unique<Channel>(*loop, fd, [](std::uint32_t) {});
             std::thread wrong([&] {
                 if (operation == 0)
                     channel->remove();
@@ -605,7 +638,8 @@ void tokens() {
         Channel channel(loop, fd, [](std::uint32_t) {});
         EventLoopTestAccess::token(std::numeric_limits<std::uint64_t>::max());
         channel.set_interest(EPOLLIN);
-        check(channel.token() == std::numeric_limits<std::uint64_t>::max(), "last token");
+        check(channel.token() == std::numeric_limits<std::uint64_t>::max(),
+              "last token");
         channel.remove();
         throws([&] { channel.set_interest(EPOLLIN); });
         throws([&] { channel.set_interest(EPOLLIN); });
@@ -613,11 +647,13 @@ void tokens() {
         _exit(0);
     }
     int status{};
-    check(::waitpid(child, &status, 0) == child && WIFEXITED(status) && WEXITSTATUS(status) == 0,
+    check(::waitpid(child, &status, 0) == child && WIFEXITED(status) &&
+              WEXITSTATUS(status) == 0,
           "token exhaustion child");
-    std::cout << "tokens: concurrent_registrations=" << registrations << " exhaustion_latched=2\n";
+    std::cout << "tokens: concurrent_registrations=" << registrations
+              << " exhaustion_latched=2\n";
 }
-} // namespace
+}  // namespace
 
 int main() {
     try {

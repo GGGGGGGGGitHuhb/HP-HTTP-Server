@@ -44,8 +44,7 @@ void Epoller::control(int operation, int observed_fd, std::uint32_t events,
     }
 }
 
-void Epoller::add(int observed_fd, std::uint32_t events,
-                  std::uint64_t token) {
+void Epoller::add(int observed_fd, std::uint32_t events, std::uint64_t token) {
     control(EPOLL_CTL_ADD, observed_fd, events, token);
 }
 
@@ -66,9 +65,8 @@ void Epoller::remove(int observed_fd) noexcept {
 
 std::span<const epoll_event> Epoller::wait(int timeout_ms) {
     while (true) {
-        const int count = ::epoll_wait(fd_, events_.data(),
-                                       static_cast<int>(events_.size()),
-                                       timeout_ms);
+        const int count = ::epoll_wait(
+            fd_, events_.data(), static_cast<int>(events_.size()), timeout_ms);
         if (count >= 0) {
             ready_count_ = static_cast<std::size_t>(count);
             return {events_.data(), ready_count_};
