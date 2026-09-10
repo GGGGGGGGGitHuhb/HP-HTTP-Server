@@ -297,7 +297,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.5 性能优化与静态文件传输增强
 
-状态：S1已完成（Approved revision1），S2已完成（Approved revision1，Reviewer001 PASS及Leader003收口），S3已完成（Approved revision1，Reviewer002 PASS及Leader003收口），S4未开始，版本尚未完成。
+状态：S1已完成（Approved revision1），S2已完成（Approved revision1，Reviewer001 PASS及Leader003收口），S3已完成（Approved revision1，Reviewer002 PASS及Leader003收口），S4已完成（原设计及R001 Approved、Reviewer002 PASS、Leader005五项条件收口），V0.5已完成，未合并/发布。
 
 前置条件：
 
@@ -330,7 +330,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - `S1 sendfile 文件传输`（`已完成`，Approved revision1）：实现静态文件零拷贝传输和短写续传。设计文档：`docs/leader/designs/V0.5/S1-design.md`。
 - `S2 异步日志与 IO 路径减负`（`已完成`，Approved revision1）：已交付固定有界队列、单消费者与过载/关闭契约，独立25/25及8AC/RV通过；不承诺吞吐增益或阻塞stderr下整个进程限时退出。设计文档：`docs/leader/designs/V0.5/S2-design.md`。
 - `S3 Buffer 与背压优化`（`已完成`，Approved revision1）：已交付连续游标Buffer、直接接收、>64KiB空闲输出释放及原背压/慢连接机制验证，独立27/27和最终8AC/RV通过。设计文档：`docs/leader/designs/V0.5/S3-design.md`。
-- `S4 压测基线`：建立 wrk 压测脚本、环境记录和基础对比结果。设计文档：`docs/leader/designs/V0.5/S4-design.md`。
+- `S4 压测基线`（`已完成`，Approved revision1及R001、Reviewer002 PASS）：已交付固定两版本/两文件基本wrk对比、环境与错误/回收规则及五项版本退出核对。设计文档：`docs/leader/designs/V0.5/S4-design.md`。
 
 完成标准：
 
@@ -530,7 +530,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - `S1 sendfile 文件传输`（`已完成`，Approved revision1）：产出零拷贝静态文件路径；涉及 `http`、`net`。
 - `S2 异步日志与 IO 路径减负`（`已完成`，Approved revision1）：交付有界异步日志及生产RAII，8REQ/8AC/RV通过；涉及 `base`、`app`、`tests`。
 - `S3 Buffer 与背压优化`（`已完成`，Approved revision1）：交付Buffer减少拷贝/容量保留及现有背压验证；涉及 `base`、`net`。
-- `S4 压测基线`：产出 wrk 脚本和基础性能记录；涉及 `benchmark`。
+- `S4 压测基线`（`已完成`，Approved revision1及R001、Reviewer002 PASS）：已交付固定版本wrk脚本、环境/结果与版本退出核对；涉及 `benchmark`。
 
 ### V0.6 阶段摘要
 
@@ -653,3 +653,11 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 2026-09-10：依据PM“批准，完成后提交并推送”及Leader S3-report-002登记S3 Approved revision1、待实现 / Ready for Builder，含64KiB空闲输出保留门槛；S4未开始，尚无S3实现或验收。
 
 - 2026-09-10：依据S3 Reviewer002最终PASS与Leader003收口关闭S3/P2-01/P3-01及TD-005本检查点；精确两换行复审继承001完整动态证据。S1/S2/S3已完成，S4未开始，V0.5未完成；S3尚未提交推送。
+
+- 2026-09-10：S3经PR #16合并至89514bd，annotated v0.5-s3已推送且peeled核对一致；新分支codex/v0.5-s4-benchmark-baseline准备S4 Draft revision1设计/审查及Leader001。S4待整体批准，wrk未安装，本阶段未实现/压测；V0.5未完成。
+
+- 2026-09-10：PM在完整S4决策包及更新角色规则后回复“批准”，见Leader S4-report-002；design/review登记Approved revision1、待实现。复用当前分支，无版本启动清理；验收收口后由Leader提交推送，用户合并。V0.5尚未完成。
+
+- 2026-09-10：PM批准日志预算R001/审查补充，见Leader S4-report-004；每套累计2GiB日志/启动前4GiB可用磁盘，待Builder002完成正式12测量。原formal-001 invalid0/12保留；原产品/负载及五项版本条件不变。
+
+- 2026-09-10：S4 Reviewer002 PASS与Leader005核对VC01–05后关闭S4及V0.5；P2-01尾字节审计缺陷关闭。固定基准有效，不代表吞吐提升；1KiB明显下降及未知根因记录RO-002，TD-001/TD-005持续Open，无新增债务豁免。V0.6未开始，未合并或标签发布。

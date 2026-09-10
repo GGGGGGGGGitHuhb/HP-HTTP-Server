@@ -114,6 +114,8 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 ### 测试与验证层
 
+V0.5/S4已交付独立于生产依赖的Python构建/协调脚本及wrk Lua summary，固定两版本Release、两文件、三轮对比。每套累计日志2GiB、启动磁盘4GiB；完整长度/SHA/keep-alive/无尾字节前后审计与错误整套invalid、有限超时及owned进程回收均经Reviewer002验证。基准不承担逐请求计时body审计或生产性能保证；WSL同机与noise限制、1KiB明显下降及未知根因均保留。
+
 测试与验证层负责单元测试、集成测试、smoke test、压测脚本、性能报告和回归验证。它可以调用公开 API 或启动真实服务器进程，但不能成为生产代码依赖。
 
 典型目录：
@@ -624,10 +626,12 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 
 文件区域move-only且每响应独占CLOEXEC fd，文件完成/取消先释放再推进HTTP；内存输出只保存头或显式内存响应，文件remaining计入逻辑pending。每轮有限调用和最多256KiB文件预算，offset只按实际进展更新；文件未排空不触发后缀或keep-alive等待。默认SIGPIPE路径以窄线程guard保持宿主原mask/pending语义，不全局改信号处置。
 
-文件须保持内容稳定，更新采用原子替换名称；增长只发送初始长度，截短提前EOF或unsupported/发送错误关闭连接，不自动read降级、不补第二响应。冷文件仍可能阻塞owner，不提供并发原地修改快照或性能保证。S2日志已完成并发布v0.5-s2；S3 Buffer已完成并经Reviewer002 PASS，S4压测未开始。
+文件须保持内容稳定，更新采用原子替换名称；增长只发送初始长度，截短提前EOF或unsupported/发送错误关闭连接，不自动read降级、不补第二响应。冷文件仍可能阻塞owner，不提供并发原地修改快照或性能保证。S2日志已完成并发布v0.5-s2；S3 Buffer已完成并经Reviewer002 PASS，S4固定压测基线已完成，独立数据与限制见benchmark/。
 
 - 2026-09-10：依据Reviewer002 PASS与Leader003关闭V0.5/S1；版本整体未完成。
 
 - 2026-09-10：依据V0.5/S2 Reviewer001 PASS与Leader003记录已交付日志队列、共享会话、信号mask及阻塞stderr关闭边界；澄清Approved日志兼容入口限定，S3/S4未开始。
 
 - 2026-09-10：依据V0.5/S3 Reviewer002最终PASS及Leader003同步已交付Buffer、直接recv、64KiB保留取舍和异常/瞬时存储界；HTTP背压及S2日志关闭限制保持。S4未开始。
+
+- 2026-09-10：Reviewer002 PASS、Leader005关闭S4及V0.5，保留S1 sendfile、S2阻塞stderr最终join限制和S3 Buffer边界；本阶段未改C++产品。
