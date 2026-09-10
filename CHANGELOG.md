@@ -6,6 +6,8 @@
 
 ### 新增
 
+- V0.5/S3交付连续游标Buffer与ConnectionIo直接recv，减少consume/尾空间足够时追加的后缀搬移，复用小header；完全排空后>64KiB输出容量释放、≤64KiB保留。生产16KiB输入、9MiB逻辑输出含file remaining、sendfile及HTTP背压/超时不变；重复大输出有重新分配取舍，不宣称吞吐收益。Reviewer001独立27/27、三TSan/五ASan及五反证通过；Reviewer002核实唯一两换行格式修复后最终PASS，Leader003关闭S3及TD-005本检查点。S4未开始，V0.5未完成，Unreleased不代表已发布。
+
 - V0.5/S2交付有界异步日志：1024槽、1024字节正文上限及截断，所有等级满队列丢新并计数；单消费者写stderr/flush，拥有消息，生产RAII及并发stop安全回收。健康sink排空；阻塞stderr可能拖延最终join，HTTP shutdown_timeout不保证整个进程退出上限。原接口/诊断及HTTP行为保持，没有吞吐增益承诺。独立Reviewer001 PASS、Debug25/25及三TSan/三ASan、四反证通过，Leader003关闭S2及TD-002；V0.5未完成，Unreleased不表示已发布。
 
 - V0.5/S1交付生产小内存头+拥有型fd/sendfile正文，保持8MiB文件/9MiB逻辑输出及安全路径、HTTP、超时和排空。正文不进入用户输出vector；unsupported/发送错误关闭，不自动read降级、不追加第二响应。要求稳定文件内容，不据机制证据宣称性能提升。

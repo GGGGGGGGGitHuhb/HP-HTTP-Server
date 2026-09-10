@@ -297,7 +297,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.5 性能优化与静态文件传输增强
 
-状态：S1已完成（Approved revision1），S2已完成（Approved revision1，Reviewer001 PASS及Leader003收口），S3/S4未开始，版本尚未完成。
+状态：S1已完成（Approved revision1），S2已完成（Approved revision1，Reviewer001 PASS及Leader003收口），S3已完成（Approved revision1，Reviewer002 PASS及Leader003收口），S4未开始，版本尚未完成。
 
 前置条件：
 
@@ -329,7 +329,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 - `S1 sendfile 文件传输`（`已完成`，Approved revision1）：实现静态文件零拷贝传输和短写续传。设计文档：`docs/leader/designs/V0.5/S1-design.md`。
 - `S2 异步日志与 IO 路径减负`（`已完成`，Approved revision1）：已交付固定有界队列、单消费者与过载/关闭契约，独立25/25及8AC/RV通过；不承诺吞吐增益或阻塞stderr下整个进程限时退出。设计文档：`docs/leader/designs/V0.5/S2-design.md`。
-- `S3 Buffer 与背压优化`：优化输入输出 Buffer、高水位和慢连接策略。设计文档：`docs/leader/designs/V0.5/S3-design.md`。
+- `S3 Buffer 与背压优化`（`已完成`，Approved revision1）：已交付连续游标Buffer、直接接收、>64KiB空闲输出释放及原背压/慢连接机制验证，独立27/27和最终8AC/RV通过。设计文档：`docs/leader/designs/V0.5/S3-design.md`。
 - `S4 压测基线`：建立 wrk 压测脚本、环境记录和基础对比结果。设计文档：`docs/leader/designs/V0.5/S4-design.md`。
 
 完成标准：
@@ -529,7 +529,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 - `S1 sendfile 文件传输`（`已完成`，Approved revision1）：产出零拷贝静态文件路径；涉及 `http`、`net`。
 - `S2 异步日志与 IO 路径减负`（`已完成`，Approved revision1）：交付有界异步日志及生产RAII，8REQ/8AC/RV通过；涉及 `base`、`app`、`tests`。
-- `S3 Buffer 与背压优化`：产出缓冲区和慢连接治理能力；涉及 `base`、`net`。
+- `S3 Buffer 与背压优化`（`已完成`，Approved revision1）：交付Buffer减少拷贝/容量保留及现有背压验证；涉及 `base`、`net`。
 - `S4 压测基线`：产出 wrk 脚本和基础性能记录；涉及 `benchmark`。
 
 ### V0.6 阶段摘要
@@ -647,3 +647,9 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 2026-09-10：依据PM“批准，完成后提交并推送”及Leader V0.5/S2-report-002登记S2 design/review Approved revision1、待实现 / Ready for Builder；包含阻塞stderr最终join不保证限时的整体设计边界。S3/S4未开始，尚无S2实现或验收结论。
 
 - 2026-09-10：依据V0.5/S2 Reviewer001 PASS和Leader003关闭S2/P3-01及TD-002；TD-005本阶段检查点完成、持续Open，TD-001留S4。S1/S2已完成，S3/S4未开始，V0.5未完成；S2尚未提交推送。
+
+- 2026-09-10：S2经PR #15合并至0146a75，annotated v0.5-s2已推送且peeled核对一致；新分支codex/v0.5-s3-buffer-backpressure准备S3 Draft revision1设计/审查和Leader001。S3设计中待批准，S4未开始，未实现S3或新增性能结论。
+
+- 2026-09-10：依据PM“批准，完成后提交并推送”及Leader S3-report-002登记S3 Approved revision1、待实现 / Ready for Builder，含64KiB空闲输出保留门槛；S4未开始，尚无S3实现或验收。
+
+- 2026-09-10：依据S3 Reviewer002最终PASS与Leader003收口关闭S3/P2-01/P3-01及TD-005本检查点；精确两换行复审继承001完整动态证据。S1/S2/S3已完成，S4未开始，V0.5未完成；S3尚未提交推送。

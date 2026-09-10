@@ -252,6 +252,10 @@ void fixture_owner(const Fixture &fixture) {
 
 namespace hp::net {
 struct ConnectionIoTestAccess {
+  static std::size_t input_capacity(const ConnectionIo &io) {
+    return io.input_.capacity();
+  }
+
   static std::size_t capacity(const ConnectionIo &io) {
     return io.output_.capacity();
   }
@@ -690,6 +694,14 @@ struct SendfileTestAccess {
     return ConnectionIoTestAccess::capacity(connection.io_);
   }
 
+  static std::size_t input_capacity(const TcpConnection &connection) {
+    return ConnectionIoTestAccess::input_capacity(connection.io_);
+  }
+
+  static bool paused(const TcpConnection &connection) {
+    return connection.read_paused_;
+  }
+
   static auto progress(const TcpConnection &connection) {
     return connection.last_progress_;
   }
@@ -1003,7 +1015,10 @@ void unfinished_lifecycle(const hp::http::StaticFileService &service) {
 }
 }  // namespace
 
-int main(int argc, char **argv) {
+#ifndef HP_SENDFILE_ENTRY
+#define HP_SENDFILE_ENTRY main
+#endif
+int HP_SENDFILE_ENTRY(int argc, char **argv) {
   try {
     Fixture fixture;
     const auto option =

@@ -156,8 +156,11 @@ void pipeline_slow_and_repeated() {
     auto want = response(n % 2 ? "/b" : big);
     expect(pump(loop, p, c, want.size()) == want,
            "repeated small/large requests preserve bytes");
+    expect(n % 2 ? C::capacity(c) <= 64U * 1024U : C::capacity(c) == 0,
+           "idle large response releases storage while small response retains "
+           "bounded storage");
   }
-  expect(C::capacity(c) == capacity,
+  expect(C::capacity(c) <= capacity,
          "output capacity does not grow over repeated requests");
   expect(max_pending <= response(big).size() && calls == 28,
          "pending bound independent of request count");
@@ -172,7 +175,7 @@ void pipeline_slow_and_repeated() {
   expect(
       pump(loop, p, c, expected_many.size()) == expected_many && calls == 628,
       "600 short pipelined requests reset independent limits");
-  expect(C::capacity(c) == capacity,
+  expect(C::capacity(c) <= capacity,
          "pipeline depth does not grow output capacity");
   const auto idle = C::events(c);
   for (int i = 0; i < 20; ++i) loop.poll_once(0);
