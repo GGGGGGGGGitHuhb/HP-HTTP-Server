@@ -1,0 +1,5285 @@
+{
+  "status": "valid",
+  "experiment": "V0.5-S4-fixed",
+  "samples": [
+    {
+      "status": "valid",
+      "label": "A",
+      "commit": "e6aa82b5e2a95dc24bb76ff822599518a1e0d9fd",
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "started_utc": "2026-09-10T09:48:00.509064+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "0c382874ec642856d1c1e56515735de8a812200b84df4b0d624ec18c6a05c1e2",
+      "server_identity": {
+        "pid": 19137,
+        "starttime": 2782728,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 35470,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5001167,
+        "requests": 137193,
+        "bytes": 154890897,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1164.840939,
+          "p50": 1056.0,
+          "p95": 2184.0,
+          "p99": 2958.0,
+          "max": 9707.0
+        },
+        "elapsed_seconds": 5.001167,
+        "qps": 27432.197325144312,
+        "received_mib_s": 29.53620031365197,
+        "latency_ms": {
+          "mean": 1.1648409389999999,
+          "p50": 1.056,
+          "p95": 2.184,
+          "p99": 2.958,
+          "max": 9.707
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:48:00.590602+00:00",
+          "envelope_end_utc": "2026-09-10T09:48:05.599786+00:00",
+          "envelope_seconds": 5.009007108998048,
+          "server_cpu_seconds": 6.78,
+          "server_cpu_percent_one_core": 135.3561664510435,
+          "wrk_cpu_seconds": 3.5759,
+          "wrk_cpu_percent_one_core": 71.3893975829331,
+          "rss_sampled_max_kib": 4160,
+          "VmHWM_kib_including_warmup": 4160,
+          "rss_samples": [
+            {
+              "elapsed": 0.0011842679996334482,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 0.0,
+              "rss_kib": 3520,
+              "hwm_kib": 3520
+            },
+            {
+              "elapsed": 1.0228560590003326,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 1.36,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 2.0463726059970213,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 2.77,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 3.0180730069987476,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 4.1,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 4.038560634999158,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 5.47,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.008354483998119,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 6.78,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.009007108998048,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 6.78,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20100068,
+        "requests": 544183,
+        "bytes": 614382607,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1170.402821,
+          "p50": 1073.0,
+          "p95": 2155.0,
+          "p99": 2778.0,
+          "max": 7353.0
+        },
+        "elapsed_seconds": 20.100068,
+        "qps": 27073.689501945963,
+        "received_mib_s": 29.15019554872226,
+        "latency_ms": {
+          "mean": 1.170402821,
+          "p50": 1.073,
+          "p95": 2.155,
+          "p99": 2.778,
+          "max": 7.353
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:48:05.600140+00:00",
+          "envelope_end_utc": "2026-09-10T09:48:25.743156+00:00",
+          "envelope_seconds": 20.142531485998916,
+          "server_cpu_seconds": 27.29,
+          "server_cpu_percent_one_core": 135.4844599298221,
+          "wrk_cpu_seconds": 14.785122999999999,
+          "wrk_cpu_percent_one_core": 73.40250658303374,
+          "rss_sampled_max_kib": 4160,
+          "VmHWM_kib_including_warmup": 4160,
+          "rss_samples": [
+            {
+              "elapsed": 0.0007517510020988993,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 6.78,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 1.0228176720011106,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 8.16,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 2.0450687470001867,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 9.56,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 3.014841296000668,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 10.86,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 4.034376193001663,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 12.24,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.009264404001442,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 13.55,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 6.031614756000636,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 14.94,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 7.0020506540022325,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 16.28,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 8.021571109002252,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 17.69,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 9.04751722400033,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 19.1,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 10.021849674001714,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 20.42,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 11.045617505002156,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 21.84,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 12.015934323000693,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 23.18,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 13.038063446001615,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 24.57,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 14.007960119000927,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 25.9,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 15.031349723001767,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 27.28,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 16.001774888998625,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 28.58,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 17.02245189400128,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 29.94,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 18.04564548900089,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 31.32,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 19.015341105001426,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 32.62,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 20.03894914400007,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 34.01,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 20.142531485998916,
+              "pid": 19137,
+              "starttime": 2782728,
+              "cpu_seconds": 34.07,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "cleanup": {
+        "pid": 19137,
+        "starttime": 2782728,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:48:25.806407+00:00",
+      "round": 1
+    },
+    {
+      "status": "valid",
+      "label": "B",
+      "commit": "89514bd99a4410a6eb35d02444fe9e73f56232a2",
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "started_utc": "2026-09-10T09:48:25.809406+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "c03d30e88797316365608bae1c3f10e3b2a5fae0ece8d578360413e1b593ca3c",
+      "server_identity": {
+        "pid": 19418,
+        "starttime": 2785258,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 36014,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5013705,
+        "requests": 3600,
+        "bytes": 4067655,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44275.446389,
+          "p50": 44054.0,
+          "p95": 48105.0,
+          "p99": 48472.0,
+          "max": 49123.0
+        },
+        "elapsed_seconds": 5.013705,
+        "qps": 718.0318746316348,
+        "received_mib_s": 0.7737228459794633,
+        "latency_ms": {
+          "mean": 44.275446388999995,
+          "p50": 44.054,
+          "p95": 48.105,
+          "p99": 48.472,
+          "max": 49.123
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:48:26.058735+00:00",
+          "envelope_end_utc": "2026-09-10T09:48:31.112633+00:00",
+          "envelope_seconds": 5.05361542099854,
+          "server_cpu_seconds": 0.48,
+          "server_cpu_percent_one_core": 9.49815053210276,
+          "wrk_cpu_seconds": 0.2577259999999981,
+          "wrk_cpu_percent_one_core": 5.099834050076455,
+          "rss_sampled_max_kib": 5120,
+          "VmHWM_kib_including_warmup": 5120,
+          "rss_samples": [
+            {
+              "elapsed": 0.0009020999968925025,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.0,
+              "rss_kib": 4480,
+              "hwm_kib": 4480
+            },
+            {
+              "elapsed": 1.0239037529972848,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.12,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 2.045963964999828,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.22,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 3.0165617239981657,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.32,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 4.034851151998737,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.4,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 5.001828265998483,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.48,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 5.05361542099854,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.48,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20043455,
+        "requests": 14344,
+        "bytes": 16197736,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44625.629113,
+          "p50": 44103.0,
+          "p95": 48254.0,
+          "p99": 48691.0,
+          "max": 52034.0
+        },
+        "elapsed_seconds": 20.043455,
+        "qps": 715.6450821477634,
+        "received_mib_s": 0.7706937155859059,
+        "latency_ms": {
+          "mean": 44.625629113,
+          "p50": 44.103,
+          "p95": 48.254,
+          "p99": 48.691,
+          "max": 52.034
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:48:31.112981+00:00",
+          "envelope_end_utc": "2026-09-10T09:48:51.192264+00:00",
+          "envelope_seconds": 20.07884350400127,
+          "server_cpu_seconds": 2.02,
+          "server_cpu_percent_one_core": 10.060340375666849,
+          "wrk_cpu_seconds": 1.1123750000000072,
+          "wrk_cpu_percent_one_core": 5.540035210585388,
+          "rss_sampled_max_kib": 5120,
+          "VmHWM_kib_including_warmup": 5120,
+          "rss_samples": [
+            {
+              "elapsed": 0.0008627050010545645,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.48,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 1.0176023530002567,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.55,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 2.046792811001069,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.65,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 3.018723378001596,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.74,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 4.039447143000871,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.82,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 5.01277711000148,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 0.92,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 6.0390053459996125,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.02,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 7.014497751999443,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.13,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 8.042756212002132,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.25,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 9.022218393001822,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.35,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 10.00131618299929,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.46,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 11.02904922200105,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.56,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 12.005343953002011,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.64,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 13.03423946300245,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.76,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 14.011066129001847,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.86,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 15.040866441999242,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 1.96,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 16.016978625000775,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 2.06,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 17.045199454001704,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 2.18,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 18.019491412000207,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 2.28,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 19.05000326500158,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 2.4,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 20.025372651001817,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 2.5,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 20.07884350400127,
+              "pid": 19418,
+              "starttime": 2785258,
+              "cpu_seconds": 2.5,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "cleanup": {
+        "pid": 19418,
+        "starttime": 2785258,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:48:51.428121+00:00",
+      "round": 1
+    },
+    {
+      "status": "valid",
+      "label": "A",
+      "commit": "e6aa82b5e2a95dc24bb76ff822599518a1e0d9fd",
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "started_utc": "2026-09-10T09:48:51.432291+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "0c382874ec642856d1c1e56515735de8a812200b84df4b0d624ec18c6a05c1e2",
+      "server_identity": {
+        "pid": 19665,
+        "starttime": 2787820,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 36630,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5007208,
+        "requests": 1698,
+        "bytes": 1797121952,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 93323.839161,
+          "p50": 85499.0,
+          "p95": 163052.0,
+          "p99": 190379.0,
+          "max": 234982.0
+        },
+        "elapsed_seconds": 5.007208,
+        "qps": 339.1111373843467,
+        "received_mib_s": 342.2803784209215,
+        "latency_ms": {
+          "mean": 93.323839161,
+          "p50": 85.499,
+          "p95": 163.052,
+          "p99": 190.379,
+          "max": 234.982
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:48:51.561928+00:00",
+          "envelope_end_utc": "2026-09-10T09:48:56.618127+00:00",
+          "envelope_seconds": 5.055634348998865,
+          "server_cpu_seconds": 2.72,
+          "server_cpu_percent_one_core": 53.80135928023799,
+          "wrk_cpu_seconds": 5.07484199999999,
+          "wrk_cpu_percent_one_core": 100.37992563692681,
+          "rss_sampled_max_kib": 42668,
+          "VmHWM_kib_including_warmup": 42668,
+          "rss_samples": [
+            {
+              "elapsed": 0.0009969120001187548,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 0.0,
+              "rss_kib": 6668,
+              "hwm_kib": 6668
+            },
+            {
+              "elapsed": 1.0083389159990475,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 0.59,
+              "rss_kib": 42668,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 2.0040181500007748,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 1.1,
+              "rss_kib": 42668,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 3.0032626799984428,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 1.65,
+              "rss_kib": 42668,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 4.0468696399984765,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 2.23,
+              "rss_kib": 42668,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 5.002247361000627,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 2.71,
+              "rss_kib": 42668,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 5.055634348998865,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 2.72,
+              "rss_kib": 6036,
+              "hwm_kib": 42668
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20062379,
+        "requests": 6934,
+        "bytes": 7284046480,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 92247.949462,
+          "p50": 90874.0,
+          "p95": 146595.0,
+          "p99": 175418.0,
+          "max": 221406.0
+        },
+        "elapsed_seconds": 20.062379,
+        "qps": 345.6220221938784,
+        "received_mib_s": 346.25046448805256,
+        "latency_ms": {
+          "mean": 92.24794946200001,
+          "p50": 90.874,
+          "p95": 146.595,
+          "p99": 175.418,
+          "max": 221.406
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:48:56.618846+00:00",
+          "envelope_end_utc": "2026-09-10T09:49:16.741091+00:00",
+          "envelope_seconds": 20.121636777003005,
+          "server_cpu_seconds": 11.91,
+          "server_cpu_percent_one_core": 59.190015861989544,
+          "wrk_cpu_seconds": 21.235903000000008,
+          "wrk_cpu_percent_one_core": 105.53765200786498,
+          "rss_sampled_max_kib": 42516,
+          "VmHWM_kib_including_warmup": 42668,
+          "rss_samples": [
+            {
+              "elapsed": 0.001173742002720246,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 2.72,
+              "rss_kib": 6036,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 1.0046945560025051,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 3.27,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 2.0406517700030236,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 3.77,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 3.007574563001981,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 4.3,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 4.021880070002226,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 4.98,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 5.021016522001446,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 5.66,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 6.030291966002551,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 6.28,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 7.004197873000521,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 6.86,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 8.004475366000406,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 7.39,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 9.016894110001886,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 7.97,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 10.015545959002338,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 8.57,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 11.015408065999509,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 9.13,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 12.042851731002884,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 9.75,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 13.00681104600153,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 10.39,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 14.031684469002357,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 11.09,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 15.003753853001399,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 11.64,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 16.009576135002135,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 12.24,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 17.020131558001594,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 12.84,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 18.014644456001406,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 13.43,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 19.015163762000157,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 14.02,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 20.013860099999874,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 14.58,
+              "rss_kib": 42516,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 20.121636777003005,
+              "pid": 19665,
+              "starttime": 2787820,
+              "cpu_seconds": 14.63,
+              "rss_kib": 5888,
+              "hwm_kib": 42668
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "cleanup": {
+        "pid": 19665,
+        "starttime": 2787820,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:49:16.867533+00:00",
+      "round": 1
+    },
+    {
+      "status": "valid",
+      "label": "B",
+      "commit": "89514bd99a4410a6eb35d02444fe9e73f56232a2",
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "started_utc": "2026-09-10T09:49:16.874030+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "c03d30e88797316365608bae1c3f10e3b2a5fae0ece8d578360413e1b593ca3c",
+      "server_identity": {
+        "pid": 19872,
+        "starttime": 2790365,
+        "cpu_seconds": 0.0,
+        "rss_kib": 320,
+        "hwm_kib": 320
+      },
+      "port": 36436,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5009471,
+        "requests": 1733,
+        "bytes": 1830659028,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 95725.979535,
+          "p50": 83951.0,
+          "p95": 178317.0,
+          "p99": 384211.0,
+          "max": 678770.0
+        },
+        "elapsed_seconds": 5.009471,
+        "qps": 345.9447115274248,
+        "received_mib_s": 348.5103511130876,
+        "latency_ms": {
+          "mean": 95.72597953500001,
+          "p50": 83.951,
+          "p95": 178.317,
+          "p99": 384.211,
+          "max": 678.77
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:49:17.018679+00:00",
+          "envelope_end_utc": "2026-09-10T09:49:22.045602+00:00",
+          "envelope_seconds": 5.026665590998164,
+          "server_cpu_seconds": 1.08,
+          "server_cpu_percent_one_core": 21.4854157382994,
+          "wrk_cpu_seconds": 5.202810999999997,
+          "wrk_cpu_percent_one_core": 103.50421976184923,
+          "rss_sampled_max_kib": 5280,
+          "VmHWM_kib_including_warmup": 5280,
+          "rss_samples": [
+            {
+              "elapsed": 0.0013096759976178873,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 0.0,
+              "rss_kib": 4640,
+              "hwm_kib": 4640
+            },
+            {
+              "elapsed": 1.0045168270007707,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 0.26,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 2.007049496998661,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 0.44,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 3.0047472559999733,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 0.64,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 4.01364045399896,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 0.85,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 5.025227615999029,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 1.08,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 5.026665590998164,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 1.08,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20055325,
+        "requests": 6932,
+        "bytes": 7288831800,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 93857.533991,
+          "p50": 81711.0,
+          "p95": 199442.0,
+          "p99": 224331.0,
+          "max": 356729.0
+        },
+        "elapsed_seconds": 20.055325,
+        "qps": 345.6438626649032,
+        "received_mib_s": 346.59980250956477,
+        "latency_ms": {
+          "mean": 93.857533991,
+          "p50": 81.711,
+          "p95": 199.442,
+          "p99": 224.331,
+          "max": 356.729
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:49:22.046630+00:00",
+          "envelope_end_utc": "2026-09-10T09:49:42.136095+00:00",
+          "envelope_seconds": 20.089259039999888,
+          "server_cpu_seconds": 4.7700000000000005,
+          "server_cpu_percent_one_core": 23.74403152700861,
+          "wrk_cpu_seconds": 21.329188000000002,
+          "wrk_cpu_percent_one_core": 106.17209901834251,
+          "rss_sampled_max_kib": 5280,
+          "VmHWM_kib_including_warmup": 5280,
+          "rss_samples": [
+            {
+              "elapsed": 0.0018440200001350604,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 1.09,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 1.052394637001271,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 1.34,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 2.0501522880003904,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 1.54,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 3.0521426140003314,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 1.76,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 4.0452378839981975,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 1.98,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 5.040798526999424,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 2.17,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 6.0415290870005265,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 2.45,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 7.033661597000901,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 2.68,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 8.04408460799823,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 2.92,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 9.001662513997871,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 3.17,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 10.004008126001281,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 3.37,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 11.01229243600028,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 3.63,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 12.031218161999277,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 3.88,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 13.035374680999666,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 4.11,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 14.003654287000245,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 4.35,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 15.0230631609993,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 4.64,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 16.01746408100007,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 4.88,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 17.005892575998587,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 5.1,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 18.012910461999127,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 5.37,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 19.017332960000203,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 5.63,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.035802771999442,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 5.84,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.089259039999888,
+              "pid": 19872,
+              "starttime": 2790365,
+              "cpu_seconds": 5.86,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "cleanup": {
+        "pid": 19872,
+        "starttime": 2790365,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:49:42.243956+00:00",
+      "round": 1
+    },
+    {
+      "status": "valid",
+      "label": "B",
+      "commit": "89514bd99a4410a6eb35d02444fe9e73f56232a2",
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "started_utc": "2026-09-10T09:49:42.246141+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "c03d30e88797316365608bae1c3f10e3b2a5fae0ece8d578360413e1b593ca3c",
+      "server_identity": {
+        "pid": 20126,
+        "starttime": 2792902,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 35438,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5014003,
+        "requests": 1748,
+        "bytes": 1845756620,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 95007.497277,
+          "p50": 78828.0,
+          "p95": 182838.0,
+          "p99": 358213.0,
+          "max": 569897.0
+        },
+        "elapsed_seconds": 5.014003,
+        "qps": 348.6236446208748,
+        "received_mib_s": 351.0669384982041,
+        "latency_ms": {
+          "mean": 95.007497277,
+          "p50": 78.828,
+          "p95": 182.838,
+          "p99": 358.213,
+          "max": 569.897
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:49:42.368514+00:00",
+          "envelope_end_utc": "2026-09-10T09:49:47.400110+00:00",
+          "envelope_seconds": 5.031226851999236,
+          "server_cpu_seconds": 1.22,
+          "server_cpu_percent_one_core": 24.248558768826218,
+          "wrk_cpu_seconds": 5.075311000000028,
+          "wrk_cpu_percent_one_core": 100.87621069964823,
+          "rss_sampled_max_kib": 5120,
+          "VmHWM_kib_including_warmup": 5120,
+          "rss_samples": [
+            {
+              "elapsed": 0.0007948049969854765,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 0.0,
+              "rss_kib": 4640,
+              "hwm_kib": 4640
+            },
+            {
+              "elapsed": 1.0033692910001264,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 0.27,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 2.002173861998017,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 0.52,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 3.0116385399996943,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 0.76,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 4.026801317999343,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 1.01,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 5.028056470997399,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 1.22,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 5.031226851999236,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 1.22,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20059235,
+        "requests": 7278,
+        "bytes": 7647104696,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 88545.158774,
+          "p50": 80938.0,
+          "p95": 164500.0,
+          "p99": 202479.0,
+          "max": 258435.0
+        },
+        "elapsed_seconds": 20.059235,
+        "qps": 362.8254018660233,
+        "received_mib_s": 363.5655768250795,
+        "latency_ms": {
+          "mean": 88.545158774,
+          "p50": 80.938,
+          "p95": 164.5,
+          "p99": 202.479,
+          "max": 258.435
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:49:47.400632+00:00",
+          "envelope_end_utc": "2026-09-10T09:50:07.480587+00:00",
+          "envelope_seconds": 20.07950613199864,
+          "server_cpu_seconds": 4.84,
+          "server_cpu_percent_one_core": 24.104178500122522,
+          "wrk_cpu_seconds": 21.305301999999983,
+          "wrk_cpu_percent_one_core": 106.1047112411192,
+          "rss_sampled_max_kib": 5280,
+          "VmHWM_kib_including_warmup": 5280,
+          "rss_samples": [
+            {
+              "elapsed": 0.001493735999247292,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 1.22,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 1.0142680530007055,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 1.48,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 2.01864866699907,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 1.74,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 3.0362938529979147,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 1.98,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 4.042408745001012,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 2.21,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 5.047856619999948,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 2.45,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 6.052983896999649,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 2.65,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 7.001230933001352,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 2.89,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 8.01785116300016,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 3.16,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 9.025001091999002,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 3.4,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 10.037184036998951,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 3.68,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 11.051390706001257,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 3.95,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 12.013890133999666,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 4.18,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 13.019844573998853,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 4.42,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 14.032744640000601,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 4.7,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 15.041792223000812,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 4.92,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 16.0060584189996,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 5.15,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 17.016012797997973,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 5.38,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 18.02935800100022,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 5.64,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 19.053093777998583,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 5.85,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.02467070700004,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 6.05,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.07950613199864,
+              "pid": 20126,
+              "starttime": 2792902,
+              "cpu_seconds": 6.06,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "cleanup": {
+        "pid": 20126,
+        "starttime": 2792902,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:50:07.593491+00:00",
+      "round": 2
+    },
+    {
+      "status": "valid",
+      "label": "A",
+      "commit": "e6aa82b5e2a95dc24bb76ff822599518a1e0d9fd",
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "started_utc": "2026-09-10T09:50:07.596795+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "0c382874ec642856d1c1e56515735de8a812200b84df4b0d624ec18c6a05c1e2",
+      "server_identity": {
+        "pid": 20379,
+        "starttime": 2795437,
+        "cpu_seconds": 0.0,
+        "rss_kib": 320,
+        "hwm_kib": 320
+      },
+      "port": 35766,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5006884,
+        "requests": 1708,
+        "bytes": 1803377736,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 93348.914432,
+          "p50": 84578.0,
+          "p95": 172183.0,
+          "p99": 218053.0,
+          "max": 277178.0
+        },
+        "elapsed_seconds": 5.006884,
+        "qps": 341.13033175923385,
+        "received_mib_s": 343.49408326656874,
+        "latency_ms": {
+          "mean": 93.348914432,
+          "p50": 84.578,
+          "p95": 172.183,
+          "p99": 218.053,
+          "max": 277.178
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:50:07.733493+00:00",
+          "envelope_end_utc": "2026-09-10T09:50:12.757937+00:00",
+          "envelope_seconds": 5.024256749002234,
+          "server_cpu_seconds": 3.24,
+          "server_cpu_percent_one_core": 64.48715027637533,
+          "wrk_cpu_seconds": 5.385716999999971,
+          "wrk_cpu_percent_one_core": 107.19430293982329,
+          "rss_sampled_max_kib": 42508,
+          "VmHWM_kib_including_warmup": 42508,
+          "rss_samples": [
+            {
+              "elapsed": 0.0009213320008711889,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 0.0,
+              "rss_kib": 6668,
+              "hwm_kib": 6668
+            },
+            {
+              "elapsed": 1.0387302610033657,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 0.75,
+              "rss_kib": 42508,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 2.009378489001392,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 1.38,
+              "rss_kib": 42508,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 3.028524136003398,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 1.97,
+              "rss_kib": 42508,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 4.051311722003447,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 2.67,
+              "rss_kib": 42508,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 5.021971030000714,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 3.24,
+              "rss_kib": 12064,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 5.024256749002234,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 3.24,
+              "rss_kib": 6916,
+              "hwm_kib": 42508
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20041062,
+        "requests": 5511,
+        "bytes": 5792035580,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 123450.812315,
+          "p50": 99494.0,
+          "p95": 302796.0,
+          "p99": 385567.0,
+          "max": 451646.0
+        },
+        "elapsed_seconds": 20.041062,
+        "qps": 274.98542741896614,
+        "received_mib_s": 275.61990339420026,
+        "latency_ms": {
+          "mean": 123.45081231500001,
+          "p50": 99.494,
+          "p95": 302.796,
+          "p99": 385.567,
+          "max": 451.646
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:50:12.758351+00:00",
+          "envelope_end_utc": "2026-09-10T09:50:32.853900+00:00",
+          "envelope_seconds": 20.0952543659987,
+          "server_cpu_seconds": 11.129999999999999,
+          "server_cpu_percent_one_core": 55.386211078930316,
+          "wrk_cpu_seconds": 20.860675000000015,
+          "wrk_cpu_percent_one_core": 103.8089621562413,
+          "rss_sampled_max_kib": 42276,
+          "VmHWM_kib_including_warmup": 42508,
+          "rss_samples": [
+            {
+              "elapsed": 0.0029283659969223663,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 3.25,
+              "rss_kib": 6916,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 1.014269252998929,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 4.02,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 2.043890648998058,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 4.64,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 3.0119115549969138,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 5.2,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 4.034016865000012,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 5.72,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 5.017074917999707,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 6.24,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 6.047283543997764,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 6.77,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 7.009498112998699,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 7.38,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 8.045237928999995,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 7.91,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 9.023514234999311,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 8.43,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 10.028110821996961,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 8.93,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 11.032935695999186,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 9.44,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 12.01575949099788,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 9.92,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 13.01246680499753,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 10.5,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 14.024992085996928,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 11.06,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 15.030791717999819,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 11.54,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 16.025824243999523,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 12.05,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 17.046986037999886,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 12.68,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 18.022192201999133,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 13.23,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 19.052077975997236,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 13.8,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 20.039115538998885,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 14.35,
+              "rss_kib": 42276,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 20.0952543659987,
+              "pid": 20379,
+              "starttime": 2795437,
+              "cpu_seconds": 14.37,
+              "rss_kib": 5848,
+              "hwm_kib": 42508
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "cleanup": {
+        "pid": 20379,
+        "starttime": 2795437,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:50:32.992122+00:00",
+      "round": 2
+    },
+    {
+      "status": "valid",
+      "label": "B",
+      "commit": "89514bd99a4410a6eb35d02444fe9e73f56232a2",
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "started_utc": "2026-09-10T09:50:32.996472+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "c03d30e88797316365608bae1c3f10e3b2a5fae0ece8d578360413e1b593ca3c",
+      "server_identity": {
+        "pid": 20574,
+        "starttime": 2797977,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 35636,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5010671,
+        "requests": 3609,
+        "bytes": 4077816,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44191.228318,
+          "p50": 44098.0,
+          "p95": 48151.0,
+          "p99": 48759.0,
+          "max": 51019.0
+        },
+        "elapsed_seconds": 5.010671,
+        "qps": 720.2628151000135,
+        "received_mib_s": 0.7761252706933799,
+        "latency_ms": {
+          "mean": 44.191228318,
+          "p50": 44.098,
+          "p95": 48.151,
+          "p99": 48.759,
+          "max": 51.019
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:50:33.259060+00:00",
+          "envelope_end_utc": "2026-09-10T09:50:38.287743+00:00",
+          "envelope_seconds": 5.028475055001763,
+          "server_cpu_seconds": 0.5,
+          "server_cpu_percent_one_core": 9.943372384887462,
+          "wrk_cpu_seconds": 0.27187500000002274,
+          "wrk_cpu_percent_one_core": 5.4067087342830105,
+          "rss_sampled_max_kib": 5120,
+          "VmHWM_kib_including_warmup": 5120,
+          "rss_samples": [
+            {
+              "elapsed": 0.0022091489990998525,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.0,
+              "rss_kib": 4480,
+              "hwm_kib": 4480
+            },
+            {
+              "elapsed": 1.000106899999082,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.1,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 2.048532871998759,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.2,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 3.041762952998397,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.3,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 4.034442328000296,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.4,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 5.026492371998756,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.5,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 5.028475055001763,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.5,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20044388,
+        "requests": 14374,
+        "bytes": 16231501,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44550.952414,
+          "p50": 44097.0,
+          "p95": 48160.0,
+          "p99": 48621.0,
+          "max": 51317.0
+        },
+        "elapsed_seconds": 20.044388,
+        "qps": 717.1084495071638,
+        "received_mib_s": 0.7722643175946485,
+        "latency_ms": {
+          "mean": 44.550952414,
+          "p50": 44.097,
+          "p95": 48.16,
+          "p99": 48.621,
+          "max": 51.317
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:50:38.288157+00:00",
+          "envelope_end_utc": "2026-09-10T09:50:58.352219+00:00",
+          "envelope_seconds": 20.063904053000442,
+          "server_cpu_seconds": 1.9,
+          "server_cpu_percent_one_core": 9.469742254453543,
+          "wrk_cpu_seconds": 1.0183590000000038,
+          "wrk_cpu_percent_one_core": 5.075577501317417,
+          "rss_sampled_max_kib": 5280,
+          "VmHWM_kib_including_warmup": 5280,
+          "rss_samples": [
+            {
+              "elapsed": 0.0010261690003972035,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.5,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 1.0054661289977957,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.6,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 2.00305792799918,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.7,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 3.05044392399941,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.8,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 4.041279615998064,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 0.9,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 5.040316786999028,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.02,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 6.026265869000781,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.08,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 7.0190647749986965,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.18,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 8.015735142998892,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.3,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 9.011867598997924,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.4,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 10.008524248998583,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.5,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 11.000000542000635,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.6,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 12.028687456000625,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.66,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 13.019550814999093,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.76,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 14.012479170000006,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.86,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 15.002314735000255,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 1.94,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 16.034003115000814,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 2.0,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 17.02136297600009,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 2.1,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 18.01532469399899,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 2.18,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 19.017423983998015,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 2.3,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.010236145000817,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 2.4,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.063904053000442,
+              "pid": 20574,
+              "starttime": 2797977,
+              "cpu_seconds": 2.4,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "cleanup": {
+        "pid": 20574,
+        "starttime": 2797977,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:50:58.591389+00:00",
+      "round": 2
+    },
+    {
+      "status": "valid",
+      "label": "A",
+      "commit": "e6aa82b5e2a95dc24bb76ff822599518a1e0d9fd",
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "started_utc": "2026-09-10T09:50:58.598367+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "0c382874ec642856d1c1e56515735de8a812200b84df4b0d624ec18c6a05c1e2",
+      "server_identity": {
+        "pid": 20814,
+        "starttime": 2800537,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 36628,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5100076,
+        "requests": 167671,
+        "bytes": 189300559,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 952.806347,
+          "p50": 885.0,
+          "p95": 1693.0,
+          "p99": 2187.0,
+          "max": 7406.0
+        },
+        "elapsed_seconds": 5.100076,
+        "qps": 32876.176747170044,
+        "received_mib_s": 35.39772372012613,
+        "latency_ms": {
+          "mean": 0.952806347,
+          "p50": 0.885,
+          "p95": 1.693,
+          "p99": 2.187,
+          "max": 7.406
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:50:58.683559+00:00",
+          "envelope_end_utc": "2026-09-10T09:51:03.791047+00:00",
+          "envelope_seconds": 5.1072289969997655,
+          "server_cpu_seconds": 6.73,
+          "server_cpu_percent_one_core": 131.7740012040488,
+          "wrk_cpu_seconds": 3.820666999999986,
+          "wrk_cpu_percent_one_core": 74.8090011676475,
+          "rss_sampled_max_kib": 4160,
+          "VmHWM_kib_including_warmup": 4160,
+          "rss_samples": [
+            {
+              "elapsed": 0.001277350998861948,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 0.0,
+              "rss_kib": 3520,
+              "hwm_kib": 3520
+            },
+            {
+              "elapsed": 1.0386859459977131,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 1.36,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 2.0255221059996984,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 2.68,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 3.0145101769994653,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 3.99,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 4.0089949919965875,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 5.3,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.001833900998463,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 6.62,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.1072289969997655,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 6.73,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20100199,
+        "requests": 668848,
+        "bytes": 755129392,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 947.812818,
+          "p50": 876.0,
+          "p95": 1703.0,
+          "p99": 2185.0,
+          "max": 5727.0
+        },
+        "elapsed_seconds": 20.100199,
+        "qps": 33275.69045460694,
+        "received_mib_s": 35.82787945103763,
+        "latency_ms": {
+          "mean": 0.947812818,
+          "p50": 0.876,
+          "p95": 1.703,
+          "p99": 2.185,
+          "max": 5.727
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:51:03.791367+00:00",
+          "envelope_end_utc": "2026-09-10T09:51:23.944015+00:00",
+          "envelope_seconds": 20.15223096200134,
+          "server_cpu_seconds": 26.8,
+          "server_cpu_percent_one_core": 132.9877572886772,
+          "wrk_cpu_seconds": 14.968270000000018,
+          "wrk_cpu_percent_one_core": 74.2759946937086,
+          "rss_sampled_max_kib": 4160,
+          "VmHWM_kib_including_warmup": 4160,
+          "rss_samples": [
+            {
+              "elapsed": 0.0006900840016896836,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 6.73,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 1.0411140379983408,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 8.11,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 2.031888326000626,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 9.43,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 3.0219596550014103,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 10.76,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 4.014891721999447,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 12.08,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.006423421000363,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 13.42,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 6.043695876000129,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 14.8,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 7.035353699000552,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 16.13,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 8.024782578999293,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 17.44,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 9.012437894998584,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 18.74,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 10.051311125000211,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 20.12,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 11.036790968999412,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 21.41,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 12.022467632999906,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 22.72,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 13.01466886200069,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 24.03,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 14.008084007000434,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 25.34,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 15.000864007000928,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 26.66,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 16.040825258998666,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 28.06,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 17.03266689099837,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 29.37,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 18.01880089200131,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 30.71,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 19.004948144000082,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 32.05,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 20.04611111700069,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 33.47,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 20.15223096200134,
+              "pid": 20814,
+              "starttime": 2800537,
+              "cpu_seconds": 33.53,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "cleanup": {
+        "pid": 20814,
+        "starttime": 2800537,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:51:24.007105+00:00",
+      "round": 2
+    },
+    {
+      "status": "valid",
+      "label": "A",
+      "commit": "e6aa82b5e2a95dc24bb76ff822599518a1e0d9fd",
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "started_utc": "2026-09-10T09:51:24.013678+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "0c382874ec642856d1c1e56515735de8a812200b84df4b0d624ec18c6a05c1e2",
+      "server_identity": {
+        "pid": 21050,
+        "starttime": 2803078,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 36622,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5099907,
+        "requests": 163841,
+        "bytes": 184976489,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 980.42937,
+          "p50": 894.0,
+          "p95": 1795.0,
+          "p99": 2390.0,
+          "max": 6143.0
+        },
+        "elapsed_seconds": 5.099907,
+        "qps": 32126.27210653057,
+        "received_mib_s": 34.59030266597082,
+        "latency_ms": {
+          "mean": 0.98042937,
+          "p50": 0.894,
+          "p95": 1.795,
+          "p99": 2.39,
+          "max": 6.143
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:51:24.103484+00:00",
+          "envelope_end_utc": "2026-09-10T09:51:29.253657+00:00",
+          "envelope_seconds": 5.149614182999358,
+          "server_cpu_seconds": 6.86,
+          "server_cpu_percent_one_core": 133.21386333460111,
+          "wrk_cpu_seconds": 3.6065620000000536,
+          "wrk_cpu_percent_one_core": 70.03557687693481,
+          "rss_sampled_max_kib": 4160,
+          "VmHWM_kib_including_warmup": 4160,
+          "rss_samples": [
+            {
+              "elapsed": 0.0017773239997040946,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 0.0,
+              "rss_kib": 3520,
+              "hwm_kib": 3520
+            },
+            {
+              "elapsed": 1.0486256049989606,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 1.39,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 2.049277712998446,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 2.75,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 3.0523453729983885,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 4.1,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 4.047302380000474,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 5.45,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.0408980139982305,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 6.79,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.149614182999358,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 6.86,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20100297,
+        "requests": 629235,
+        "bytes": 710406315,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1011.884739,
+          "p50": 934.0,
+          "p95": 1828.0,
+          "p99": 2376.0,
+          "max": 6064.0
+        },
+        "elapsed_seconds": 20.100297,
+        "qps": 31304.7613177059,
+        "received_mib_s": 33.70578339356419,
+        "latency_ms": {
+          "mean": 1.0118847389999999,
+          "p50": 0.934,
+          "p95": 1.828,
+          "p99": 2.376,
+          "max": 6.064
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:51:29.254330+00:00",
+          "envelope_end_utc": "2026-09-10T09:51:49.412398+00:00",
+          "envelope_seconds": 20.157791605997772,
+          "server_cpu_seconds": 26.700000000000003,
+          "server_cpu_percent_one_core": 132.45498575377502,
+          "wrk_cpu_seconds": 15.042692999999986,
+          "wrk_cpu_percent_one_core": 74.62470737877935,
+          "rss_sampled_max_kib": 4160,
+          "VmHWM_kib_including_warmup": 4160,
+          "rss_samples": [
+            {
+              "elapsed": 0.0013712439977098256,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 6.86,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 1.0495849549988634,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 8.27,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 2.044772187997296,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 9.59,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 3.045377066999208,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 10.92,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 4.042520955998043,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 12.25,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.041329799998493,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 13.56,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 6.037920604998362,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 14.9,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 7.03040281399808,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 16.25,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 8.020255141000234,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 17.58,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 9.012439524998626,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 18.9,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 10.003224281997973,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 20.2,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 11.043368736998673,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 21.57,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 12.032402167998953,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 22.88,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 13.023101914997824,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 24.19,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 14.01485665799919,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 25.51,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 15.010934070000076,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 26.84,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 16.016568609997194,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 28.18,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 17.022892916000274,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 29.5,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 18.033548714000062,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 30.83,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 19.039936920999025,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 32.15,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 20.050636795000173,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 33.49,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 20.157791605997772,
+              "pid": 21050,
+              "starttime": 2803078,
+              "cpu_seconds": 33.56,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "cleanup": {
+        "pid": 21050,
+        "starttime": 2803078,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:51:49.473827+00:00",
+      "round": 3
+    },
+    {
+      "status": "valid",
+      "label": "B",
+      "commit": "89514bd99a4410a6eb35d02444fe9e73f56232a2",
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "started_utc": "2026-09-10T09:51:49.482524+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "c03d30e88797316365608bae1c3f10e3b2a5fae0ece8d578360413e1b593ca3c",
+      "server_identity": {
+        "pid": 21325,
+        "starttime": 2805625,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 37008,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5016275,
+        "requests": 3581,
+        "bytes": 4046309,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44518.063111,
+          "p50": 44163.0,
+          "p95": 48259.0,
+          "p99": 48756.0,
+          "max": 51612.0
+        },
+        "elapsed_seconds": 5.016275,
+        "qps": 713.8763325375901,
+        "received_mib_s": 0.769268225833603,
+        "latency_ms": {
+          "mean": 44.518063111000004,
+          "p50": 44.163,
+          "p95": 48.259,
+          "p99": 48.756,
+          "max": 51.612
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:51:49.747608+00:00",
+          "envelope_end_utc": "2026-09-10T09:51:54.806505+00:00",
+          "envelope_seconds": 5.0584746210006415,
+          "server_cpu_seconds": 0.46,
+          "server_cpu_percent_one_core": 9.093650447316175,
+          "wrk_cpu_seconds": 0.25529200000005403,
+          "wrk_cpu_percent_one_core": 5.046817847818983,
+          "rss_sampled_max_kib": 5280,
+          "VmHWM_kib_including_warmup": 5280,
+          "rss_samples": [
+            {
+              "elapsed": 0.0013732789993810002,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.0,
+              "rss_kib": 4480,
+              "hwm_kib": 4480
+            },
+            {
+              "elapsed": 1.0068880360013281,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.09,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 2.0014901270005794,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.17,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 3.0048302200011676,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.26,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 4.003026179998415,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.36,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 5.00062923799851,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.46,
+              "rss_kib": 5120,
+              "hwm_kib": 5120
+            },
+            {
+              "elapsed": 5.0584746210006415,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.46,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20046865,
+        "requests": 14354,
+        "bytes": 16209026,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44609.634318,
+          "p50": 44105.0,
+          "p95": 48180.0,
+          "p99": 48662.0,
+          "max": 50999.0
+        },
+        "elapsed_seconds": 20.046865,
+        "qps": 716.0221810243147,
+        "received_mib_s": 0.7710997101123359,
+        "latency_ms": {
+          "mean": 44.609634318,
+          "p50": 44.105,
+          "p95": 48.18,
+          "p99": 48.662,
+          "max": 50.999
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:51:54.807645+00:00",
+          "envelope_end_utc": "2026-09-10T09:52:14.910058+00:00",
+          "envelope_seconds": 20.101981588002673,
+          "server_cpu_seconds": 1.85,
+          "server_cpu_percent_one_core": 9.203072801062175,
+          "wrk_cpu_seconds": 0.9902409999999691,
+          "wrk_cpu_percent_one_core": 4.92608649383585,
+          "rss_sampled_max_kib": 5280,
+          "VmHWM_kib_including_warmup": 5280,
+          "rss_samples": [
+            {
+              "elapsed": 0.0015644490013073664,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.46,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 1.0063186070001393,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.55,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 2.0083464840026863,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.64,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 3.0511376050017134,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.73,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 4.050742295003147,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.82,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 5.050928633001604,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 0.91,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 6.005976055999781,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.02,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 7.004973246999725,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.11,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 8.007303874001082,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.21,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 9.01324625000052,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.3,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 10.017168859001686,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.4,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 11.01849423800013,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.5,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 12.019561188000807,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.6,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 13.02045630900102,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.69,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 14.022981738002272,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.79,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 15.025547722001647,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.89,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 16.02765465000266,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 1.98,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 17.029544631001045,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 2.08,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 18.014919186000043,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 2.16,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 19.000201377002668,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 2.22,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.045807308000803,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 2.31,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.101981588002673,
+              "pid": 21325,
+              "starttime": 2805625,
+              "cpu_seconds": 2.31,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "cleanup": {
+        "pid": 21325,
+        "starttime": 2805625,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:52:15.148896+00:00",
+      "round": 3
+    },
+    {
+      "status": "valid",
+      "label": "A",
+      "commit": "e6aa82b5e2a95dc24bb76ff822599518a1e0d9fd",
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "started_utc": "2026-09-10T09:52:15.155036+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "0c382874ec642856d1c1e56515735de8a812200b84df4b0d624ec18c6a05c1e2",
+      "server_identity": {
+        "pid": 21627,
+        "starttime": 2808192,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 35270,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5008247,
+        "requests": 1697,
+        "bytes": 1795630180,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 94195.160807,
+          "p50": 83899.0,
+          "p95": 171765.0,
+          "p99": 218489.0,
+          "max": 312984.0
+        },
+        "elapsed_seconds": 5.008247,
+        "qps": 338.84111546415346,
+        "received_mib_s": 341.9253052874452,
+        "latency_ms": {
+          "mean": 94.195160807,
+          "p50": 83.899,
+          "p95": 171.765,
+          "p99": 218.489,
+          "max": 312.984
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:52:15.286870+00:00",
+          "envelope_end_utc": "2026-09-10T09:52:20.348520+00:00",
+          "envelope_seconds": 5.061382286003209,
+          "server_cpu_seconds": 3.12,
+          "server_cpu_percent_one_core": 61.64323940967817,
+          "wrk_cpu_seconds": 5.06512500000008,
+          "wrk_cpu_percent_one_core": 100.073946479151,
+          "rss_sampled_max_kib": 42508,
+          "VmHWM_kib_including_warmup": 42668,
+          "rss_samples": [
+            {
+              "elapsed": 0.0010790420019475278,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 0.0,
+              "rss_kib": 6508,
+              "hwm_kib": 6508
+            },
+            {
+              "elapsed": 1.013584627002274,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 0.72,
+              "rss_kib": 42508,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 2.0195254390018818,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 1.34,
+              "rss_kib": 42508,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 3.0071837040013634,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 1.91,
+              "rss_kib": 42508,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 4.019920771002944,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 2.49,
+              "rss_kib": 42508,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 5.003943598003389,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 3.11,
+              "rss_kib": 42508,
+              "hwm_kib": 42508
+            },
+            {
+              "elapsed": 5.061382286003209,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 3.12,
+              "rss_kib": 5112,
+              "hwm_kib": 42668
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20026190,
+        "requests": 6892,
+        "bytes": 7243888184,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 94337.449044,
+          "p50": 84811.0,
+          "p95": 187345.0,
+          "p99": 243990.0,
+          "max": 385742.0
+        },
+        "elapsed_seconds": 20.02619,
+        "qps": 344.1493364439267,
+        "received_mib_s": 344.96377553591134,
+        "latency_ms": {
+          "mean": 94.337449044,
+          "p50": 84.811,
+          "p95": 187.345,
+          "p99": 243.99,
+          "max": 385.742
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:52:20.348954+00:00",
+          "envelope_end_utc": "2026-09-10T09:52:40.429656+00:00",
+          "envelope_seconds": 20.080360755000584,
+          "server_cpu_seconds": 12.27,
+          "server_cpu_percent_one_core": 61.10447989309365,
+          "wrk_cpu_seconds": 21.523728999999946,
+          "wrk_cpu_percent_one_core": 107.18795973145016,
+          "rss_sampled_max_kib": 42552,
+          "VmHWM_kib_including_warmup": 42668,
+          "rss_samples": [
+            {
+              "elapsed": 0.0008138749981299043,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 3.12,
+              "rss_kib": 5112,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 1.054246723997494,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 3.86,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 2.0526212379991193,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 4.48,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 3.0026926419996016,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 5.09,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 4.052250856999308,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 5.61,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 5.045414313997753,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 6.11,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 6.007071752999764,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 6.71,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 7.043398514997534,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 7.37,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 8.036095634000958,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 8.0,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 9.024715528998058,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 8.67,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 10.015282340998965,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 9.34,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 11.015046991000418,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 10.02,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 12.016866145997483,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 10.61,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 13.011145386000862,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 11.3,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 14.006890109998494,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 11.85,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 15.005015562001063,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 12.43,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 16.050209526998515,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 13.05,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 17.0516341429975,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 13.59,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 18.039902742999402,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 14.19,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 19.02318284499779,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 14.76,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 20.0241870059981,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 15.38,
+              "rss_kib": 42552,
+              "hwm_kib": 42668
+            },
+            {
+              "elapsed": 20.080360755000584,
+              "pid": 21627,
+              "starttime": 2808192,
+              "cpu_seconds": 15.39,
+              "rss_kib": 5952,
+              "hwm_kib": 42668
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "cleanup": {
+        "pid": 21627,
+        "starttime": 2808192,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:52:40.539738+00:00",
+      "round": 3
+    },
+    {
+      "status": "valid",
+      "label": "B",
+      "commit": "89514bd99a4410a6eb35d02444fe9e73f56232a2",
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "started_utc": "2026-09-10T09:52:40.545266+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "<manifest binary>",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "<generated root>"
+      ],
+      "config_sha256": "c03d30e88797316365608bae1c3f10e3b2a5fae0ece8d578360413e1b593ca3c",
+      "server_identity": {
+        "pid": 21867,
+        "starttime": 2810731,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 36414,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5017546,
+        "requests": 1804,
+        "bytes": 1901677932,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 89582.897504,
+          "p50": 80218.0,
+          "p95": 171138.0,
+          "p99": 226535.0,
+          "max": 264697.0
+        },
+        "elapsed_seconds": 5.017546,
+        "qps": 359.5383081689734,
+        "received_mib_s": 361.44788743839143,
+        "latency_ms": {
+          "mean": 89.58289750399999,
+          "p50": 80.218,
+          "p95": 171.138,
+          "p99": 226.535,
+          "max": 264.697
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:52:40.684493+00:00",
+          "envelope_end_utc": "2026-09-10T09:52:45.713098+00:00",
+          "envelope_seconds": 5.028305367999565,
+          "server_cpu_seconds": 1.23,
+          "server_cpu_percent_one_core": 24.46152152627391,
+          "wrk_cpu_seconds": 5.329574999999977,
+          "wrk_cpu_percent_one_core": 105.99147446210625,
+          "rss_sampled_max_kib": 5280,
+          "VmHWM_kib_including_warmup": 5280,
+          "rss_samples": [
+            {
+              "elapsed": 0.0006611550015804823,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 0.0,
+              "rss_kib": 4640,
+              "hwm_kib": 4640
+            },
+            {
+              "elapsed": 1.0447645890017156,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 0.25,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 2.03842232900206,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 0.5,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 3.0199635550015955,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 0.77,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 4.025893966001604,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 0.98,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 5.024344501001906,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 1.23,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 5.028305367999565,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 1.23,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20018546,
+        "requests": 6466,
+        "bytes": 6796373016,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 120283.164601,
+          "p50": 87760.0,
+          "p95": 337743.0,
+          "p99": 750113.0,
+          "max": 1383396.0
+        },
+        "elapsed_seconds": 20.018546,
+        "qps": 323.00048165336284,
+        "received_mib_s": 323.7760819429984,
+        "latency_ms": {
+          "mean": 120.283164601,
+          "p50": 87.76,
+          "p95": 337.743,
+          "p99": 750.113,
+          "max": 1383.396
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-10T09:52:45.713539+00:00",
+          "envelope_end_utc": "2026-09-10T09:53:05.788499+00:00",
+          "envelope_seconds": 20.0746329279973,
+          "server_cpu_seconds": 4.109999999999999,
+          "server_cpu_percent_one_core": 20.473599765144122,
+          "wrk_cpu_seconds": 20.39671500000003,
+          "wrk_cpu_percent_one_core": 101.60442321988133,
+          "rss_sampled_max_kib": 5280,
+          "VmHWM_kib_including_warmup": 5280,
+          "rss_samples": [
+            {
+              "elapsed": 0.001685111998085631,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 1.23,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 1.0461544610006968,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 1.56,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 2.0554033299995353,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 1.78,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 3.0409883149986854,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 1.97,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 4.030999339000118,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 2.17,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 5.033308162997855,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 2.35,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 6.042611233999196,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 2.56,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 7.039075143999071,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 2.77,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 8.037608327998896,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 2.98,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 9.051652834998094,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 3.18,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 10.002339864997339,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 3.38,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 11.052409593998163,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 3.57,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 12.021930094997515,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 3.75,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 13.040698205997614,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 3.97,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 14.04127170299762,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 4.18,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 15.014474624000286,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 4.35,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 16.026604917999066,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 4.57,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 17.054225195999607,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 4.77,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 18.02578314299899,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 4.94,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 19.00125923899759,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 5.12,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.018346409000515,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 5.33,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            },
+            {
+              "elapsed": 20.0746329279973,
+              "pid": 21867,
+              "starttime": 2810731,
+              "cpu_seconds": 5.34,
+              "rss_kib": 5280,
+              "hwm_kib": 5280
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        },
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+        }
+      ],
+      "cleanup": {
+        "pid": 21867,
+        "starttime": 2810731,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-10T09:53:05.933945+00:00",
+      "round": 3
+    }
+  ],
+  "log_limit_bytes": 2147483648,
+  "min_free_disk_bytes": 4294967296,
+  "environment": {
+    "utc": "2026-09-10T09:48:00.323207+00:00",
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "os": "Ubuntu 24.04.3 LTS",
+    "WSL": true,
+    "cpu_model": "13th Gen Intel(R) Core(TM) i5-13500HX",
+    "online_cpus": 20,
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "memory": "MemTotal:        7974052 kB",
+    "preflight": {
+      "MemAvailable_kib": 3258220,
+      "disk_free_bytes": 1011951099904,
+      "nofile": 10240
+    },
+    "working_directory_category": "repository-local native Linux filesystem",
+    "clock": "monotonic intervals / UTC wall timestamps",
+    "limitations": "same-host loopback, WSL, closed-loop wrk, warmed page cache; timed responses not individually body-audited"
+  },
+  "builds": {
+    "A": {
+      "schema": 1,
+      "label": "A",
+      "commit": "e6aa82b5e2a95dc24bb76ff822599518a1e0d9fd",
+      "tree": "a12650f261912c55b26690df0e8e4239ede4fcf1",
+      "archive_sha256": "bc4034cc75988e397b6f68319631be174a88506c1e9f50c8c9a33f0625431a5b",
+      "binary_sha256": "abacf76fbfcfba1294d6f8e7426a449359245097358bb5617e3fcf74ed4bb0f5",
+      "cmake_cache_sha256": "e33446ca7a91284f9dc609b8656080ad510aed93fa06004ad112080a16ac05bb",
+      "compile_commands_sha256": "5d701f4561055315bdfca878369e146ccbdc8828124f266151805994ab736b34",
+      "flags": [
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DBUILD_TESTING=OFF",
+        "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+        "-DCMAKE_CXX_STANDARD=20",
+        "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG",
+        "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+      ],
+      "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+      "cmake": "cmake version 3.28.3"
+    },
+    "B": {
+      "schema": 1,
+      "label": "B",
+      "commit": "89514bd99a4410a6eb35d02444fe9e73f56232a2",
+      "tree": "f6912c28d25355873fbca48ede3b4d63c281a97c",
+      "archive_sha256": "1e09adab31db96639aff92dbccde49337c7b6732b990458b79d3a99e9429b47e",
+      "binary_sha256": "1b46e9b2f0def6d8940e9ae4fd0ff413d5556ec314da93dd1d4313714f91755d",
+      "cmake_cache_sha256": "5d56d955f9a185808032c4f78aa67b79bca2a0867f608c9dd0bde57a84a53cb7",
+      "compile_commands_sha256": "5aa205e8397e2fa3a0a1147b615beb2834c118f6364dbcf6260dda0b98f44c90",
+      "flags": [
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DBUILD_TESTING=OFF",
+        "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+        "-DCMAKE_CXX_STANDARD=20",
+        "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG",
+        "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+      ],
+      "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+      "cmake": "cmake version 3.28.3"
+    }
+  },
+  "tool": {
+    "sha256": "b10e53769443c2bf3be2cdedec8ef6571aa5bfd1494796b247f3f9296e3af71d",
+    "version": "wrk debian/4.1.0-4build2 [epoll] Copyright (C) 2012 Will Glozer",
+    "version_exit": 1,
+    "libraries_sha256": {
+      "libluajit-5.1.so.2": "04c8976ae97b5e89ba27c008bb9d43c002bfc5b1f923c0598953df278ae14bfe",
+      "libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+      "libssl.so.3": "0ca2c28b026f0084661fbb0e69079436680f3b6dd1f4aa3436395442456a6d4c",
+      "libcrypto.so.3": "e6391daf670544d3a8f2b8a0cb8e27b4246fea109352abed50a29ec57f03153d",
+      "libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+      "libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+      "ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+    },
+    "package_versions": {
+      "wrk": "4.1.0-4build2",
+      "libluajit-5.1-2": "2.1.0+git20231223.c525bcb+dfsg-1ubuntu0.1",
+      "libluajit-5.1-common": "2.1.0+git20231223.c525bcb+dfsg-1ubuntu0.1",
+      "libc6": "2.39-0ubuntu8.6",
+      "libssl3t64": "3.0.13-0ubuntu3.9",
+      "libgcc-s1": "14.2.0-4ubuntu2~24.04"
+    }
+  },
+  "order": [
+    [
+      1,
+      1024,
+      "A"
+    ],
+    [
+      1,
+      1024,
+      "B"
+    ],
+    [
+      1,
+      1048576,
+      "A"
+    ],
+    [
+      1,
+      1048576,
+      "B"
+    ],
+    [
+      2,
+      1048576,
+      "B"
+    ],
+    [
+      2,
+      1048576,
+      "A"
+    ],
+    [
+      2,
+      1024,
+      "B"
+    ],
+    [
+      2,
+      1024,
+      "A"
+    ],
+    [
+      3,
+      1024,
+      "A"
+    ],
+    [
+      3,
+      1024,
+      "B"
+    ],
+    [
+      3,
+      1048576,
+      "A"
+    ],
+    [
+      3,
+      1048576,
+      "B"
+    ]
+  ],
+  "summary": {
+    "groups": {
+      "A-1024": {
+        "qps_samples": [
+          27073.689501945963,
+          33275.69045460694,
+          31304.7613177059
+        ],
+        "qps_median": 31304.7613177059,
+        "qps_min": 27073.689501945963,
+        "qps_max": 33275.69045460694,
+        "qps_relative_span": 0.1981168579986311,
+        "noisy": false,
+        "median_of_run_p99_ms": 2.376
+      },
+      "B-1024": {
+        "qps_samples": [
+          715.6450821477634,
+          717.1084495071638,
+          716.0221810243147
+        ],
+        "qps_median": 716.0221810243147,
+        "qps_min": 715.6450821477634,
+        "qps_max": 717.1084495071638,
+        "qps_relative_span": 0.002043745847798834,
+        "noisy": false,
+        "median_of_run_p99_ms": 48.662
+      },
+      "A-1048576": {
+        "qps_samples": [
+          345.6220221938784,
+          274.98542741896614,
+          344.1493364439267
+        ],
+        "qps_median": 344.1493364439267,
+        "qps_min": 274.98542741896614,
+        "qps_max": 345.6220221938784,
+        "qps_relative_span": 0.205249835739321,
+        "noisy": true,
+        "median_of_run_p99_ms": 243.99
+      },
+      "B-1048576": {
+        "qps_samples": [
+          345.6438626649032,
+          362.8254018660233,
+          323.00048165336284
+        ],
+        "qps_median": 345.6438626649032,
+        "qps_min": 323.00048165336284,
+        "qps_max": 362.8254018660233,
+        "qps_relative_span": 0.11521952076802865,
+        "noisy": false,
+        "median_of_run_p99_ms": 224.331
+      }
+    },
+    "B_over_A_qps_median": {
+      "1024": 0.022872628663657444,
+      "1048576": 1.0043426677395906
+    }
+  },
+  "wall_seconds": 305.71218426199994,
+  "ended_utc": "2026-09-10T09:53:06.034786+00:00",
+  "observed_log_bytes_at_stop": 212864583,
+  "provenance": "Builder formal-002, complete fixed suite after approved finite log-budget revision; independent Reviewer pending",
+  "raw_run_json_sha256": "444ded1615f7fc3210f8abe80b2b44b953c4d7b41424109d4e8178bb4e00e617",
+  "runner_source_sha256": {
+    "benchmark/run.py": "1668cced53e13016dd15cb5c3c611d8e2ecd22516a171ecac0e7707cfff74687",
+    "benchmark/build.py": "32340a0c73946ad18938b0c48247a18f44eb8c297d495961a710fac8bea8e22b",
+    "benchmark/summary.lua": "0ded2fdca3ab1f53274ae70806117c3c6288fec1bb05b0a0b601d55bf36b73ea"
+  }
+}

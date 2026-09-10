@@ -6,6 +6,9 @@
 
 ### 新增
 
+- V0.5/S4交付固定版本wrk脚本、环境与完整公开数据、26项快测；修复响应尾字节审计漏检。Reviewer002独立12/12测量、24阶段错误0、120次审计及进程/端口回收通过；按指纹继承独立Debug28/28、旧3/双curl及S3 sanitizer证据。Leader005核对五项条件关闭S4与V0.5，未合并或标签发布。
+- 基准有效性PASS不表示性能改善：独立1KiB中位QPS A21373.88/B713.56，B/A0.033385（观测下降约96.66%，A noisy）；1MiB B/A1.019197且双方noisy，根因未确定。保留失败及不利样本，不宣称稳定降幅或普适收益。
+
 - V0.5/S3交付连续游标Buffer与ConnectionIo直接recv，减少consume/尾空间足够时追加的后缀搬移，复用小header；完全排空后>64KiB输出容量释放、≤64KiB保留。生产16KiB输入、9MiB逻辑输出含file remaining、sendfile及HTTP背压/超时不变；重复大输出有重新分配取舍，不宣称吞吐收益。Reviewer001独立27/27、三TSan/五ASan及五反证通过；Reviewer002核实唯一两换行格式修复后最终PASS，Leader003关闭S3及TD-005本检查点。S4未开始，V0.5未完成，Unreleased不代表已发布。
 
 - V0.5/S2交付有界异步日志：1024槽、1024字节正文上限及截断，所有等级满队列丢新并计数；单消费者写stderr/flush，拥有消息，生产RAII及并发stop安全回收。健康sink排空；阻塞stderr可能拖延最终join，HTTP shutdown_timeout不保证整个进程退出上限。原接口/诊断及HTTP行为保持，没有吞吐增益承诺。独立Reviewer001 PASS、Debug25/25及三TSan/三ASan、四反证通过，Leader003关闭S2及TD-002；V0.5未完成，Unreleased不表示已发布。

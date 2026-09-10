@@ -4,7 +4,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.5/S3 Buffer 与背压优化，`已完成 / Completed`；Approved revision1、Builder001/002、Reviewer002最终PASS与Leader003收口齐备。设计：`docs/leader/designs/V0.5/S3-design.md`；审查：`docs/reviewer/reviews/V0.5/S3-review.md`；实现：`docs/builder/reports/V0.5/S3-report-001.md`；复审：`docs/reviewer/reports/V0.5/S3-report-002.md`；收口：`docs/leader/reports/V0.5/S3-report-003.md`。当前分支`codex/v0.5-s3-buffer-backpressure`基于main `0146a75`；S3尚未提交或推送。S2已通过PR #15合并，annotated `v0.5-s2`已推送且peeled目标0146a75核对一致。S4未开始，V0.5未完成。
+- 当前阶段：V0.5/S4可复现压测基线已完成，Reviewer002唯一PASS、Leader005按五项版本条件关闭V0.5；S1–S4全部完成，仍为Unreleased，合并与标签发布尚未进行。当前分支`codex/v0.5-s4-benchmark-baseline`。运行命令、环境与完整数据见 [压测说明](benchmark/README.md) 和 [独立结果](benchmark/results/V0.5-S4-reviewer-002.md)。1KiB实测A/B中位QPS为21373.88/713.56，B/A=0.033385；A组noisy，不能宣称性能改善、稳定降幅或根因。1MiB双方noisy，同样无稳定收益结论。
 
 - S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
@@ -12,7 +12,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 - 历史版本：`V0.3 HTTP 状态机与连接复用`已完成，S1/S2/S3均已完成；V0.1/V0.2已完成，V0.4已完成，S1已完成，S2已完成，S3已完成，S4已完成（Approved）。S1已合并至main并发布标签 `v0.4-s1`；S2已独立验收、收口并经PR #11合并至main，标签 `v0.4-s2` 已推送。
 - 前置版本状态：`V0.1 最小可运行 HTTP Server` 已完成；S1、S2、S3 均有 Approved 基线、Builder 实现证据与 Reviewer `PASS`。
-- 最近完成阶段：`V0.5/S3 Buffer与背压优化`；Reviewer001独立Debug27/27（28.73秒）、旧3/3、双curl、三TSan/五ASan、M0/五反证、真实0/1/2及300轮回收通过。Reviewer002以精确两换行修复及指纹不变关闭唯一格式P2-01，最终8REQ/8AC/8RV通过；本轮复审未重复动态测试。P3-01及TD-005本检查点完成，TD-005持续Open。
+- V0.5/S3历史验收：`V0.5/S3 Buffer与背压优化`；Reviewer001独立Debug27/27（28.73秒）、旧3/3、双curl、三TSan/五ASan、M0/五反证、真实0/1/2及300轮回收通过。Reviewer002以精确两换行修复及指纹不变关闭唯一格式P2-01，最终8REQ/8AC/8RV通过；本轮复审未重复动态测试。P3-01及TD-005本检查点完成，TD-005持续Open。
 
 - V0.4/S4历史验收：`V0.4/S4 资源上限与优雅关闭`；独立Debug零告警、22/22（15.70秒）、threads0旧3/3（6.00秒）、双curl、四TSan/三ASan及独立正负探针通过。Reviewer002关闭两项P2，Leader003按ROADMAP六项条件关闭V0.4；S4已合并并发布v0.4-s4；V0.5/S1已完成sendfile验收。报告：`docs/reviewer/reports/V0.4/S4-report-002.md`、`docs/leader/reports/V0.4/S4-report-003.md`。
 
@@ -436,4 +436,8 @@ cmake --build build-v0.5-s1-asan -j4
 ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 timeout 60s ./build-v0.5-s1-asan/sendfile_tests
 ```
 
-这一步验证传输机制与资源边界；不提供QPS结论，V0.5/S2日志已完成，Buffer已完成独立验收及Leader收口，wrk阶段尚未实施。
+这一步验证传输机制与资源边界；不提供QPS结论，V0.5/S2日志已完成，Buffer已完成独立验收及Leader收口，wrk固定基线已由Builder003和Reviewer002独立完成测量并通过验收。
+
+## 固定版本压测入口
+
+`benchmark/` 提供仓库内工具准备、两个固定提交的独立 Release 构建和受控 localhost wrk 对比。完整命令、失败处理、统计口径与 WSL 限制见 [benchmark/README.md](benchmark/README.md)，实测记录见 [V0.5/S4 基线](benchmark/results/V0.5-S4-baseline.md)。快速 runner 测试已登记 CTest；正式 12 样本约五分钟，需显式运行，不属于默认测试。本阶段已由Reviewer002独立PASS，完整验收与版本收口见本地Leader S4-report-005；数值有效性不代表性能改善。
