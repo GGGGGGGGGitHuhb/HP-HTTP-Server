@@ -6,6 +6,8 @@
 
 ## 当前状态与目标架构
 
+2026-09-17：R1基础接口重构已完成，独立Reviewer001 PASS、Leader005收口。基础/HTTP/Socket/Epoller普通操作与枚举/常量命名统一，当前调用者同步适配；RequestParser将ASCII比较和Header空白裁剪提取为同步具名私有方法，扫描计数、借用及拥有型请求结果保持。PathResult/ResponseResult状态和file/policy显式表达。所有权、线程和协议行为不变；后轮持久回调装配尚未迁移，R2未启动，不据此宣称全项目重构完成或性能收益。
+
 V0.5/S3已完成：Approved revision1、Builder001/002、Reviewer002最终PASS与Leader003收口齐备。base Buffer使用独占连续字节块和读/写/prepare游标，consume不搬移后缀；ConnectionIo直接recv到持有尾区，成功只commit实际字节。构造不分配，首次懒分配4KiB，生产输入容量≤16KiB；通用max_input=0仍无输入硬限。尾区不足才整理或增长，新块成功后转移所有权，失败保留原字节/游标。
 
 输出复用小header与尾空间，pending仍含file remaining且≤9MiB，file pending禁止普通追加。queue_file仍复制header并持有FileRegion，先验证/分配，失败文件销毁一次；先头后sendfile、offset及预算不变。只有内存和文件都排空时，容量>64KiB释放为0、≤64KiB保留；这不是响应拒绝或读暂停门槛，重复大内存输出可能重新分配。单Buffer增长最多旧+新两块，生产输入瞬时≤32KiB、内存输出≤18MiB，另计parser/调用方/分配器等，不能视为进程RSS上限。
@@ -16,7 +18,7 @@ V0.5/S2已完成：Approved revision1、Builder001、独立Reviewer001 PASS和Le
 
 LoggerSession先于服务资源创建，服务/worker/callback销毁及fatal记录后才停止接收、排空并join；共享引用覆盖每次提交，stop后的调用仅拒绝计数。无会话旧库调用保留同步兼容。入口先以当前线程RAII屏蔽SIGINT/SIGTERM，让消费者继承，再创建服务信号消费器；日志join后恢复原mask。健康sink排空，可返回的写/flush失败计failed并继续消费。**阻塞stderr可能拖延最终join；HTTP shutdown_timeout不保证整个进程限时退出**，不detach、不改共享stderr标志。
 
-V0.5/S1已完成，Approved revision1、Builder002、Reviewer002 PASS及Leader003齐备。生产prepare_response提供小内存头和拥有型文件区域，transport先头后sendfile正文；保留8MiB文件、9MiB逻辑待发送上限及超时/关闭语义。旧物化接口仅显式兼容，生产正文read/pread为0；不据此承诺QPS提升。
+V0.5/S1已完成，Approved revision1、Builder002、Reviewer002 PASS及Leader003齐备。生产`PrepareResponse`提供小内存头和拥有型文件区域，transport先头后sendfile正文；保留8MiB文件、9MiB逻辑待发送上限及超时/关闭语义。旧物化接口仅显式兼容，生产正文read/pread为0；不据此承诺QPS提升。
 
 V0.4/S4及V0.4已完成，Approved revision1、Builder002、Reviewer002 PASS与Leader003齐备。每连接逻辑待发送上限9MiB，超限关闭；每loop普通未完成任务最多1024，含batch/执行者，固定控制通知绕过普通名额。应用signalfd接收SIGINT/SIGTERM，停止接收并仅排空已有输出，默认5000ms统一绝对截止（0立即、最大60000），再次观察信号强关；不推进pipeline后缀。
 
@@ -314,7 +316,7 @@ V0.5/S4已交付独立于生产依赖的Python构建/协调脚本及wrk Lua summ
 
 ### 静态文件请求流
 
-当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::read_messages -> MessageCallback -> app Session -> RequestParser/HTTP`。每个factory创建共享会话Reading/Writing/Closing及独立parser；feed新字节后立即consume并丢弃旧view。解析成功后暂停读取，生产service.prepare_response返回内存头/拥有型文件区域或内存响应及effective_policy；策略先决定再序列化，服务400收紧close，旧handle委托以保持兼容。app保存最终策略并移动提交完整响应，write-complete排空通知后close或reset并优先处理缓存后缀，无须新socket事件。Session不拥有连接/service，ConnectionIo只读写字节；service生命周期覆盖回调并保留root文件fd。
+当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::read_messages -> MessageCallback -> app Session -> RequestParser/HTTP`。每个factory创建共享会话Reading/Writing/Closing及独立parser；`RequestParser::Feed`接收新字节后立即由连接consume并丢弃旧view。解析成功后暂停读取，生产`service.PrepareResponse`返回内存头/拥有型文件区域或内存响应及effective_policy；策略先决定再序列化，服务400收紧close，`Handle`委托以保持兼容。app保存最终策略并移动提交完整响应，write-complete排空通知后close或reset并优先处理缓存后缀，无须新socket事件。Session不拥有连接/service，ConnectionIo只读写字节；service生命周期覆盖回调并保留root文件fd。
 
 以下请求流包含已交付连接复用与长期扩展；sendfile已交付，完整指标仍非当前能力：
 
@@ -330,6 +332,10 @@ V0.5/S4已交付独立于生产依赖的Python构建/协调脚本及wrk Lua summ
 10. `TcpConnection` 将响应数据写入输出 Buffer，并关注可写事件。
 11. 数据写完后，根据 HTTP Connection 语义选择保持连接或关闭连接。
 12. 日志和指标模块记录请求结果、状态码、耗时和错误信息。
+
+协议解析同步路径为 `RequestParser::Feed → FinishLine → ValidateHeader → EqualsAsciiCaseInsensitive / TrimHeaderWhitespace → BuildResult`。两个具名私有helper仅借用本次输入视图并更新parser自身的扫描计数；不会保存视图或异步执行。`FeedResult`返回独立请求值，调用者之后消费输入不会使它失效。
+
+基础缓冲的变更入口为`Buffer::Prepare/Commit/Consume/Append/Reset/ReleaseEmpty`，视图仍在下一次变更时失效；`FileRegion::Advance`推进独占文件区域，`UniqueFd::Release/Reset`转移或关闭fd。`Socket::CreateTcp/BindAny/Listen/AcceptNonBlocking`与`Epoller::Add/Modify/Remove/Wait`保持原系统调用错误及生命周期契约；这些命名变化不改变网络层的后续阶段装配结构。
 
 ### L7 代理请求流
 

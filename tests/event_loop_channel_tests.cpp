@@ -23,7 +23,8 @@ struct TcpConnectionTestAccess {
 };
 
 struct EventLoopTestAccess {
-  static void dispatch(EventLoop& loop, std::uint64_t token,
+  static void dispatch(EventLoop& loop,
+                       std::uint64_t token,
                        std::uint32_t mask) {
     loop.dispatch(token, mask);
   }
@@ -46,11 +47,13 @@ struct Pair {
 
   Pair() {
     int fds[2];
-    if (::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0,
+    if (::socketpair(AF_UNIX,
+                     SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+                     0,
                      fds))
       throw std::runtime_error("socketpair");
-    observed.reset(fds[0]);
-    peer.reset(fds[1]);
+    observed.Reset(fds[0]);
+    peer.Reset(fds[1]);
   }
 
   void ready() {
@@ -118,7 +121,7 @@ void callback_lifetime_and_same_batch() {
       self.reset();
       expect(::fcntl(first.observed.fd(), F_GETFD) >= 0,
              "Channel destruction does not close fd");
-      first.observed.reset();
+      first.observed.Reset();
       ++deferred_destroy;
     }
   });
@@ -177,12 +180,12 @@ void fd_reuse_and_failures() {
     channel.remove();
   }
   expect(::fcntl(reused_fd, F_GETFD) >= 0, "non-owning destructor");
-  old.observed.reset();
+  old.observed.Reset();
   Pair fresh;
   if (fresh.observed.fd() != reused_fd) {
     expect(::dup2(fresh.observed.fd(), reused_fd) == reused_fd,
            "controlled numeric fd reuse");
-    fresh.observed.reset(reused_fd);
+    fresh.observed.Reset(reused_fd);
   }
   Channel replacement(loop, reused_fd, [&](std::uint32_t) {
     ++new_callbacks;
@@ -223,7 +226,7 @@ void fd_reuse_and_failures() {
   }
   // Remove the underlying fd to trigger a real kernel MOD failure. Channel is
   // deliberately non-owning; owner close here is fault injection, not usage.
-  fresh.observed.reset();
+  fresh.observed.Reset();
   try {
     good.set_interest(EPOLLIN | EPOLLOUT);
   } catch (const std::system_error&) {
@@ -258,15 +261,15 @@ int connect_loopback(std::uint16_t port) {
 
 void real_reset_through_channel() {
   EventLoop loop;
-  Socket listener = Socket::create_tcp();
-  listener.bind_any(0);
-  listener.listen(4);
+  Socket listener = Socket::CreateTcp();
+  listener.BindAny(0);
+  listener.Listen(4);
   Socket accepted;
   int listener_callbacks{}, connection_callbacks{}, combined{}, so_errors{};
   Channel listening(loop, listener.fd(), [&](std::uint32_t mask) {
     expect(mask & EPOLLIN, "real listener read mask");
     ++listener_callbacks;
-    accepted = listener.accept_non_blocking();
+    accepted = listener.AcceptNonBlocking();
     listening.remove();
   });
   listening.set_interest(EPOLLIN);
@@ -307,10 +310,11 @@ void real_reset_through_channel() {
          "all TCP bytes queued without consuming");
   connection.set_interest(0);
   linger reset{1, 0};
-  expect(::setsockopt(client.fd(), SOL_SOCKET, SO_LINGER, &reset,
-                      sizeof(reset)) == 0,
-         "zero linger");
-  client.reset();
+  expect(
+      ::setsockopt(client.fd(), SOL_SOCKET, SO_LINGER, &reset, sizeof(reset)) ==
+          0,
+      "zero linger");
+  client.Reset();
   for (int i = 0; i < 8 && !error_ready; ++i) loop.poll_once(250);
   expect(error_ready, "kernel reset pending");
   consume = true;

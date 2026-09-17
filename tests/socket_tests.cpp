@@ -50,8 +50,8 @@ void test_default_state() {
   hp::net::Socket socket;
   expect(!socket.valid(), "default socket must be invalid");
   expect(socket.fd() == -1, "default fd must be -1");
-  expect(socket.release() == -1, "release on invalid socket must return -1");
-  socket.reset();
+  expect(socket.Release() == -1, "release on invalid socket must return -1");
+  socket.Reset();
 }
 
 void test_destructor() {
@@ -124,7 +124,7 @@ void test_release() {
   int released_fd = -1;
   {
     hp::net::Socket socket(fds[0]);
-    released_fd = socket.release();
+    released_fd = socket.Release();
     expect(!socket.valid(), "release must invalidate socket");
     expect(released_fd == fds[0], "release must return owned fd");
   }
@@ -148,16 +148,16 @@ void test_reset() {
   const int old_fd = first_pipe[0];
   const int new_fd = second_pipe[0];
   hp::net::Socket socket(old_fd);
-  socket.reset(new_fd);
+  socket.Reset(new_fd);
   expect(is_closed(old_fd), "reset must close the old fd");
   expect(socket.fd() == new_fd, "reset must own the new fd");
   expect(is_open(new_fd), "new fd must remain open");
 
-  socket.reset(new_fd);
+  socket.Reset(new_fd);
   expect(socket.fd() == new_fd, "same-fd reset must preserve ownership");
   expect(is_open(new_fd), "same-fd reset must not close the fd");
 
-  socket.reset();
+  socket.Reset();
   expect(!socket.valid(), "empty reset must invalidate socket");
   expect(is_closed(new_fd), "empty reset must close the owned fd");
   close_fd(first_pipe[1]);

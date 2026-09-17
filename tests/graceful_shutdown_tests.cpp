@@ -45,8 +45,12 @@ struct GracefulShutdownTestAccess {
           ::getpeername(fd, reinterpret_cast<sockaddr*>(&peer), &size) == 0
               ? 0
               : errno;
-      result.push_back({fd, error, connection->identity(), peer,
-                        connection->state(), connection->pending_bytes(),
+      result.push_back({fd,
+                        error,
+                        connection->identity(),
+                        peer,
+                        connection->state(),
+                        connection->pending_bytes(),
                         connection->input_view().size(),
                         std::this_thread::get_id()});
     }
@@ -70,7 +74,8 @@ namespace {
 using Clock = hp::timer::TimerQueue::Clock;
 using ShutdownAccess = GracefulShutdownTestAccess;
 
-std::size_t pending(ServerHarness& harness, std::size_t workers,
+std::size_t pending(ServerHarness& harness,
+                    std::size_t workers,
                     std::size_t index = 0) {
   std::promise<std::size_t> done;
   auto result = done.get_future();
@@ -127,7 +132,8 @@ sockaddr_in client_endpoint(int fd) {
 }
 
 std::vector<ShutdownAccess::ConnectionSnapshot> owner_connections(
-    ServerHarness& harness, std::size_t workers) {
+    ServerHarness& harness,
+    std::size_t workers) {
   std::vector<ShutdownAccess::ConnectionSnapshot> all;
   for (std::size_t index = 0; index < std::max(workers, std::size_t{1});
        ++index) {
@@ -139,7 +145,8 @@ std::vector<ShutdownAccess::ConnectionSnapshot> owner_connections(
     };
     const bool accepted =
         workers
-            ? TcpServerTestAccess::post(*harness.server, index,
+            ? TcpServerTestAccess::post(*harness.server,
+                                        index,
                                         [inspect](EventLoop&) { inspect(); })
             : TcpServerTestAccess::main_post(*harness.server, inspect);
     require(accepted, "connection snapshot accepted");
@@ -151,7 +158,8 @@ std::vector<ShutdownAccess::ConnectionSnapshot> owner_connections(
   return all;
 }
 
-std::size_t writing_pending(ServerHarness& harness, std::size_t workers,
+std::size_t writing_pending(ServerHarness& harness,
+                            std::size_t workers,
                             const Stream& writing) {
   const auto expected = client_endpoint(writing.fd);
   const auto connections = owner_connections(harness, workers);
@@ -168,9 +176,12 @@ std::size_t writing_pending(ServerHarness& harness, std::size_t workers,
   return pending_bytes;
 }
 
-void partial_handshake(ServerHarness& harness, Probe& probe,
-                       std::size_t workers, Stream& partial,
-                       const sockaddr_in& expected, DrainProbe mode) {
+void partial_handshake(ServerHarness& harness,
+                       Probe& probe,
+                       std::size_t workers,
+                       Stream& partial,
+                       const sockaddr_in& expected,
+                       DrainProbe mode) {
   const std::string marker = "GET /note.txt HTTP/1.1\r\nHost:";
   auto inspect = [&] {
     std::lock_guard lock(probe.mutex);
@@ -289,7 +300,8 @@ void library_drain(const hp::http::StaticFileService& service,
       partial.send("GET /note");
       await([&] {
         std::lock_guard lock(probe.mutex);
-        return std::any_of(probe.messages.begin(), probe.messages.end(),
+        return std::any_of(probe.messages.begin(),
+                           probe.messages.end(),
                            [&](const auto& row) {
                              return row.peer.sin_port == endpoint.sin_port &&
                                     row.completed && row.input == "GET /note";
@@ -314,7 +326,8 @@ void library_drain(const hp::http::StaticFileService& service,
     require(
         response.status == 200 && response.body.size() == fixture.large.size(),
         "drained size");
-    require(std::memcmp(response.body.data(), fixture.large.data(),
+    require(std::memcmp(response.body.data(),
+                        fixture.large.data(),
                         fixture.large.size()) == 0,
             "8MiB response byte for byte");
     writing.eof();
@@ -353,12 +366,13 @@ void deadline_drain(const hp::http::StaticFileService& service,
     require(prefix.starts_with("HTTP/1.1 200"), "original response prefix");
     require(prefix.find("HTTP/1.1", 1) == std::string::npos,
             "no appended timeout/error response");
-    require(prefix.size() < hp::http::max_file_bytes,
+    require(prefix.size() < hp::http::kMaxFileBytes,
             "deadline truncates stalled response");
     const auto body = prefix.find("\r\n\r\n") + 4;
     require(body >= 4 && body <= prefix.size(),
             "complete response prefix header");
-    require(std::memcmp(prefix.data() + body, fixture.large.data(),
+    require(std::memcmp(prefix.data() + body,
+                        fixture.large.data(),
                         prefix.size() - body) == 0,
             "truncated body is byte-exact original prefix");
     std::cout << "deadline timeout_ms=" << timeout.count()
@@ -370,7 +384,7 @@ void deadline_drain(const hp::http::StaticFileService& service,
 void provider_drain(const hp::http::StaticFileService& service,
                     const Fixture& fixture) {
   EventLoop loop;
-  ConnectionRegistry registry(loop, hp::http::max_request_bytes, {30ms, 30ms});
+  ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {30ms, 30ms});
   int sockets[2];
   require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, sockets) == 0,
           "provider pair");
@@ -381,7 +395,7 @@ void provider_drain(const hp::http::StaticFileService& service,
       Socket(sockets[0]),
       hp::app::make_http_callback([&](const auto& request, auto policy) {
         ++providers;
-        return service.handle_response(request, policy);
+        return service.HandleResponse(request, policy);
       }));
   const auto request = query("/large.bin") + query("/note.txt");
   require(::send(peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
@@ -405,7 +419,8 @@ void provider_drain(const hp::http::StaticFileService& service,
   }
   const auto body = wire.find("\r\n\r\n") + 4;
   require(wire.size() - body == fixture.large.size() &&
-              std::memcmp(wire.data() + body, fixture.large.data(),
+              std::memcmp(wire.data() + body,
+                          fixture.large.data(),
                           fixture.large.size()) == 0,
           "provider drain full bytes");
   require(providers == 1 && ShutdownAccess::entries(registry).empty(),
@@ -453,7 +468,8 @@ void full_control(const hp::http::StaticFileService& service) {
   ServerHarness saturated(service, 2);
   std::promise<void> handoff_entered, handoff_release;
   auto handoff_gate = handoff_release.get_future().share();
-  require(TcpServerTestAccess::post(*saturated.server, 1,
+  require(TcpServerTestAccess::post(*saturated.server,
+                                    1,
                                     [&](EventLoop&) {
                                       handoff_entered.set_value();
                                       require(handoff_gate.wait_for(3s) ==
@@ -483,7 +499,8 @@ void full_control(const hp::http::StaticFileService& service) {
   ServerHarness fatal(service, 2);
   std::promise<void> peer_entered, peer_release;
   auto peer_gate = peer_release.get_future().share();
-  require(TcpServerTestAccess::post(*fatal.server, 1,
+  require(TcpServerTestAccess::post(*fatal.server,
+                                    1,
                                     [&](EventLoop&) {
                                       peer_entered.set_value();
                                       require(peer_gate.wait_for(3s) ==
@@ -498,7 +515,8 @@ void full_control(const hp::http::StaticFileService& service) {
             "fill peer");
   require(!TcpServerTestAccess::post(*fatal.server, 1, [](EventLoop&) {}),
           "peer saturated");
-  require(TcpServerTestAccess::post(*fatal.server, 0,
+  require(TcpServerTestAccess::post(*fatal.server,
+                                    0,
                                     [](EventLoop&) {
                                       throw std::runtime_error(
                                           "graceful fatal original");
@@ -528,8 +546,10 @@ std::string describe_threads(const ThreadIds& ids) {
   return result + "]";
 }
 
-ThreadIds settle_threads(const ThreadIds& owned, const ThreadIds& expected,
-                         const char* phase, int cycle) {
+ThreadIds settle_threads(const ThreadIds& owned,
+                         const ThreadIds& expected,
+                         const char* phase,
+                         int cycle) {
   const auto start = Clock::now();
   const auto first = task_ids();
   auto actual = first;
@@ -541,8 +561,9 @@ ThreadIds settle_threads(const ThreadIds& owned, const ThreadIds& expected,
   const auto controller = static_cast<pid_t>(::syscall(SYS_gettid));
   for (;;) {
     const bool retired =
-        std::none_of(owned.begin(), owned.end(),
-                     [&](pid_t tid) { return actual.contains(tid); });
+        std::none_of(owned.begin(), owned.end(), [&](pid_t tid) {
+          return actual.contains(tid);
+        });
     const bool baseline = expected.empty() ? actual.size() == baseline_size &&
                                                  actual.contains(controller)
                                            : actual == expected;
@@ -576,7 +597,8 @@ ThreadIds ready_threads(ServerHarness& harness) {
     };
     const bool accepted =
         index < 0 ? TcpServerTestAccess::main_post(*harness.server, observe)
-                  : TcpServerTestAccess::post(*harness.server, index,
+                  : TcpServerTestAccess::post(*harness.server,
+                                              index,
                                               [&](EventLoop&) { observe(); });
     require(accepted, "thread identity observer accepted");
     require(tid.wait_for(3s) == std::future_status::ready,
@@ -622,7 +644,8 @@ ThreadIds mask_lifetime(bool startup_fault = true,
           std::promise<std::pair<bool, pid_t>> observed_mask;
           auto result = observed_mask.get_future();
           require(TcpServerTestAccess::post(
-                      server, index,
+                      server,
+                      index,
                       [&](EventLoop&) {
                         sigset_t current;
                         ::pthread_sigmask(SIG_SETMASK, nullptr, &current);
@@ -717,7 +740,9 @@ struct Child {
   std::uint16_t port{};
   std::string text;
 
-  Child(const char* executable, const Fixture& fixture, int workers,
+  Child(const char* executable,
+        const Fixture& fixture,
+        int workers,
         int timeout) {
     int pipes[2];
     require(::pipe2(pipes, O_CLOEXEC) == 0, "child pipe");

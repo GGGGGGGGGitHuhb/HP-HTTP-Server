@@ -7,88 +7,94 @@
 namespace hp::http {
 namespace {
 
-std::string_view reason_phrase(Status status) {
+std::string_view ReasonPhrase(Status status) {
   switch (status) {
-    case Status::ok:
+    case Status::kOk:
       return "OK";
-    case Status::bad_request:
+    case Status::kBadRequest:
       return "Bad Request";
-    case Status::forbidden:
+    case Status::kForbidden:
       return "Forbidden";
-    case Status::not_found:
+    case Status::kNotFound:
       return "Not Found";
-    case Status::method_not_allowed:
+    case Status::kMethodNotAllowed:
       return "Method Not Allowed";
-    case Status::internal_server_error:
+    case Status::kInternalServerError:
       return "Internal Server Error";
   }
   throw std::invalid_argument("unsupported HTTP status");
 }
 
-std::string_view error_body(Status status) {
+std::string_view ErrorBody(Status status) {
   switch (status) {
-    case Status::bad_request:
+    case Status::kBadRequest:
       return "400 Bad Request\n";
-    case Status::forbidden:
+    case Status::kForbidden:
       return "403 Forbidden\n";
-    case Status::not_found:
+    case Status::kNotFound:
       return "404 Not Found\n";
-    case Status::method_not_allowed:
+    case Status::kMethodNotAllowed:
       return "405 Method Not Allowed\n";
-    case Status::internal_server_error:
+    case Status::kInternalServerError:
       return "500 Internal Server Error\n";
-    case Status::ok:
+    case Status::kOk:
       break;
   }
   throw std::invalid_argument("200 is not an error response");
 }
 
-std::span<const std::byte> as_bytes(std::string_view text) {
+std::span<const std::byte> AsBytes(std::string_view text) {
   return {reinterpret_cast<const std::byte*>(text.data()), text.size()};
 }
 
 }  // namespace
 
-std::vector<std::byte> make_response_header(Status status,
-                                            std::size_t content_length,
-                                            std::string_view content_type,
-                                            bool include_allow_get,
-                                            ConnectionPolicy policy) {
+std::vector<std::byte> MakeResponseHeader(Status status,
+                                          std::size_t content_length,
+                                          std::string_view content_type,
+                                          bool include_allow_get,
+                                          ConnectionPolicy policy) {
   std::string header = "HTTP/1.1 " + std::to_string(static_cast<int>(status)) +
-                       " " + std::string(reason_phrase(status)) + "\r\n";
+                       " " + std::string(ReasonPhrase(status)) + "\r\n";
   header += "Content-Length: " + std::to_string(content_length) + "\r\n";
   header += "Content-Type: " + std::string(content_type) + "\r\n";
-  header += policy == ConnectionPolicy::close ? "Connection: close\r\n"
-                                              : "Connection: keep-alive\r\n";
+  header += policy == ConnectionPolicy::kClose ? "Connection: close\r\n"
+                                               : "Connection: keep-alive\r\n";
   if (include_allow_get) {
     header += "Allow: GET\r\n";
   }
   header += "\r\n";
 
-  const auto bytes = as_bytes(header);
+  const auto bytes = AsBytes(header);
   return {bytes.begin(), bytes.end()};
 }
 
-std::vector<std::byte> make_response(Status status,
-                                     std::span<const std::byte> body,
-                                     std::string_view content_type,
-                                     bool include_allow_get,
-                                     ConnectionPolicy policy) {
-  auto response = make_response_header(status, body.size(), content_type,
-                                       include_allow_get, policy);
+std::vector<std::byte> MakeResponse(Status status,
+                                    std::span<const std::byte> body,
+                                    std::string_view content_type,
+                                    bool include_allow_get,
+                                    ConnectionPolicy policy) {
+  auto response = MakeResponseHeader(status,
+                                     body.size(),
+                                     content_type,
+                                     include_allow_get,
+                                     policy);
   response.reserve(response.size() + body.size());
   response.insert(response.end(), body.begin(), body.end());
   return response;
 }
 
-std::vector<std::byte> make_error_response(Status status,
-                                           ConnectionPolicy policy) {
-  const std::string_view body = error_body(status);
-  return make_response(status, as_bytes(body), "text/plain; charset=utf-8",
-                       status == Status::method_not_allowed, policy);
+std::vector<std::byte> MakeErrorResponse(Status status,
+                                         ConnectionPolicy policy) {
+  const std::string_view body = ErrorBody(status);
+  return MakeResponse(status,
+                      AsBytes(body),
+                      "text/plain; charset=utf-8",
+                      status == Status::kMethodNotAllowed,
+                      policy);
 }
 
-std::string content_type_for_path(std::string_view path) {
+std::string ContentTypeForPath(std::string_view path) {
   const std::size_t slash = path.find_last_of('/');
   const std::size_t dot = path.find_last_of('.');
   if (dot == std::string_view::npos ||
@@ -96,7 +102,9 @@ std::string content_type_for_path(std::string_view path) {
     return "application/octet-stream";
   }
   std::string extension(path.substr(dot));
-  std::transform(extension.begin(), extension.end(), extension.begin(),
+  std::transform(extension.begin(),
+                 extension.end(),
+                 extension.begin(),
                  [](unsigned char character) {
                    return static_cast<char>(std::tolower(character));
                  });

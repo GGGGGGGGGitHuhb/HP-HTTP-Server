@@ -21,13 +21,13 @@ class Buffer {
   std::size_t capacity() const noexcept { return capacity_; }
   std::size_t writable_bytes() const noexcept { return capacity_ - write_; }
 
-  std::span<std::byte> prepare(std::size_t count);
-  void commit(std::size_t count);
-  void consume(std::size_t count);
+  std::span<std::byte> Prepare(std::size_t count);
+  void Commit(std::size_t count);
+  void Consume(std::size_t count);
   // Source must not alias this Buffer's storage.
-  void append(std::span<const std::byte> bytes);
-  void reset() noexcept;
-  void release_empty(std::size_t retain_limit) noexcept;
+  void Append(std::span<const std::byte> bytes);
+  void Reset() noexcept;
+  void ReleaseEmpty(std::size_t retain_limit) noexcept;
 
  private:
   struct StorageDeleter {

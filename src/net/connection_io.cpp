@@ -18,7 +18,9 @@ struct FileWrite {
   int error;
 };
 
-FileWrite send_file(int socket, int file, off_t* offset,
+FileWrite send_file(int socket,
+                    int file,
+                    off_t* offset,
                     std::size_t length) noexcept {
   sigset_t pipe, previous, pending;
   ::sigemptyset(&pipe);
@@ -62,7 +64,7 @@ std::span<const std::byte> ConnectionIo::input_view() const noexcept {
   return input_.readable_view();
 }
 
-void ConnectionIo::consume(std::size_t count) { input_.consume(count); }
+void ConnectionIo::consume(std::size_t count) { input_.Consume(count); }
 
 ReadResult ConnectionIo::read_once() {
   ReadResult result;
@@ -80,11 +82,11 @@ ReadResult ConnectionIo::read_once() {
   }
   const auto available = input_.writable_bytes();
   const auto size = std::min(budget, available ? available : std::size_t{4096});
-  auto tail = input_.prepare(size);
+  auto tail = input_.Prepare(size);
   while (true) {
     const auto count = ::recv(fd(), tail.data(), tail.size(), 0);
     if (count > 0) {
-      input_.commit(static_cast<std::size_t>(count));
+      input_.Commit(static_cast<std::size_t>(count));
       result.bytes_read = static_cast<std::size_t>(count);
       return result;
     }
@@ -126,7 +128,7 @@ WriteResult ConnectionIo::write_available() {
     const ssize_t count = ::send(socket_.fd(), data, remaining, MSG_NOSIGNAL);
     if (count > 0) {
       const auto byte_count = static_cast<std::size_t>(count);
-      output_.consume(byte_count);
+      output_.Consume(byte_count);
       result.bytes_written += byte_count;
       continue;
     }
@@ -155,7 +157,7 @@ WriteResult ConnectionIo::write_available() {
     const auto written = send_file(fd(), file_->fd(), &offset, count);
     if (written.count > 0) {
       const auto bytes = static_cast<std::size_t>(written.count);
-      file_->advance(bytes);
+      file_->Advance(bytes);
       progress += bytes;
       result.bytes_written += bytes;
     }
@@ -170,7 +172,7 @@ WriteResult ConnectionIo::write_available() {
     }
   }
   file_.reset();
-  output_.release_empty(64U * 1024U);
+  output_.ReleaseEmpty(64U * 1024U);
   return result;
 }
 
@@ -183,7 +185,7 @@ void ConnectionIo::queue_output(std::span<const std::byte> bytes) {
   if (file_) throw std::logic_error("append while file output is pending");
   if (!output_fits(pending_bytes(), bytes.size()))
     throw std::length_error("connection output limit exceeded");
-  output_.append(bytes);
+  output_.Append(bytes);
 }
 
 void ConnectionIo::queue_file(std::span<const std::byte> header,
@@ -195,7 +197,7 @@ void ConnectionIo::queue_file(std::span<const std::byte> header,
   if (!output_fits(header.size(), file.remaining()))
     throw std::length_error("connection output limit exceeded");
   // Allocate before taking the region; failure destroys the by-value owner.
-  output_.append(header);
+  output_.Append(header);
   file_.emplace(std::move(file));
   if (!file_->remaining()) file_.reset();
 }

@@ -33,7 +33,7 @@ std::span<const std::byte> Buffer::readable_view() const noexcept {
   return {storage_.get() + read_, readable_bytes()};
 }
 
-std::span<std::byte> Buffer::prepare(std::size_t count) {
+std::span<std::byte> Buffer::Prepare(std::size_t count) {
   const auto readable = readable_bytes();
   if (count > limit_ - readable)
     throw std::length_error("buffer limit exceeded");
@@ -62,14 +62,14 @@ std::span<std::byte> Buffer::prepare(std::size_t count) {
   return {storage_.get() + write_, count};
 }
 
-void Buffer::commit(std::size_t count) {
+void Buffer::Commit(std::size_t count) {
   if (count > prepared_)
     throw std::out_of_range("buffer commit exceeds prepared bytes");
   write_ += count;
   prepared_ = 0;
 }
 
-void Buffer::consume(std::size_t count) {
+void Buffer::Consume(std::size_t count) {
   if (count > readable_bytes())
     throw std::out_of_range("buffer consumption exceeds readable bytes");
   read_ += count;
@@ -77,19 +77,19 @@ void Buffer::consume(std::size_t count) {
   if (read_ == write_) read_ = write_ = 0;
 }
 
-void Buffer::append(std::span<const std::byte> bytes) {
-  auto tail = prepare(bytes.size());
+void Buffer::Append(std::span<const std::byte> bytes) {
+  auto tail = Prepare(bytes.size());
   if (!bytes.empty()) std::memcpy(tail.data(), bytes.data(), bytes.size());
-  commit(bytes.size());
+  Commit(bytes.size());
 }
 
-void Buffer::reset() noexcept { read_ = write_ = prepared_ = 0; }
+void Buffer::Reset() noexcept { read_ = write_ = prepared_ = 0; }
 
-void Buffer::release_empty(std::size_t retain_limit) noexcept {
+void Buffer::ReleaseEmpty(std::size_t retain_limit) noexcept {
   if (readable_bytes() == 0 && capacity_ > retain_limit) {
     storage_.reset();
     capacity_ = 0;
-    reset();
+    Reset();
   }
 }
 }  // namespace hp::base

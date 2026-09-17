@@ -4,7 +4,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.5/S4可复现压测基线已完成，Reviewer002唯一PASS、Leader005按五项版本条件关闭V0.5；S1–S4全部完成，仍为Unreleased，合并与标签发布尚未进行。当前分支`codex/v0.5-s4-benchmark-baseline`。运行命令、环境与完整数据见 [压测说明](benchmark/README.md) 和 [独立结果](benchmark/results/V0.5-S4-reviewer-002.md)。1KiB实测A/B中位QPS为21373.88/713.56，B/A=0.033385；A组noisy，不能宣称性能改善、稳定降幅或根因。1MiB双方noisy，同样无稳定收益结论。
+- 当前阶段：V0.5/S4可复现压测基线已完成，Reviewer002唯一PASS、Leader005按五项版本条件关闭V0.5；S1–S4全部完成，本地基线`ecddb98`已包含PR #17合并，未新增版本标签。R1基础接口重构已完成（独立Reviewer001 PASS）：接口和调用者同步迁移、parser具名helper及显式结果、局部格式化与暂存范围hook已交付；独立28/28、五项ASan/UBSan、13项hook回归和双smoke通过。分支`codex/refactor-r1`仅本地提交、不推送，R2未启动。运行命令、环境与完整数据见 [压测说明](benchmark/README.md) 和 [独立结果](benchmark/results/V0.5-S4-reviewer-002.md)。1KiB实测A/B中位QPS为21373.88/713.56，B/A=0.033385；A组noisy，不能宣称性能改善、稳定降幅或根因。1MiB双方noisy，同样无稳定收益结论。
 
 - S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
@@ -29,7 +29,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 - 当前生产 listener/connection 通过非 fd owner 的 Channel 注册，由 EventLoop wait、按 registration token 分发完整 mask；Acceptor 独占监听与 accept-drain，TcpConnection 独占 ConnectionIo、Channel、事件诊断、interest 与本地关闭；各 owner 的 ConnectionRegistry 持有连接集合，在本 owner 回调返回后按稳定 identity 回收；TcpServer 在 main 管理监听、固定线程池和轮转交接。
 - V0.2/S2 独立验收：全新 Debug 构建告警 0、CTest `11/11`、REQ-01..08/AC-01..10/RV-01..10 全通过；新增组件专项 ASan/UBSan 无诊断。
 - V0.2/S3 历史链路（S2会话已替代done）：TcpConnection 发布累计未消费输入/EOF；app 层 HTTP 适配器每连接独立 done，通过 send/consume/close_after_flush 发送并排空；ConnectionIo 仅管理字节读写和缓冲。实现报告见 `docs/builder/reports/V0.2/S3-report-001.md`。
-- V0.3/S1 实现：每连接独立 `RequestParser` 接收新字节，NeedMore 时立即消费已接收字节；RequestLine/Headers/Complete/Error 状态保留跨块 CR。`parse_request` 使用同一算法。请求行内容恰好 4096 字节的未结束前缀为 NeedMore，4097 内容字节为错误；完整请求头上限 16384 字节（含 CRLF）。
+- V0.3/S1 实现：每连接独立 `RequestParser` 接收新字节，NeedMore 时立即消费已接收字节；RequestLine/Headers/Complete/Error 状态保留跨块 CR。`ParseRequest` 使用同一算法。请求行内容恰好 4096 字节的未结束前缀为 NeedMore，4097 内容字节为错误；完整请求头上限 16384 字节（含 CRLF）。
 - 增量 parser 的终态保持到显式 reset，并在首个请求头结尾精确停止。生产在响应排空后 reset，先处理 transport 中缓存的后缀，最多保留一个未排空响应。待输出时暂停读取，正常空闲 EOF 静默关闭；初始空 EOF 或部分请求 EOF 返回400后关闭。
 - V0.1/S3 历史 Approved 权威包：
   - `docs/leader/designs/V0.1/S3-design.md`
@@ -84,22 +84,22 @@ chmod +x .githooks/pre-commit
 git config --local core.hooksPath .githooks
 ```
 
-日常手动格式化与只读检查：
+按受影响文件格式化与只读检查（清单为UTF-8，每行一个仓库相对C++路径，支持空格；空清单不做修改）：
 
 ```bash
-python3 scripts/format_cpp.py
-python3 scripts/format_cpp.py --check
+python3 scripts/format_cpp.py --files-from affected-cpp.txt
+python3 scripts/format_cpp.py --check --files-from affected-cpp.txt
 ```
 
 钩子回归测试：`python3 scripts/test_format_hook.py`，只在临时仓库中创建测试提交。
 
-每次 `git commit` 前，钩子格式化所有 Git 跟踪的 `.cpp`、`.h`、`.cc`、`.hpp`、`.cxx`、`.hxx` 文件，
+每次 `git commit` 前，钩子只格式化本次暂存新增、修改或重命名后的 `.cpp`、`.h`、`.cc`、`.hpp`、`.cxx`、`.hxx` 文件，
 排除 `build`、`build-*`、`.cache`、`third_party`、`vendor` 和 `generated` 目录。
-新文件先暂存才会纳入检查。格式化产生改动时中止提交，请查看差异、按需重新暂存后再次提交；钩子不会自动暂存。
+删除项不检查，范围外未暂存文件不触碰。显式清单允许尚未跟踪的新文件，但拒绝绝对/越界路径、符号链接、排除目录、非C++或不存在的文件；不能与`--hook`组合。手动不带`--files-from`仍为全仓模式，只在授权全仓格式化时使用。格式化产生改动时中止提交，请查看差异、按需重新暂存后再次提交；钩子不会自动暂存。
 相关文件存在部分暂存、格式配置尚未暂存、合并冲突、工具缺失或版本不匹配时，先拒绝操作。
 提交前还会检查暂存区内容，避免工作区已格式化而提交的仍是旧内容。
 
-格式配置仅保留 `BasedOnStyle: Google`，使用其默认设置。
+格式配置以Google为基础、80列，保留用户的参数/实参不合并、不整体挪到下一行及括号后对齐覆盖项。配置暂存变化不授权hook改动提交范围外文件；重构分五轮迁移，未涉及文件可能尚不符合此配置，R5再要求全仓检查通过。
 接口职责分组和函数内部逻辑分段仍须人工复核。本地钩子可以被绕过，不能替代服务端 CI 检查。
 
 ## 快速开始
@@ -131,7 +131,7 @@ curl --http1.1 -i http://127.0.0.1:8080/missing.txt
 curl --http1.1 -i -X POST http://127.0.0.1:8080/
 ```
 
-预期信号包括 `27/27` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
+预期信号包括 `28/28` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
 
 ## 配置说明
 
@@ -207,7 +207,9 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
   bash tests/http_smoke_test.sh ./build-v0.4-s2/hp_http_server
 ```
 
-当前 CTest 共 27 项（保留原25项身份，新增Buffer及真实背压专项）：
+当前 CTest 共28项（含V0.5/S4新增的benchmark runner回归）：
+
+- `benchmark_runner_tests`：预算、测量审计、尾字节、失败退出及子进程回收；临时输出必须位于源码树内，因此导出基线时将构建目录放在导出的源码树内。
 
 - `buffer_tests`：游标/边界/移动/异常、直接recv地址、输出容量及瞬时分配、小header1000轮复用、大容量释放和文件失败所有权。
 - `buffer_backpressure_tests`：0/1/2生产HTTP以peer+fd/identity及owner握手验证真实EAGAIN、同owner健康请求/控制、Writing期间无额外recv、恢复pipeline，以及每模式100轮资源回收。
@@ -369,7 +371,7 @@ Agent 执行真实 socket/HTTP、系统跟踪或受限 sanitizer 时遵守仓库
 - 生产默认main监听、两个worker处理连接，显式 `--threads 0` 保留单 Reactor。EventLoop 绑定构造线程；所有注册、更新、移除、poll、cleanup 设置及销毁始终由该 owner 执行（启动前也不例外）。Channel 不关闭 fd，所有者必须先 remove，回调返回后再销毁 Channel 和 fd owner。
 - 消息 span 只在回调期间借用，consume 后不再使用旧视图；send 在返回前复制字节，close_after_flush 立即停止新输入通知并保留待写尾部。HTTP会话在上个响应实际排空后才解析下个请求；pause与永久关闭分离。旧 ApplicationHandler/Result 生产接口已移除。
 - 已有 owner 定时队列、连接超时、输出上限和进程优雅关闭；尚无全局连接/内存配额或总请求时限。持续发送少量字节可刷新 idle，阻塞 provider 不能被同 owner timer 抢占，因此这些超时不等同于完整 slowloris/慢读防护。
-- 生产静态文件采用小内存响应头与独占fd的sendfile正文；错误/自定义内存响应仍使用输出缓冲。旧handle/handle_response是显式物化兼容入口，生产factory使用prepare_response。不据机制验证承诺性能涨幅。
+- 生产静态文件采用小内存响应头与独占fd的sendfile正文；错误/自定义内存响应仍使用输出缓冲。`Handle`/`HandleResponse`是显式物化兼容入口，生产factory使用`PrepareResponse`。不据机制验证承诺性能涨幅。
 - 只承诺 Linux / WSL2 方向；HTTP/2、TLS、数据库、代理、L4LB、XDP 和 DPDK 均不在当前范围。
 
 ## 许可证

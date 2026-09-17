@@ -19,7 +19,8 @@ FileRegion::FileRegion(UniqueFd file, off_t offset, std::size_t length)
   const int flags = ::fcntl(file_.get(), F_GETFD);
   if (flags < 0 || (!(flags & FD_CLOEXEC) &&
                     ::fcntl(file_.get(), F_SETFD, flags | FD_CLOEXEC) < 0))
-    throw std::system_error(errno, std::generic_category(),
+    throw std::system_error(errno,
+                            std::generic_category(),
                             "file region CLOEXEC");
 }
 
@@ -37,11 +38,11 @@ FileRegion &FileRegion::operator=(FileRegion &&other) noexcept {
   return *this;
 }
 
-void FileRegion::advance(std::size_t bytes) {
+void FileRegion::Advance(std::size_t bytes) {
   if (bytes > remaining_)
     throw std::out_of_range("file progress exceeds region");
   offset_ += static_cast<off_t>(bytes);
   remaining_ -= bytes;
-  if (!remaining_) file_.reset();
+  if (!remaining_) file_.Reset();
 }
 }  // namespace hp::base

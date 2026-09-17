@@ -41,7 +41,8 @@ struct EventLoopThreadPoolTestAccess {
 };
 
 struct TcpServerTestAccess {
-  static bool post(TcpServer& server, std::size_t index,
+  static bool post(TcpServer& server,
+                   std::size_t index,
                    EventLoopThread::Callback task) {
     return server.pool_.post(index, std::move(task));
   }
@@ -94,7 +95,9 @@ int __wrap_close(int fd) {
 
 int __real_epoll_ctl(int, int, int, epoll_event*);
 
-int __wrap_epoll_ctl(int fd, int operation, int observed_fd,
+int __wrap_epoll_ctl(int fd,
+                     int operation,
+                     int observed_fd,
                      epoll_event* event) {
   if (operation == EPOLL_CTL_ADD &&
       std::exchange(reject_any_registration, false)) {
@@ -199,7 +202,8 @@ void session_event(bool created, const void* session) noexcept {
   if (auto* probe = observed.load()) {
     std::lock_guard lock(probe->mutex);
     if (created) {
-      if (std::find(probe->owners.begin(), probe->owners.end(),
+      if (std::find(probe->owners.begin(),
+                    probe->owners.end(),
                     std::this_thread::get_id()) == probe->owners.end())
         ++probe->owner_errors;
       probe->sessions.emplace(session, std::this_thread::get_id());
@@ -223,8 +227,10 @@ struct ServerHarness {
   bool release_owner{false};
   std::atomic<bool> run_ended{false}, run_failed{false};
 
-  ServerHarness(const hp::http::StaticFileService& service, std::size_t workers,
-                Probe* probe = nullptr, ConnectionTimeouts timeouts = {}) {
+  ServerHarness(const hp::http::StaticFileService& service,
+                std::size_t workers,
+                Probe* probe = nullptr,
+                ConnectionTimeouts timeouts = {}) {
     std::promise<void> ready;
     auto result = ready.get_future();
     control = std::thread([&, workers, probe, timeouts] {
@@ -247,7 +253,8 @@ struct ServerHarness {
               return TcpConnection::MessageCallback(
                   [callback = std::move(callback), probe, id](
                       TcpConnection& connection,
-                      std::span<const std::byte> bytes, bool eof) mutable {
+                      std::span<const std::byte> bytes,
+                      bool eof) mutable {
                     {
                       std::lock_guard lock(probe->mutex);
                       auto& owner = probe->owners[id];
@@ -287,7 +294,9 @@ struct ServerHarness {
                     }
                   });
             },
-            hp::http::max_request_bytes, workers, timeouts);
+            hp::http::kMaxRequestBytes,
+            workers,
+            timeouts);
         if (probe) probe->main = std::this_thread::get_id();
         server = &instance;
         port = instance.bound_port();
@@ -453,7 +462,8 @@ void protocols(const hp::http::StaticFileService& service,
         client.send(first.substr(0, first.size() - 1));
         client.send(first.substr(first.size() - 1) + query("/missing") +
                     query("/note.txt"));
-        response(client.next(), 200,
+        response(client.next(),
+                 200,
                  i ? "<h1>integration index</h1>\n" : "hello from S3\n");
         response(client.next(), 404, "404 Not Found\n");
         response(client.next(), 200, "hello from S3\n");
@@ -481,7 +491,10 @@ void protocols(const hp::http::StaticFileService& service,
     Stream reset(harness.port);
     reset.send("GET / HTTP/1.1\r\nHost:");
     linger immediate{1, 0};
-    ::setsockopt(reset.fd, SOL_SOCKET, SO_LINGER, &immediate,
+    ::setsockopt(reset.fd,
+                 SOL_SOCKET,
+                 SO_LINGER,
+                 &immediate,
                  sizeof(immediate));
   }
   for (auto path : {"/escape.txt", "/../sibling-secret.txt"}) {
@@ -524,7 +537,8 @@ void failures_and_pending(const hp::http::StaticFileService& service) {
     std::promise<void> entered, release;
     auto gate = release.get_future().share();
     require(TcpServerTestAccess::post(
-                *harness.server, 0,
+                *harness.server,
+                0,
                 [&](EventLoop&) {
                   entered.set_value();
                   require(gate.wait_for(3s) == std::future_status::ready,

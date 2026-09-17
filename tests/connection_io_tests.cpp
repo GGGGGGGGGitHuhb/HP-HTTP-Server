@@ -46,7 +46,9 @@ std::vector<std::byte> make_payload(std::size_t size) {
 
 void test_binary_read_echo_and_half_close() {
   int fds[2] = {-1, -1};
-  expect(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0,
+  expect(::socketpair(AF_UNIX,
+                      SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+                      0,
                       fds) == 0,
          "binary socketpair must be created");
   if (fds[0] == -1) {
@@ -92,8 +94,10 @@ void test_binary_read_echo_and_half_close() {
   std::vector<std::byte> received(payload.size());
   std::size_t received_count = 0;
   while (received_count < received.size()) {
-    const ssize_t count = ::recv(fds[1], received.data() + received_count,
-                                 received.size() - received_count, 0);
+    const ssize_t count = ::recv(fds[1],
+                                 received.data() + received_count,
+                                 received.size() - received_count,
+                                 0);
     if (count > 0) {
       received_count += static_cast<std::size_t>(count);
       continue;
@@ -111,7 +115,9 @@ void test_binary_read_echo_and_half_close() {
 
 void test_short_write_and_eagain_resume() {
   int fds[2] = {-1, -1};
-  expect(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0,
+  expect(::socketpair(AF_UNIX,
+                      SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+                      0,
                       fds) == 0,
          "short-write socketpair must be created");
   if (fds[0] == -1) {
@@ -119,7 +125,10 @@ void test_short_write_and_eagain_resume() {
   }
 
   int send_buffer = 4096;
-  expect(::setsockopt(fds[0], SOL_SOCKET, SO_SNDBUF, &send_buffer,
+  expect(::setsockopt(fds[0],
+                      SOL_SOCKET,
+                      SO_SNDBUF,
+                      &send_buffer,
                       sizeof(send_buffer)) == 0,
          "controlled send buffer must be configured");
 
@@ -230,7 +239,10 @@ void test_write_retries_eintr() {
   }
 
   int send_buffer = 4096;
-  expect(::setsockopt(fds[0], SOL_SOCKET, SO_SNDBUF, &send_buffer,
+  expect(::setsockopt(fds[0],
+                      SOL_SOCKET,
+                      SO_SNDBUF,
+                      &send_buffer,
                       sizeof(send_buffer)) == 0,
          "EINTR write send buffer must be constrained");
   const int original_flags = ::fcntl(fds[0], F_GETFL);
@@ -334,7 +346,8 @@ int connect_loopback(std::uint16_t port) {
   address.sin_family = AF_INET;
   address.sin_port = htons(port);
   address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  if (::connect(fd, reinterpret_cast<const sockaddr*>(&address),
+  if (::connect(fd,
+                reinterpret_cast<const sockaddr*>(&address),
                 sizeof(address)) == -1) {
     ::close(fd);
     return -1;
@@ -343,14 +356,14 @@ int connect_loopback(std::uint16_t port) {
 }
 
 void test_real_epoll_error_preserves_same_batch_bytes() {
-  hp::net::Socket listener = hp::net::Socket::create_tcp();
+  hp::net::Socket listener = hp::net::Socket::CreateTcp();
   listener.set_reuse_address(true);
-  listener.bind_any(0);
-  listener.listen(4);
+  listener.BindAny(0);
+  listener.Listen(4);
   hp::net::Epoller epoller;
   constexpr std::uint64_t listener_token = 0x55aa7700ULL;
   constexpr std::uint64_t connection_token = 0x55aa7711ULL;
-  epoller.add(listener.fd(), EPOLLIN, listener_token);
+  epoller.Add(listener.fd(), EPOLLIN, listener_token);
 
   const int client = connect_loopback(listener.local_port());
   expect(client >= 0, "RST combination client must connect");
@@ -359,28 +372,30 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
   }
   bool listener_ready = false;
   for (int attempt = 0; attempt < 8 && !listener_ready; ++attempt) {
-    for (const epoll_event& event : epoller.wait(250)) {
+    for (const epoll_event& event : epoller.Wait(250)) {
       if (event.data.u64 == listener_token && (event.events & EPOLLIN) != 0U) {
         listener_ready = true;
       }
     }
   }
   expect(listener_ready, "RST combination listener must become readable");
-  hp::net::Socket accepted = listener.accept_non_blocking();
+  hp::net::Socket accepted = listener.AcceptNonBlocking();
   expect(accepted.valid(), "RST combination connection must be accepted");
   if (!accepted.valid()) {
     ::close(client);
     return;
   }
 
-  epoller.remove(listener.fd());
-  epoller.add(accepted.fd(), EPOLLIN | EPOLLRDHUP, connection_token);
+  epoller.Remove(listener.fd());
+  epoller.Add(accepted.fd(), EPOLLIN | EPOLLRDHUP, connection_token);
 
   const auto payload = make_payload(1024 + 29);
   std::size_t sent = 0;
   while (sent < payload.size()) {
-    const ssize_t count = ::send(client, payload.data() + sent,
-                                 payload.size() - sent, MSG_NOSIGNAL);
+    const ssize_t count = ::send(client,
+                                 payload.data() + sent,
+                                 payload.size() - sent,
+                                 MSG_NOSIGNAL);
     if (count > 0) {
       sent += static_cast<std::size_t>(count);
       continue;
@@ -404,7 +419,7 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
         errno != EWOULDBLOCK) {
       break;
     }
-    (void)epoller.wait(250);
+    (void)epoller.Wait(250);
   }
   expect(peeked_bytes == static_cast<ssize_t>(payload.size()),
          "RST combination payload must be fully queued before reset");
@@ -416,16 +431,19 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
 
   // ERR/HUP are reported regardless of the requested interest. Suppress the
   // level-triggered readable wakeup while the real TCP reset becomes pending.
-  epoller.modify(accepted.fd(), 0U, connection_token);
+  epoller.Modify(accepted.fd(), 0U, connection_token);
   linger reset_linger{1, 0};
-  expect(::setsockopt(client, SOL_SOCKET, SO_LINGER, &reset_linger,
+  expect(::setsockopt(client,
+                      SOL_SOCKET,
+                      SO_LINGER,
+                      &reset_linger,
                       sizeof(reset_linger)) == 0,
          "RST combination must configure zero linger");
   ::close(client);
 
   bool error_ready = false;
   for (int attempt = 0; attempt < 8 && !error_ready; ++attempt) {
-    for (const epoll_event& event : epoller.wait(250)) {
+    for (const epoll_event& event : epoller.Wait(250)) {
       if (event.data.u64 == connection_token &&
           (event.events & EPOLLERR) != 0U) {
         error_ready = true;
@@ -435,11 +453,11 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
   expect(error_ready, "real reset must make EPOLLERR observable");
   // Restoring the production interest obtains a kernel-produced same-batch
   // EPOLLIN|EPOLLERR mask while the peeked bytes remain unread.
-  epoller.modify(accepted.fd(), EPOLLIN | EPOLLRDHUP, connection_token);
+  epoller.Modify(accepted.fd(), EPOLLIN | EPOLLRDHUP, connection_token);
 
   std::uint32_t observed_events = 0;
   for (int attempt = 0; attempt < 8; ++attempt) {
-    const auto events = epoller.wait(250);
+    const auto events = epoller.Wait(250);
     for (const epoll_event& event : events) {
       if (event.data.u64 == connection_token &&
           (event.events & EPOLLIN) != 0U && (event.events & EPOLLERR) != 0U) {
@@ -457,7 +475,11 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
          "real reset event must contain EPOLLERR");
 
   hp::net::EventLoop loop;
-  hp::net::TcpConnection connection(loop, std::move(accepted), 1, {}, 0,
+  hp::net::TcpConnection connection(loop,
+                                    std::move(accepted),
+                                    1,
+                                    {},
+                                    0,
                                     [](int, auto) {});
   connection.start();
   const hp::net::ConnectionEventResult result =
@@ -473,7 +495,7 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
          "ERR/HUP production event path must request connection close");
   expect(connection.pending_bytes() + result.bytes_written == payload.size(),
          "same-batch bytes must be retained or written, never discarded");
-  epoller.remove(connection.fd());
+  epoller.Remove(connection.fd());
 }
 }  // namespace
 

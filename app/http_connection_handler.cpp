@@ -39,7 +39,7 @@ struct Session {
       ++stats->parses;
       if (eof) ++stats->eof_notifications;
     }
-    const auto parsed = parser.feed(
+    const auto parsed = parser.Feed(
         {reinterpret_cast<const char*>(input.data()), input.size()});
     if (stats) {
       stats->submitted_bytes += input.size();
@@ -48,23 +48,23 @@ struct Session {
     connection.consume(
         parsed.accepted_bytes);  // Never use the borrowed input again.
     if (stats) stats->consumed_bytes += parsed.accepted_bytes;
-    if (parsed.status == http::ParseStatus::need_more && !eof) {
+    if (parsed.status == http::ParseStatus::kNeedMore && !eof) {
       if (stats) ++stats->need_more;
       connection.set_idle_wait(completed && parsed.request_bytes == 0 &&
                                connection.pending_bytes() == 0);
       connection.resume_reading();
       return;
     }
-    if (parsed.status == http::ParseStatus::need_more && completed &&
+    if (parsed.status == http::ParseStatus::kNeedMore && completed &&
         parsed.request_bytes == 0) {
       phase = Phase::closing;
       connection.close_after_flush();
       return;
     }
-    close = parsed.status != http::ParseStatus::complete ||
+    close = parsed.status != http::ParseStatus::kComplete ||
             parsed.request.close_requested;
-    const auto policy = close ? http::ConnectionPolicy::close
-                              : http::ConnectionPolicy::keep_alive;
+    const auto policy = close ? http::ConnectionPolicy::kClose
+                              : http::ConnectionPolicy::kKeepAlive;
     connection.set_idle_wait(false);
     phase = Phase::writing;
     connection.pause_reading();
@@ -72,21 +72,21 @@ struct Session {
     std::optional<base::FileRegion> file;
     try {
       switch (parsed.status) {
-        case http::ParseStatus::need_more:
-        case http::ParseStatus::bad_request:
+        case http::ParseStatus::kNeedMore:
+        case http::ParseStatus::kBadRequest:
+          response = http::MakeErrorResponse(http::Status::kBadRequest, policy);
+          break;
+        case http::ParseStatus::kMethodNotAllowed:
           response =
-              http::make_error_response(http::Status::bad_request, policy);
+              http::MakeErrorResponse(http::Status::kMethodNotAllowed, policy);
           break;
-        case http::ParseStatus::method_not_allowed:
-          response = http::make_error_response(http::Status::method_not_allowed,
-                                               policy);
-          break;
-        case http::ParseStatus::complete: {
+        case http::ParseStatus::kComplete: {
           auto result = provider(parsed.request, policy);
-          if (close && result.effective_policy != http::ConnectionPolicy::close)
+          if (close &&
+              result.effective_policy != http::ConnectionPolicy::kClose)
             throw std::logic_error(
                 "provider relaxed terminal connection policy");
-          close = result.effective_policy == http::ConnectionPolicy::close;
+          close = result.effective_policy == http::ConnectionPolicy::kClose;
           response = std::move(result.bytes);
           file = std::move(result.file);
           break;
@@ -95,8 +95,8 @@ struct Session {
     } catch (...) {
       close = true;
       file.reset();
-      response = http::make_error_response(http::Status::internal_server_error,
-                                           http::ConnectionPolicy::close);
+      response = http::MakeErrorResponse(http::Status::kInternalServerError,
+                                         http::ConnectionPolicy::kClose);
     }
     if (file)
       connection.send_file(response, std::move(*file));
@@ -116,7 +116,7 @@ struct Session {
       connection.close_after_flush();
       return;
     }
-    parser.reset();
+    parser.Reset();
     phase = Phase::reading;
     // Process transport-owned suffix even without a new readable event.
     advance(connection);
@@ -132,9 +132,11 @@ void set_session_observer_for_test(void (*observer)(bool,
 }
 
 net::TcpConnection::MessageCallback make_http_callback(
-    ResponseProvider provider, HttpCallbackStats* stats) {
+    ResponseProvider provider,
+    HttpCallbackStats* stats) {
   // Factory runs on main; mutable parser/session state is born on the IO owner.
-  return [provider = std::move(provider), stats,
+  return [provider = std::move(provider),
+          stats,
           session = std::shared_ptr<Session>{}](net::TcpConnection& connection,
                                                 std::span<const std::byte>,
                                                 bool) mutable {
@@ -153,7 +155,7 @@ net::TcpServer::MessageCallbackFactory make_http_factory(
   return [&service] {
     return make_http_callback([&service](const http::HttpRequest& request,
                                          http::ConnectionPolicy policy) {
-      return service.prepare_response(request, policy);
+      return service.PrepareResponse(request, policy);
     });
   };
 }

@@ -21,13 +21,15 @@ class Epoller final : private base::NonCopyable {
 
   [[nodiscard]] int fd() const noexcept;
 
-  void add(int observed_fd, std::uint32_t events, std::uint64_t token);
-  void modify(int observed_fd, std::uint32_t events, std::uint64_t token);
-  void remove(int observed_fd) noexcept;
-  [[nodiscard]] std::span<const epoll_event> wait(int timeout_ms);
+  void Add(int observed_fd, std::uint32_t events, std::uint64_t token);
+  void Modify(int observed_fd, std::uint32_t events, std::uint64_t token);
+  void Remove(int observed_fd) noexcept;
+  [[nodiscard]] std::span<const epoll_event> Wait(int timeout_ms);
 
  private:
-  void control(int operation, int observed_fd, std::uint32_t events,
+  void Control(int operation,
+               int observed_fd,
+               std::uint32_t events,
                std::uint64_t token);
 
   int fd_{-1};
