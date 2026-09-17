@@ -22,7 +22,8 @@ std::uint64_t allocate_token() {
   do {
     if (!token) throw std::overflow_error("Channel token exhausted");
   } while (!next_token.compare_exchange_weak(
-      token, token == std::numeric_limits<std::uint64_t>::max() ? 0 : token + 1,
+      token,
+      token == std::numeric_limits<std::uint64_t>::max() ? 0 : token + 1,
       std::memory_order_relaxed));
   return token;
 }
@@ -49,8 +50,10 @@ EventLoop::EventLoop() {
   wake_fd_ = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
   if (wake_fd_ < 0) syscall_error("eventfd");
   try {
-    wake_channel_ = std::make_unique<Channel>(
-        *this, wake_fd_, [this](std::uint32_t) { drain_wakeup(); });
+    wake_channel_ =
+        std::make_unique<Channel>(*this, wake_fd_, [this](std::uint32_t) {
+          drain_wakeup();
+        });
     wake_channel_->set_interest(EPOLLIN);
     counters_ = {};
   } catch (...) {
@@ -223,7 +226,7 @@ void EventLoop::update_channel(Channel& c, std::uint32_t interest) {
     throw std::invalid_argument("Channel belongs to another loop");
   if (c.registered()) {
     if (interest == c.interest_) return;
-    epoller_.modify(c.fd_, interest, c.token_);
+    epoller_.Modify(c.fd_, interest, c.token_);
     c.interest_ = interest;
     ++counters_.mods;
     return;
@@ -236,7 +239,7 @@ void EventLoop::update_channel(Channel& c, std::uint32_t interest) {
   channels_.emplace(token, &c);
   try {
     fds_.emplace(c.fd_, token);
-    epoller_.add(c.fd_, interest, token);
+    epoller_.Add(c.fd_, interest, token);
   } catch (...) {
     fds_.erase(c.fd_);
     channels_.erase(token);
@@ -251,7 +254,7 @@ void EventLoop::remove_channel(Channel& c) noexcept {
   assert(is_in_loop_thread());
   assert(&c.loop_ == this);
   if (&c.loop_ != this || !c.registered()) return;
-  epoller_.remove(c.fd_);
+  epoller_.Remove(c.fd_);
   channels_.erase(c.token_);
   fds_.erase(c.fd_);
   c.token_ = 0;
@@ -361,11 +364,12 @@ void EventLoop::poll_once(int timeout_ms) {
             control_deadline_ - timer::TimerQueue::Clock::now();
         const auto millis =
             std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
-        timeout_ms = static_cast<int>(std::max<std::int64_t>(
-            0, std::min<std::int64_t>(timeout_ms, millis)));
+        timeout_ms = static_cast<int>(
+            std::max<std::int64_t>(0,
+                                   std::min<std::int64_t>(timeout_ms, millis)));
       }
     }
-    const auto events = epoller_.wait(timeout_ms);
+    const auto events = epoller_.Wait(timeout_ms);
     dispatch_control();
     for (const auto& event : events) {
       dispatch_control();

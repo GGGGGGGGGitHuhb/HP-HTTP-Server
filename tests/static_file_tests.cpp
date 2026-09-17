@@ -71,9 +71,11 @@ class Fixture {
     std::filesystem::create_directory_symlink(workspace, root / "escape-dir");
     const auto oversized = root / "oversized.bin";
     const int fd = ::open(oversized.c_str(),
-                          O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
-    if (fd == -1 || ::ftruncate(fd, static_cast<off_t>(
-                                        hp::http::max_file_bytes + 1)) == -1) {
+                          O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
+                          0600);
+    if (fd == -1 ||
+        ::ftruncate(fd, static_cast<off_t>(hp::http::kMaxFileBytes + 1)) ==
+            -1) {
       const int error_number = errno;
       if (fd >= 0) ::close(fd);
       throw std::runtime_error(std::string("oversized fixture: ") +
@@ -120,7 +122,8 @@ Response parse_response(const std::vector<std::byte>& bytes) {
   if (status == 403) ++forbidden_hits;
   if (status == 404) ++not_found_hits;
   if (status == 500) ++internal_error_hits;
-  return {status, std::string(raw.substr(0, boundary + 4)),
+  return {status,
+          std::string(raw.substr(0, boundary + 4)),
           std::vector<std::byte>(bytes.begin() + boundary + 4, bytes.end())};
 }
 
@@ -142,7 +145,7 @@ std::size_t open_fd_count() {
 Response request(const hp::http::StaticFileService& service,
                  std::string target) {
   return parse_response(
-      service.handle(hp::http::HttpRequest{"GET", std::move(target)}));
+      service.Handle(hp::http::HttpRequest{"GET", std::move(target)}));
 }
 
 void test_success_and_mime(const hp::http::StaticFileService& service) {
@@ -159,8 +162,10 @@ void test_success_and_mime(const hp::http::StaticFileService& service) {
          "query must be ignored for file mapping");
 
   const Response binary = request(service, "/assets/data.png");
-  const std::vector<std::byte> expected{std::byte{0x00}, std::byte{0x01},
-                                        std::byte{0x7f}, std::byte{0xff},
+  const std::vector<std::byte> expected{std::byte{0x00},
+                                        std::byte{0x01},
+                                        std::byte{0x7f},
+                                        std::byte{0xff},
                                         std::byte{0x41}};
   expect(binary.status == 200 && binary.body == expected,
          "binary bytes including NUL must be exact");
@@ -204,7 +209,8 @@ void test_rejections(const hp::http::StaticFileService& service) {
 }
 
 void test_fd_stability_and_read_only(
-    Fixture& fixture, const hp::http::StaticFileService& service) {
+    Fixture& fixture,
+    const hp::http::StaticFileService& service) {
   const auto note_path = fixture.root / "assets" / "note.txt";
   const auto before_mtime = std::filesystem::last_write_time(note_path);
   std::ifstream before_file(note_path, std::ios::binary);
@@ -212,9 +218,9 @@ void test_fd_stability_and_read_only(
                            std::istreambuf_iterator<char>());
   const std::size_t baseline = open_fd_count();
   for (int iteration = 0; iteration < 500; ++iteration) {
-    (void)request(service, iteration % 2 == 0
-                               ? "/assets/note.txt"
-                               : "/escape-dir/sibling-secret.txt");
+    (void)request(service,
+                  iteration % 2 == 0 ? "/assets/note.txt"
+                                     : "/escape-dir/sibling-secret.txt");
   }
   const std::size_t after = open_fd_count();
   expect(after == baseline,
@@ -254,25 +260,29 @@ int main() {
   try {
     Fixture fixture;
     hp::http::StaticFileService service(fixture.root.string());
-    for (const auto& target : std::vector<std::string>{
-             "/", "/missing", "/../sibling-secret.txt", "/bad%20target",
-             "/" + std::string(300, 'x')}) {
-      const auto result = service.handle_response(
-          {"GET", target}, hp::http::ConnectionPolicy::keep_alive);
+    for (const auto& target :
+         std::vector<std::string>{"/",
+                                  "/missing",
+                                  "/../sibling-secret.txt",
+                                  "/bad%20target",
+                                  "/" + std::string(300, 'x')}) {
+      const auto result =
+          service.HandleResponse({"GET", target},
+                                 hp::http::ConnectionPolicy::kKeepAlive);
       const std::string raw(reinterpret_cast<const char*>(result.bytes.data()),
                             result.bytes.size());
       const bool close =
           std::string_view(target).find('%') != std::string_view::npos;
       expect(result.effective_policy ==
-                 (close ? hp::http::ConnectionPolicy::close
-                        : hp::http::ConnectionPolicy::keep_alive),
+                 (close ? hp::http::ConnectionPolicy::kClose
+                        : hp::http::ConnectionPolicy::kKeepAlive),
              "service effective policy");
       expect(
           raw.find(close ? "Connection: close\r\n"
                          : "Connection: keep-alive\r\n") != std::string::npos,
           "service bytes and metadata agree");
-      expect(service.handle({"GET", target},
-                            hp::http::ConnectionPolicy::keep_alive) ==
+      expect(service.Handle({"GET", target},
+                            hp::http::ConnectionPolicy::kKeepAlive) ==
                  result.bytes,
              "legacy handle delegates without changing bytes");
     }

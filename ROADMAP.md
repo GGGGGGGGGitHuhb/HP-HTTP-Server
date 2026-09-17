@@ -4,6 +4,11 @@
 
 本文档不记录函数级、类级或文件级实现步骤。长期架构写入 `ARCHITECTURE.md`，阶段详细设计写入 `docs/leader/designs/Vx/Sx-design.md`，实现过程写入 Builder 报告，审查结果写入 Reviewer 报告，跨版本技术债写入 `TECH-DEBT-TRACKER.md`。
 
+## 当前独立重构进度
+
+- 2026-09-17：R1基础类型与协议契约已完成。REF-R1-DESIGN/review revision2 Approved及R001为基线，Builder001、独立Reviewer001 PASS、Leader005收口齐备；接口调用闭合、具名parser helper、显式结果、局部formatter/暂存范围hook已交付。独立Debug28/28、五项ASan/UBSan、13项hook、双smoke及反证通过。
+- R1仅本地提交，不推送；R2–R5未开始，不自动启动R2，V0.6范围和阶段顺序不变。五轮安排在本地`docs/leader/designs/refractor/overall-plan.md`；本次不宣称性能提升。
+
 ## 项目概览
 
 HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1.1 服务器项目。项目目标不是实现完整 Web 框架，而是围绕 Linux 系统编程和网络编程能力，逐步构建一个可运行、可压测、可解释、可扩展的高性能 HTTP Server。

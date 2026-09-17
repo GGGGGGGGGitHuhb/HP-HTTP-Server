@@ -41,7 +41,8 @@ struct ConnectionTimeoutTestAccess {
     connection.handle_event(event);
   }
 
-  static void expire(ConnectionRegistry& registry, int fd,
+  static void expire(ConnectionRegistry& registry,
+                     int fd,
                      TcpConnection::Identity identity) {
     registry.expire(fd, identity);
   }
@@ -67,7 +68,8 @@ struct Snapshot {
   long long progress{}, deadline{}, wait{};
 };
 
-Snapshot snapshot(ServerHarness& harness, std::size_t workers,
+Snapshot snapshot(ServerHarness& harness,
+                  std::size_t workers,
                   std::size_t index = 0) {
   std::promise<Snapshot> done;
   auto result = done.get_future();
@@ -126,9 +128,10 @@ void idle_modes(const hp::http::StaticFileService& service) {
 }
 
 void waiting_states(const hp::http::StaticFileService& service) {
-  for (const auto config :
-       {ConnectionTimeouts{0ms, 120ms}, ConnectionTimeouts{200ms, 0ms},
-        ConnectionTimeouts{200ms, 120ms}, ConnectionTimeouts{0ms, 0ms}}) {
+  for (const auto config : {ConnectionTimeouts{0ms, 120ms},
+                            ConnectionTimeouts{200ms, 0ms},
+                            ConnectionTimeouts{200ms, 120ms},
+                            ConnectionTimeouts{0ms, 0ms}}) {
     ServerHarness harness(service, 2, nullptr, config);
     Stream client(harness.port);
     Snapshot initial;
@@ -192,11 +195,13 @@ struct Pair {
 
   Pair() {
     int sockets[2];
-    require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0,
+    require(::socketpair(AF_UNIX,
+                         SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+                         0,
                          sockets) == 0,
             "socketpair");
     owned = sockets[0];
-    peer.reset(sockets[1]);
+    peer.Reset(sockets[1]);
     std::lock_guard lock(socket_probe_mutex);
     accepted_fds.insert(owned);
     ++accepted_sockets;
@@ -205,8 +210,7 @@ struct Pair {
 
 void owner_progress_and_failures(const hp::http::StaticFileService& service) {
   EventLoop loop;
-  ConnectionRegistry registry(loop, hp::http::max_request_bytes,
-                              {150ms, 100ms});
+  ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   Pair pair;
   registry.add(Socket(pair.owned), hp::app::make_http_factory(service)());
   auto& connection = *Access::entries(registry).at(pair.owned);
@@ -223,9 +227,10 @@ void owner_progress_and_failures(const hp::http::StaticFileService& service) {
           "duplicate wait does not renew");
   connection.set_idle_wait(false);
   const std::string partial = "GET /note.txt HTTP/1.1\r\nHost:";
-  require(::send(pair.peer.fd(), partial.data(), partial.size(),
-                 MSG_NOSIGNAL) == static_cast<ssize_t>(partial.size()),
-          "partial send bytes");
+  require(
+      ::send(pair.peer.fd(), partial.data(), partial.size(), MSG_NOSIGNAL) ==
+          static_cast<ssize_t>(partial.size()),
+      "partial send bytes");
   loop.poll_once(0);
   require(
       Access::progress(connection) > initial && !Access::wait_since(connection),
@@ -253,8 +258,7 @@ void owner_progress_and_failures(const hp::http::StaticFileService& service) {
 
 void write_progress(const hp::http::StaticFileService& service) {
   EventLoop loop;
-  ConnectionRegistry registry(loop, hp::http::max_request_bytes,
-                              {150ms, 100ms});
+  ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   Pair pair;
   int small = 4096;
   ::setsockopt(pair.owned, SOL_SOCKET, SO_SNDBUF, &small, sizeof(small));
@@ -263,13 +267,14 @@ void write_progress(const hp::http::StaticFileService& service) {
       Socket(pair.owned),
       hp::app::make_http_callback([&](const auto& request, auto policy) {
         ++provider_calls;
-        return service.handle_response(request, policy);
+        return service.HandleResponse(request, policy);
       }));
   auto& connection = *Access::entries(registry).at(pair.owned);
   const std::string request = query("/large.bin") + query("/note.txt");
-  require(::send(pair.peer.fd(), request.data(), request.size(),
-                 MSG_NOSIGNAL) == static_cast<ssize_t>(request.size()),
-          "large request");
+  require(
+      ::send(pair.peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
+          static_cast<ssize_t>(request.size()),
+      "large request");
   loop.poll_once(0);
   require(connection.pending_bytes() > 0 && !Access::wait_since(connection),
           "Writing never waits");
@@ -323,8 +328,7 @@ void write_progress(const hp::http::StaticFileService& service) {
 
 void paced_input(const hp::http::StaticFileService& service) {
   EventLoop loop;
-  ConnectionRegistry registry(loop, hp::http::max_request_bytes,
-                              {150ms, 100ms});
+  ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   Pair pair;
   registry.add(Socket(pair.owned), hp::app::make_http_factory(service)());
   const auto began = Clock::now();
@@ -385,8 +389,7 @@ void healthy_during_timeout(const hp::http::StaticFileService& service) {
 
 void rollback_and_reuse(const hp::http::StaticFileService& service) {
   EventLoop loop;
-  ConnectionRegistry registry(loop, hp::http::max_request_bytes,
-                              {150ms, 100ms});
+  ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   int failures_seen = 0;
   for (int allocation = 0; allocation < 4; ++allocation) {
     Pair pair;
@@ -460,7 +463,8 @@ void fatal_timer(const hp::http::StaticFileService& service) {
   response(second.next(), 404, "404 Not Found\n");
   std::promise<void> entered, release;
   auto gate = release.get_future().share();
-  require(TcpServerTestAccess::post(*harness.server, 1,
+  require(TcpServerTestAccess::post(*harness.server,
+                                    1,
                                     [&](EventLoop&) {
                                       entered.set_value();
                                       require(gate.wait_for(3s) ==
@@ -477,7 +481,8 @@ void fatal_timer(const hp::http::StaticFileService& service) {
           "capacity bounded");
   std::atomic<int> callbacks{0}, forbidden{0}, captures{0};
   require(TcpServerTestAccess::post(
-              *harness.server, 0,
+              *harness.server,
+              0,
               [&](EventLoop& loop) {
                 struct Capture {
                   EventLoop& loop;

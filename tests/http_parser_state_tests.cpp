@@ -21,23 +21,22 @@ void expect(bool ok, const char* why) {
 
 void observe(const RequestParser& p, const FeedResult& r) {
   switch (p.state()) {
-    case ParserState::request_line:
+    case ParserState::kRequestLine:
       ++line_hits;
       break;
-    case ParserState::headers:
+    case ParserState::kHeaders:
       ++headers_hits;
       break;
-    case ParserState::complete:
+    case ParserState::kComplete:
       ++complete_hits;
       break;
-    case ParserState::error:
+    case ParserState::kError:
       ++error_hits;
       break;
   }
   expect(p.scan_steps() <= 10 * r.request_bytes,
          "linear framing and validation byte visits");
-  expect(p.peak_buffered_bytes() <= max_request_bytes,
-         "bounded parser storage");
+  expect(p.peak_buffered_bytes() <= kMaxRequestBytes, "bounded parser storage");
   max_scans = std::max(max_scans, p.scan_steps());
   max_buffer = std::max(max_buffer, p.peak_buffered_bytes());
 }
@@ -49,49 +48,54 @@ bool same(const FeedResult& a, const FeedResult& b) {
          a.request_bytes == b.request_bytes;
 }
 
-void chunk_variants(const std::string& input, ParseStatus expected,
+void chunk_variants(const std::string& input,
+                    ParseStatus expected,
                     bool all_splits = true) {
   RequestParser whole;
-  const auto baseline = whole.feed(input);
+  const auto baseline = whole.Feed(input);
   expect(baseline.status == expected, "independent support-matrix result");
   observe(whole, baseline);
   std::vector<std::size_t> points;
   if (all_splits)
     for (std::size_t i = 0; i <= input.size(); ++i) points.push_back(i);
   else
-    for (std::size_t i :
-         {std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
-          std::size_t{4097}, input.size() - 1, input.size()})
+    for (std::size_t i : {std::size_t{0},
+                          std::size_t{1},
+                          std::size_t{4095},
+                          std::size_t{4096},
+                          std::size_t{4097},
+                          input.size() - 1,
+                          input.size()})
       if (i <= input.size()) points.push_back(i);
   for (auto split : points) {
     RequestParser p;
-    auto first = p.feed(std::string_view(input).substr(0, split));
+    auto first = p.Feed(std::string_view(input).substr(0, split));
     observe(p, first);
     if (p.pending_cr()) ++cr_splits;
-    auto second = p.feed(std::string_view(input).substr(split));
+    auto second = p.Feed(std::string_view(input).substr(split));
     observe(p, second);
     ++splits;
     expect(same(baseline, second) &&
                first.accepted_bytes + second.accepted_bytes ==
                    baseline.request_bytes,
            "split result and error offset independent");
-    if (first.status == ParseStatus::need_more)
+    if (first.status == ParseStatus::kNeedMore)
       expect(first.accepted_bytes == split, "NeedMore accepts full block");
   }
   RequestParser p;
   FeedResult last;
   std::size_t total{};
   for (char c : input) {
-    last = p.feed({&c, 1});
+    last = p.Feed({&c, 1});
     total += last.accepted_bytes;
     ++byte_feeds;
     observe(p, last);
   }
   expect(same(last, baseline) && total == baseline.request_bytes,
          "one-byte feed agrees and does not rescan prefix");
-  const auto wrapper = parse_request(input);
-  const bool success = expected == ParseStatus::complete ||
-                       expected == ParseStatus::method_not_allowed;
+  const auto wrapper = ParseRequest(input);
+  const bool success = expected == ParseStatus::kComplete ||
+                       expected == ParseStatus::kMethodNotAllowed;
   expect(wrapper.status == baseline.status &&
              wrapper.request.method == baseline.request.method &&
              wrapper.request.target == baseline.request.target &&
@@ -102,36 +106,36 @@ void chunk_variants(const std::string& input, ParseStatus expected,
 void support_and_splits() {
   const std::vector<std::pair<std::string, ParseStatus>> samples = {
       {"GET /asset?x=1 HTTP/1.1\r\nHost: a\r\nX: unknown\r\n\r\n",
-       ParseStatus::complete},
+       ParseStatus::kComplete},
       {"CUSTOM / HTTP/1.1\r\nhOsT: \t a \t\r\n\r\n",
-       ParseStatus::method_not_allowed},
+       ParseStatus::kMethodNotAllowed},
       {"POST / HTTP/1.1\r\nHost: a\r\nBad Header: x\r\n\r\n",
-       ParseStatus::bad_request},
-      {"GET / HTTP/1.1\r\nX: a\r\n\r\n", ParseStatus::bad_request},
+       ParseStatus::kBadRequest},
+      {"GET / HTTP/1.1\r\nX: a\r\n\r\n", ParseStatus::kBadRequest},
       {"GET / HTTP/1.1\r\nHost: a\r\nHOST: b\r\n\r\n",
-       ParseStatus::bad_request},
-      {"GET / HTTP/1.1\r\nHost: \t \r\n\r\n", ParseStatus::bad_request},
-      {"G?T / HTTP/1.1\r\nHost: a\r\n\r\n", ParseStatus::bad_request},
-      {"GET http://a/ HTTP/1.1\r\nHost: a\r\n\r\n", ParseStatus::bad_request},
-      {"GET /#f HTTP/1.1\r\nHost: a\r\n\r\n", ParseStatus::bad_request},
-      {"GET / HTTP/1.0\r\nHost: a\r\n\r\n", ParseStatus::bad_request},
+       ParseStatus::kBadRequest},
+      {"GET / HTTP/1.1\r\nHost: \t \r\n\r\n", ParseStatus::kBadRequest},
+      {"G?T / HTTP/1.1\r\nHost: a\r\n\r\n", ParseStatus::kBadRequest},
+      {"GET http://a/ HTTP/1.1\r\nHost: a\r\n\r\n", ParseStatus::kBadRequest},
+      {"GET /#f HTTP/1.1\r\nHost: a\r\n\r\n", ParseStatus::kBadRequest},
+      {"GET / HTTP/1.0\r\nHost: a\r\n\r\n", ParseStatus::kBadRequest},
       {"GET / HTTP/1.1\r\n folded: x\r\nHost: a\r\n\r\n",
-       ParseStatus::bad_request},
-      {"GET / HTTP/1.1\nHost: a\n\n", ParseStatus::bad_request},
-      {"GET / HTTP/1.1\rXHost: a\r\n\r\n", ParseStatus::bad_request},
+       ParseStatus::kBadRequest},
+      {"GET / HTTP/1.1\nHost: a\n\n", ParseStatus::kBadRequest},
+      {"GET / HTTP/1.1\rXHost: a\r\n\r\n", ParseStatus::kBadRequest},
       {std::string("GET / HTTP/1.1\r\nHost: a\0junk\r\n\r\n", 32),
-       ParseStatus::bad_request},
+       ParseStatus::kBadRequest},
       {"GET / HTTP/1.1\r\nHost: a\r\nX: \x01\r\n\r\n",
-       ParseStatus::bad_request},
+       ParseStatus::kBadRequest},
       {"GET / HTTP/1.1\r\nHost: a\r\nX: \x7f\r\n\r\n",
-       ParseStatus::bad_request},
+       ParseStatus::kBadRequest},
       {"GET / HTTP/1.1\r\nHost: a\r\nContent-Length: 9\r\nConnection: "
        "keep-alive\r\n\r\nbody-tail",
-       ParseStatus::bad_request},
+       ParseStatus::kBadRequest},
       {"GET / HTTP/1.1\r\nHost: a\r\nTransfer-Encoding: "
        "chunked\r\n\r\n1\r\nx\r\n0\r\n\r\n",
-       ParseStatus::bad_request},
-      {"GET / HTTP/1.1\r\nHost: par", ParseStatus::need_more}};
+       ParseStatus::kBadRequest},
+      {"GET / HTTP/1.1\r\nHost: par", ParseStatus::kNeedMore}};
   for (const auto& [input, status] : samples) chunk_variants(input, status);
   std::cout << "matrix: samples=" << samples.size() << " split_cases=" << splits
             << " byte_feeds=" << byte_feeds << " cr_splits=" << cr_splits
@@ -170,26 +174,26 @@ void framing_matrix() {
     const auto input = "GET / HTTP/1.1\r\nHost: a\r\n" + header +
                        "\r\nGET /suffix HTTP/1.1\r\nHost: a\r\n\r\n";
     chunk_variants(input,
-                   ok ? ParseStatus::complete : ParseStatus::bad_request);
+                   ok ? ParseStatus::kComplete : ParseStatus::kBadRequest);
   }
   RequestParser p;
-  auto r = p.feed(
+  auto r = p.Feed(
       "GET / HTTP/1.1\r\nHost: a\r\nContent-Length: 00\r\nConnection: "
       "ClOsE\r\n\r\n");
   expect(r.request.close_requested, "mixed-case close recognized");
-  p.reset();
-  r = p.feed(
+  p.Reset();
+  r = p.Feed(
       "GET / HTTP/1.1\r\nHost: a\r\nContent-Length: 0\r\nConnection: "
       "xclose,,,,\r\n\r\n");
-  expect(r.status == ParseStatus::complete && !r.request.close_requested,
+  expect(r.status == ParseStatus::kComplete && !r.request.close_requested,
          "reset clears CL and close; token match exact");
-  p.reset();
-  expect(p.feed("GET / HTTP/1.1\r\n\r\n").status == ParseStatus::bad_request,
+  p.Reset();
+  expect(p.Feed("GET / HTTP/1.1\r\n\r\n").status == ParseStatus::kBadRequest,
          "reset clears Host");
   for (int i = 0; i < 1000; ++i) {
-    p.reset();
-    r = p.feed("GET / HTTP/1.1\r\nHost: a\r\n\r\n");
-    expect(r.status == ParseStatus::complete,
+    p.Reset();
+    r = p.Feed("GET / HTTP/1.1\r\nHost: a\r\n\r\n");
+    expect(r.status == ParseStatus::kComplete,
            "per-request limit after repeated resets");
   }
   std::cout << "S2 framing matrix=" << cases.size()
@@ -202,21 +206,21 @@ void boundaries() {
     std::string line = "GET /" + std::string(length - 14, 'a') + " HTTP/1.1";
     expect(line.size() == length, "actual request-line fixture length");
     RequestParser p;
-    auto prefix = p.feed(line);
-    expect(prefix.status == (length <= 4096 ? ParseStatus::need_more
-                                            : ParseStatus::bad_request),
+    auto prefix = p.Feed(line);
+    expect(prefix.status == (length <= 4096 ? ParseStatus::kNeedMore
+                                            : ParseStatus::kBadRequest),
            "4096 prefix waits; 4097 content fails");
     if (length <= 4096) {
-      auto cr = p.feed("\r");
-      expect(cr.status == ParseStatus::need_more && p.pending_cr(),
+      auto cr = p.Feed("\r");
+      expect(cr.status == ParseStatus::kNeedMore && p.pending_cr(),
              "CR at bound waits LF");
-      auto rest = p.feed("\nHost: x\r\n\r\n");
-      expect(rest.status == ParseStatus::complete,
+      auto rest = p.Feed("\nHost: x\r\n\r\n");
+      expect(rest.status == ParseStatus::kComplete,
              "legal boundary split completion");
     }
     chunk_variants(
         line + "\r\nHost: x\r\n\r\n",
-        length <= 4096 ? ParseStatus::complete : ParseStatus::bad_request,
+        length <= 4096 ? ParseStatus::kComplete : ParseStatus::kBadRequest,
         false);
   }
   for (std::size_t length : {16383U, 16384U, 16385U}) {
@@ -226,31 +230,31 @@ void boundaries() {
     expect(request.size() == length, "actual total-request fixture length");
     chunk_variants(
         request,
-        length <= 16384 ? ParseStatus::complete : ParseStatus::bad_request,
+        length <= 16384 ? ParseStatus::kComplete : ParseStatus::kBadRequest,
         false);
     RequestParser p;
-    auto before = p.feed(std::string_view(request).substr(0, length - 1));
-    auto last = p.feed(std::string_view(request).substr(length - 1));
-    expect(last.status == (length <= 16384 ? ParseStatus::complete
-                                           : ParseStatus::bad_request),
+    auto before = p.Feed(std::string_view(request).substr(0, length - 1));
+    auto last = p.Feed(std::string_view(request).substr(length - 1));
+    expect(last.status == (length <= 16384 ? ParseStatus::kComplete
+                                           : ParseStatus::kBadRequest),
            "terminal LF at total boundary");
     expect(before.accepted_bytes + last.accepted_bytes ==
-               std::min(length, max_request_bytes),
+               std::min(length, kMaxRequestBytes),
            "total boundary consumes no byte beyond cap");
   }
   std::string partial = "GET / HTTP/1.1\r\nHost: a\r\nX: ";
   partial.resize(16383, 'a');
   RequestParser p;
-  expect(p.feed(partial).status == ParseStatus::need_more,
+  expect(p.Feed(partial).status == ParseStatus::kNeedMore,
          "unterminated 16383 may wait");
-  auto limit = p.feed("b");
+  auto limit = p.Feed("b");
   expect(
-      limit.status == ParseStatus::bad_request && limit.request_bytes == 16384,
+      limit.status == ParseStatus::kBadRequest && limit.request_bytes == 16384,
       "unterminated cap rejects exactly");
   std::cout << "bounds: line4095/4096/4097=pass total16383/16384/16385=pass "
                "max_scan_visits="
             << max_scans << " peak_buffered=" << max_buffer
-            << " fixed_capacity=" << max_request_bytes << '\n';
+            << " fixed_capacity=" << kMaxRequestBytes << '\n';
 }
 
 void sticky_reset_and_ownership() {
@@ -259,38 +263,38 @@ void sticky_reset_and_ownership() {
                     partial = "GET /three HTTP/1.1\r";
   std::string combined = one + two + partial;
   RequestParser p;
-  auto first = p.feed(combined);
+  auto first = p.Feed(combined);
   auto saved = first.request;
   expect(
       first.accepted_bytes == one.size() && first.request_bytes == one.size(),
       "first boundary stops exactly");
   const auto suffix = combined.substr(first.accepted_bytes);
   expect(suffix == two + partial, "suffix preserved verbatim");
-  auto sticky = p.feed(suffix);
+  auto sticky = p.Feed(suffix);
   expect(sticky.accepted_bytes == 0 && sticky.request_bytes == one.size(),
          "complete terminal accepts zero");
-  p.reset();
-  expect(p.state() == ParserState::request_line && p.scan_steps() == 0 &&
+  p.Reset();
+  expect(p.state() == ParserState::kRequestLine && p.scan_steps() == 0 &&
              p.buffered_bytes() == 0,
          "reset clears all state");
-  auto second = p.feed(suffix);
-  expect(second.status == ParseStatus::method_not_allowed &&
+  auto second = p.Feed(suffix);
+  expect(second.status == ParseStatus::kMethodNotAllowed &&
              second.accepted_bytes == two.size() &&
              second.request.target == "/two",
          "reset parses second request independently");
-  p.reset();
-  auto third = p.feed(std::string_view(suffix).substr(second.accepted_bytes));
-  expect(third.status == ParseStatus::need_more &&
+  p.Reset();
+  auto third = p.Feed(std::string_view(suffix).substr(second.accepted_bytes));
+  expect(third.status == ParseStatus::kNeedMore &&
              third.accepted_bytes == partial.size(),
          "incomplete third preserved");
-  auto error = p.feed("X");
-  expect(error.status == ParseStatus::bad_request && error.accepted_bytes == 1,
+  auto error = p.Feed("X");
+  expect(error.status == ParseStatus::kBadRequest && error.accepted_bytes == 1,
          "pending CR mismatch identifies offending byte");
-  expect(p.feed(one).accepted_bytes == 0, "error terminal sticky");
-  p.reset();
+  expect(p.Feed(one).accepted_bytes == 0, "error terminal sticky");
+  p.Reset();
   combined.assign(1000000, 'z');
-  auto recovered = p.feed(one + std::string(1000000, '\0'));
-  expect(recovered.status == ParseStatus::complete &&
+  auto recovered = p.Feed(one + std::string(1000000, '\0'));
+  expect(recovered.status == ParseStatus::kComplete &&
              recovered.accepted_bytes == one.size() && saved.target == "/one" &&
              first.request.method == "GET",
          "error reset and owned result survive source mutation");
@@ -321,13 +325,13 @@ void named_schedule(const NamedCase& sample,
   std::size_t offset{}, accepted{};
   const int before = failures;
   for (auto count : chunks) {
-    result = parser.feed(std::string_view(sample.wire).substr(offset, count));
+    result = parser.Feed(std::string_view(sample.wire).substr(offset, count));
     expect(result.accepted_bytes <= count, "per-feed accepted <= submitted");
     accepted += result.accepted_bytes;
     offset += count;
     observe(parser, result);
     expect(result.request_bytes == accepted, "per-feed cumulative consumption");
-    if (result.status == ParseStatus::need_more)
+    if (result.status == ParseStatus::kNeedMore)
       expect(result.accepted_bytes == count,
              "need-more consumes entire submitted block");
   }
@@ -339,7 +343,7 @@ void named_schedule(const NamedCase& sample,
              result.request.target == sample.target &&
              result.request.close_requested == sample.close,
          "independent owned request fields and close decision");
-  auto terminal = parser.feed("GET /ignored HTTP/1.1\r\nHost: z\r\n\r\n");
+  auto terminal = parser.Feed("GET /ignored HTTP/1.1\r\nHost: z\r\n\r\n");
   expect(terminal.accepted_bytes == 0 && same(result, terminal),
          "every named terminal is sticky");
   if (failures != before)
@@ -393,20 +397,33 @@ void named_protocol_matrix() {
   std::vector<NamedCase> cases;
   const std::string line = "GET /case HTTP/1.1\r\n", host = "Host: a\r\n",
                     tail = "GET /tail HTTP/1.1\r\nHost: z\r\n\r\n";
-  auto good = [&](std::string id, std::string method, std::string headers,
+  auto good = [&](std::string id,
+                  std::string method,
+                  std::string headers,
                   bool close = false) {
     auto wire = method + " /case HTTP/1.1\r\n" + host + headers + "\r\n";
     const auto size = wire.size();
-    const auto status = method == "GET" ? ParseStatus::complete
-                                        : ParseStatus::method_not_allowed;
-    cases.push_back({std::move(id), wire + tail, status, size,
-                     std::move(method), "/case", close});
+    const auto status = method == "GET" ? ParseStatus::kComplete
+                                        : ParseStatus::kMethodNotAllowed;
+    cases.push_back({std::move(id),
+                     wire + tail,
+                     status,
+                     size,
+                     std::move(method),
+                     "/case",
+                     close});
   };
-  auto bad = [&](std::string id, std::string failing_prefix,
+  auto bad = [&](std::string id,
+                 std::string failing_prefix,
                  std::string remainder = "\r\n") {
     const auto size = failing_prefix.size();
-    cases.push_back({std::move(id), failing_prefix + remainder + tail,
-                     ParseStatus::bad_request, size, "", "", false});
+    cases.push_back({std::move(id),
+                     failing_prefix + remainder + tail,
+                     ParseStatus::kBadRequest,
+                     size,
+                     "",
+                     "",
+                     false});
   };
   good("G01-get", "GET", "");
   good("G01-token-method", "M!X", "");
@@ -444,10 +461,14 @@ void named_protocol_matrix() {
            {"empty-token", "Connection: , ,\t,\r\n"},
            {"proxy-ignored", "Proxy-Connection: close\r\n"}})
     good("G03-04-" + id, "GET", header);
-  good("G04-multi-close", "GET",
-       "Connection: keep-alive\r\ncOnNeCtIoN: , ClOsE, xclose\r\n", true);
-  good("G04-close-first", "GET",
-       "Connection: close\r\nConnection: keep-alive\r\n", true);
+  good("G04-multi-close",
+       "GET",
+       "Connection: keep-alive\r\ncOnNeCtIoN: , ClOsE, xclose\r\n",
+       true);
+  good("G04-close-first",
+       "GET",
+       "Connection: close\r\nConnection: keep-alive\r\n",
+       true);
   good("G04-nonget-close", "POST", "Connection: close\r\n", true);
   const std::vector<std::pair<std::string, std::string>> rejected = {
       {"duplicate-cl", "Content-Length: 0\r\nContent-Length: 0\r\n"},
@@ -495,10 +516,13 @@ void named_boundaries_and_reset() {
     const auto target = "/" + std::string(size - 14, 'a');
     const auto wire = "GET " + target + " HTTP/1.1\r\nHost: a\r\n\r\n";
     named_variants(
-        {"G05-independent-line-" + std::to_string(size), wire,
-         size <= 4096 ? ParseStatus::complete : ParseStatus::bad_request,
-         size <= 4096 ? wire.size() : 4097, size <= 4096 ? "GET" : "",
-         size <= 4096 ? target : "", false},
+        {"G05-independent-line-" + std::to_string(size),
+         wire,
+         size <= 4096 ? ParseStatus::kComplete : ParseStatus::kBadRequest,
+         size <= 4096 ? wire.size() : 4097,
+         size <= 4096 ? "GET" : "",
+         size <= 4096 ? target : "",
+         false},
         false);
   }
   for (std::size_t size : {16383U, 16384U, 16385U}) {
@@ -506,40 +530,46 @@ void named_boundaries_and_reset() {
     wire.append(size - wire.size() - 4, 'a');
     wire += "\r\n\r\n";
     named_variants(
-        {"G05-independent-single-header-" + std::to_string(size), wire,
-         size <= 16384 ? ParseStatus::complete : ParseStatus::bad_request,
-         std::min(size, max_request_bytes), size <= 16384 ? "GET" : "",
-         size <= 16384 ? "/case" : "", false},
+        {"G05-independent-single-header-" + std::to_string(size),
+         wire,
+         size <= 16384 ? ParseStatus::kComplete : ParseStatus::kBadRequest,
+         std::min(size, kMaxRequestBytes),
+         size <= 16384 ? "GET" : "",
+         size <= 16384 ? "/case" : "",
+         false},
         false);
   }
   for (std::size_t size : {16383U, 16384U, 16385U}) {
     auto wire = cumulative_headers(size);
     expect(wire.size() == size, "many-header exact fixture size");
     named_variants(
-        {"G05-many-headers-" + std::to_string(size), wire,
-         size <= 16384 ? ParseStatus::complete : ParseStatus::bad_request,
-         std::min(size, max_request_bytes), size <= 16384 ? "GET" : "",
-         size <= 16384 ? "/case" : "", false},
+        {"G05-many-headers-" + std::to_string(size),
+         wire,
+         size <= 16384 ? ParseStatus::kComplete : ParseStatus::kBadRequest,
+         std::min(size, kMaxRequestBytes),
+         size <= 16384 ? "GET" : "",
+         size <= 16384 ? "/case" : "",
+         false},
         false);
   }
   RequestParser parser;
   const auto large = cumulative_headers(16384);
-  auto saved = parser.feed(large);
-  parser.reset();
-  auto second = parser.feed(large);
-  expect(saved.status == ParseStatus::complete &&
-             second.status == ParseStatus::complete &&
-             saved.request_bytes + second.request_bytes > max_request_bytes,
+  auto saved = parser.Feed(large);
+  parser.Reset();
+  auto second = parser.Feed(large);
+  expect(saved.status == ParseStatus::kComplete &&
+             second.status == ParseStatus::kComplete &&
+             saved.request_bytes + second.request_bytes > kMaxRequestBytes,
          "two max requests reset byte budget");
-  parser.reset();
-  (void)parser.feed(
+  parser.Reset();
+  (void)parser.Feed(
       "GET /old HTTP/1.1\r\nHost: a\r\nContent-Length: 0\r\nConnection: "
       "close\r\nX: y\r");
   expect(parser.pending_cr(), "reset fixture pending header CR");
-  parser.reset();
-  auto fresh = parser.feed(
+  parser.Reset();
+  auto fresh = parser.Feed(
       "GET /fresh HTTP/1.1\r\nHost: b\r\nContent-Length: 00\r\n\r\n");
-  expect(fresh.status == ParseStatus::complete &&
+  expect(fresh.status == ParseStatus::kComplete &&
              !fresh.request.close_requested && !parser.pending_cr() &&
              saved.request.target == "/case",
          "reset clears pending CR/Host/CL/close and retains saved result");
@@ -549,9 +579,80 @@ void named_boundaries_and_reset() {
             << " max_scan=" << max_scans << '\n';
 }
 
+// Counts captured from the fixed ecddb98 parser, before helper extraction.
+// Exercise trimming, length rejection, early mismatch and Connection tokens.
+void header_helper_contracts() {
+  struct Sample {
+    std::string_view wire;
+    std::size_t scans;
+    ParseStatus status;
+    bool close_requested;
+    std::size_t request_bytes;
+  };
+  const Sample samples[] = {
+      {"GET / HTTP/1.1\r\nhOsT:\t a \t\r\n\r\n",
+       78,
+       ParseStatus::kComplete,
+       false,
+       30},
+      {"GET / HTTP/1.1\r\nHost: \t \t\r\n\r\n",
+       74,
+       ParseStatus::kBadRequest,
+       false,
+       27},
+      {"GET / HTTP/1.1\r\nHost: a\r\nHos: x\r\n\r\n",
+       87,
+       ParseStatus::kComplete,
+       false,
+       35},
+      {"GET / HTTP/1.1\r\nHost: a\r\nXost: x\r\n\r\n",
+       91,
+       ParseStatus::kComplete,
+       false,
+       36},
+      {"GET / HTTP/1.1\r\nHost: a\r\nCoNnEcTiOn: \t keep-alive , \tClOsE "
+       "\t\r\n\r\n",
+       209,
+       ParseStatus::kComplete,
+       true,
+       64},
+      {"GET / HTTP/1.1\r\nHost: a\r\nConnection: \t \t\r\n\r\n",
+       126,
+       ParseStatus::kComplete,
+       false,
+       44},
+      {"GET / HTTP/1.1\r\nHost: a\r\nContent-Length: \t00 \t\r\n\r\n",
+       147,
+       ParseStatus::kComplete,
+       false,
+       50},
+      {"GET / HTTP/1.1\r\nHost: a\r\nExpect: \t\r\n\r\n",
+       101,
+       ParseStatus::kBadRequest,
+       false,
+       36},
+  };
+  for (const auto& sample : samples) {
+    RequestParser parser;
+    const auto result = parser.Feed(sample.wire);
+    expect(result.status == sample.status, "header helper status oracle");
+    expect(result.request.close_requested == sample.close_requested,
+           "header helper connection policy oracle");
+    expect(result.request_bytes == sample.request_bytes,
+           "header helper accepted boundary oracle");
+    expect(parser.scan_steps() == sample.scans,
+           "header helper exact baseline scan count");
+    parser.Reset();
+    for (const char c : sample.wire) (void)parser.Feed({&c, 1});
+    expect(parser.scan_steps() == sample.scans,
+           "header helper one-byte scan count");
+  }
+}
+
 }  // namespace
 
 int main() {
+  header_helper_contracts();
   support_and_splits();
   framing_matrix();
   boundaries();

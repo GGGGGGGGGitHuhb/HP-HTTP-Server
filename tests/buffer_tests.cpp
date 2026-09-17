@@ -67,37 +67,37 @@ void rejects(F operation, const char* message) {
 void buffer_contract() {
   Buffer b(8);
   require(b.readable_bytes() == 0 && b.capacity() == 0, "lazy empty buffer");
-  b.append(bytes(std::string_view("ab\0cdefg", 8)));
+  b.Append(bytes(std::string_view("ab\0cdefg", 8)));
   const auto* suffix = b.readable_view().data() + 3;
-  b.consume(3);
+  b.Consume(3);
   require(b.readable_view().data() == suffix && text(b) == "cdefg",
           "consume advances without moving suffix");
-  rejects<std::out_of_range>([&] { b.consume(6); }, "consume bounds");
-  rejects<std::length_error>([&] { b.prepare(SIZE_MAX); },
+  rejects<std::out_of_range>([&] { b.Consume(6); }, "consume bounds");
+  rejects<std::length_error>([&] { b.Prepare(SIZE_MAX); },
                              "SIZE_MAX overflow rejection");
-  rejects<std::out_of_range>([&] { b.commit(1); },
+  rejects<std::out_of_range>([&] { b.Commit(1); },
                              "unprepared commit rejection");
   require(text(b) == "cdefg", "rejection preserves readable bytes");
-  b.append(bytes("hij"));
+  b.Append(bytes("hij"));
   require(text(b) == "cdefghij" && b.capacity() == 8,
           "necessary compaction exact bytes");
-  rejects<std::length_error>([&] { b.append(bytes("x")); }, "limit plus one");
-  b.consume(8);
+  rejects<std::length_error>([&] { b.Append(bytes("x")); }, "limit plus one");
+  b.Consume(8);
   require(b.readable_bytes() == 0 && b.capacity() == 8,
           "full consume resets cursors");
-  auto tail = b.prepare(7);
+  auto tail = b.Prepare(7);
   std::memcpy(tail.data(), "1234567", 7);
-  rejects<std::out_of_range>([&] { b.commit(8); },
+  rejects<std::out_of_range>([&] { b.Commit(8); },
                              "commit exceeds reservation");
-  b.commit(7);
+  b.Commit(7);
   require(text(b) == "1234567", "limit minus one");
-  b.append(bytes("8"));
+  b.Append(bytes("8"));
   require(text(b) == "12345678", "limit exact");
   Buffer moved(std::move(b));
   require(
       text(moved) == "12345678" && b.readable_bytes() == 0 && b.capacity() == 0,
       "move constructor valid source");
-  b.append(bytes("reuse"));
+  b.Append(bytes("reuse"));
   b = std::move(moved);
   require(text(b) == "12345678" && moved.readable_bytes() == 0,
           "move assignment valid source");
@@ -105,14 +105,14 @@ void buffer_contract() {
   b = std::move(alias);
   require(text(b) == "12345678", "self move");
   Buffer growing(32);
-  growing.append(bytes("abcd"));
-  growing.consume(1);
+  growing.Append(bytes("abcd"));
+  growing.Consume(1);
   fail_allocation = true;
-  rejects<std::bad_alloc>([&] { growing.append(bytes("12345")); },
+  rejects<std::bad_alloc>([&] { growing.Append(bytes("12345")); },
                           "growth allocation failure");
   require(text(growing) == "bcd" && growing.capacity() == 4,
           "failed growth strong guarantee");
-  growing.append(bytes("12345"));
+  growing.Append(bytes("12345"));
   require(text(growing) == "bcd12345" && growing.capacity() == 8,
           "growth preserves suffix");
   std::cout << "Buffer consume_move=0 NUL bounds overflow prepare commit move "
@@ -228,20 +228,22 @@ void output_storage() {
   require(file_closes == 1 && header.pending_bytes() == 0,
           "file header failure closes exactly once no partial publish");
   watched_file = -1;
-  auto held = hp::base::FileRegion(
-      hp::base::UniqueFd(::open("/dev/null", O_RDONLY)), 0, 100);
+  auto held =
+      hp::base::FileRegion(hp::base::UniqueFd(::open("/dev/null", O_RDONLY)),
+                           0,
+                           100);
   header.queue_file(bytes("HDR"), std::move(held));
   require(header.pending_bytes() == 103,
           "logical pending includes file remaining");
   require(allocation_hits == 4, "four allocation failures precisely consumed");
   Buffer peak(ConnectionIo::output_limit);
   std::vector<std::byte> first(5U * 1024U * 1024U), second(4U * 1024U * 1024U);
-  peak.append(first);
+  peak.Append(first);
   const auto old_capacity = peak.capacity();
   allocated_bytes = 0;
   allocations = 0;
   count_allocation = true;
-  peak.append(second);
+  peak.Append(second);
   count_allocation = false;
   require(allocations == 1 && allocated_bytes == ConnectionIo::output_limit &&
               peak.capacity() == ConnectionIo::output_limit &&

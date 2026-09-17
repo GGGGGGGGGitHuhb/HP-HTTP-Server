@@ -22,17 +22,17 @@ void expect(bool condition, std::string_view message) {
 }
 
 hp::http::ParseResult parse(std::string_view request) {
-  const auto result = hp::http::parse_request(request);
-  if (result.status == hp::http::ParseStatus::need_more) ++need_more_hits;
-  if (result.status == hp::http::ParseStatus::bad_request) ++bad_request_hits;
-  if (result.status == hp::http::ParseStatus::method_not_allowed) {
+  const auto result = hp::http::ParseRequest(request);
+  if (result.status == hp::http::ParseStatus::kNeedMore) ++need_more_hits;
+  if (result.status == hp::http::ParseStatus::kBadRequest) ++bad_request_hits;
+  if (result.status == hp::http::ParseStatus::kMethodNotAllowed) {
     ++method_not_allowed_hits;
   }
   return result;
 }
 
 void expect_bad(std::string_view request, std::string_view message) {
-  expect(parse(request).status == hp::http::ParseStatus::bad_request, message);
+  expect(parse(request).status == hp::http::ParseStatus::kBadRequest, message);
 }
 
 std::string bytes_to_string(const std::vector<std::byte>& bytes) {
@@ -41,7 +41,7 @@ std::string bytes_to_string(const std::vector<std::byte>& bytes) {
 
 void test_fragmented_and_complete_request() {
   expect(parse("GET / HTTP/1.1\r\nHost: ex").status ==
-             hp::http::ParseStatus::need_more,
+             hp::http::ParseStatus::kNeedMore,
          "partial header must need more bytes");
 
   constexpr std::string_view complete =
@@ -49,7 +49,7 @@ void test_fragmented_and_complete_request() {
       "Host: example\r\n"
       "X-Test: yes\r\n\r\n";
   const auto parsed = parse(complete);
-  expect(parsed.status == hp::http::ParseStatus::complete,
+  expect(parsed.status == hp::http::ParseStatus::kComplete,
          "valid GET must complete");
   expect(parsed.request.method == "GET", "method must be retained");
   expect(parsed.request.target == "/asset.txt?x=1",
@@ -60,14 +60,14 @@ void test_fragmented_and_complete_request() {
   const std::string pipelined =
       std::string(complete) + "GET /second HTTP/1.1\r\nHost: x\r\n\r\n";
   const auto first = parse(pipelined);
-  expect(first.status == hp::http::ParseStatus::complete &&
+  expect(first.status == hp::http::ParseStatus::kComplete &&
              first.consumed_bytes == complete.size(),
          "only the first request header block may be consumed");
 
   const std::string ignored_trailing =
       std::string(complete) + std::string("\n\0ignored", 9);
   const auto ignored = parse(ignored_trailing);
-  expect(ignored.status == hp::http::ParseStatus::complete &&
+  expect(ignored.status == hp::http::ParseStatus::kComplete &&
              ignored.consumed_bytes == complete.size(),
          "bytes after the first header block must be ignored");
 }
@@ -75,7 +75,7 @@ void test_fragmented_and_complete_request() {
 void test_method_and_host_rules() {
   const auto post =
       parse("POST / HTTP/1.1\r\nHost: example\r\nContent-Length: 0\r\n\r\n");
-  expect(post.status == hp::http::ParseStatus::method_not_allowed,
+  expect(post.status == hp::http::ParseStatus::kMethodNotAllowed,
          "syntactically valid non-GET method must be 405");
   expect(post.request.method == "POST",
          "405 result must retain the parsed method");
@@ -116,46 +116,49 @@ void test_request_line_and_header_syntax() {
 
 void test_limits() {
   std::string long_line = "GET /";
-  long_line.append(hp::http::max_request_line_bytes, 'a');
+  long_line.append(hp::http::kMaxRequestLineBytes, 'a');
   long_line += " HTTP/1.1\r\nHost: x\r\n\r\n";
   expect_bad(long_line, "request line over 4 KiB must return 400");
 
-  std::string at_request_limit(hp::http::max_request_bytes, 'a');
+  std::string at_request_limit(hp::http::kMaxRequestBytes, 'a');
   at_request_limit.replace(0, 4, "GET ");
   expect_bad(at_request_limit,
              "16 KiB without a header terminator must return 400");
 
   std::string over_request_limit = "GET / HTTP/1.1\r\nHost: x\r\nX: ";
-  over_request_limit.append(hp::http::max_request_bytes, 'a');
+  over_request_limit.append(hp::http::kMaxRequestBytes, 'a');
   expect_bad(over_request_limit, "request bytes beyond 16 KiB must return 400");
 
   std::string exact_line = "GET /";
-  exact_line.append(hp::http::max_request_line_bytes - 14, 'a');
+  exact_line.append(hp::http::kMaxRequestLineBytes - 14, 'a');
   exact_line += " HTTP/1.1\r\nHost: x\r\n\r\n";
-  expect(exact_line.find("\r\n") == hp::http::max_request_line_bytes,
+  expect(exact_line.find("\r\n") == hp::http::kMaxRequestLineBytes,
          "exact request-line fixture must be 4 KiB");
   expect(parse(std::string_view(exact_line)
-                   .substr(0, hp::http::max_request_line_bytes))
-                 .status == hp::http::ParseStatus::need_more,
+                   .substr(0, hp::http::kMaxRequestLineBytes))
+                 .status == hp::http::ParseStatus::kNeedMore,
          "exact 4 KiB content prefix must await CRLF independent of chunking");
-  expect(parse(exact_line).status == hp::http::ParseStatus::complete,
+  expect(parse(exact_line).status == hp::http::ParseStatus::kComplete,
          "a request line exactly at 4 KiB must be accepted");
 
   std::string exact_request = "GET / HTTP/1.1\r\nHost: x\r\nX-Limit: ";
-  exact_request.append(hp::http::max_request_bytes - exact_request.size() - 4,
+  exact_request.append(hp::http::kMaxRequestBytes - exact_request.size() - 4,
                        'a');
   exact_request += "\r\n\r\n";
-  expect(exact_request.size() == hp::http::max_request_bytes,
+  expect(exact_request.size() == hp::http::kMaxRequestBytes,
          "exact request fixture must be 16 KiB");
-  expect(parse(exact_request).status == hp::http::ParseStatus::complete,
+  expect(parse(exact_request).status == hp::http::ParseStatus::kComplete,
          "a complete request exactly at 16 KiB must be accepted");
 }
 
 void test_response_and_mime() {
-  const std::vector<std::byte> body{std::byte{'A'}, std::byte{0},
+  const std::vector<std::byte> body{std::byte{'A'},
+                                    std::byte{0},
                                     std::byte{'B'}};
-  const std::string response = bytes_to_string(hp::http::make_response(
-      hp::http::Status::ok, body, "application/octet-stream"));
+  const std::string response =
+      bytes_to_string(hp::http::MakeResponse(hp::http::Status::kOk,
+                                             body,
+                                             "application/octet-stream"));
   expect(response.starts_with("HTTP/1.1 200 OK\r\n"),
          "200 response must have the standard status line");
   expect(response.find("Content-Length: 3\r\n") != std::string::npos,
@@ -167,29 +170,33 @@ void test_response_and_mime() {
          "binary response body must preserve NUL bytes");
 
   const std::string method = bytes_to_string(
-      hp::http::make_error_response(hp::http::Status::method_not_allowed));
+      hp::http::MakeErrorResponse(hp::http::Status::kMethodNotAllowed));
   expect(method.find("Allow: GET\r\n") != std::string::npos,
          "405 must include Allow: GET");
   expect(method.ends_with("405 Method Not Allowed\n"),
          "405 body must be deterministic");
 
   const std::string internal = bytes_to_string(
-      hp::http::make_error_response(hp::http::Status::internal_server_error));
+      hp::http::MakeErrorResponse(hp::http::Status::kInternalServerError));
   expect(internal.starts_with("HTTP/1.1 500 Internal Server Error\r\n"),
          "500 response construction must be covered");
 
-  for (auto policy : {hp::http::ConnectionPolicy::close,
-                      hp::http::ConnectionPolicy::keep_alive}) {
-    for (auto status :
-         {hp::http::Status::ok, hp::http::Status::bad_request,
-          hp::http::Status::forbidden, hp::http::Status::not_found,
-          hp::http::Status::method_not_allowed,
-          hp::http::Status::internal_server_error}) {
+  for (auto policy : {hp::http::ConnectionPolicy::kClose,
+                      hp::http::ConnectionPolicy::kKeepAlive}) {
+    for (auto status : {hp::http::Status::kOk,
+                        hp::http::Status::kBadRequest,
+                        hp::http::Status::kForbidden,
+                        hp::http::Status::kNotFound,
+                        hp::http::Status::kMethodNotAllowed,
+                        hp::http::Status::kInternalServerError}) {
       const auto raw = bytes_to_string(
-          status == hp::http::Status::ok
-              ? hp::http::make_response(
-                    status, body, "application/octet-stream", false, policy)
-              : hp::http::make_error_response(status, policy));
+          status == hp::http::Status::kOk
+              ? hp::http::MakeResponse(status,
+                                       body,
+                                       "application/octet-stream",
+                                       false,
+                                       policy)
+              : hp::http::MakeErrorResponse(status, policy));
       const auto boundary = raw.find("\r\n\r\n") + 4;
       const auto connection = raw.find("Connection: "),
                  length = raw.find("Content-Length: ");
@@ -201,38 +208,36 @@ void test_response_and_mime() {
               raw.find("Content-Length: ", length + 1) == std::string::npos &&
               std::stoull(raw.substr(length + 16)) == raw.size() - boundary,
           "one exact length on every status");
-      expect(raw.find(policy == hp::http::ConnectionPolicy::close
+      expect(raw.find(policy == hp::http::ConnectionPolicy::kClose
                           ? "Connection: close\r\n"
                           : "Connection: keep-alive\r\n") != std::string::npos,
              "explicit policy serialized for all statuses");
-      if (status == hp::http::Status::method_not_allowed)
+      if (status == hp::http::Status::kMethodNotAllowed)
         expect(raw.find("Allow: GET\r\n") != std::string::npos,
                "405 policy preserves Allow");
     }
   }
-  expect(
-      hp::http::content_type_for_path("x.html") == "text/html; charset=utf-8",
-      "html MIME must be known");
-  expect(hp::http::content_type_for_path("x.CSS") == "text/css; charset=utf-8",
+  expect(hp::http::ContentTypeForPath("x.html") == "text/html; charset=utf-8",
+         "html MIME must be known");
+  expect(hp::http::ContentTypeForPath("x.CSS") == "text/css; charset=utf-8",
          "MIME lookup must be case-insensitive");
-  expect(hp::http::content_type_for_path("x.js") == "application/javascript",
+  expect(hp::http::ContentTypeForPath("x.js") == "application/javascript",
          "JavaScript MIME must be known");
-  expect(
-      hp::http::content_type_for_path("x.txt") == "text/plain; charset=utf-8",
-      "text MIME must be known");
-  expect(hp::http::content_type_for_path("x.json") == "application/json",
+  expect(hp::http::ContentTypeForPath("x.txt") == "text/plain; charset=utf-8",
+         "text MIME must be known");
+  expect(hp::http::ContentTypeForPath("x.json") == "application/json",
          "JSON MIME must be known");
-  expect(hp::http::content_type_for_path("x.png") == "image/png",
+  expect(hp::http::ContentTypeForPath("x.png") == "image/png",
          "PNG MIME must be known");
-  expect(hp::http::content_type_for_path("x.jpeg") == "image/jpeg",
+  expect(hp::http::ContentTypeForPath("x.jpeg") == "image/jpeg",
          "JPEG MIME must be known");
-  expect(hp::http::content_type_for_path("x.gif") == "image/gif",
+  expect(hp::http::ContentTypeForPath("x.gif") == "image/gif",
          "GIF MIME must be known");
-  expect(hp::http::content_type_for_path("x.svg") == "image/svg+xml",
+  expect(hp::http::ContentTypeForPath("x.svg") == "image/svg+xml",
          "SVG MIME must be known");
-  expect(hp::http::content_type_for_path("x.unknown") ==
-             "application/octet-stream",
-         "unknown extension must use octet-stream");
+  expect(
+      hp::http::ContentTypeForPath("x.unknown") == "application/octet-stream",
+      "unknown extension must use octet-stream");
 }
 
 }  // namespace

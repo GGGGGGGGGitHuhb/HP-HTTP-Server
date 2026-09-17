@@ -22,11 +22,11 @@ struct EventLoopTestAccess {
   static void dispatch_after_kernel_detach(EventLoop& loop, int fd) {
     // Keep a real queued event, detach only kernel registration, then dispatch
     // through production Channel/TcpConnection so the next MOD fails ENOENT.
-    const auto events = loop.epoller_.wait(250);
+    const auto events = loop.epoller_.Wait(250);
     if (events.size() != 1)
       throw std::runtime_error("expected one pending event");
     const auto event = events.front();
-    loop.epoller_.remove(fd);
+    loop.epoller_.Remove(fd);
     loop.dispatch(event.data.u64, event.events);
   }
 };
@@ -52,7 +52,7 @@ struct TcpConnectionTestAccess {
 struct AcceptorTestAccess {
   static int fd(Acceptor& a) { return a.listener_.fd(); }
 
-  static void invalidate_listener(Acceptor& a) { a.listener_.reset(); }
+  static void invalidate_listener(Acceptor& a) { a.listener_.Reset(); }
 };
 
 struct TcpServerTestAccess {
@@ -104,11 +104,13 @@ struct Pair {
 
   Pair() {
     int fds[2];
-    if (::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0,
+    if (::socketpair(AF_UNIX,
+                     SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+                     0,
                      fds))
       throw std::runtime_error("socketpair");
-    observed.reset(fds[0]);
-    peer.reset(fds[1]);
+    observed.Reset(fds[0]);
+    peer.Reset(fds[1]);
   }
 
   void send(std::span<const std::byte> bytes) {
@@ -129,9 +131,9 @@ Socket connect_to(std::uint16_t port) {
   address.sin_family = AF_INET;
   address.sin_port = htons(port);
   address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  if (!client.valid() ||
-      ::connect(client.fd(), reinterpret_cast<sockaddr*>(&address),
-                sizeof(address)))
+  if (!client.valid() || ::connect(client.fd(),
+                                   reinterpret_cast<sockaddr*>(&address),
+                                   sizeof(address)))
     throw std::runtime_error("connect");
   return client;
 }
@@ -143,8 +145,11 @@ void await_accept_queue(Acceptor& acceptor, unsigned expected) {
   for (int attempt = 0; attempt < 1000; ++attempt) {
     tcp_info info{};
     socklen_t length = sizeof(info);
-    if (::getsockopt(AcceptorTestAccess::fd(acceptor), IPPROTO_TCP, TCP_INFO,
-                     &info, &length))
+    if (::getsockopt(AcceptorTestAccess::fd(acceptor),
+                     IPPROTO_TCP,
+                     TCP_INFO,
+                     &info,
+                     &length))
       throw std::runtime_error("listener TCP_INFO");
     if (info.tcpi_unacked == expected) return;
     ::usleep(1000);
@@ -225,12 +230,16 @@ void buffers_and_echo() {
   EventLoop loop;
   Pair pair;
   int size = 4096;
-  expect(::setsockopt(pair.observed.fd(), SOL_SOCKET, SO_SNDBUF, &size,
+  expect(::setsockopt(pair.observed.fd(),
+                      SOL_SOCKET,
+                      SO_SNDBUF,
+                      &size,
                       sizeof(size)) == 0,
          "small send buffer");
   int closes{};
-  TcpConnection c(loop, std::move(pair.observed), 1, {}, 0,
-                  [&](int, auto) { ++closes; });
+  TcpConnection c(loop, std::move(pair.observed), 1, {}, 0, [&](int, auto) {
+    ++closes;
+  });
   c.start();
   c.start();
   std::vector<std::byte> payload(65536);
@@ -272,7 +281,9 @@ void application_boundaries() {
   int calls{}, notices{};
   Pair pair;
   TcpConnection c(
-      loop, std::move(pair.observed), 2,
+      loop,
+      std::move(pair.observed),
+      2,
       [&](TcpConnection& connection, std::span<const std::byte> input, bool) {
         ++calls;
         if (input.size() < 2) return;
@@ -282,7 +293,8 @@ void application_boundaries() {
         connection.consume(input.size());
         connection.close_after_flush();
       },
-      2, [&](int, auto) { ++notices; });
+      2,
+      [&](int, auto) { ++notices; });
   c.start();
   pair.ready();
   loop.poll_once(250);
@@ -301,13 +313,16 @@ void application_boundaries() {
   Pair limit;
   int limit_calls{}, limit_closed{};
   TcpConnection capped(
-      loop, std::move(limit.observed), 3,
+      loop,
+      std::move(limit.observed),
+      3,
       [&](TcpConnection& connection, std::span<const std::byte> input, bool) {
         (void)connection;
         ++limit_calls;
         expect(input.size() <= 2, "input limit respected");
       },
-      2, [&](int, auto) { ++limit_closed; });
+      2,
+      [&](int, auto) { ++limit_closed; });
   capped.start();
   std::byte over[3]{};
   limit.send(over);
@@ -380,7 +395,7 @@ void close_batch_and_reuse() {
     Pair fresh;
     if (fresh.observed.fd() != fd) {
       expect(::dup2(fresh.observed.fd(), fd) == fd, "force same numeric fd");
-      fresh.observed.reset(fd);
+      fresh.observed.Reset(fd);
     }
     S::add(server, std::move(fresh.observed));
     auto& current = S::connection(server, fd);
@@ -417,7 +432,11 @@ void failures_and_recovery() {
     Pair pair;
     const int fd = pair.observed.fd();
     try {
-      TcpConnection bad(loop, std::move(pair.observed), 0, {}, 0,
+      TcpConnection bad(loop,
+                        std::move(pair.observed),
+                        0,
+                        {},
+                        0,
                         [](int, auto) {});
     } catch (const std::invalid_argument&) {
       ++constructor_fail;
@@ -441,7 +460,11 @@ void failures_and_recovery() {
     // /dev/null is a valid owned fd but cannot be epoll-registered (EPERM).
     Socket regular(::open("/dev/null", O_RDONLY | O_CLOEXEC));
     int regular_fd = regular.fd();
-    TcpConnection unsupported(loop, std::move(regular), 4, {}, 0,
+    TcpConnection unsupported(loop,
+                              std::move(regular),
+                              4,
+                              {},
+                              0,
                               [](int, auto) {});
     try {
       unsupported.start();
@@ -506,8 +529,9 @@ void real_reset() {
   acceptor.stop();
   expect(accepted.valid(), "accept real reset TCP client");
   int notices{};
-  TcpConnection c(loop, std::move(accepted), 7, {}, 0,
-                  [&](int, auto) { ++notices; });
+  TcpConnection c(loop, std::move(accepted), 7, {}, 0, [&](int, auto) {
+    ++notices;
+  });
   c.start();
   std::vector<std::byte> bytes(1053, std::byte{0x7a});
   expect(::send(client.fd(), bytes.data(), bytes.size(), MSG_NOSIGNAL) == 1053,
@@ -523,18 +547,19 @@ void real_reset() {
   // Poll for ERR on an independent observer without consuming SO_ERROR/data.
   // The target TcpConnection is still untouched until the real combined event.
   Epoller reset_ready;
-  reset_ready.add(c.fd(), 0, 1);
+  reset_ready.Add(c.fd(), 0, 1);
   linger reset{1, 0};
-  expect(::setsockopt(client.fd(), SOL_SOCKET, SO_LINGER, &reset,
-                      sizeof(reset)) == 0,
-         "reset linger");
-  client.reset();
+  expect(
+      ::setsockopt(client.fd(), SOL_SOCKET, SO_LINGER, &reset, sizeof(reset)) ==
+          0,
+      "reset linger");
+  client.Reset();
   bool error_ready = false;
   for (int i = 0; i < 8 && !error_ready; ++i)
-    for (const auto& e : reset_ready.wait(250))
+    for (const auto& e : reset_ready.Wait(250))
       if (e.events & EPOLLERR) error_ready = true;
   expect(error_ready, "kernel TCP reset pending");
-  reset_ready.remove(c.fd());
+  reset_ready.Remove(c.fd());
   loop.poll_once(250);
   const auto result = C::result(c);
   const bool combined =

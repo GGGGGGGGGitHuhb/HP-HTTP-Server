@@ -60,9 +60,12 @@ std::string request(std::string_view target = "/a",
 
 std::string response(
     std::string_view body,
-    http::ConnectionPolicy policy = http::ConnectionPolicy::keep_alive) {
-  return text(http::make_response(http::Status::ok, bytes(body), "text/plain",
-                                  false, policy));
+    http::ConnectionPolicy policy = http::ConnectionPolicy::kKeepAlive) {
+  return text(http::MakeResponse(http::Status::kOk,
+                                 bytes(body),
+                                 "text/plain",
+                                 false,
+                                 policy));
 }
 
 struct Pair {
@@ -72,8 +75,8 @@ struct Pair {
     int f[2];
     if (::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, f))
       throw std::runtime_error("socketpair");
-    owner.reset(f[0]);
-    peer.reset(f[1]);
+    owner.Reset(f[0]);
+    peer.Reset(f[1]);
   }
 
   void send(std::string_view s) {
@@ -92,7 +95,9 @@ struct Pair {
   }
 };
 
-std::string pump(EventLoop& loop, Pair& pair, TcpConnection& c,
+std::string pump(EventLoop& loop,
+                 Pair& pair,
+                 TcpConnection& c,
                  std::size_t expected) {
   std::string out;
   for (int i = 0; i < 10000 && out.size() < expected; ++i) {
@@ -113,17 +118,22 @@ void pipeline_slow_and_repeated() {
   const std::string big(512 * 1024, 'q');
   std::size_t calls{}, closes{}, eagain{};
   TcpConnection c(
-      loop, std::move(p.owner), 1,
+      loop,
+      std::move(p.owner),
+      1,
       app::make_http_callback(
           [&](const http::HttpRequest& r, http::ConnectionPolicy policy) {
             ++calls;
             return http::ResponseResult{
-                http::make_response(http::Status::ok,
-                                    bytes(r.target == "/big" ? big : r.target),
-                                    "text/plain", false, policy),
+                http::MakeResponse(http::Status::kOk,
+                                   bytes(r.target == "/big" ? big : r.target),
+                                   "text/plain",
+                                   false,
+                                   policy),
                 policy};
           }),
-      http::max_request_bytes, [&](int, auto) { ++closes; });
+      http::kMaxRequestBytes,
+      [&](int, auto) { ++closes; });
   c.start();
   p.send(request("/big") + request("/b") + request("/c"));
   loop.poll_once(100);
@@ -133,7 +143,7 @@ void pipeline_slow_and_repeated() {
              events = C::events(c);
   eagain += C::result(c).write_would_block;
   expect(buffered == request("/b").size() + request("/c").size() &&
-             buffered <= http::max_request_bytes,
+             buffered <= http::kMaxRequestBytes,
          "bounded suffix stays in transport");
   p.send(request("/later"));
   for (int i = 0; i < 10; ++i) loop.poll_once(0);
@@ -169,7 +179,7 @@ void pipeline_slow_and_repeated() {
     many += request("/b");
     expected_many += response("/b");
   }
-  expect(many.size() > http::max_request_bytes,
+  expect(many.size() > http::kMaxRequestBytes,
          "cumulative connection input exceeds per-request limit");
   p.send(many);
   expect(
@@ -213,31 +223,38 @@ void terminal_matrix_and_eof() {
       "Connection: @\r\n",
       "Connection: content-length\r\nContent-Length: 1\r\n"};
   std::size_t cases{};
-  auto run = [&](const std::string& input, const std::string& wanted,
-                 std::size_t expected_calls, bool eof) {
+  auto run = [&](const std::string& input,
+                 const std::string& wanted,
+                 std::size_t expected_calls,
+                 bool eof) {
     EventLoop loop;
     Pair p;
     std::size_t calls{}, closes{};
     TcpConnection c(
-        loop, std::move(p.owner), 2,
+        loop,
+        std::move(p.owner),
+        2,
         app::make_http_callback([&](const http::HttpRequest& r,
                                     http::ConnectionPolicy policy) {
           ++calls;
           if (r.target == "/throw") throw std::runtime_error("provider");
           if (r.target == "/403" || r.target == "/404" || r.target == "/500")
             return http::ResponseResult{
-                http::make_error_response(
-                    r.target == "/403"   ? http::Status::forbidden
-                    : r.target == "/404" ? http::Status::not_found
-                                         : http::Status::internal_server_error,
+                http::MakeErrorResponse(
+                    r.target == "/403"   ? http::Status::kForbidden
+                    : r.target == "/404" ? http::Status::kNotFound
+                                         : http::Status::kInternalServerError,
                     policy),
                 policy};
-          return http::ResponseResult{
-              http::make_response(http::Status::ok, bytes(r.target),
-                                  "text/plain", false, policy),
-              policy};
+          return http::ResponseResult{http::MakeResponse(http::Status::kOk,
+                                                         bytes(r.target),
+                                                         "text/plain",
+                                                         false,
+                                                         policy),
+                                      policy};
         }),
-        http::max_request_bytes, [&](int, auto) { ++closes; });
+        http::kMaxRequestBytes,
+        [&](int, auto) { ++closes; });
     c.start();
     if (!input.empty()) p.send(input);
     if (eof) ::shutdown(p.peer.fd(), SHUT_WR);
@@ -249,42 +266,54 @@ void terminal_matrix_and_eof() {
            "terminal/EOF exact ordered stream and no suffix provider");
     ++cases;
   };
-  const auto bad = text(http::make_error_response(http::Status::bad_request));
+  const auto bad = text(http::MakeErrorResponse(http::Status::kBadRequest));
   for (const auto& h : invalid)
     run(request("/a") + request("/bad", h) + request("/suffix"),
-        response("/a") + bad, 1, false);
+        response("/a") + bad,
+        1,
+        false);
   for (const auto& h :
        {"Connection: ClOsE,keep-alive\r\nConnection: keep-alive\r\n",
         "Connection: keep-alive\r\nConnection: x, close\r\n"}) {
     run(request("/a", h) + request("/suffix"),
-        response("/a", http::ConnectionPolicy::close), 1, false);
+        response("/a", http::ConnectionPolicy::kClose),
+        1,
+        false);
     run(request("/a") + request("/b", h) + request("/suffix"),
-        response("/a") + response("/b", http::ConnectionPolicy::close), 2,
+        response("/a") + response("/b", http::ConnectionPolicy::kClose),
+        2,
         false);
   }
   run(request("/a") + "POST / HTTP/1.1\r\nHost: a\r\n\r\n" + request("/suffix"),
       response("/a") +
-          text(http::make_error_response(http::Status::method_not_allowed)),
-      1, false);
+          text(http::MakeErrorResponse(http::Status::kMethodNotAllowed)),
+      1,
+      false);
   run(request("/a") + request("/throw") + request("/suffix"),
       response("/a") +
-          text(http::make_error_response(http::Status::internal_server_error)),
-      2, false);
+          text(http::MakeErrorResponse(http::Status::kInternalServerError)),
+      2,
+      false);
   run("", bad, 0, true);
-  run(request("/a") + "GET /b HTTP/1.1\r\nHost:", response("/a") + bad, 1,
+  run(request("/a") + "GET /b HTTP/1.1\r\nHost:",
+      response("/a") + bad,
+      1,
       true);
   run(request("/a") + request("/b") + request("/c"),
-      response("/a") + response("/b") + response("/c"), 3, true);
+      response("/a") + response("/b") + response("/c"),
+      3,
+      true);
   for (const auto& target : {"/403", "/404", "/500"}) {
-    auto status = std::string_view(target) == "/403" ? http::Status::forbidden
+    auto status = std::string_view(target) == "/403" ? http::Status::kForbidden
                   : std::string_view(target) == "/404"
-                      ? http::Status::not_found
-                      : http::Status::internal_server_error;
+                      ? http::Status::kNotFound
+                      : http::Status::kInternalServerError;
     run(request(target) + request("/b", "Connection: close\r\n"),
-        text(http::make_error_response(status,
-                                       http::ConnectionPolicy::keep_alive)) +
-            response("/b", http::ConnectionPolicy::close),
-        2, false);
+        text(http::MakeErrorResponse(status,
+                                     http::ConnectionPolicy::kKeepAlive)) +
+            response("/b", http::ConnectionPolicy::kClose),
+        2,
+        false);
   }
   std::cout << "terminal/eof: cases=" << cases
             << " rejected_framing=" << invalid.size()
@@ -314,21 +343,24 @@ void service_policy_and_fin() {
     EventLoop loop;
     Pair p;
     std::size_t calls{}, closed{};
-    TcpConnection c(loop, std::move(p.owner), 4,
+    TcpConnection c(loop,
+                    std::move(p.owner),
+                    4,
                     app::make_http_callback([&](const http::HttpRequest& r,
                                                 http::ConnectionPolicy policy) {
                       ++calls;
-                      return service.handle_response(r, policy);
+                      return service.HandleResponse(r, policy);
                     }),
-                    http::max_request_bytes, [&](int, auto) { ++closed; });
+                    http::kMaxRequestBytes,
+                    [&](int, auto) { ++closed; });
     c.start();
     p.send((prefix ? request("/") : "") + request("/bad%20target") +
            request("/suffix"));
     auto wanted =
-        (prefix ? text(service.handle({"GET", "/"},
-                                      http::ConnectionPolicy::keep_alive))
+        (prefix ? text(service.Handle({"GET", "/"},
+                                      http::ConnectionPolicy::kKeepAlive))
                 : "") +
-        text(http::make_error_response(http::Status::bad_request));
+        text(http::MakeErrorResponse(http::Status::kBadRequest));
     expect(pump(loop, p, c, wanted.size()) == wanted &&
                calls == (prefix ? 2U : 1U) && closed == 1,
            "real service 400 metadata stops first/second request suffix");
@@ -337,21 +369,27 @@ void service_policy_and_fin() {
     EventLoop loop;
     Pair p;
     int calls{}, closed{};
-    TcpConnection c(loop, std::move(p.owner), 5,
-                    app::make_http_callback([&](const http::HttpRequest&,
-                                                http::ConnectionPolicy) {
-                      ++calls;
-                      return http::ResponseResult{
-                          http::make_response(
-                              http::Status::ok, bytes("INVALID"), "text/plain",
-                              false, http::ConnectionPolicy::keep_alive),
-                          http::ConnectionPolicy::keep_alive};
-                    }),
-                    http::max_request_bytes, [&](int, auto) { ++closed; });
+    TcpConnection c(
+        loop,
+        std::move(p.owner),
+        5,
+        app::make_http_callback(
+            [&](const http::HttpRequest&, http::ConnectionPolicy) {
+              ++calls;
+              return http::ResponseResult{
+                  http::MakeResponse(http::Status::kOk,
+                                     bytes("INVALID"),
+                                     "text/plain",
+                                     false,
+                                     http::ConnectionPolicy::kKeepAlive),
+                  http::ConnectionPolicy::kKeepAlive};
+            }),
+        http::kMaxRequestBytes,
+        [&](int, auto) { ++closed; });
     c.start();
     p.send(request("/", "Connection: close\r\n") + request("/suffix"));
     const auto wanted =
-        text(http::make_error_response(http::Status::internal_server_error));
+        text(http::MakeErrorResponse(http::Status::kInternalServerError));
     expect(
         pump(loop, p, c, wanted.size()) == wanted && calls == 1 && closed == 1,
         "provider cannot relax explicit close; invalid bytes replaced by500 "
@@ -365,17 +403,22 @@ void service_policy_and_fin() {
     const std::string big(512 * 1024, 'F');
     int calls{}, closed{};
     TcpConnection c(
-        loop, std::move(p.owner), 6,
-        app::make_http_callback([&](const http::HttpRequest& r,
-                                    http::ConnectionPolicy policy) {
-          ++calls;
-          return http::ResponseResult{
-              http::make_response(http::Status::ok,
-                                  bytes(r.target == "/big" ? big : r.target),
-                                  "text/plain", false, policy),
-              policy};
-        }),
-        http::max_request_bytes, [&](int, auto) { ++closed; });
+        loop,
+        std::move(p.owner),
+        6,
+        app::make_http_callback(
+            [&](const http::HttpRequest& r, http::ConnectionPolicy policy) {
+              ++calls;
+              return http::ResponseResult{
+                  http::MakeResponse(http::Status::kOk,
+                                     bytes(r.target == "/big" ? big : r.target),
+                                     "text/plain",
+                                     false,
+                                     policy),
+                  policy};
+            }),
+        http::kMaxRequestBytes,
+        [&](int, auto) { ++closed; });
     c.start();
     p.send(request("/big") + request("/b") + request("/c"));
     loop.poll_once(100);
@@ -400,8 +443,12 @@ void generic_drains() {
     Pair p;
     int notifications{}, depth{}, max_depth{}, closed{}, alive{};
     TcpConnection c(
-        loop, std::move(p.owner), 3, [](TcpConnection&, auto, bool) {},
-        http::max_request_bytes, [&](int, auto) { ++closed; });
+        loop,
+        std::move(p.owner),
+        3,
+        [](TcpConnection&, auto, bool) {},
+        http::kMaxRequestBytes,
+        [&](int, auto) { ++closed; });
     c.start();
     c.set_write_complete_callback([&](TcpConnection& conn) {
       ++depth;
@@ -444,7 +491,11 @@ void generic_drains() {
     bool returned = false, requested = false;
     int destroyed = 0, alive = 0;
     auto c = std::make_unique<TcpConnection>(
-        loop, std::move(p.owner), 7, [](TcpConnection&, auto, bool) {}, 0,
+        loop,
+        std::move(p.owner),
+        7,
+        [](TcpConnection&, auto, bool) {},
+        0,
         [&](int, auto) { requested = true; });
     const int fd = c->fd();
     loop.set_after_dispatch([&] {
@@ -478,29 +529,34 @@ void boundary_rejection_and_fin() {
       Pair pair;
       std::size_t calls{}, suffix_calls{}, closes{};
       TcpConnection c(
-          loop, std::move(pair.owner), 81,
-          app::make_http_callback(
-              [&](const http::HttpRequest& r, http::ConnectionPolicy policy) {
-                ++calls;
-                if (r.target == "/suffix") ++suffix_calls;
-                if (r.target == "/bad%20target")
-                  return http::ResponseResult{
-                      http::make_error_response(http::Status::bad_request),
-                      http::ConnectionPolicy::close};
-                return http::ResponseResult{
-                    http::make_response(http::Status::ok, bytes(r.target),
-                                        "text/plain", false, policy),
-                    policy};
-              }),
-          http::max_request_bytes, [&](int, auto) { ++closes; });
+          loop,
+          std::move(pair.owner),
+          81,
+          app::make_http_callback([&](const http::HttpRequest& r,
+                                      http::ConnectionPolicy policy) {
+            ++calls;
+            if (r.target == "/suffix") ++suffix_calls;
+            if (r.target == "/bad%20target")
+              return http::ResponseResult{
+                  http::MakeErrorResponse(http::Status::kBadRequest),
+                  http::ConnectionPolicy::kClose};
+            return http::ResponseResult{http::MakeResponse(http::Status::kOk,
+                                                           bytes(r.target),
+                                                           "text/plain",
+                                                           false,
+                                                           policy),
+                                        policy};
+          }),
+          http::kMaxRequestBytes,
+          [&](int, auto) { ++closes; });
       c.start();
       pair.send((prefix ? request("/prefix") : "") + sample.wire +
                 request("/suffix"));
       const auto expected =
           (prefix ? response("/prefix") : "") +
-          text(http::make_error_response(sample.status == 405
-                                             ? http::Status::method_not_allowed
-                                             : http::Status::bad_request));
+          text(http::MakeErrorResponse(sample.status == 405
+                                           ? http::Status::kMethodNotAllowed
+                                           : http::Status::kBadRequest));
       expect(pump(loop, pair, c, expected.size()) == expected,
              "S3 component rejection ordered bytes");
       for (int i = 0; i < 5; ++i) loop.poll_once(0);
@@ -520,16 +576,21 @@ void boundary_rejection_and_fin() {
       Pair pair;
       std::size_t calls{}, closes{};
       TcpConnection c(
-          loop, std::move(pair.owner), 82,
-          app::make_http_callback(
-              [&](const http::HttpRequest& r, http::ConnectionPolicy policy) {
-                ++calls;
-                return http::ResponseResult{
-                    http::make_response(http::Status::ok, bytes(r.target),
-                                        "text/plain", false, policy),
-                    policy};
-              }),
-          http::max_request_bytes, [&](int, auto) { ++closes; });
+          loop,
+          std::move(pair.owner),
+          82,
+          app::make_http_callback([&](const http::HttpRequest& r,
+                                      http::ConnectionPolicy policy) {
+            ++calls;
+            return http::ResponseResult{http::MakeResponse(http::Status::kOk,
+                                                           bytes(r.target),
+                                                           "text/plain",
+                                                           false,
+                                                           policy),
+                                        policy};
+          }),
+          http::kMaxRequestBytes,
+          [&](int, auto) { ++closes; });
       c.start();
       if (reused) {
         pair.send(request("/prefix"));
@@ -542,7 +603,7 @@ void boundary_rejection_and_fin() {
       expect(pair.collect().empty(), "incomplete prefix has no early response");
       expect(::shutdown(pair.peer.fd(), SHUT_WR) == 0, "component FIN");
       const auto expected =
-          text(http::make_error_response(http::Status::bad_request));
+          text(http::MakeErrorResponse(http::Status::kBadRequest));
       expect(pump(loop, pair, c, expected.size()) == expected,
              "truncated prefix produces exactly400");
       for (int i = 0; i < 5; ++i) loop.poll_once(0);

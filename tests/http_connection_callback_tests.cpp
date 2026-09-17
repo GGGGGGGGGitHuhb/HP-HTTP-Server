@@ -88,11 +88,13 @@ struct Pair {
 
   Pair() {
     int fd[2];
-    if (::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0,
+    if (::socketpair(AF_UNIX,
+                     SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+                     0,
                      fd))
       throw std::runtime_error("pair");
-    owner.reset(fd[0]);
-    peer.reset(fd[1]);
+    owner.Reset(fd[0]);
+    peer.Reset(fd[1]);
   }
 
   void send(std::string_view s) {
@@ -112,7 +114,7 @@ std::vector<std::byte> collect(int fd) {
 }
 
 std::vector<std::byte> response(std::string_view body) {
-  return http::make_response(http::Status::ok, bytes(body), "text/plain");
+  return http::MakeResponse(http::Status::kOk, bytes(body), "text/plain");
 }
 
 const std::string request =
@@ -127,12 +129,18 @@ void interleaved_and_eof() {
     return http::ResponseResult{response(r.target), policy};
   };
   int closed{};
-  TcpConnection ca(loop, std::move(a.owner), 1,
+  TcpConnection ca(loop,
+                   std::move(a.owner),
+                   1,
                    app::make_http_callback(provider, &sa),
-                   http::max_request_bytes, [&](int, auto) { ++closed; });
-  TcpConnection cb(loop, std::move(b.owner), 2,
+                   http::kMaxRequestBytes,
+                   [&](int, auto) { ++closed; });
+  TcpConnection cb(loop,
+                   std::move(b.owner),
+                   2,
                    app::make_http_callback(provider, &sb),
-                   http::max_request_bytes, [&](int, auto) { ++closed; });
+                   http::kMaxRequestBytes,
+                   [&](int, auto) { ++closed; });
   ca.start();
   cb.start();
   a.send("GET /one HTTP/1.1\r\n");
@@ -153,27 +161,33 @@ void interleaved_and_eof() {
          "per-connection done state");
   Pair eof;
   app::HttpCallbackStats se;
-  TcpConnection ce(loop, std::move(eof.owner), 3,
+  TcpConnection ce(loop,
+                   std::move(eof.owner),
+                   3,
                    app::make_http_callback(provider, &se),
-                   http::max_request_bytes, [](int, auto) {});
+                   http::kMaxRequestBytes,
+                   [](int, auto) {});
   ce.start();
   eof.send("GET / HTTP/1.1\r\n");
   loop.poll_once(250);
   ::shutdown(eof.peer.fd(), SHUT_WR);
   loop.poll_once(250);
   expect(collect(eof.peer.fd()) ==
-                 http::make_error_response(http::Status::bad_request) &&
+                 http::MakeErrorResponse(http::Status::kBadRequest) &&
              se.eof_notifications == 1,
          "EOF without new bytes incomplete400");
   int eof_empty{};
   Pair empty;
   TcpConnection cc(
-      loop, std::move(empty.owner), 4,
+      loop,
+      std::move(empty.owner),
+      4,
       [&](TcpConnection& c, std::span<const std::byte> in, bool ended) {
         if (ended && in.empty()) ++eof_empty;
         c.close_after_flush();
       },
-      0, [](int, auto) {});
+      0,
+      [](int, auto) {});
   cc.start();
   ::shutdown(empty.peer.fd(), SHUT_WR);
   loop.poll_once(250);
@@ -192,17 +206,25 @@ void incremental_consumption() {
                      http::ConnectionPolicy policy) {
     return http::ResponseResult{response(r.target), policy};
   };
-  TcpConnection ca(loop, std::move(a.owner), 90,
+  TcpConnection ca(loop,
+                   std::move(a.owner),
+                   90,
                    app::make_http_callback(provider, &sa),
-                   http::max_request_bytes, [](int, auto) {});
-  TcpConnection cb(loop, std::move(b.owner), 91,
+                   http::kMaxRequestBytes,
+                   [](int, auto) {});
+  TcpConnection cb(loop,
+                   std::move(b.owner),
+                   91,
                    app::make_http_callback(provider, &sb),
-                   http::max_request_bytes, [](int, auto) {});
+                   http::kMaxRequestBytes,
+                   [](int, auto) {});
   ca.start();
   cb.start();
-  const std::vector<std::string> pa = {"GET /", "a HTTP/1.1\r\nHo",
+  const std::vector<std::string> pa = {"GET /",
+                                       "a HTTP/1.1\r\nHo",
                                        "st: x\r\nConnection: close\r\n\r\n"};
-  const std::vector<std::string> pb = {"GET /b HTTP/1.1\r", "\nHost: y\r",
+  const std::vector<std::string> pb = {"GET /b HTTP/1.1\r",
+                                       "\nHost: y\r",
                                        "\nConnection: close\r\n\r\n"};
   std::size_t sent_a = 0, sent_b = 0;
   for (std::size_t i = 0; i < pa.size(); ++i) {
@@ -230,14 +252,17 @@ void incremental_consumption() {
          "three fragments preserve independent request fields");
   Pair empty;
   app::HttpCallbackStats se;
-  TcpConnection ce(loop, std::move(empty.owner), 92,
+  TcpConnection ce(loop,
+                   std::move(empty.owner),
+                   92,
                    app::make_http_callback(provider, &se),
-                   http::max_request_bytes, [](int, auto) {});
+                   http::kMaxRequestBytes,
+                   [](int, auto) {});
   ce.start();
   ::shutdown(empty.peer.fd(), SHUT_WR);
   loop.poll_once(250);
   expect(collect(empty.peer.fd()) ==
-                 http::make_error_response(http::Status::bad_request) &&
+                 http::MakeErrorResponse(http::Status::kBadRequest) &&
              se.accepted_bytes == 0 && se.eof_notifications == 1,
          "empty HTTP EOF feed produces400 without consumed bytes");
   std::cout
@@ -255,49 +280,58 @@ void limits_and_500() {
     return http::ResponseResult{response("ok"), policy};
   };
   std::string exact = "GET / HTTP/1.1\r\nHost: t\r\nConnection: close\r\nX: ";
-  exact.append(http::max_request_bytes - exact.size() - 4, 'a');
+  exact.append(http::kMaxRequestBytes - exact.size() - 4, 'a');
   exact += "\r\n\r\n";
   for (bool over : {false, true}) {
     Pair p;
     app::HttpCallbackStats st;
-    TcpConnection c(loop, std::move(p.owner), 5,
+    TcpConnection c(loop,
+                    std::move(p.owner),
+                    5,
                     app::make_http_callback(provider, &st),
-                    http::max_request_bytes, [](int, auto) {});
+                    http::kMaxRequestBytes,
+                    [](int, auto) {});
     c.start();
     std::string input =
-        over ? std::string(http::max_request_bytes + 1, 'a') : exact;
+        over ? std::string(http::kMaxRequestBytes + 1, 'a') : exact;
     p.send(input);
     loop.poll_once(250);
     auto got = collect(p.peer.fd());
-    expect(got == (over ? http::make_error_response(http::Status::bad_request)
+    expect(got == (over ? http::MakeErrorResponse(http::Status::kBadRequest)
                         : response("ok")),
            "precise HTTP input bound response");
   }
   Pair p;
   app::HttpCallbackStats st;
-  TcpConnection c(loop, std::move(p.owner), 6,
+  TcpConnection c(loop,
+                  std::move(p.owner),
+                  6,
                   app::make_http_callback(
                       [](const http::HttpRequest&,
                          http::ConnectionPolicy) -> http::ResponseResult {
                         throw std::runtime_error("provider");
                       },
                       &st),
-                  http::max_request_bytes, [](int, auto) {});
+                  http::kMaxRequestBytes,
+                  [](int, auto) {});
   c.start();
   p.send(request);
   loop.poll_once(250);
-  expect(collect(p.peer.fd()) == http::make_error_response(
-                                     http::Status::internal_server_error) &&
+  expect(collect(p.peer.fd()) ==
+                 http::MakeErrorResponse(http::Status::kInternalServerError) &&
              st.responses == 1,
          "adapter exception maps500");
   int exact_seen{}, limit_closed{};
   Pair bounded;
   TcpConnection cap(
-      loop, std::move(bounded.owner), 7,
+      loop,
+      std::move(bounded.owner),
+      7,
       [&](TcpConnection&, std::span<const std::byte> in, bool) {
         if (in.size() == 4) ++exact_seen;
       },
-      4, [&](int, auto) { ++limit_closed; });
+      4,
+      [&](int, auto) { ++limit_closed; });
   cap.start();
   bounded.send("12345");
   loop.poll_once(250);
@@ -319,19 +353,25 @@ void drain_pipeline_and_borrow() {
   for (std::size_t i = 0; i < body.size(); ++i)
     body[i] = static_cast<std::byte>(i * 71U);
   const auto expected =
-      http::make_response(http::Status::ok, body, "application/octet-stream");
+      http::MakeResponse(http::Status::kOk, body, "application/octet-stream");
   int closes{};
   TcpConnection c(
-      loop, std::move(p.owner), 8,
+      loop,
+      std::move(p.owner),
+      8,
       app::make_http_callback(
           [&](const http::HttpRequest&, http::ConnectionPolicy policy) {
             return http::ResponseResult{
-                http::make_response(http::Status::ok, body,
-                                    "application/octet-stream", false, policy),
+                http::MakeResponse(http::Status::kOk,
+                                   body,
+                                   "application/octet-stream",
+                                   false,
+                                   policy),
                 policy};
           },
           &stats),
-      http::max_request_bytes, [&](int, auto) { ++closes; });
+      http::kMaxRequestBytes,
+      [&](int, auto) { ++closes; });
   c.start();
   p.send(request + request);
   loop.poll_once(250);
@@ -361,11 +401,14 @@ void drain_pipeline_and_borrow() {
   Pair invalid;
   int consumed_close{};
   TcpConnection bad(
-      loop, std::move(invalid.owner), 9,
+      loop,
+      std::move(invalid.owner),
+      9,
       [](TcpConnection& c, std::span<const std::byte> input, bool) {
         c.consume(input.size() + 1);
       },
-      0, [&](int, auto) { ++consumed_close; });
+      0,
+      [&](int, auto) { ++consumed_close; });
   bad.start();
   invalid.send("x");
   loop.poll_once(250);
@@ -423,7 +466,7 @@ void factory_message_lifetime() {
     Pair fresh;
     if (fresh.owner.fd() != oldfd) {
       expect(::dup2(fresh.owner.fd(), oldfd) == oldfd, "reuse numeric fd");
-      fresh.owner.reset(oldfd);
+      fresh.owner.Reset(oldfd);
     }
     S::add(server, std::move(fresh.owner));
     EventLoopTestAccess::stale(S::loop(server), oldtoken);
@@ -442,10 +485,14 @@ void factory_message_lifetime() {
     expect(S::size(server) == 0 && ::fcntl(oldfd, F_GETFD) == -1,
            "callback returns before fd close");
     Pair output;
-    TcpConnection c(S::loop(server), std::move(output.owner), 77, {}, 0,
+    TcpConnection c(S::loop(server),
+                    std::move(output.owner),
+                    77,
+                    {},
+                    0,
                     [](int, auto) {});
     c.start();
-    output.peer.reset();
+    output.peer.Reset();
     c.send(bytes("out"));
     expect(c.state() == TcpConnection::State::closing,
            "send output error closes");
@@ -473,7 +520,8 @@ void reset_new_message() {
   address.sin_family = AF_INET;
   address.sin_port = htons(acceptor.bound_port());
   address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  expect(::connect(client.fd(), reinterpret_cast<sockaddr*>(&address),
+  expect(::connect(client.fd(),
+                   reinterpret_cast<sockaddr*>(&address),
                    sizeof(address)) == 0,
          "reset TCP connect");
   loop.poll_once(250);
@@ -481,13 +529,16 @@ void reset_new_message() {
   std::vector<std::byte> received;
   int messages{}, closed{};
   TcpConnection c(
-      loop, std::move(accepted), 78,
+      loop,
+      std::move(accepted),
+      78,
       [&](TcpConnection& conn, std::span<const std::byte> input, bool) {
         ++messages;
         received.insert(received.end(), input.begin(), input.end());
         conn.consume(input.size());
       },
-      0, [&](int, auto) { ++closed; });
+      0,
+      [&](int, auto) { ++closed; });
   c.start();
   std::vector<std::byte> queued(1053, std::byte{0x5a});
   expect(
@@ -502,17 +553,17 @@ void reset_new_message() {
   }
   expect(count == 1053 && peek == queued, "reset full queued");
   Epoller waiting;
-  waiting.add(c.fd(), 0, 1);
+  waiting.Add(c.fd(), 0, 1);
   linger reset{1, 0};
   ::setsockopt(client.fd(), SOL_SOCKET, SO_LINGER, &reset, sizeof(reset));
-  client.reset();
+  client.Reset();
   bool pending = false;
   for (int i = 0; i < 8 && !pending; ++i) {
-    for (const auto& e : waiting.wait(250))
+    for (const auto& e : waiting.Wait(250))
       if (e.events & EPOLLERR) pending = true;
   }
   expect(pending, "reset error ready");
-  waiting.remove(c.fd());
+  waiting.Remove(c.fd());
   loop.poll_once(250);
   auto result = C::result(c);
   bool combined = (C::mask(c) & (EPOLLERR | EPOLLIN)) == (EPOLLERR | EPOLLIN);

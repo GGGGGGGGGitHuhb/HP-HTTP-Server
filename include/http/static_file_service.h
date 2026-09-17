@@ -10,24 +10,24 @@
 
 namespace hp::http {
 
-inline constexpr std::size_t max_file_bytes = 8U * 1024U * 1024U;
+inline constexpr std::size_t kMaxFileBytes = 8U * 1024U * 1024U;
 
 class StaticFileService final : private base::NonCopyable {
  public:
   explicit StaticFileService(const std::string& root_path);
   ~StaticFileService();
 
-  [[nodiscard]] std::vector<std::byte> handle(
+  [[nodiscard]] std::vector<std::byte> Handle(
       const HttpRequest& request,
-      ConnectionPolicy policy = ConnectionPolicy::close) const;
+      ConnectionPolicy policy = ConnectionPolicy::kClose) const;
 
-  [[nodiscard]] ResponseResult handle_response(
+  [[nodiscard]] ResponseResult HandleResponse(
       const HttpRequest& request,
-      ConnectionPolicy policy = ConnectionPolicy::close) const;
+      ConnectionPolicy policy = ConnectionPolicy::kClose) const;
 
-  [[nodiscard]] ResponseResult prepare_response(
+  [[nodiscard]] ResponseResult PrepareResponse(
       const HttpRequest& request,
-      ConnectionPolicy policy = ConnectionPolicy::close) const;
+      ConnectionPolicy policy = ConnectionPolicy::kClose) const;
 
  private:
   friend struct StaticFileServiceTestAccess;

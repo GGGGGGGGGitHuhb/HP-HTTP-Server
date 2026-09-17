@@ -7,8 +7,8 @@
 
 namespace hp::http {
 
-inline constexpr std::size_t max_request_bytes = 16U * 1024U;
-inline constexpr std::size_t max_request_line_bytes = 4U * 1024U;
+inline constexpr std::size_t kMaxRequestBytes = 16U * 1024U;
+inline constexpr std::size_t kMaxRequestLineBytes = 4U * 1024U;
 
 struct HttpRequest {
   std::string method;
@@ -17,24 +17,24 @@ struct HttpRequest {
 };
 
 enum class ParseStatus {
-  need_more,
-  complete,
-  bad_request,
-  method_not_allowed,
+  kNeedMore,
+  kComplete,
+  kBadRequest,
+  kMethodNotAllowed,
 };
 
 struct ParseResult {
-  ParseStatus status{ParseStatus::need_more};
+  ParseStatus status{ParseStatus::kNeedMore};
   HttpRequest request;
   std::size_t consumed_bytes{0};
 };
 
-enum class ParserState { request_line, headers, complete, error };
+enum class ParserState { kRequestLine, kHeaders, kComplete, kError };
 
 struct FeedResult {
-  ParseStatus status{ParseStatus::need_more};
+  ParseStatus status{ParseStatus::kNeedMore};
   HttpRequest
-      request;  // Independent value; safe after reset or caller input release.
+      request;  // Independent value; safe after Reset or caller input release.
   std::size_t accepted_bytes{0};  // Bytes accepted from this feed only.
   std::size_t request_bytes{
       0};  // Cumulative, including the offending byte on error.
@@ -42,8 +42,8 @@ struct FeedResult {
 
 class RequestParser final {
  public:
-  [[nodiscard]] FeedResult feed(std::string_view new_bytes);
-  void reset() noexcept;
+  [[nodiscard]] FeedResult Feed(std::string_view new_bytes);
+  void Reset() noexcept;
 
   [[nodiscard]] ParserState state() const noexcept { return state_; }
 
@@ -61,18 +61,24 @@ class RequestParser final {
   [[nodiscard]] bool pending_cr() const noexcept { return pending_cr_; }
 
  private:
-  bool validate_request_line();
-  bool validate_header();
-  void finish_line();
-  [[nodiscard]] FeedResult result(std::size_t accepted) const;
+  bool ValidateRequestLine();
+  bool ValidateHeader();
+  void FinishLine();
+  [[nodiscard]] FeedResult BuildResult(std::size_t accepted) const;
+
+  // Borrow input only for this call; each inspected character updates
+  // scan_steps_.
+  bool EqualsAsciiCaseInsensitive(std::string_view value,
+                                  std::string_view expected);
+  std::string_view TrimHeaderWhitespace(std::string_view value);
 
   // Request line retained once; subsequent Header lines reuse the rest. Never
   // retain a view into caller memory or copy a pipelined suffix into this
   // array.
-  std::array<char, max_request_bytes> storage_{};
+  std::array<char, kMaxRequestBytes> storage_{};
 
-  ParserState state_{ParserState::request_line};
-  ParseStatus status_{ParseStatus::need_more};
+  ParserState state_{ParserState::kRequestLine};
+  ParseStatus status_{ParseStatus::kNeedMore};
   bool pending_cr_{false};
   bool host_seen_{false};
   bool content_length_seen_{false};
@@ -84,6 +90,6 @@ class RequestParser final {
   std::size_t scan_steps_{0}, peak_buffered_{0};
 };
 
-[[nodiscard]] ParseResult parse_request(std::string_view bytes);
+[[nodiscard]] ParseResult ParseRequest(std::string_view bytes);
 
 }  // namespace hp::http

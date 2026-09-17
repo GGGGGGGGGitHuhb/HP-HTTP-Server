@@ -121,7 +121,9 @@ ssize_t __wrap_pread(int fd, void *bytes, std::size_t count, off_t offset) {
   return __real_pread(fd, bytes, count, offset);
 }
 
-ssize_t __wrap_sendfile(int output, int input, off_t *offset,
+ssize_t __wrap_sendfile(int output,
+                        int input,
+                        off_t *offset,
                         std::size_t count) {
   const off_t before = offset ? *offset : -1;
   const int injected = sendfile_injection;
@@ -270,10 +272,11 @@ static_assert(!std::is_copy_constructible_v<FileRegion> &&
 static_assert(std::is_nothrow_move_constructible_v<FileRegion> &&
               std::is_nothrow_move_assignable_v<FileRegion>);
 
-FileRegion region(const Fixture &fixture, std::size_t length,
+FileRegion region(const Fixture &fixture,
+                  std::size_t length,
                   off_t offset = 0) {
   auto file = open_fixture(fixture);
-  return FileRegion(UniqueFd(file.release()), offset, length);
+  return FileRegion(UniqueFd(file.Release()), offset, length);
 }
 
 std::span<const std::byte> view(std::string_view text) {
@@ -294,7 +297,8 @@ void collect(int fd, std::string &target) {
   }
 }
 
-void call_budget_and_mask_failure(const Fixture &fixture, bool disable_budget,
+void call_budget_and_mask_failure(const Fixture &fixture,
+                                  bool disable_budget,
                                   bool disable_mask) {
   int pair[2];
   require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
@@ -380,12 +384,12 @@ void transport_bounds(const Fixture &fixture, bool disable_allocation) {
           "move assignment releases old file once");
   require((::fcntl(replacement.fd(), F_GETFD) & FD_CLOEXEC) != 0,
           "file CLOEXEC");
-  replacement.advance(7);
+  replacement.Advance(7);
   require(evidence(moved_id).closes == 1,
           "region completes and releases file immediately");
-  for (const auto length :
-       {ConnectionIo::output_limit - 2, ConnectionIo::output_limit - 1,
-        ConnectionIo::output_limit}) {
+  for (const auto length : {ConnectionIo::output_limit - 2,
+                            ConnectionIo::output_limit - 1,
+                            ConnectionIo::output_limit}) {
     int pair[2];
     require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
             "bounds pair");
@@ -480,7 +484,8 @@ void transport_short_writes(const Fixture &fixture) {
   const auto record = evidence(id);
   require(wire.size() == header.size() + length && wire.starts_with(header),
           "header file ordering");
-  require(std::memcmp(wire.data() + header.size(), fixture.large.data() + 17,
+  require(std::memcmp(wire.data() + header.size(),
+                      fixture.large.data() + 17,
                       length) == 0,
           "nonzero offset file exact bytes");
   require(record.positive > 0 && record.short_writes > 0 && record.eagain > 0 &&
@@ -503,14 +508,16 @@ void transport_errors(const Fixture &fixture, bool disable_eof) {
     require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
             "error pair");
     Socket peer(pair[1]);
-    registry.add(
-        Socket(pair[0]), [&](TcpConnection &connection, auto bytes, bool) {
-          auto file = region(fixture, error ? 32 : 1,
-                             (error || disable_eof) ? 0 : fixture.large.size());
-          connection.consume(bytes.size());
-          connection.send_file({}, std::move(file));
-          sendfile_injection = error;
-        });
+    registry.add(Socket(pair[0]),
+                 [&](TcpConnection &connection, auto bytes, bool) {
+                   auto file = region(
+                       fixture,
+                       error ? 32 : 1,
+                       (error || disable_eof) ? 0 : fixture.large.size());
+                   connection.consume(bytes.size());
+                   connection.send_file({}, std::move(file));
+                   sendfile_injection = error;
+                 });
     require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "trigger file error");
     const auto before = sendfile_injection_consumed;
     loop.poll_once(0);
@@ -538,7 +545,8 @@ void transport_fairness(const Fixture &fixture) {
   Socket peer(pair[1]), other(healthy[1]);
   int completed = 0, healthy_calls = 0;
   registry.add(
-      Socket(pair[0]), [&](TcpConnection &connection, auto bytes, bool) {
+      Socket(pair[0]),
+      [&](TcpConnection &connection, auto bytes, bool) {
         connection.consume(bytes.size());
         connection.set_write_complete_callback([&](TcpConnection &current) {
           ++completed;
@@ -597,7 +605,7 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
             ::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
             "pipe pair");
         Socket disconnected(pair[1]);
-        if (!disable_peer_close) disconnected.reset();
+        if (!disable_peer_close) disconnected.Reset();
         sigset_t saved_mask;
         ::pthread_sigmask(SIG_SETMASK, nullptr, &saved_mask);
         ConnectionIo io{Socket(pair[0])};
@@ -622,20 +630,23 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
         }
       }
       {
-        auto listener = Socket::create_tcp();
-        listener.bind_any(0);
-        listener.listen(4);
+        auto listener = Socket::CreateTcp();
+        listener.BindAny(0);
+        listener.Listen(4);
         Socket reset_peer(connect_client(listener.local_port()));
         Socket accepted;
         await([&] {
-          accepted = listener.accept_non_blocking();
+          accepted = listener.AcceptNonBlocking();
           return accepted.valid();
         });
         const linger reset{1, 0};
-        require(::setsockopt(reset_peer.fd(), SOL_SOCKET, SO_LINGER, &reset,
+        require(::setsockopt(reset_peer.fd(),
+                             SOL_SOCKET,
+                             SO_LINGER,
+                             &reset,
                              sizeof(reset)) == 0,
                 "TCP reset peer configuration");
-        reset_peer.reset();
+        reset_peer.Reset();
         pollfd event{accepted.fd(), POLLERR, 0};
         const int polled = ::poll(&event, 1, 1000);
         std::cerr << "TCP reset diagnostic fd=" << event.fd
@@ -722,7 +733,8 @@ std::size_t file_count() {
   return file_evidence.size();
 }
 
-std::size_t owner_capacity(ServerHarness &harness, std::size_t workers,
+std::size_t owner_capacity(ServerHarness &harness,
+                           std::size_t workers,
                            std::size_t owner) {
   std::promise<std::size_t> answer;
   auto result = answer.get_future();
@@ -734,7 +746,8 @@ std::size_t owner_capacity(ServerHarness &harness, std::size_t workers,
     answer.set_value(SendfileTestAccess::capacity(*entries.begin()->second));
   };
   if (workers)
-    require(TcpServerTestAccess::post(*harness.server, owner,
+    require(TcpServerTestAccess::post(*harness.server,
+                                      owner,
                                       [&](EventLoop &) { observe(); }),
             "capacity owner observer");
   else
@@ -778,12 +791,19 @@ void prepare_compatibility(const Fixture &fixture,
       fixture.root / "mega.bin",
       std::vector<std::byte>(fixture.large.begin(),
                              fixture.large.begin() + 1024 * 1024));
-  for (auto path : {"/empty.bin", "/one.bin", "/large.bin", "/oversized.bin",
-                    "/escape.txt", "/../sibling-secret.txt", "/assets",
-                    "/missing", "/assets/binary.png"}) {
+  for (auto path : {"/empty.bin",
+                    "/one.bin",
+                    "/large.bin",
+                    "/oversized.bin",
+                    "/escape.txt",
+                    "/../sibling-secret.txt",
+                    "/assets",
+                    "/missing",
+                    "/assets/binary.png"}) {
     const auto before = file_count();
-    auto prepared = service.prepare_response(
-        {"GET", path}, hp::http::ConnectionPolicy::keep_alive);
+    auto prepared =
+        service.PrepareResponse({"GET", path},
+                                hp::http::ConnectionPolicy::kKeepAlive);
     const auto after_prepare = file_count();
     if (prepared.file) {
       require(prepared.file->offset() == 0 && prepared.bytes.size() < 256,
@@ -793,8 +813,9 @@ void prepare_compatibility(const Fixture &fixture,
               "prepare never reads body");
     }
     const auto actual = materialize_prepared(std::move(prepared));
-    const auto legacy = service.handle_response(
-        {"GET", path}, hp::http::ConnectionPolicy::keep_alive);
+    const auto legacy =
+        service.HandleResponse({"GET", path},
+                               hp::http::ConnectionPolicy::kKeepAlive);
     require(
         actual.size() == legacy.bytes.size() &&
             std::memcmp(actual.data(), legacy.bytes.data(), actual.size()) == 0,
@@ -813,25 +834,25 @@ void changing_files(const Fixture &fixture,
   const auto path = fixture.root / "replace.txt";
   const auto next = fixture.root / "replacement.txt";
   Fixture::write_text(path, "old");
-  auto opened = service.prepare_response({"GET", "/replace.txt"});
+  auto opened = service.PrepareResponse({"GET", "/replace.txt"});
   const auto old_id = latest_file();
   Fixture::write_text(next, "new contents");
   std::filesystem::rename(next, path);
   require(materialize_prepared(std::move(opened)).ends_with("\r\n\r\nold"),
           "rename keeps opened inode");
-  auto replaced = service.prepare_response({"GET", "/replace.txt"});
+  auto replaced = service.PrepareResponse({"GET", "/replace.txt"});
   const auto new_id = latest_file();
   require(evidence(old_id).inode != evidence(new_id).inode &&
               materialize_prepared(std::move(replaced))
                   .ends_with("\r\n\r\nnew contents"),
           "next request opens replacement inode");
   Fixture::write_text(path, "grow");
-  auto growing = service.prepare_response({"GET", "/replace.txt"});
+  auto growing = service.PrepareResponse({"GET", "/replace.txt"});
   Fixture::write_text(path, "grow plus appended data");
   require(materialize_prepared(std::move(growing)).ends_with("\r\n\r\ngrow"),
           "growth cannot exceed original Content-Length");
   Fixture::write_text(path, "truncate original");
-  auto truncated = service.prepare_response({"GET", "/replace.txt"});
+  auto truncated = service.PrepareResponse({"GET", "/replace.txt"});
   const auto truncated_id = latest_file();
   if (!disable_truncate) Fixture::write_text(path, "");
   EventLoop loop;
@@ -840,11 +861,12 @@ void changing_files(const Fixture &fixture,
   require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "truncate pair");
   Socket peer(pair[1]);
-  registry.add(
-      Socket(pair[0]), [&](TcpConnection &connection, auto input, bool) {
-        connection.consume(input.size());
-        connection.send_file(truncated.bytes, std::move(*truncated.file));
-      });
+  registry.add(Socket(pair[0]),
+               [&](TcpConnection &connection, auto input, bool) {
+                 connection.consume(input.size());
+                 connection.send_file(truncated.bytes,
+                                      std::move(*truncated.file));
+               });
   require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "truncate trigger");
   loop.poll_once(0);
   std::string wire;
@@ -881,10 +903,11 @@ void production_files(const Fixture &fixture,
       const auto owner = workers ? request_index % workers : 0;
       const auto capacity = owner_capacity(harness, workers, owner);
       const auto received = client.next();
-      require(received.status == 200 && received.body.size() == length &&
-                  std::memcmp(received.body.data(), fixture.large.data(),
-                              length) == 0,
-              "production size ladder byte exact");
+      require(
+          received.status == 200 && received.body.size() == length &&
+              std::memcmp(received.body.data(), fixture.large.data(), length) ==
+                  0,
+          "production size ladder byte exact");
       require(capacity < 256 && received.header.size() < 256,
               "production memory independent of body size");
       client.send(query("/missing", true));
@@ -920,8 +943,7 @@ void production_files(const Fixture &fixture,
 void file_progress(const Fixture &fixture,
                    const hp::http::StaticFileService &service) {
   EventLoop loop;
-  ConnectionRegistry registry(loop, hp::http::max_request_bytes,
-                              {150ms, 100ms});
+  ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   int pair[2];
   require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "progress pair");
@@ -930,13 +952,13 @@ void file_progress(const Fixture &fixture,
   ::setsockopt(pair[0], SOL_SOCKET, SO_SNDBUF, &small, sizeof(small));
   int providers = 0;
   hp::app::HttpCallbackStats stats;
-  registry.add(Socket(pair[0]), hp::app::make_http_callback(
-                                    [&](const auto &request, auto policy) {
-                                      ++providers;
-                                      return service.prepare_response(request,
-                                                                      policy);
-                                    },
-                                    &stats));
+  registry.add(Socket(pair[0]),
+               hp::app::make_http_callback(
+                   [&](const auto &request, auto policy) {
+                     ++providers;
+                     return service.PrepareResponse(request, policy);
+                   },
+                   &stats));
   auto &connection = *ShutdownAccess::entries(registry).at(pair[0]);
   const auto request = query("/large.bin") + query("/note.txt");
   require(::send(peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
@@ -989,7 +1011,8 @@ void unfinished_lifecycle(const hp::http::StaticFileService &service) {
       return pending(harness, 2, 0) > 0 && pending(harness, 2, 1) > 0;
     });
     if (cycle == 99) {
-      require(TcpServerTestAccess::post(*harness.server, 0,
+      require(TcpServerTestAccess::post(*harness.server,
+                                        0,
                                         [](EventLoop &) {
                                           throw std::runtime_error(
                                               "file fatal original");
@@ -1006,7 +1029,7 @@ void unfinished_lifecycle(const hp::http::StaticFileService &service) {
           "100 rounds hold two unfinished file responses");
   for (auto id = files; id < file_count(); ++id)
     require(evidence(id).closes == 1 &&
-                evidence(id).bytes < hp::http::max_file_bytes,
+                evidence(id).bytes < hp::http::kMaxFileBytes,
             "unfinished file identity closed exactly once");
   require(resources("/proc/self/fd") == fds && task_ids() == baseline,
           "unfinished file lifecycle fd and exact TID baseline");
@@ -1033,7 +1056,8 @@ int HP_SENDFILE_ENTRY(int argc, char **argv) {
     raw_observation(fixture, disabled_error);
     default_sigpipe_fixture(fixture);
     transport_bounds(fixture, option == "--no-allocation");
-    call_budget_and_mask_failure(fixture, option == "--no-budget-eintr",
+    call_budget_and_mask_failure(fixture,
+                                 option == "--no-budget-eintr",
                                  option == "--no-mask-error");
     file_registration_failure(fixture, option == "--no-file-registration");
     transport_short_writes(fixture);

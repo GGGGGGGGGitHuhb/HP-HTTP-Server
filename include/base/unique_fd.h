@@ -8,23 +8,23 @@ class UniqueFd final {
  public:
   explicit UniqueFd(int fd = -1) noexcept : fd_(fd) {}
 
-  ~UniqueFd() noexcept { reset(); }
+  ~UniqueFd() noexcept { Reset(); }
 
   UniqueFd(const UniqueFd&) = delete;
   UniqueFd& operator=(const UniqueFd&) = delete;
 
-  UniqueFd(UniqueFd&& other) noexcept : fd_(other.release()) {}
+  UniqueFd(UniqueFd&& other) noexcept : fd_(other.Release()) {}
 
   UniqueFd& operator=(UniqueFd&& other) noexcept {
-    if (this != &other) reset(other.release());
+    if (this != &other) Reset(other.Release());
     return *this;
   }
 
   [[nodiscard]] int get() const noexcept { return fd_; }
 
-  [[nodiscard]] int release() noexcept { return std::exchange(fd_, -1); }
+  [[nodiscard]] int Release() noexcept { return std::exchange(fd_, -1); }
 
-  void reset(int fd = -1) noexcept {
+  void Reset(int fd = -1) noexcept {
     const int previous = std::exchange(fd_, fd);
     if (previous >= 0) ::close(previous);
   }

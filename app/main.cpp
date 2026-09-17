@@ -32,7 +32,8 @@ class ShutdownSignalMask {
     ::sigaddset(&signals, SIGTERM);
     const int result = ::pthread_sigmask(SIG_BLOCK, &signals, &previous_);
     if (result)
-      throw std::system_error(result, std::generic_category(),
+      throw std::system_error(result,
+                              std::generic_category(),
                               "block logger shutdown signals");
   }
 
@@ -105,8 +106,10 @@ struct Options {
         if (has_threads)
           throw std::invalid_argument("--threads appears more than once");
         unsigned int count = 0;
-        const auto [end, error] = std::from_chars(
-            value.data(), value.data() + value.size(), count, 10);
+        const auto [end, error] = std::from_chars(value.data(),
+                                                  value.data() + value.size(),
+                                                  count,
+                                                  10);
         if (value.empty() || error != std::errc{} ||
             end != value.data() + value.size() || count > 64)
           throw std::invalid_argument("threads must be decimal in 0-64");
@@ -117,8 +120,10 @@ struct Options {
           throw std::invalid_argument(
               "shutdown timeout appears more than once");
         unsigned int milliseconds = 0;
-        const auto [end, error] = std::from_chars(
-            value.data(), value.data() + value.size(), milliseconds, 10);
+        const auto [end, error] = std::from_chars(value.data(),
+                                                  value.data() + value.size(),
+                                                  milliseconds,
+                                                  10);
         if (value.empty() || error != std::errc{} ||
             end != value.data() + value.size() || milliseconds > 60000)
           throw std::invalid_argument(
@@ -130,8 +135,10 @@ struct Options {
         bool& seen = option == "--idle-timeout-ms" ? has_idle : has_keep;
         if (seen) throw std::invalid_argument("timeout appears more than once");
         unsigned int value_ms = 0;
-        const auto [end, error] = std::from_chars(
-            value.data(), value.data() + value.size(), value_ms, 10);
+        const auto [end, error] = std::from_chars(value.data(),
+                                                  value.data() + value.size(),
+                                                  value_ms,
+                                                  10);
         if (value.empty() || error != std::errc{} ||
             end != value.data() + value.size() || value_ms > 86400000)
           throw std::invalid_argument(
@@ -182,8 +189,10 @@ int run(int argc, char* argv[]) {
   try {
     hp::http::StaticFileService service(options.root);
     hp::app::SignalWatcher signals;
-    hp::net::TcpServer server(options.port, hp::app::make_http_factory(service),
-                              hp::http::max_request_bytes, options.threads,
+    hp::net::TcpServer server(options.port,
+                              hp::app::make_http_factory(service),
+                              hp::http::kMaxRequestBytes,
+                              options.threads,
                               options.timeouts);
     bool draining = false;
     server.watch_control_fd(signals.fd(), [&](std::uint32_t) {

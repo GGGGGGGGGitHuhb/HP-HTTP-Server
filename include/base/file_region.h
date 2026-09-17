@@ -18,7 +18,7 @@ class FileRegion final {
   [[nodiscard]] off_t offset() const noexcept { return offset_; }
   [[nodiscard]] std::size_t remaining() const noexcept { return remaining_; }
 
-  void advance(std::size_t bytes);
+  void Advance(std::size_t bytes);
 
  private:
   UniqueFd file_;

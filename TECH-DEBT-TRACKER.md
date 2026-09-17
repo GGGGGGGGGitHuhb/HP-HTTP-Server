@@ -374,3 +374,8 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 ## V0.5/S4 收口检查点
 
 - 2026-09-10：Reviewer002 PASS与Leader005确认五项版本条件齐备，S4/V0.5关闭；TD-001环境限定和TD-005同步检查点完成，风险继续Open，TD-002Closed。RO-002更新实际下降与不确定性；没有新增风险豁免或自动调优。
+
+## R1重构收口检查点
+
+- 2026-09-17：Approved R1 design/review revision2与R001，Builder001、独立Reviewer001 PASS及Leader005齐备；现行接口/调用链/format命令与README、架构和路线状态同步，TD-005本轮检查点关闭，TD-005总体继续Open。无新增债务、延期或风险豁免。
+- TD-001继续Open，TD-002保持Closed，RO-002既有小文件下降及未知根因不变；未做性能声明。baseline构建应放在导出源码内baseline/build-debug，双方已实际验证；这是命令路径勘误，不是产品缺陷或新增跨阶段债务。
