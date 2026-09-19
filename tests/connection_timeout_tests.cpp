@@ -1,3 +1,5 @@
+#include <functional>
+#include <type_traits>
 // Reuse the original production fixture and close probes without changing its
 // assertions.
 #include <climits>
@@ -37,11 +39,11 @@ struct ConnectionTimeoutTestAccess {
     return connection.timeout_id_;
   }
 
-  static void event(TcpConnection& connection, std::uint32_t event) {
+  static void Event(TcpConnection& connection, std::uint32_t event) {
     connection.HandleConnectionEvent(event);
   }
 
-  static void expire(ConnectionRegistry& registry,
+  static void Expire(ConnectionRegistry& registry,
                      int fd,
                      TcpConnection::Identity identity) {
     registry.ExpireConnection(fd, identity);
@@ -54,10 +56,13 @@ struct ConnectionTimeoutTestAccess {
 }  // namespace hp::net
 
 namespace {
+void ConnectionTimeoutCompleteLoopProbe(EventLoop&) {}
+void ConnectionTimeoutCompleteQueuedProbe() {}
+
 using Access = ConnectionTimeoutTestAccess;
 using Clock = hp::timer::TimerQueue::Clock;
 
-long long ticks(Clock::time_point time) {
+long long Ticks(Clock::time_point time) {
   return std::chrono::duration_cast<std::chrono::microseconds>(
              time.time_since_epoch())
       .count();
@@ -68,66 +73,81 @@ struct Snapshot {
   long long progress{}, deadline{}, wait{};
 };
 
-Snapshot snapshot(ServerHarness& harness,
-                  std::size_t workers,
-                  std::size_t index = 0) {
+Snapshot CollectTimeoutSnapshot(ServerHarness& harness,
+                                std::size_t workers,
+                                std::size_t index = 0) {
   std::promise<Snapshot> done;
   auto result = done.get_future();
-  auto inspect = [&](EventLoop& loop) {
-    Snapshot value;
-    auto& registry = Access::registry(*harness.server, index);
-    value.connections = Access::entries(registry).size();
-    value.timers = loop.timer_count();
-    for (auto& [fd, connection] : Access::entries(registry)) {
-      (void)fd;
-      value.pending += connection->pending_bytes();
-      value.waiting += Access::wait_since(*connection).has_value();
-      value.progress = ticks(Access::progress(*connection));
-      if (auto wait = Access::wait_since(*connection))
-        value.wait = ticks(*wait);
+
+  using CollectConnectionSnapshotTaskHarnessState = decltype((harness));
+  using CollectConnectionSnapshotTaskIndexState = decltype((index));
+  using CollectConnectionSnapshotTaskDoneState = decltype((done));
+  struct CollectConnectionSnapshotTask {
+    CollectConnectionSnapshotTaskHarnessState harness;
+    CollectConnectionSnapshotTaskIndexState index;
+    CollectConnectionSnapshotTaskDoneState done;
+    decltype(auto) CollectConnectionSnapshot(EventLoop& loop) const {
+      Snapshot value;
+      auto& registry = Access::registry(*harness.server, index);
+      value.connections = Access::entries(registry).size();
+      value.timers = loop.timer_count();
+      for (auto& [fd, connection] : Access::entries(registry)) {
+        (void)fd;
+        value.pending += connection->pending_bytes();
+        value.waiting += Access::wait_since(*connection).has_value();
+        value.progress = Ticks(Access::progress(*connection));
+        if (auto wait = Access::wait_since(*connection))
+          value.wait = Ticks(*wait);
+      }
+      if (auto deadline = Access::deadline(loop))
+        value.deadline = Ticks(*deadline);
+      done.set_value(value);
     }
-    if (auto deadline = Access::deadline(loop))
-      value.deadline = ticks(*deadline);
-    done.set_value(value);
   };
+  auto inspect =
+      std::bind(&CollectConnectionSnapshotTask::CollectConnectionSnapshot,
+                CollectConnectionSnapshotTask{harness, index, done},
+                std::placeholders::_1);
   bool accepted;
   if (workers)
-    accepted = TcpServerTestAccess::post(*harness.server, index, inspect);
+    accepted = TcpServerTestAccess::Post(*harness.server, index, inspect);
   else
-    accepted = TcpServerTestAccess::main_post(*harness.server, [&] {
-      inspect(Access::loop(Access::registry(*harness.server, 0)));
-    });
-  require(accepted, "snapshot task accepted");
-  require(result.wait_for(3s) == std::future_status::ready,
+    accepted = TcpServerTestAccess::MainPost(
+        *harness.server,
+        std::bind_front(
+            inspect,
+            std::ref(Access::loop(Access::registry(*harness.server, 0)))));
+  Require(accepted, "snapshot task accepted");
+  Require(result.wait_for(3s) == std::future_status::ready,
           "snapshot deadline");
   return result.get();
 }
 
-void idle_modes(const hp::http::StaticFileService& service) {
+void IdleModes(const hp::http::StaticFileService& service) {
   for (std::size_t workers : {0U, 1U, 2U}) {
     ServerHarness harness(service, workers, nullptr, {150ms, 0ms});
     Stream client(harness.port);
     Snapshot state;
-    await([&] {
-      state = snapshot(harness, workers);
+    WaitUntil([&] {
+      state = CollectTimeoutSnapshot(harness, workers);
       return state.connections == 1;
     });
-    require(state.timers == 1 && state.deadline - state.progress == 150000,
+    Require(state.timers == 1 && state.deadline - state.progress == 150000,
             "adopt starts exactly one idle timer");
-    client.eof();
-    const auto closed = ticks(Clock::now());
-    auto after = snapshot(harness, workers);
-    require(after.connections == 0 && after.timers == 0,
+    client.ExpectEof();
+    const auto closed = Ticks(Clock::now());
+    auto after = CollectTimeoutSnapshot(harness, workers);
+    Require(after.connections == 0 && after.timers == 0,
             "pure timer immediately reclaimed");
-    require(closed >= state.deadline, "idle not early");
-    harness.stop();
+    Require(closed >= state.deadline, "idle not early");
+    harness.Stop();
     std::cout << "idle workers=" << workers << " adopted_us=" << state.progress
               << " deadline_us=" << state.deadline << " closed_us=" << closed
               << " timers=" << state.timers << "->" << after.timers << '\n';
   }
 }
 
-void waiting_states(const hp::http::StaticFileService& service) {
+void WaitingStates(const hp::http::StaticFileService& service) {
   for (const auto config : {ConnectionTimeouts{0ms, 120ms},
                             ConnectionTimeouts{200ms, 0ms},
                             ConnectionTimeouts{200ms, 120ms},
@@ -135,20 +155,20 @@ void waiting_states(const hp::http::StaticFileService& service) {
     ServerHarness harness(service, 2, nullptr, config);
     Stream client(harness.port);
     Snapshot initial;
-    await([&] {
-      initial = snapshot(harness, 2);
+    WaitUntil([&] {
+      initial = CollectTimeoutSnapshot(harness, 2);
       return initial.connections == 1;
     });
-    require(initial.waiting == 0 &&
+    Require(initial.waiting == 0 &&
                 initial.timers == (config.idle.count() ? 1U : 0U),
             "initial connection is not keep-alive waiting");
-    client.send(query("/note.txt") + query("/missing"));
-    response(client.next(), 200, "hello from S3\n");
-    response(client.next(), 404, "404 Not Found\n");
-    auto state = snapshot(harness, 2);
-    require(state.waiting == 1 && state.pending == 0,
+    client.Send(Query("/note.txt") + Query("/missing"));
+    Response(client.ReadResponse(), 200, "hello from S3\n");
+    Response(client.ReadResponse(), 404, "404 Not Found\n");
+    auto state = CollectTimeoutSnapshot(harness, 2);
+    Require(state.waiting == 1 && state.pending == 0,
             "pipeline drained before wait");
-    require(state.timers ==
+    Require(state.timers ==
                 (config.idle.count() || config.keep_alive.count() ? 1U : 0U),
             "disabled policies allocate no timers");
     auto expected = config.idle.count()
@@ -158,29 +178,29 @@ void waiting_states(const hp::http::StaticFileService& service) {
       expected =
           std::min(expected, state.wait + config.keep_alive.count() * 1000);
     if (state.timers)
-      require(state.deadline == expected, "minimum applicable deadline");
-    client.send("GET /note.txt HTTP/1.1\r\nHost:");
+      Require(state.deadline == expected, "minimum applicable deadline");
+    client.Send("GET /note.txt HTTP/1.1\r\nHost:");
     Snapshot partial;
-    await([&] {
-      partial = snapshot(harness, 2);
+    WaitUntil([&] {
+      partial = CollectTimeoutSnapshot(harness, 2);
       return partial.waiting == 0;
     });
-    require(partial.progress > state.progress,
+    Require(partial.progress > state.progress,
             "new bytes refresh idle and exit waiting");
-    require(partial.timers == (config.idle.count() ? 1U : 0U),
+    Require(partial.timers == (config.idle.count() ? 1U : 0U),
             "partial has no keep timer");
-    client.send(" localhost\r\n\r\n");
-    response(client.next(), 200, "hello from S3\n");
-    state = snapshot(harness, 2);
-    require(state.waiting == 1, "second response enters wait");
+    client.Send(" localhost\r\n\r\n");
+    Response(client.ReadResponse(), 200, "hello from S3\n");
+    state = CollectTimeoutSnapshot(harness, 2);
+    Require(state.waiting == 1, "second response enters wait");
     if (state.timers) {
-      client.eof();
-      require(ticks(Clock::now()) >= state.deadline,
+      client.ExpectEof();
+      Require(Ticks(Clock::now()) >= state.deadline,
               "combined deadline not early");
     } else {
       harness.server->RequestStop();
     }
-    harness.stop();
+    harness.Stop();
     std::cout << "waiting idle_ms=" << config.idle.count()
               << " keep_ms=" << config.keep_alive.count()
               << " wait_us=" << state.wait << " deadline_us=" << state.deadline
@@ -195,7 +215,7 @@ struct Pair {
 
   Pair() {
     int sockets[2];
-    require(::socketpair(AF_UNIX,
+    Require(::socketpair(AF_UNIX,
                          SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
                          0,
                          sockets) == 0,
@@ -208,7 +228,7 @@ struct Pair {
   }
 };
 
-void owner_progress_and_failures(const hp::http::StaticFileService& service) {
+void OwnerProgressAndFailures(const hp::http::StaticFileService& service) {
   EventLoop loop;
   ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   Pair pair;
@@ -217,23 +237,23 @@ void owner_progress_and_failures(const hp::http::StaticFileService& service) {
   auto& connection = *Access::entries(registry).at(pair.owned);
   const auto initial = Access::progress(connection);
   const auto id = Access::timer(connection);
-  Access::event(connection, EPOLLIN | EPOLLOUT);
-  require(Access::progress(connection) == initial &&
+  Access::Event(connection, EPOLLIN | EPOLLOUT);
+  Require(Access::progress(connection) == initial &&
               Access::timer(connection) == id,
           "EAGAIN and spurious writable do not refresh");
   connection.set_idle_wait(true);
   auto wait = Access::wait_since(connection);
   connection.set_idle_wait(true);
-  require(Access::wait_since(connection) == wait,
+  Require(Access::wait_since(connection) == wait,
           "duplicate wait does not renew");
   connection.set_idle_wait(false);
   const std::string partial = "GET /note.txt HTTP/1.1\r\nHost:";
-  require(
+  Require(
       ::send(pair.peer.fd(), partial.data(), partial.size(), MSG_NOSIGNAL) ==
           static_cast<ssize_t>(partial.size()),
       "partial send bytes");
   loop.PollOnce(0);
-  require(
+  Require(
       Access::progress(connection) > initial && !Access::wait_since(connection),
       "actual recv refresh");
   const auto before_failure = Access::progress(connection);
@@ -244,20 +264,20 @@ void owner_progress_and_failures(const hp::http::StaticFileService& service) {
   } catch (const std::bad_alloc&) {
   }
   timer_allocation_failure = -1;
-  require(connection.state() == TcpConnection::State::kClosing &&
+  Require(connection.state() == TcpConnection::State::kClosing &&
               loop.timer_count() == 0,
           "renew failure closes connection and cancels record");
   registry.DrainClosedConnections();
-  require(Access::entries(registry).empty(), "failed renewal reclaimed");
-  require(!loop.CancelTimer(id), "old timer id invalid");
+  Require(Access::entries(registry).empty(), "failed renewal reclaimed");
+  Require(!loop.CancelTimer(id), "old timer id invalid");
   std::cout << "progress recv_bytes=" << partial.size()
-            << " adopted_us=" << ticks(initial)
-            << " recv_us=" << ticks(before_failure)
+            << " adopted_us=" << Ticks(initial)
+            << " recv_us=" << Ticks(before_failure)
             << " EAGAIN_delta=0 renewal_failure_timers=" << loop.timer_count()
             << '\n';
 }
 
-void write_progress(const hp::http::StaticFileService& service) {
+void WriteProgress(const hp::http::StaticFileService& service) {
   EventLoop loop;
   ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   Pair pair;
@@ -281,18 +301,18 @@ void write_progress(const hp::http::StaticFileService& service) {
                              &ResponseScenario1::PrepareResponse,
                              ResponseScenario1{provider_calls, service})));
   auto& connection = *Access::entries(registry).at(pair.owned);
-  const std::string request = query("/large.bin") + query("/note.txt");
-  require(
+  const std::string request = Query("/large.bin") + Query("/note.txt");
+  Require(
       ::send(pair.peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
           static_cast<ssize_t>(request.size()),
       "large request");
   loop.PollOnce(0);
-  require(connection.pending_bytes() > 0 && !Access::wait_since(connection),
+  Require(connection.pending_bytes() > 0 && !Access::wait_since(connection),
           "Writing never waits");
   auto progress = Access::progress(connection);
   const auto queued = connection.pending_bytes();
-  Access::event(connection, EPOLLOUT);
-  require(Access::progress(connection) == progress &&
+  Access::Event(connection, EPOLLOUT);
+  Require(Access::progress(connection) == progress &&
               connection.pending_bytes() == queued,
           "real send EAGAIN does not refresh");
   char bytes[65536];
@@ -300,25 +320,33 @@ void write_progress(const hp::http::StaticFileService& service) {
   const auto began = Clock::now();
   for (int cycle = 0; cycle < 12; ++cycle) {
     auto n = ::recv(pair.peer.fd(), bytes, sizeof(bytes), 0);
-    require(n > 0, "drain real response bytes");
+    Require(n > 0, "drain real response bytes");
     received += static_cast<std::size_t>(n);
     loop.PollOnce(0);
     bool paced = false;
-    loop.AddTimer(Clock::now() + 30ms, [&] { paced = true; });
+
+    using RecordPacingDeadlineTaskPacedState = decltype((paced));
+    struct RecordPacingDeadlineTask {
+      RecordPacingDeadlineTaskPacedState paced;
+      decltype(auto) RecordPacingDeadline() const { paced = true; }
+    };
+    loop.AddTimer(Clock::now() + 30ms,
+                  std::bind(&RecordPacingDeadlineTask::RecordPacingDeadline,
+                            RecordPacingDeadlineTask{paced}));
     while (!paced) loop.PollOnce(-1);
   }
-  require(Clock::now() - began > 150ms,
+  Require(Clock::now() - began > 150ms,
           "write progress survives original idle deadline");
-  require(Access::progress(connection) > progress &&
+  Require(Access::progress(connection) > progress &&
               connection.pending_bytes() < queued,
           "actual send progress renews idle");
   progress = Access::progress(connection);
   const auto pending = connection.pending_bytes();
   while (!Access::entries(registry).empty()) loop.PollOnce(-1);
-  require(ticks(Clock::now()) >= ticks(progress) + 150000,
+  Require(Ticks(Clock::now()) >= Ticks(progress) + 150000,
           "stalled writer deadline");
-  require(loop.timer_count() == 0, "stalled writer timer reclaimed");
-  require(provider_calls == 1,
+  Require(loop.timer_count() == 0, "stalled writer timer reclaimed");
+  Require(provider_calls == 1,
           "buffered suffix provider not called after timeout");
   std::string tail;
   for (;;) {
@@ -326,18 +354,18 @@ void write_progress(const hp::http::StaticFileService& service) {
     if (n <= 0) break;
     tail.append(bytes, static_cast<std::size_t>(n));
   }
-  require(tail.find("408") == std::string::npos,
+  Require(tail.find("408") == std::string::npos,
           "no synthetic timeout response");
   std::cout << "write received_bytes=" << received
-            << " progress_duration_us=" << ticks(Clock::now()) - ticks(began)
+            << " progress_duration_us=" << Ticks(Clock::now()) - Ticks(began)
             << " initial_pending=" << queued << " stalled_pending=" << pending
-            << " last_send_us=" << ticks(progress)
-            << " closed_us=" << ticks(Clock::now())
+            << " last_send_us=" << Ticks(progress)
+            << " closed_us=" << Ticks(Clock::now())
             << " provider_calls=" << provider_calls
             << " timers=" << loop.timer_count() << '\n';
 }
 
-void paced_input(const hp::http::StaticFileService& service) {
+void PacedInput(const hp::http::StaticFileService& service) {
   EventLoop loop;
   ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   Pair pair;
@@ -347,59 +375,67 @@ void paced_input(const hp::http::StaticFileService& service) {
   std::size_t sent = 0;
   for (const std::string_view part :
        {"GET ", "/note.txt ", "HTTP/1.1\r\n", "Host: localhost\r\n", "\r\n"}) {
-    require(::send(pair.peer.fd(), part.data(), part.size(), MSG_NOSIGNAL) ==
+    Require(::send(pair.peer.fd(), part.data(), part.size(), MSG_NOSIGNAL) ==
                 static_cast<ssize_t>(part.size()),
             "paced request send");
     sent += part.size();
     loop.PollOnce(0);
     bool paced = false;
-    loop.AddTimer(Clock::now() + 50ms, [&] { paced = true; });
+
+    using RecordPacingDeadlineTaskPacedState = decltype((paced));
+    struct RecordPacingDeadlineTask {
+      RecordPacingDeadlineTaskPacedState paced;
+      decltype(auto) RecordPacingDeadline() const { paced = true; }
+    };
+    loop.AddTimer(Clock::now() + 50ms,
+                  std::bind(&RecordPacingDeadlineTask::RecordPacingDeadline,
+                            RecordPacingDeadlineTask{paced}));
     while (!paced) loop.PollOnce(-1);
-    require(Access::entries(registry).size() == 1,
+    Require(Access::entries(registry).size() == 1,
             "positive chunks keep connection alive");
   }
-  require(Clock::now() - began > 150ms, "input spans original idle cutoff");
+  Require(Clock::now() - began > 150ms, "input spans original idle cutoff");
   char bytes[1024];
   const auto count = ::recv(pair.peer.fd(), bytes, sizeof(bytes), 0);
-  require(count > 0, "paced request received response");
+  Require(count > 0, "paced request received response");
   const std::string response_bytes(bytes, static_cast<std::size_t>(count));
-  require(response_bytes.starts_with("HTTP/1.1 200") &&
+  Require(response_bytes.starts_with("HTTP/1.1 200") &&
               response_bytes.ends_with("hello from S3\n"),
           "paced complete response");
   std::cout << "paced_input sent_bytes=" << sent << " response_bytes=" << count
-            << " elapsed_us=" << ticks(Clock::now()) - ticks(began)
+            << " elapsed_us=" << Ticks(Clock::now()) - Ticks(began)
             << " timers=" << loop.timer_count() << '\n';
 }
 
-void healthy_during_timeout(const hp::http::StaticFileService& service) {
+void HealthyDuringTimeout(const hp::http::StaticFileService& service) {
   ServerHarness harness(service, 2, nullptr, {150ms, 100ms});
   Stream stalled(harness.port);
-  stalled.send(query("/large.bin") + query("/note.txt"));
+  stalled.Send(Query("/large.bin") + Query("/note.txt"));
   Snapshot blocked;
-  await([&] {
-    blocked = snapshot(harness, 2, 0);
+  WaitUntil([&] {
+    blocked = CollectTimeoutSnapshot(harness, 2, 0);
     return blocked.pending > 0;
   });
-  require(blocked.waiting == 0, "production stalled writer is not waiting");
+  Require(blocked.waiting == 0, "production stalled writer is not waiting");
   Stream healthy(harness.port);
-  healthy.send(query("/note.txt", true));
-  response(healthy.next(), 200, "hello from S3\n");
-  healthy.eof();
+  healthy.Send(Query("/note.txt", true));
+  Response(healthy.ReadResponse(), 200, "hello from S3\n");
+  healthy.ExpectEof();
   Snapshot after;
-  await([&] {
-    after = snapshot(harness, 2, 0);
+  WaitUntil([&] {
+    after = CollectTimeoutSnapshot(harness, 2, 0);
     return after.connections == 0;
   });
-  const auto closed = ticks(Clock::now());
-  require(after.timers == 0 && closed >= blocked.deadline,
+  const auto closed = Ticks(Clock::now());
+  Require(after.timers == 0 && closed >= blocked.deadline,
           "production writer expiry reclaimed");
-  harness.stop();
+  harness.Stop();
   std::cout << "healthy_during_timeout pending_bytes=" << blocked.pending
             << " deadline_us=" << blocked.deadline << " closed_us=" << closed
             << " healthy_responses=1 timers_after=" << after.timers << '\n';
 }
 
-void rollback_and_reuse(const hp::http::StaticFileService& service) {
+void RollbackAndReuse(const hp::http::StaticFileService& service) {
   EventLoop loop;
   ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   int failures_seen = 0;
@@ -415,9 +451,9 @@ void rollback_and_reuse(const hp::http::StaticFileService& service) {
     }
     fail_after_registration = -1;
     timer_allocation_failure = -1;
-    require(loop.timer_count() == 0 && Access::entries(registry).empty(),
+    Require(loop.timer_count() == 0 && Access::entries(registry).empty(),
             "adopt rollback");
-    require(::fcntl(pair.owned, F_GETFD) == -1 && errno == EBADF,
+    Require(::fcntl(pair.owned, F_GETFD) == -1 && errno == EBADF,
             "adopt socket closed");
   }
   Pair original;
@@ -430,25 +466,40 @@ void rollback_and_reuse(const hp::http::StaticFileService& service) {
   Access::entries(registry).at(original.owned)->RequestClose();
   registry.DrainClosedConnections();
   Pair replacement;
-  require(replacement.owned == original.owned, "real fd reused by socketpair");
+  Require(replacement.owned == original.owned, "real fd reused by socketpair");
   registry.AddConnection(Socket(replacement.owned),
                          hp::app::MakeHttpFactory(service)());
   auto& current = *Access::entries(registry).at(replacement.owned);
-  require(current.identity() != old_identity, "connection identity not reused");
-  require(!loop.CancelTimer(old_timer), "old timer cannot cancel new one");
-  Access::expire(registry, replacement.owned, old_identity);
-  require(current.state() == TcpConnection::State::kActive &&
+  Require(current.identity() != old_identity, "connection identity not reused");
+  Require(!loop.CancelTimer(old_timer), "old timer cannot cancel new one");
+  Access::Expire(registry, replacement.owned, old_identity);
+  Require(current.state() == TcpConnection::State::kActive &&
               loop.timer_count() == 1,
           "old identity cannot close reused fd");
   bool callback_finished = false;
-  loop.AddTimer(Clock::now(), [&] {
-    current.RequestClose();
-    require(Access::entries(registry).size() == 1,
-            "not destroyed inside callback");
-    callback_finished = true;
-  });
+
+  using CloseExpiredConnectionTaskCurrentState = decltype((current));
+  using CloseExpiredConnectionTaskRegistryState = decltype((registry));
+  using CloseExpiredConnectionTaskCallbackFinishedState =
+      decltype((callback_finished));
+  struct CloseExpiredConnectionTask {
+    CloseExpiredConnectionTaskCurrentState current;
+    CloseExpiredConnectionTaskRegistryState registry;
+    CloseExpiredConnectionTaskCallbackFinishedState callback_finished;
+    decltype(auto) CloseExpiredConnection() const {
+      current.RequestClose();
+      Require(Access::entries(registry).size() == 1,
+              "not destroyed inside callback");
+      callback_finished = true;
+    }
+  };
+  loop.AddTimer(
+      Clock::now(),
+      std::bind(
+          &CloseExpiredConnectionTask::CloseExpiredConnection,
+          CloseExpiredConnectionTask{current, registry, callback_finished}));
   loop.PollOnce(0);
-  require(callback_finished && Access::entries(registry).empty() &&
+  Require(callback_finished && Access::entries(registry).empty() &&
               loop.timer_count() == 0,
           "after_dispatch owns destruction");
   // A ready EOF and expired timer share one poll; IO closes first and cancels
@@ -460,7 +511,7 @@ void rollback_and_reuse(const hp::http::StaticFileService& service) {
                        Clock::now());
   ::shutdown(eof.peer.fd(), SHUT_WR);
   loop.PollOnce(0);
-  require(Access::entries(registry).empty() && loop.timer_count() == 0,
+  Require(Access::entries(registry).empty() && loop.timer_count() == 0,
           "EOF and expiry once");
   std::cout << "rollback post_registration_failures=" << failures_seen
             << " reused_fd=" << replacement.owned << " old_id=" << old_identity
@@ -468,121 +519,170 @@ void rollback_and_reuse(const hp::http::StaticFileService& service) {
             << " remaining=" << loop.timer_count() << '\n';
 }
 
-void fatal_timer(const hp::http::StaticFileService& service) {
+void FatalTimer(const hp::http::StaticFileService& service) {
   ServerHarness harness(service, 2, nullptr, {300ms, 200ms});
   Stream first(harness.port), second(harness.port);
-  first.send(query("/note.txt"));
-  second.send(query("/missing"));
-  response(first.next(), 200, "hello from S3\n");
-  response(second.next(), 404, "404 Not Found\n");
+  first.Send(Query("/note.txt"));
+  second.Send(Query("/missing"));
+  Response(first.ReadResponse(), 200, "hello from S3\n");
+  Response(second.ReadResponse(), 404, "404 Not Found\n");
   std::promise<void> entered, release;
   auto gate = release.get_future().share();
-  require(TcpServerTestAccess::post(*harness.server,
-                                    1,
-                                    [&](EventLoop&) {
-                                      entered.set_value();
-                                      require(gate.wait_for(3s) ==
-                                                  std::future_status::ready,
-                                              "fatal timer full worker gate");
-                                    }),
+
+  using WaitForTimerReleaseTaskEnteredState = decltype((entered));
+  using WaitForTimerReleaseTaskGateState = decltype((gate));
+  struct WaitForTimerReleaseTask {
+    WaitForTimerReleaseTaskEnteredState entered;
+    WaitForTimerReleaseTaskGateState gate;
+    decltype(auto) WaitForTimerRelease(EventLoop&) const {
+      entered.set_value();
+      Require(gate.wait_for(3s) == std::future_status::ready,
+              "fatal timer full worker gate");
+    }
+  };
+  Require(TcpServerTestAccess::Post(
+              *harness.server,
+              1,
+              std::bind(&WaitForTimerReleaseTask::WaitForTimerRelease,
+                        WaitForTimerReleaseTask{entered, gate},
+                        std::placeholders::_1)),
           "block other worker");
-  require(entered.get_future().wait_for(3s) == std::future_status::ready,
+  Require(entered.get_future().wait_for(3s) == std::future_status::ready,
           "other worker entered");
   for (int i = 1; i < 1024; ++i)
-    require(TcpServerTestAccess::post(*harness.server, 1, [](EventLoop&) {}),
+    Require(TcpServerTestAccess::Post(*harness.server,
+                                      1,
+                                      &ConnectionTimeoutCompleteLoopProbe),
             "fill other worker");
-  require(!TcpServerTestAccess::post(*harness.server, 1, [](EventLoop&) {}),
+  Require(!TcpServerTestAccess::Post(*harness.server,
+                                     1,
+                                     &ConnectionTimeoutCompleteLoopProbe),
           "capacity bounded");
   std::atomic<int> callbacks{0}, forbidden{0}, captures{0};
-  require(TcpServerTestAccess::post(
-              *harness.server,
-              0,
-              [&](EventLoop& loop) {
-                struct Capture {
-                  EventLoop& loop;
-                  std::atomic<int>& released;
 
-                  ~Capture() {
-                    ++released;
-                    try {
-                      loop.AddTimer(Clock::now(), [] {});
-                      std::terminate();
-                    } catch (const std::logic_error&) {
-                    }
-                  }
-                };
-                loop.AddTimer(Clock::now(), [&] {
-                  ++callbacks;
-                  throw std::runtime_error("fatal timer original");
-                });
-                auto capture =
-                    std::shared_ptr<Capture>(new Capture{loop, captures});
-                loop.AddTimer(Clock::now() + 1h, [&, capture] { ++forbidden; });
-              }),
-          "install real worker timers");
-  await([&] { return Access::stopping(*harness.server); });
+  using ScheduleFailingTimersTaskCallbacksState = decltype((callbacks));
+  using ScheduleFailingTimersTaskCapturesState = decltype((captures));
+  using ScheduleFailingTimersTaskForbiddenState = decltype((forbidden));
+  struct ScheduleFailingTimersTask {
+    ScheduleFailingTimersTaskCallbacksState callbacks;
+    ScheduleFailingTimersTaskCapturesState captures;
+    ScheduleFailingTimersTaskForbiddenState forbidden;
+    decltype(auto) ScheduleFailingTimers(EventLoop& loop) const {
+      struct Capture {
+        EventLoop& loop;
+        std::atomic<int>& released;
+
+        ~Capture() {
+          ++released;
+          try {
+            loop.AddTimer(Clock::now(), &ConnectionTimeoutCompleteQueuedProbe);
+            std::terminate();
+          } catch (const std::logic_error&) {
+          }
+        }
+      };
+
+      using ThrowTimerFailureTaskCallbacksState = decltype((callbacks));
+      struct ThrowTimerFailureTask {
+        ThrowTimerFailureTaskCallbacksState callbacks;
+        decltype(auto) ThrowTimerFailure() const {
+          ++callbacks;
+          throw std::runtime_error("fatal timer original");
+        }
+      };
+      loop.AddTimer(Clock::now(),
+                    std::bind(&ThrowTimerFailureTask::ThrowTimerFailure,
+                              ThrowTimerFailureTask{callbacks}));
+      auto capture = std::shared_ptr<Capture>(new Capture{loop, captures});
+
+      using RecordForbiddenExpiryTaskCaptureState =
+          std::remove_cvref_t<decltype(capture)>;
+      using RecordForbiddenExpiryTaskForbiddenState = decltype((forbidden));
+      struct RecordForbiddenExpiryTask {
+        RecordForbiddenExpiryTaskCaptureState capture;
+        RecordForbiddenExpiryTaskForbiddenState forbidden;
+        decltype(auto) RecordForbiddenExpiry() const { ++forbidden; }
+      };
+      loop.AddTimer(Clock::now() + 1h,
+                    std::bind(&RecordForbiddenExpiryTask::RecordForbiddenExpiry,
+                              RecordForbiddenExpiryTask{capture, forbidden}));
+    }
+  };
+  Require(
+      TcpServerTestAccess::Post(
+          *harness.server,
+          0,
+          std::bind(&ScheduleFailingTimersTask::ScheduleFailingTimers,
+                    ScheduleFailingTimersTask{callbacks, captures, forbidden},
+                    std::placeholders::_1)),
+      "install real worker timers");
+  WaitUntil([&] { return Access::stopping(*harness.server); });
   release.set_value();
-  harness.failed("fatal timer original");
-  require(callbacks == 1 && forbidden == 0 && captures == 1,
+  harness.ExpectFailure("fatal timer original");
+  Require(callbacks == 1 && forbidden == 0 && captures == 1,
           "fatal timer terminal cleanup");
-  first.eof();
-  second.eof();
+  first.ExpectEof();
+  second.ExpectEof();
   std::cout << "fatal_timer full_other_worker=1024 callbacks=" << callbacks
             << " forbidden=" << forbidden << " capture_release=" << captures
             << '\n';
 }
 
-void active_lifecycle(const hp::http::StaticFileService& service) {
-  const auto fd = resources("/proc/self/fd");
-  const auto threads = resources("/proc/self/task");
+void ActiveLifecycle(const hp::http::StaticFileService& service) {
+  const auto fd = Resources("/proc/self/fd");
+  const auto threads = Resources("/proc/self/task");
   std::size_t timers = 0;
   for (int cycle = 0; cycle < 100; ++cycle) {
     ServerHarness harness(service, 2, nullptr, {300ms, 200ms});
     Stream first(harness.port), second(harness.port);
-    first.send(query("/note.txt"));
-    second.send(query("/missing"));
-    response(first.next(), 200, "hello from S3\n");
-    response(second.next(), 404, "404 Not Found\n");
+    first.Send(Query("/note.txt"));
+    second.Send(Query("/missing"));
+    Response(first.ReadResponse(), 200, "hello from S3\n");
+    Response(second.ReadResponse(), 404, "404 Not Found\n");
     for (std::size_t index = 0; index < 2; ++index) {
-      const auto state = snapshot(harness, 2, index);
-      require(state.connections == 1 && state.timers == 1,
+      const auto state = CollectTimeoutSnapshot(harness, 2, index);
+      Require(state.connections == 1 && state.timers == 1,
               "active timer per worker");
       timers += state.timers;
     }
-    harness.stop();
-    first.eof();
-    second.eof();
+    harness.Stop();
+    first.ExpectEof();
+    second.ExpectEof();
   }
-  await([&] { return resources("/proc/self/task") == threads; });
-  require(resources("/proc/self/fd") == fd, "timer cycles fd baseline");
+  WaitUntil([&] { return Resources("/proc/self/task") == threads; });
+  Require(Resources("/proc/self/fd") == fd, "timer cycles fd baseline");
   std::cout << "active_lifecycle cycles=100 observed_timers=" << timers
-            << " fd=" << fd << '/' << resources("/proc/self/fd")
-            << " threads=" << threads << '/' << resources("/proc/self/task")
+            << " fd=" << fd << '/' << Resources("/proc/self/fd")
+            << " threads=" << threads << '/' << Resources("/proc/self/task")
             << '\n';
 }
 
-void options_boundaries() {
-  auto parse = [](std::vector<std::string> values) {
-    std::vector<char*> argv;
-    for (auto& value : values) argv.push_back(value.data());
-    return ParseServerOptions(static_cast<int>(argv.size()), argv.data());
+void OptionsBoundaries() {
+  struct ParseOptionValuesTask {
+    decltype(auto) ParseOptionValues(std::vector<std::string> values) const {
+      std::vector<char*> argv;
+      for (auto& value : values) argv.push_back(value.data());
+      return ParseServerOptions(static_cast<int>(argv.size()), argv.data());
+    }
   };
-  const auto defaults = parse({"server", "--port", "0", "--root", "."});
-  require(defaults.shutdown_timeout == 5000ms,
+  auto parse = ParseOptionValuesTask{};
+  const auto defaults =
+      parse.ParseOptionValues({"server", "--port", "0", "--root", "."});
+  Require(defaults.shutdown_timeout == 5000ms,
           "actual production shutdown default");
-  require(defaults.timeouts.idle == 30000ms &&
+  Require(defaults.timeouts.idle == 30000ms &&
               defaults.timeouts.keep_alive == 15000ms,
           "actual production parser defaults");
   TcpServer component(0);
-  require(Access::config(component).idle == 0ms &&
+  Require(Access::config(component).idle == 0ms &&
               Access::config(component).keep_alive == 0ms,
           "C++ compatibility defaults");
   int rejected = 0, accepted = 0;
   for (const auto option : {"--idle-timeout-ms", "--keep-alive-timeout-ms"}) {
     for (const auto value : {"0", "1", "86400000"}) {
-      auto config =
-          parse({"server", "--port", "0", "--root", ".", option, value});
-      require((std::string_view(option) == "--idle-timeout-ms"
+      auto config = parse.ParseOptionValues(
+          {"server", "--port", "0", "--root", ".", option, value});
+      Require((std::string_view(option) == "--idle-timeout-ms"
                    ? config.timeouts.idle
                    : config.timeouts.keep_alive)
                       .count() == std::stoll(value),
@@ -592,7 +692,8 @@ void options_boundaries() {
     for (const auto value :
          {"86400001", "-1", "+1", "", "1x", "184467440737095516160"}) {
       try {
-        (void)parse({"server", "--port", "0", "--root", ".", option, value});
+        (void)parse.ParseOptionValues(
+            {"server", "--port", "0", "--root", ".", option, value});
         throw std::runtime_error("invalid timeout accepted");
       } catch (const std::invalid_argument&) {
         ++rejected;
@@ -602,7 +703,7 @@ void options_boundaries() {
          {std::vector<std::string>{"server", option},
           std::vector<std::string>{"server", option, "0", option, "0"}}) {
       try {
-        (void)parse(values);
+        (void)parse.ParseOptionValues(values);
         throw std::runtime_error("missing/repeated accepted");
       } catch (const std::invalid_argument&) {
         ++rejected;
@@ -619,24 +720,24 @@ void options_boundaries() {
 int main() {
   try {
     Fixture fixture;
-    hp::http::StaticFileService service(fixture.root.string());
+    hp::http::StaticFileService service(fixture.root_.string());
     watched_root = hp::http::StaticFileServiceTestAccess::root_fd(service);
-    hp::app::set_session_observer_for_test(session_event);
-    options_boundaries();
-    idle_modes(service);
-    waiting_states(service);
-    protocols(service, {300ms, 150ms});
-    owner_progress_and_failures(service);
-    write_progress(service);
-    paced_input(service);
-    healthy_during_timeout(service);
-    rollback_and_reuse(service);
-    fatal_timer(service);
-    active_lifecycle(service);
-    hp::app::set_session_observer_for_test(nullptr);
-    require(root_errors == 0 && live_sessions == 0,
+    hp::app::set_RecordSessionEvent_callback(RecordSessionEvent);
+    OptionsBoundaries();
+    IdleModes(service);
+    WaitingStates(service);
+    Protocols(service, {300ms, 150ms});
+    OwnerProgressAndFailures(service);
+    WriteProgress(service);
+    PacedInput(service);
+    HealthyDuringTimeout(service);
+    RollbackAndReuse(service);
+    FatalTimer(service);
+    ActiveLifecycle(service);
+    hp::app::set_RecordSessionEvent_callback(nullptr);
+    Require(root_errors == 0 && live_sessions == 0,
             "service outlives timer callbacks");
-    require(accepted_sockets == closed_sockets && invalid_closes == 0,
+    Require(accepted_sockets == closed_sockets && invalid_closes == 0,
             "exact socket closes");
     std::cout << "close accepted=" << accepted_sockets
               << " closed=" << closed_sockets << " invalid=" << invalid_closes

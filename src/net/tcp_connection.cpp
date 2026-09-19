@@ -205,7 +205,7 @@ void TcpConnection::FlushOutput() {
       break;
     }
     if (written.would_block) {
-      base::info("S3 evidence: connection write reached EAGAIN with " +
+      base::Info("S3 evidence: connection write reached EAGAIN with " +
                  std::to_string(io_.pending_bytes()) +
                  " response bytes pending.");
       break;
@@ -246,15 +246,15 @@ void TcpConnection::HandleConnectionEvent(std::uint32_t mask) noexcept {
     if (mask & EPOLLHUP) last_result_.close_requested = true;
     const auto& result = last_result_;
     if (result.socket_error_observed && result.socket_error)
-      base::warn(ErrorMessage(fd(), "SO_ERROR", result.socket_error));
+      base::Warn(ErrorMessage(fd(), "SO_ERROR", result.socket_error));
     if (result.socket_error_query_error)
-      base::warn(ErrorMessage(fd(),
+      base::Warn(ErrorMessage(fd(),
                               "getsockopt(SO_ERROR)",
                               result.socket_error_query_error));
     if (result.read_error)
-      base::warn(ErrorMessage(fd(), "recv", result.read_error));
+      base::Warn(ErrorMessage(fd(), "recv", result.read_error));
     if (result.write_error)
-      base::warn(ErrorMessage(fd(), "send", result.write_error));
+      base::Warn(ErrorMessage(fd(), "send", result.write_error));
     if (state_ == State::kActive) {
       if (result.close_requested)
         RequestClose();
@@ -264,13 +264,13 @@ void TcpConnection::HandleConnectionEvent(std::uint32_t mask) noexcept {
   } catch (const std::exception& error) {
     RequestClose();
     try {
-      base::warn(std::string("connection event failed: ") + error.what());
+      base::Warn(std::string("connection event failed: ") + error.what());
     } catch (...) {
     }
   } catch (...) {
     RequestClose();
     try {
-      base::warn("connection event failed");
+      base::Warn("connection event failed");
     } catch (...) {
     }
   }

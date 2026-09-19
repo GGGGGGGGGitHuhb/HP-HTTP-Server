@@ -15,10 +15,10 @@
 namespace hp::base {
 struct AsyncLoggerTestAccess {
   static std::size_t allocation_bytes() {
-    return sizeof(AsyncLogger::Record) * AsyncLogger::capacity;
+    return sizeof(AsyncLogger::Record) * AsyncLogger::kCapacity;
   }
 
-  static std::unique_ptr<AsyncLogger> make(std::size_t capacity,
+  static std::unique_ptr<AsyncLogger> Make(std::size_t capacity,
                                            std::ostream& sink) {
     return std::unique_ptr<AsyncLogger>(new AsyncLogger(capacity, sink));
   }
@@ -28,23 +28,23 @@ struct AsyncLoggerTestAccess {
 namespace logger_test {
 using namespace std::chrono_literals;
 
-inline void require(bool value, const char* message) {
+inline void Require(bool value, const char* message) {
   if (!value) throw std::runtime_error(message);
 }
 
 class Gate : public std::streambuf {
  public:
-  bool blocked = false;
-  bool fail_write = false;
-  bool fail_flush = false;
-  bool throw_write = false;
+  bool blocked_ = false;
+  bool fail_write_ = false;
+  bool fail_flush_ = false;
+  bool throw_write_ = false;
 
-  bool await_entry() {
+  bool AwaitEntry() {
     std::unique_lock lock(mutex_);
     return cv_.wait_for(lock, 3s, [this] { return entered_; });
   }
 
-  void release() {
+  void Release() {
     const std::lock_guard lock(mutex_);
     released_ = true;
     cv_.notify_all();
@@ -71,9 +71,9 @@ class Gate : public std::streambuf {
     writers_.insert(std::this_thread::get_id());
     entered_ = true;
     cv_.notify_all();
-    if (blocked) cv_.wait(lock, [this] { return released_; });
-    if (throw_write) throw std::runtime_error("injected sink exception");
-    if (fail_write) return 0;
+    if (blocked_) cv_.wait(lock, [this] { return released_; });
+    if (throw_write_) throw std::runtime_error("injected sink exception");
+    if (fail_write_) return 0;
     text_.append(data, size);
     return size;
   }
@@ -88,7 +88,7 @@ class Gate : public std::streambuf {
   int sync() override {
     const std::lock_guard lock(mutex_);
     ++flushes_;
-    return fail_flush ? -1 : 0;
+    return fail_flush_ ? -1 : 0;
   }
 
  private:
@@ -107,20 +107,20 @@ struct Fixture {
   std::unique_ptr<hp::base::AsyncLogger> logger;
 
   explicit Fixture(std::size_t capacity = 1024, bool blocked = false) {
-    gate.blocked = blocked;
-    logger = hp::base::AsyncLoggerTestAccess::make(capacity, sink);
+    gate.blocked_ = blocked;
+    logger = hp::base::AsyncLoggerTestAccess::Make(capacity, sink);
   }
 
   ~Fixture() {
-    gate.release();
-    logger->stop();
+    gate.Release();
+    logger->Stop();
   }
 };
 
-inline void balanced(const hp::base::LogStats& s) {
-  require(s.submitted == s.accepted + s.dropped_full + s.rejected_stopped,
+inline void Balanced(const hp::base::LogStats& s) {
+  Require(s.submitted == s.accepted + s.dropped_full + s.rejected_stopped,
           "submitted accounting");
-  require(s.accepted == s.written + s.failed + s.pending,
+  Require(s.accepted == s.written + s.failed + s.pending,
           "accepted accounting");
 }
 }  // namespace logger_test

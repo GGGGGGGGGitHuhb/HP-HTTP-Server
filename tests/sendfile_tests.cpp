@@ -1,3 +1,5 @@
+#include <functional>
+#include <type_traits>
 // Reuse the accepted owner/TID, process, HTTP and fault fixtures without
 // copying transport logic.
 #define HP_GRACEFUL_ENTRY legacy_sendfile_graceful_entry
@@ -31,14 +33,14 @@ thread_local int mask_injection = 0;
 thread_local unsigned int mask_injection_consumed = 0;
 thread_local unsigned int sendfile_injection_consumed = 0;
 
-FileEvidence evidence(std::size_t index) {
+FileEvidence Evidence(std::size_t index) {
   std::lock_guard lock(file_evidence_mutex);
   return file_evidence.at(index);
 }
 
-std::size_t latest_file() {
+std::size_t LatestFile() {
   std::lock_guard lock(file_evidence_mutex);
-  require(!file_evidence.empty(), "observed a real regular-file open");
+  Require(!file_evidence.empty(), "observed a real regular-file open");
   return file_evidence.size() - 1;
 }
 }  // namespace
@@ -166,27 +168,27 @@ ssize_t __wrap_sendfile(int output,
 }
 
 namespace {
-Socket open_fixture(const Fixture &fixture) {
-  const auto path = fixture.root / "large.bin";
+Socket OpenFixture(const Fixture &fixture) {
+  const auto path = fixture.root_ / "large.bin";
   const int fd = ::openat(AT_FDCWD, path.c_str(), O_RDONLY | O_CLOEXEC);
-  require(fd >= 0, "open stable fixture file");
+  Require(fd >= 0, "open stable fixture file");
   return Socket(fd);
 }
 
-void raw_observation(const Fixture &fixture, int disabled_error) {
+void RawObservation(const Fixture &fixture, int disabled_error) {
   int pair[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "observer pair");
   Socket output(pair[0]), input(pair[1]);
-  auto file = open_fixture(fixture);
-  const auto id = latest_file();
+  auto file = OpenFixture(fixture);
+  const auto id = LatestFile();
   off_t offset = 0;
-  require(::sendfile(output.fd(), file.fd(), &offset, 1024) == 1024,
+  Require(::sendfile(output.fd(), file.fd(), &offset, 1024) == 1024,
           "real sendfile observer");
   std::array<char, 1024> bytes;
-  require(::recv(input.fd(), bytes.data(), bytes.size(), 0) == 1024,
+  Require(::recv(input.fd(), bytes.data(), bytes.size(), 0) == 1024,
           "raw observer receive");
-  require(std::memcmp(bytes.data(), fixture.large.data(), bytes.size()) == 0,
+  Require(std::memcmp(bytes.data(), fixture.large_.data(), bytes.size()) == 0,
           "raw bytes exact");
   for (int error : {EINTR, EIO, ENOSYS}) {
     const auto before = sendfile_injection_consumed;
@@ -194,12 +196,12 @@ void raw_observation(const Fixture &fixture, int disabled_error) {
     errno = 0;
     const auto result = ::sendfile(output.fd(), file.fd(), &offset, 1);
     const auto actual = errno;
-    require(result == -1 && actual == error &&
+    Require(result == -1 && actual == error &&
                 sendfile_injection_consumed == before + 1,
             "sendfile injection must be consumed");
   }
-  const auto record = evidence(id);
-  require(record.positive == 1 && record.bytes == 1024 &&
+  const auto record = Evidence(id);
+  Require(record.positive == 1 && record.bytes == 1024 &&
               !record.offset_error && record.reads == 0 && record.preads == 0 &&
               record.injected == 3,
           "observer distinguishes real syscall from injection");
@@ -208,9 +210,9 @@ void raw_observation(const Fixture &fixture, int disabled_error) {
             << " read/pread=0/0 offset=" << offset << '\n';
 }
 
-void default_sigpipe_fixture(const Fixture &fixture) {
+void DefaultSigpipeFixture(const Fixture &fixture) {
   const pid_t child = ::fork();
-  require(child >= 0, "SIGPIPE fixture fork");
+  Require(child >= 0, "SIGPIPE fixture fork");
   if (child == 0) {
     struct sigaction action {};
 
@@ -224,31 +226,31 @@ void default_sigpipe_fixture(const Fixture &fixture) {
     int pair[2];
     if (::socketpair(AF_UNIX, SOCK_STREAM, 0, pair) != 0) ::_exit(92);
     ::close(pair[1]);
-    auto file = open_fixture(fixture);
+    auto file = OpenFixture(fixture);
     off_t offset = 0;
     ::sendfile(pair[0], file.fd(), &offset, 1);
     ::_exit(93);
   }
   int status = 0;
-  require(::waitpid(child, &status, 0) == child, "SIGPIPE fixture reap");
-  require(WIFSIGNALED(status) && WTERMSIG(status) == SIGPIPE,
+  Require(::waitpid(child, &status, 0) == child, "SIGPIPE fixture reap");
+  Require(WIFSIGNALED(status) && WTERMSIG(status) == SIGPIPE,
           "unguarded sendfile negative control dies by default SIGPIPE");
   std::cout << "M0 default_SIGPIPE negative child signal=" << WTERMSIG(status)
             << '\n';
 }
 
-void fixture_owner(const Fixture &fixture) {
-  const auto baseline = mask_lifetime();
-  hp::http::StaticFileService service(fixture.root.string());
+void FixtureOwner(const Fixture &fixture) {
+  const auto baseline = MaskLifetime();
+  hp::http::StaticFileService service(fixture.root_.string());
   ServerHarness harness(service, 2);
-  const auto owned = ready_threads(harness);
+  const auto owned = ReadyThreads(harness);
   Stream client(harness.port);
-  client.send(query("/note.txt", true));
-  response(client.next(), 200, "hello from S3\n");
-  client.eof();
+  client.Send(Query("/note.txt", true));
+  Response(client.ReadResponse(), 200, "hello from S3\n");
+  client.ExpectEof();
   harness.server->RequestGracefulShutdown(Clock::now() + 1s);
-  join_graceful(harness);
-  settle_threads(owned, baseline, "sendfile-M0", 0);
+  JoinGraceful(harness);
+  SettleThreads(owned, baseline, "sendfile-M0", 0);
 }
 }  // namespace
 
@@ -272,18 +274,18 @@ static_assert(!std::is_copy_constructible_v<FileRegion> &&
 static_assert(std::is_nothrow_move_constructible_v<FileRegion> &&
               std::is_nothrow_move_assignable_v<FileRegion>);
 
-FileRegion region(const Fixture &fixture,
+FileRegion Region(const Fixture &fixture,
                   std::size_t length,
                   off_t offset = 0) {
-  auto file = open_fixture(fixture);
+  auto file = OpenFixture(fixture);
   return FileRegion(UniqueFd(file.Release()), offset, length);
 }
 
-std::span<const std::byte> view(std::string_view text) {
+std::span<const std::byte> View(std::string_view text) {
   return {reinterpret_cast<const std::byte *>(text.data()), text.size()};
 }
 
-void collect(int fd, std::string &target) {
+void Collect(int fd, std::string &target) {
   std::array<char, 65536> buffer;
   for (;;) {
     const auto count = ::recv(fd, buffer.data(), buffer.size(), MSG_DONTWAIT);
@@ -291,31 +293,31 @@ void collect(int fd, std::string &target) {
       target.append(buffer.data(), static_cast<std::size_t>(count));
       continue;
     }
-    require(count == 0 || errno == EAGAIN || errno == EWOULDBLOCK,
+    Require(count == 0 || errno == EAGAIN || errno == EWOULDBLOCK,
             "collect file output");
     return;
   }
 }
 
-void call_budget_and_mask_failure(const Fixture &fixture,
-                                  bool disable_budget,
-                                  bool disable_mask) {
+void CallBudgetAndMaskFailure(const Fixture &fixture,
+                              bool disable_budget,
+                              bool disable_mask) {
   int pair[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "budget pair");
   Socket peer(pair[1]);
   int large = 1024 * 1024;
   ::setsockopt(pair[0], SOL_SOCKET, SO_SNDBUF, &large, sizeof(large));
   ConnectionIo io{Socket(pair[0])};
-  io.QueueFile({}, region(fixture, 1024 * 1024));
-  const auto id = latest_file();
+  io.QueueFile({}, Region(fixture, 1024 * 1024));
+  const auto id = LatestFile();
   const auto before = sendfile_injection_consumed;
   sendfile_injection = disable_budget ? 0 : EINTR;
   sendfile_injection_repeats = 100;
   const auto interrupted = io.WriteAvailable();
   sendfile_injection = 0;
   sendfile_injection_repeats = 0;
-  require(interrupted.bytes_written == 0 && interrupted.error_number == 0 &&
+  Require(interrupted.bytes_written == 0 && interrupted.error_number == 0 &&
               sendfile_injection_consumed - before ==
                   ConnectionIo::kFileCallBudget &&
               io.pending_bytes() == 1024 * 1024,
@@ -325,28 +327,28 @@ void call_budget_and_mask_failure(const Fixture &fixture,
   const auto mask_before = mask_injection_consumed;
   mask_injection = disable_mask ? 0 : EIO;
   const auto rejected = io.WriteAvailable();
-  require(rejected.error_number == EIO && evidence(id).calls == 0 &&
+  Require(rejected.error_number == EIO && Evidence(id).calls == 0 &&
               mask_injection_consumed == mask_before + 1,
           "mask failure must prevent unprotected sendfile");
   ::pthread_sigmask(SIG_SETMASK, nullptr, &restored);
   for (int signal = 1; signal < NSIG; ++signal)
-    require(
+    Require(
         ::sigismember(&original, signal) == ::sigismember(&restored, signal),
         "mask failure preserves full mask");
   const auto progress = io.WriteAvailable();
-  require(progress.error_number == 0 &&
+  Require(progress.error_number == 0 &&
               progress.bytes_written == ConnectionIo::kFileWriteBudget &&
-              evidence(id).bytes == ConnectionIo::kFileWriteBudget,
+              Evidence(id).bytes == ConnectionIo::kFileWriteBudget,
           "real writable socket reaches exact file byte budget then yields");
   std::cout << "M1 call_budget=" << ConnectionIo::kFileCallBudget
             << " real_byte_budget=" << progress.bytes_written
             << " guard_failure_calls=0\n";
 }
 
-void file_registration_failure(const Fixture &fixture, bool disabled) {
+void FileRegistrationFailure(const Fixture &fixture, bool disabled) {
   EventLoop loop;
   int pair[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "file registration pair");
   Socket peer(pair[1]);
   std::size_t id = 0;
@@ -360,116 +362,116 @@ void file_registration_failure(const Fixture &fixture, bool disabled) {
     connection.set_OnConnectionClosed_callback(
         std::bind_front(&OnConnectionClosedObserver1::OnConnectionClosed,
                         OnConnectionClosedObserver1{}));
-    connection.SendFile(view("header"), region(fixture, 1024));
-    id = latest_file();
+    connection.SendFile(View("header"), Region(fixture, 1024));
+    id = LatestFile();
     reject_any_registration = !disabled;
     try {
       connection.Start();
     } catch (const std::system_error &error) {
-      require(error.code() == std::error_code(EIO, std::generic_category()),
+      Require(error.code() == std::error_code(EIO, std::generic_category()),
               "file registration exact EIO");
       failed = true;
     }
   }
-  require(failed && registration_injections == before + 1 &&
-              evidence(id).closes == 1,
+  Require(failed && registration_injections == before + 1 &&
+              Evidence(id).closes == 1,
           "file registration injection must fail and close region");
   std::cout << "M1 staged_file registration_EIO=1 close=1\n";
 }
 
-void transport_bounds(const Fixture &fixture, bool disable_allocation) {
-  auto initial = region(fixture, 7, 3);
-  const auto moved_id = latest_file();
+void TransportBounds(const Fixture &fixture, bool disable_allocation) {
+  auto initial = Region(fixture, 7, 3);
+  const auto moved_id = LatestFile();
   auto moved = std::move(initial);
-  require(initial.fd() == -1 && initial.remaining() == 0 && moved.offset() == 3,
+  Require(initial.fd() == -1 && initial.remaining() == 0 && moved.offset() == 3,
           "region move transfers sole ownership");
-  auto replacement = region(fixture, 1);
-  const auto replaced_id = latest_file();
+  auto replacement = Region(fixture, 1);
+  const auto replaced_id = LatestFile();
   replacement = std::move(moved);
-  require(evidence(replaced_id).closes == 1 && moved.fd() == -1,
+  Require(Evidence(replaced_id).closes == 1 && moved.fd() == -1,
           "move assignment releases old file once");
-  require((::fcntl(replacement.fd(), F_GETFD) & FD_CLOEXEC) != 0,
+  Require((::fcntl(replacement.fd(), F_GETFD) & FD_CLOEXEC) != 0,
           "file CLOEXEC");
   replacement.Advance(7);
-  require(evidence(moved_id).closes == 1,
+  Require(Evidence(moved_id).closes == 1,
           "region completes and releases file immediately");
-  for (const auto length : {ConnectionIo::kOutputLimit - 2,
-                            ConnectionIo::kOutputLimit - 1,
-                            ConnectionIo::kOutputLimit}) {
+  for (const auto kLength : {ConnectionIo::kOutputLimit - 2,
+                             ConnectionIo::kOutputLimit - 1,
+                             ConnectionIo::kOutputLimit}) {
     int pair[2];
-    require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+    Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
             "bounds pair");
     Socket peer(pair[1]);
     ConnectionIo io{Socket(pair[0])};
-    auto file = region(fixture, length);
-    const auto id = latest_file();
+    auto file = Region(fixture, kLength);
+    const auto id = LatestFile();
     bool rejected = false;
     try {
-      io.QueueFile(view("H"), std::move(file));
+      io.QueueFile(View("H"), std::move(file));
     } catch (const std::length_error &) {
       rejected = true;
     }
-    require(rejected == (length == ConnectionIo::kOutputLimit),
+    Require(rejected == (kLength == ConnectionIo::kOutputLimit),
             "header plus file limit +/-1");
     if (rejected) {
-      require(io.pending_bytes() == 0 && evidence(id).closes == 1,
+      Require(io.pending_bytes() == 0 && Evidence(id).closes == 1,
               "rejected region closes with no partial submission");
     } else {
-      require(io.pending_bytes() == length + 1 &&
+      Require(io.pending_bytes() == kLength + 1 &&
                   ConnectionIoTestAccess::capacity(io) < 1024,
               "logical file bytes do not allocate body vector");
       bool append_rejected = false;
       try {
-        io.QueueOutput(view("late"));
+        io.QueueOutput(View("late"));
       } catch (const std::logic_error &) {
         append_rejected = true;
       }
-      require(append_rejected && io.pending_bytes() == length + 1,
+      Require(append_rejected && io.pending_bytes() == kLength + 1,
               "append cannot reorder a pending file");
     }
   }
-  require(!ConnectionIo::OutputFits(1, SIZE_MAX) &&
+  Require(!ConnectionIo::OutputFits(1, SIZE_MAX) &&
               !ConnectionIo::OutputFits(SIZE_MAX, 1),
           "overflow-safe file sum predicate");
   int pair[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "allocation pair");
   Socket peer(pair[1]);
   ConnectionIo io{Socket(pair[0])};
-  auto file = region(fixture, 1);
-  const auto id = latest_file();
+  auto file = Region(fixture, 1);
+  const auto id = LatestFile();
   bool failed = false;
   timer_allocation_failure = disable_allocation ? -1 : 0;
   try {
-    io.QueueFile(view("header"), std::move(file));
+    io.QueueFile(View("header"), std::move(file));
   } catch (const std::bad_alloc &) {
     failed = true;
   }
   timer_allocation_failure = -1;
-  require(
-      failed && io.pending_bytes() == 0 && evidence(id).closes == 1,
+  Require(
+      failed && io.pending_bytes() == 0 && Evidence(id).closes == 1,
       "submission allocation failure preserves empty output and closes region");
   std::cout << "M1 bounds limit=" << ConnectionIo::kOutputLimit
             << " region_move=1 allocation_rollback=1 body_vector=0\n";
 }
 
-void transport_short_writes(const Fixture &fixture) {
+void TransportShortWrites(const Fixture &fixture) {
   int pair[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "short write pair");
   Socket peer(pair[1]);
   int size = 4096;
-  require(
+  Require(
       ::setsockopt(pair[0], SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == 0,
       "small send buffer");
   ConnectionIo io{Socket(pair[0])};
-  constexpr std::size_t length = 1024 * 1024;
+  constexpr std::size_t kLength = 1024 * 1024;
   const std::string header(32768, 'H');
-  io.QueueFile(view(header), region(fixture, length, 17));
-  const auto id = latest_file();
+  io.QueueFile(View(header), Region(fixture, kLength, 17));
+  const auto id = LatestFile();
   const auto first = io.WriteAvailable();
-  require(first.would_block && first.bytes_written > 0 &&
-              first.bytes_written < header.size() && evidence(id).calls == 0,
+  Require(first.would_block && first.bytes_written > 0 &&
+              first.bytes_written < header.size() && Evidence(id).calls == 0,
           "real header short write precedes any sendfile");
   std::string wire;
   const auto injected_before = sendfile_injection_consumed;
@@ -477,25 +479,25 @@ void transport_short_writes(const Fixture &fixture) {
   const auto deadline = Clock::now() + 3s;
   std::size_t turns = 0;
   while (io.has_pending_output()) {
-    collect(peer.fd(), wire);
-    const auto before = evidence(id).bytes;
+    Collect(peer.fd(), wire);
+    const auto before = Evidence(id).bytes;
     const auto written = io.WriteAvailable();
-    require(written.error_number == 0, "short-write transport succeeds");
-    require(evidence(id).bytes - before <= ConnectionIo::kFileWriteBudget,
+    Require(written.error_number == 0, "short-write transport succeeds");
+    Require(Evidence(id).bytes - before <= ConnectionIo::kFileWriteBudget,
             "per-turn file progress budget");
-    require(Clock::now() < deadline, "short-write complete deadline");
+    Require(Clock::now() < deadline, "short-write complete deadline");
     ++turns;
   }
-  collect(peer.fd(), wire);
-  const auto record = evidence(id);
-  require(wire.size() == header.size() + length && wire.starts_with(header),
+  Collect(peer.fd(), wire);
+  const auto record = Evidence(id);
+  Require(wire.size() == header.size() + kLength && wire.starts_with(header),
           "header file ordering");
-  require(std::memcmp(wire.data() + header.size(),
-                      fixture.large.data() + 17,
-                      length) == 0,
+  Require(std::memcmp(wire.data() + header.size(),
+                      fixture.large_.data() + 17,
+                      kLength) == 0,
           "nonzero offset file exact bytes");
-  require(record.positive > 0 && record.short_writes > 0 && record.eagain > 0 &&
-              record.bytes == length && !record.offset_error &&
+  Require(record.positive > 0 && record.short_writes > 0 && record.eagain > 0 &&
+              record.bytes == kLength && !record.offset_error &&
               record.closes == 1 &&
               sendfile_injection_consumed == injected_before + 1,
           "real file EAGAIN/short writes and EINTR preserve offset");
@@ -506,45 +508,61 @@ void transport_short_writes(const Fixture &fixture) {
             << " capacity=" << ConnectionIoTestAccess::capacity(io) << '\n';
 }
 
-void transport_errors(const Fixture &fixture, bool disable_eof) {
+void TransportErrors(const Fixture &fixture, bool disable_eof) {
   for (const auto error : {0, EIO, ENOSYS}) {
     EventLoop loop;
     ConnectionRegistry registry(loop, 0);
     int pair[2];
-    require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+    Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
             "error pair");
     Socket peer(pair[1]);
+
+    using HandleMessageTaskFixtureState = decltype((fixture));
+    using HandleMessageTaskErrorState = decltype((error));
+    using HandleMessageTaskDisableEofState = decltype((disable_eof));
+    struct HandleMessageTask {
+      HandleMessageTaskFixtureState fixture;
+      HandleMessageTaskErrorState error;
+      HandleMessageTaskDisableEofState disable_eof;
+      decltype(auto) HandleMessage(TcpConnection &connection,
+                                   std::span<const std::byte> bytes,
+                                   bool) const {
+        auto file = Region(fixture,
+                           error ? 32 : 1,
+                           (error || disable_eof) ? 0 : fixture.large_.size());
+        connection.Consume(bytes.size());
+        connection.SendFile({}, std::move(file));
+        sendfile_injection = error;
+      }
+    };
     registry.AddConnection(
         Socket(pair[0]),
-        [&](TcpConnection &connection, auto bytes, bool) {
-          auto file = region(fixture,
-                             error ? 32 : 1,
-                             (error || disable_eof) ? 0 : fixture.large.size());
-          connection.Consume(bytes.size());
-          connection.SendFile({}, std::move(file));
-          sendfile_injection = error;
-        });
-    require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "trigger file error");
+        std::bind(&HandleMessageTask::HandleMessage,
+                  HandleMessageTask{fixture, error, disable_eof},
+                  std::placeholders::_1,
+                  std::placeholders::_2,
+                  std::placeholders::_3));
+    Require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "trigger file error");
     const auto before = sendfile_injection_consumed;
     loop.PollOnce(0);
-    const auto id = latest_file();
-    require(ShutdownAccess::entries(registry).empty() &&
-                evidence(id).closes == 1 &&
+    const auto id = LatestFile();
+    Require(ShutdownAccess::entries(registry).empty() &&
+                Evidence(id).closes == 1 &&
                 sendfile_injection_consumed == before + (error ? 1 : 0),
             "early EOF or explicit file error closes region and connection");
     char byte;
-    require(::recv(peer.fd(), &byte, 1, 0) == 0, "no appended error response");
-    require(!loop.failed(), "file error is connection-local");
+    Require(::recv(peer.fd(), &byte, 1, 0) == 0, "no appended error response");
+    Require(!loop.failed(), "file error is connection-local");
   }
   std::cout
       << "M1 errors early_EOF=1 EIO=1 unsupported=1 no_extra_response=1\n";
 }
 
-void transport_fairness(const Fixture &fixture) {
+void TransportFairness(const Fixture &fixture) {
   EventLoop loop;
   ConnectionRegistry registry(loop, 0);
   int pair[2], healthy[2];
-  require(
+  Require(
       ::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0 &&
           ::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, healthy) == 0,
       "fairness pairs");
@@ -560,24 +578,36 @@ void transport_fairness(const Fixture &fixture) {
       connection.Consume(bytes.size());
       connection.set_HandleWriteComplete_callback(
           std::bind_front(&FileBudgetHandler::HandleWriteComplete, this));
-      connection.SendFile({}, region(fixture, 1));
+      connection.SendFile({}, Region(fixture, 1));
     }
 
     void HandleWriteComplete(TcpConnection &current) {
       ++completed;
-      if (completed < 100) current.SendFile({}, region(fixture, 1));
+      if (completed < 100) current.SendFile({}, Region(fixture, 1));
     }
   } file_handler{fixture, completed};
   registry.AddConnection(
       Socket(pair[0]),
       std::bind_front(&FileBudgetHandler::HandleMessage, &file_handler));
+
+  using HandleMessageTaskHealthyCallsState = decltype((healthy_calls));
+  struct HandleMessageTask {
+    HandleMessageTaskHealthyCallsState healthy_calls;
+    decltype(auto) HandleMessage(TcpConnection &connection,
+                                 std::span<const std::byte> bytes,
+                                 bool) const {
+      ++healthy_calls;
+      connection.Send(bytes);
+      connection.Consume(bytes.size());
+    }
+  };
   registry.AddConnection(Socket(healthy[0]),
-                         [&](TcpConnection &connection, auto bytes, bool) {
-                           ++healthy_calls;
-                           connection.Send(bytes);
-                           connection.Consume(bytes.size());
-                         });
-  require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1 &&
+                         std::bind(&HandleMessageTask::HandleMessage,
+                                   HandleMessageTask{healthy_calls},
+                                   std::placeholders::_1,
+                                   std::placeholders::_2,
+                                   std::placeholders::_3));
+  Require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1 &&
               ::send(other.fd(), "y", 1, MSG_NOSIGNAL) == 1,
           "fairness ready sockets");
   struct ForceDrainTarget {
@@ -589,30 +619,44 @@ void transport_fairness(const Fixture &fixture) {
   loop.set_HandleControl_callback(
       std::bind_front(&ForceDrainTarget::HandleControl, &control_target));
   bool task = false;
-  require(loop.QueueInLoop([&] {
-    require(completed == 1 && healthy_calls == 1,
-            "outer write loop does not bypass file budget");
-    task = true;
-    loop.RequestForce();
-  }),
+
+  using VerifyFileBudgetTaskCompletedState = decltype((completed));
+  using VerifyFileBudgetTaskHealthyCallsState = decltype((healthy_calls));
+  using VerifyFileBudgetTaskState = decltype((task));
+  using VerifyFileBudgetTaskLoopState = decltype((loop));
+  struct VerifyFileBudgetTask {
+    VerifyFileBudgetTaskCompletedState completed;
+    VerifyFileBudgetTaskHealthyCallsState healthy_calls;
+    VerifyFileBudgetTaskState task;
+    VerifyFileBudgetTaskLoopState loop;
+    decltype(auto) VerifyFileBudget() const {
+      Require(completed == 1 && healthy_calls == 1,
+              "outer write loop does not bypass file budget");
+      task = true;
+      loop.RequestForce();
+    }
+  };
+  Require(loop.QueueInLoop(std::bind(
+              &VerifyFileBudgetTask::VerifyFileBudget,
+              VerifyFileBudgetTask{completed, healthy_calls, task, loop})),
           "fairness task accepted");
   loop.PollOnce(0);
-  require(task && completed == 1 && ShutdownAccess::entries(registry).empty(),
+  Require(task && completed == 1 && ShutdownAccess::entries(registry).empty(),
           "owner task and force run before reentrant file suffix");
   std::cout << "M1 fairness completed_before_control=" << completed
             << " healthy=" << healthy_calls << " task=" << task << '\n';
 }
 
-void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
+void GuardedSigpipe(const Fixture &fixture, bool disable_peer_close) {
   const pid_t child = ::fork();
-  require(child >= 0, "protected SIGPIPE fork");
+  Require(child >= 0, "protected SIGPIPE fork");
   if (child == 0) {
     try {
       struct sigaction action {};
 
       action.sa_handler = SIG_DFL;
       ::sigemptyset(&action.sa_mask);
-      require(::sigaction(SIGPIPE, &action, nullptr) == 0,
+      Require(::sigaction(SIGPIPE, &action, nullptr) == 0,
               "default SIGPIPE disposition");
       sigset_t pipe, original, actual, pending;
       ::sigemptyset(&pipe);
@@ -621,10 +665,10 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
       for (int mode = 0; mode < 3; ++mode) {
         if (mode) ::pthread_sigmask(SIG_BLOCK, &pipe, nullptr);
         if (mode == 2)
-          require(::pthread_kill(::pthread_self(), SIGPIPE) == 0,
+          Require(::pthread_kill(::pthread_self(), SIGPIPE) == 0,
                   "preexisting pending SIGPIPE");
         int pair[2];
-        require(
+        Require(
             ::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
             "pipe pair");
         Socket disconnected(pair[1]);
@@ -632,22 +676,22 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
         sigset_t saved_mask;
         ::pthread_sigmask(SIG_SETMASK, nullptr, &saved_mask);
         ConnectionIo io{Socket(pair[0])};
-        io.QueueFile({}, region(fixture, 1));
+        io.QueueFile({}, Region(fixture, 1));
         const auto result = io.WriteAvailable();
-        require(result.error_number == EPIPE,
+        Require(result.error_number == EPIPE,
                 "real sendfile EPIPE returned safely");
         ::pthread_sigmask(SIG_SETMASK, nullptr, &actual);
         ::sigpending(&pending);
         for (int signal = 1; signal < NSIG; ++signal)
-          require(::sigismember(&actual, signal) ==
+          Require(::sigismember(&actual, signal) ==
                       ::sigismember(&saved_mask, signal),
                   "guard full mask restored");
-        require(::sigismember(&actual, SIGPIPE) == (mode ? 1 : 0) &&
+        Require(::sigismember(&actual, SIGPIPE) == (mode ? 1 : 0) &&
                     ::sigismember(&pending, SIGPIPE) == (mode ? 1 : 0),
                 "original blocked and pending SIGPIPE preserved");
         if (mode) {
           const timespec zero{};
-          require(::sigtimedwait(&pipe, nullptr, &zero) == SIGPIPE,
+          Require(::sigtimedwait(&pipe, nullptr, &zero) == SIGPIPE,
                   "consume test-owned pending");
           ::pthread_sigmask(SIG_UNBLOCK, &pipe, nullptr);
         }
@@ -656,14 +700,14 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
         auto listener = Socket::CreateTcp();
         listener.BindAny(0);
         listener.Listen(4);
-        Socket reset_peer(connect_client(listener.local_port()));
+        Socket reset_peer(ConnectClient(listener.local_port()));
         Socket accepted;
-        await([&] {
+        WaitUntil([&] {
           accepted = listener.AcceptNonBlocking();
           return accepted.valid();
         });
         const linger reset{1, 0};
-        require(::setsockopt(reset_peer.fd(),
+        Require(::setsockopt(reset_peer.fd(),
                              SOL_SOCKET,
                              SO_LINGER,
                              &reset,
@@ -675,26 +719,26 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
         std::cerr << "TCP reset diagnostic fd=" << event.fd
                   << " poll=" << polled << " revents=" << event.revents
                   << " errno=" << errno << std::endl;
-        require(polled == 1 && (event.revents & POLLERR), "TCP reset observed");
+        Require(polled == 1 && (event.revents & POLLERR), "TCP reset observed");
         ConnectionIo reset_io(std::move(accepted));
-        reset_io.QueueFile({}, region(fixture, 1));
+        reset_io.QueueFile({}, Region(fixture, 1));
         const auto reset_result = reset_io.WriteAvailable();
-        require(reset_result.error_number == ECONNRESET ||
+        Require(reset_result.error_number == ECONNRESET ||
                     reset_result.error_number == EPIPE,
                 "real TCP reset is connection-local");
-        require(reset_io.WriteAvailable().error_number == EPIPE,
+        Require(reset_io.WriteAvailable().error_number == EPIPE,
                 "TCP reset followed by safe EPIPE");
       }
       int pair[2];
-      require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+      Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
               "healthy pipe pair");
       Socket peer(pair[1]);
       ConnectionIo healthy{Socket(pair[0])};
-      healthy.QueueFile({}, region(fixture, 1));
-      require(healthy.WriteAvailable().bytes_written == 1,
+      healthy.QueueFile({}, Region(fixture, 1));
+      Require(healthy.WriteAvailable().bytes_written == 1,
               "next connection survives SIGPIPE");
       ::sigaction(SIGPIPE, nullptr, &action);
-      require(action.sa_handler == SIG_DFL,
+      Require(action.sa_handler == SIG_DFL,
               "transport did not globally ignore SIGPIPE");
       ::pthread_sigmask(SIG_SETMASK, &original, nullptr);
       ::_exit(0);
@@ -704,12 +748,12 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
     }
   }
   int status;
-  require(::waitpid(child, &status, 0) == child, "protected SIGPIPE reap");
+  Require(::waitpid(child, &status, 0) == child, "protected SIGPIPE reap");
   std::cout << "SIGPIPE child exit="
             << (WIFEXITED(status) ? WEXITSTATUS(status) : -1)
             << " signal=" << (WIFSIGNALED(status) ? WTERMSIG(status) : 0)
             << std::endl;
-  require(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+  Require(WIFEXITED(status) && WEXITSTATUS(status) == 0,
           "guarded default-SIGPIPE process survives");
   std::cout << "M1 SIGPIPE default_survival=1 blocked=preserved "
                "pending=preserved TCP_RST=1 "
@@ -744,49 +788,58 @@ struct SendfileTestAccess {
     return connection.wait_since_.has_value();
   }
 
-  static void write(TcpConnection &connection) {
+  static void Write(TcpConnection &connection) {
     connection.HandleConnectionEvent(EPOLLOUT);
   }
 };
 }  // namespace hp::net
 
 namespace {
-std::size_t file_count() {
+std::size_t FileCount() {
   std::lock_guard lock(file_evidence_mutex);
   return file_evidence.size();
 }
 
-std::size_t owner_capacity(ServerHarness &harness,
-                           std::size_t workers,
-                           std::size_t owner) {
+std::size_t OwnerCapacity(ServerHarness &harness,
+                          std::size_t workers,
+                          std::size_t owner) {
   std::promise<std::size_t> answer;
   auto result = answer.get_future();
-  auto observe = [&] {
-    auto &entries = ShutdownAccess::entries(
-        SendfileTestAccess::registry(*harness.server, owner));
-    require(entries.size() == 1,
-            "one production connection per measured owner");
-    answer.set_value(SendfileTestAccess::capacity(*entries.begin()->second));
+
+  using CollectBufferCapacityTaskHarnessState = decltype((harness));
+  using CollectBufferCapacityTaskOwnerState = decltype((owner));
+  using CollectBufferCapacityTaskAnswerState = decltype((answer));
+  struct CollectBufferCapacityTask {
+    CollectBufferCapacityTaskHarnessState harness;
+    CollectBufferCapacityTaskOwnerState owner;
+    CollectBufferCapacityTaskAnswerState answer;
+    decltype(auto) CollectBufferCapacity() const {
+      auto &entries = ShutdownAccess::entries(
+          SendfileTestAccess::registry(*harness.server, owner));
+      Require(entries.size() == 1,
+              "one production connection per measured owner");
+      answer.set_value(SendfileTestAccess::capacity(*entries.begin()->second));
+    }
   };
+  auto observe = std::bind(&CollectBufferCapacityTask::CollectBufferCapacity,
+                           CollectBufferCapacityTask{harness, owner, answer});
   if (workers)
-    require(TcpServerTestAccess::post(*harness.server,
-                                      owner,
-                                      [&](EventLoop &) { observe(); }),
+    Require(TcpServerTestAccess::Post(*harness.server, owner, observe),
             "capacity owner observer");
   else
-    require(TcpServerTestAccess::main_post(*harness.server, observe),
+    Require(TcpServerTestAccess::MainPost(*harness.server, observe),
             "capacity main observer");
-  require(result.wait_for(3s) == std::future_status::ready,
+  Require(result.wait_for(3s) == std::future_status::ready,
           "capacity observer ready");
   return result.get();
 }
 
-std::string materialize_prepared(hp::http::ResponseResult prepared) {
+std::string MaterializePrepared(hp::http::ResponseResult prepared) {
   if (!prepared.file)
     return {reinterpret_cast<const char *>(prepared.bytes.data()),
             prepared.bytes.size()};
   int pair[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "prepare comparison pair");
   Socket peer(pair[1]);
   ConnectionIo io{Socket(pair[0])};
@@ -795,25 +848,25 @@ std::string materialize_prepared(hp::http::ResponseResult prepared) {
   const auto deadline = Clock::now() + 3s;
   while (io.has_pending_output()) {
     const auto result = io.WriteAvailable();
-    require(result.error_number == 0, "prepared file transfer");
-    collect(peer.fd(), wire);
-    require(Clock::now() < deadline, "prepared file transfer deadline");
+    Require(result.error_number == 0, "prepared file transfer");
+    Collect(peer.fd(), wire);
+    Require(Clock::now() < deadline, "prepared file transfer deadline");
   }
-  collect(peer.fd(), wire);
+  Collect(peer.fd(), wire);
   return wire;
 }
 
-void prepare_compatibility(const Fixture &fixture,
-                           const hp::http::StaticFileService &service) {
-  Fixture::write_text(fixture.root / "empty.bin", "");
-  Fixture::write_text(fixture.root / "one.bin", "X");
-  Fixture::write_bytes(fixture.root / "kilo.bin",
-                       std::vector<std::byte>(fixture.large.begin(),
-                                              fixture.large.begin() + 1024));
-  Fixture::write_bytes(
-      fixture.root / "mega.bin",
-      std::vector<std::byte>(fixture.large.begin(),
-                             fixture.large.begin() + 1024 * 1024));
+void PrepareCompatibility(const Fixture &fixture,
+                          const hp::http::StaticFileService &service) {
+  Fixture::WriteText(fixture.root_ / "empty.bin", "");
+  Fixture::WriteText(fixture.root_ / "one.bin", "X");
+  Fixture::WriteBytes(fixture.root_ / "kilo.bin",
+                      std::vector<std::byte>(fixture.large_.begin(),
+                                             fixture.large_.begin() + 1024));
+  Fixture::WriteBytes(
+      fixture.root_ / "mega.bin",
+      std::vector<std::byte>(fixture.large_.begin(),
+                             fixture.large_.begin() + 1024 * 1024));
   for (auto path : {"/empty.bin",
                     "/one.bin",
                     "/large.bin",
@@ -823,79 +876,90 @@ void prepare_compatibility(const Fixture &fixture,
                     "/assets",
                     "/missing",
                     "/assets/binary.png"}) {
-    const auto before = file_count();
+    const auto before = FileCount();
     auto prepared =
         service.PrepareResponse({"GET", path},
                                 hp::http::ConnectionPolicy::kKeepAlive);
-    const auto after_prepare = file_count();
+    const auto after_prepare = FileCount();
     if (prepared.file) {
-      require(prepared.file->offset() == 0 && prepared.bytes.size() < 256,
+      Require(prepared.file->offset() == 0 && prepared.bytes.size() < 256,
               "prepared metadata and small header");
-      require(evidence(after_prepare - 1).reads == 0 &&
-                  evidence(after_prepare - 1).preads == 0,
+      Require(Evidence(after_prepare - 1).reads == 0 &&
+                  Evidence(after_prepare - 1).preads == 0,
               "prepare never reads body");
     }
-    const auto actual = materialize_prepared(std::move(prepared));
+    const auto actual = MaterializePrepared(std::move(prepared));
     const auto legacy =
         service.HandleResponse({"GET", path},
                                hp::http::ConnectionPolicy::kKeepAlive);
-    require(
+    Require(
         actual.size() == legacy.bytes.size() &&
             std::memcmp(actual.data(), legacy.bytes.data(), actual.size()) == 0,
         "legacy and prepared HTTP bytes match");
-    for (auto id = before; id < file_count(); ++id)
-      require(evidence(id).closes == 1,
+    for (auto id = before; id < FileCount(); ++id)
+      Require(Evidence(id).closes == 1,
               "prepare/compatibility close every file identity");
   }
   std::cout << "M2 prepare compatibility paths=9 "
                "zero/one/8MiB/overlimit/security byte_exact=1\n";
 }
 
-void changing_files(const Fixture &fixture,
-                    const hp::http::StaticFileService &service,
-                    bool disable_truncate) {
-  const auto path = fixture.root / "replace.txt";
-  const auto next = fixture.root / "replacement.txt";
-  Fixture::write_text(path, "old");
+void ChangingFiles(const Fixture &fixture,
+                   const hp::http::StaticFileService &service,
+                   bool disable_truncate) {
+  const auto path = fixture.root_ / "replace.txt";
+  const auto next = fixture.root_ / "replacement.txt";
+  Fixture::WriteText(path, "old");
   auto opened = service.PrepareResponse({"GET", "/replace.txt"});
-  const auto old_id = latest_file();
-  Fixture::write_text(next, "new contents");
+  const auto old_id = LatestFile();
+  Fixture::WriteText(next, "new contents");
   std::filesystem::rename(next, path);
-  require(materialize_prepared(std::move(opened)).ends_with("\r\n\r\nold"),
+  Require(MaterializePrepared(std::move(opened)).ends_with("\r\n\r\nold"),
           "rename keeps opened inode");
   auto replaced = service.PrepareResponse({"GET", "/replace.txt"});
-  const auto new_id = latest_file();
-  require(evidence(old_id).inode != evidence(new_id).inode &&
-              materialize_prepared(std::move(replaced))
+  const auto new_id = LatestFile();
+  Require(Evidence(old_id).inode != Evidence(new_id).inode &&
+              MaterializePrepared(std::move(replaced))
                   .ends_with("\r\n\r\nnew contents"),
           "next request opens replacement inode");
-  Fixture::write_text(path, "grow");
+  Fixture::WriteText(path, "grow");
   auto growing = service.PrepareResponse({"GET", "/replace.txt"});
-  Fixture::write_text(path, "grow plus appended data");
-  require(materialize_prepared(std::move(growing)).ends_with("\r\n\r\ngrow"),
+  Fixture::WriteText(path, "grow plus appended data");
+  Require(MaterializePrepared(std::move(growing)).ends_with("\r\n\r\ngrow"),
           "growth cannot exceed original Content-Length");
-  Fixture::write_text(path, "truncate original");
+  Fixture::WriteText(path, "truncate original");
   auto truncated = service.PrepareResponse({"GET", "/replace.txt"});
-  const auto truncated_id = latest_file();
-  if (!disable_truncate) Fixture::write_text(path, "");
+  const auto truncated_id = LatestFile();
+  if (!disable_truncate) Fixture::WriteText(path, "");
   EventLoop loop;
   ConnectionRegistry registry(loop, 0);
   int pair[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "truncate pair");
   Socket peer(pair[1]);
+
+  using HandleMessageTaskTruncatedState = decltype((truncated));
+  struct HandleMessageTask {
+    HandleMessageTaskTruncatedState truncated;
+    decltype(auto) HandleMessage(TcpConnection &connection,
+                                 std::span<const std::byte> input,
+                                 bool) const {
+      connection.Consume(input.size());
+      connection.SendFile(truncated.bytes, std::move(*truncated.file));
+    }
+  };
   registry.AddConnection(Socket(pair[0]),
-                         [&](TcpConnection &connection, auto input, bool) {
-                           connection.Consume(input.size());
-                           connection.SendFile(truncated.bytes,
-                                               std::move(*truncated.file));
-                         });
-  require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "truncate trigger");
+                         std::bind(&HandleMessageTask::HandleMessage,
+                                   HandleMessageTask{truncated},
+                                   std::placeholders::_1,
+                                   std::placeholders::_2,
+                                   std::placeholders::_3));
+  Require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "truncate trigger");
   loop.PollOnce(0);
   std::string wire;
-  collect(peer.fd(), wire);
-  require(ShutdownAccess::entries(registry).empty() &&
-              evidence(truncated_id).closes == 1 &&
+  Collect(peer.fd(), wire);
+  Require(ShutdownAccess::entries(registry).empty() &&
+              Evidence(truncated_id).closes == 1 &&
               wire.starts_with("HTTP/1.1 200") && wire.ends_with("\r\n\r\n") &&
               wire.find("500") == std::string::npos,
           "truncate closes without extra error response");
@@ -903,42 +967,42 @@ void changing_files(const Fixture &fixture,
                "truncate=header_only_EOF\n";
 }
 
-void production_files(const Fixture &fixture,
-                      const hp::http::StaticFileService &service) {
+void ProductionFiles(const Fixture &fixture,
+                     const hp::http::StaticFileService &service) {
   ScopedAcceptedSendBuffer send_buffer_scope;
   for (std::size_t workers : {0U, 1U, 2U}) {
-    const auto begin = file_count();
+    const auto begin = FileCount();
     ServerHarness harness(service, workers);
     std::size_t request_index = 0;
     for (const auto &[path, length] :
          std::vector<std::pair<std::string, std::size_t>>{
              {"/kilo.bin", 1024},
              {"/mega.bin", 1024 * 1024},
-             {"/large.bin", fixture.large.size()}}) {
+             {"/large.bin", fixture.large_.size()}}) {
       Stream client(harness.port);
-      const auto opening = file_count();
-      client.send(query(path));
-      await([&] {
-        if (file_count() <= opening) return false;
-        const auto record = evidence(opening);
-        return length == fixture.large.size() ? record.eagain > 0
-                                              : record.positive > 0;
+      const auto opening = FileCount();
+      client.Send(Query(path));
+      WaitUntil([&] {
+        if (FileCount() <= opening) return false;
+        const auto record = Evidence(opening);
+        return length == fixture.large_.size() ? record.eagain > 0
+                                               : record.positive > 0;
       });
       const auto owner = workers ? request_index % workers : 0;
-      const auto capacity = owner_capacity(harness, workers, owner);
-      const auto received = client.next();
-      require(
-          received.status == 200 && received.body.size() == length &&
-              std::memcmp(received.body.data(), fixture.large.data(), length) ==
-                  0,
-          "production size ladder byte exact");
-      require(capacity < 256 && received.header.size() < 256,
+      const auto capacity = OwnerCapacity(harness, workers, owner);
+      const auto received = client.ReadResponse();
+      Require(received.status == 200 && received.body.size() == length &&
+                  std::memcmp(received.body.data(),
+                              fixture.large_.data(),
+                              length) == 0,
+              "production size ladder byte exact");
+      Require(capacity < 256 && received.header.size() < 256,
               "production memory independent of body size");
-      client.send(query("/missing", true));
-      response(client.next(), 404, "404 Not Found\n");
-      client.eof();
-      const auto record = evidence(opening);
-      require(record.reads == 0 && record.preads == 0 &&
+      client.Send(Query("/missing", true));
+      Response(client.ReadResponse(), 404, "404 Not Found\n");
+      client.ExpectEof();
+      const auto record = Evidence(opening);
+      Require(record.reads == 0 && record.preads == 0 &&
                   record.bytes == length && record.closes == 1 &&
                   !record.offset_error,
               "production sendfile without read/pread fallback");
@@ -951,26 +1015,26 @@ void production_files(const Fixture &fixture,
       ++request_index;
     }
     Stream pipeline(harness.port);
-    pipeline.send(query("/note.txt") + query("/one.bin"));
-    require(::shutdown(pipeline.fd, SHUT_WR) == 0, "pipeline peer FIN");
-    response(pipeline.next(), 200, "hello from S3\n");
-    response(pipeline.next(), 200, "X");
-    pipeline.eof();
-    harness.stop();
-    for (auto id = begin; id < file_count(); ++id)
-      require(evidence(id).closes == 1 && evidence(id).reads == 0 &&
-                  evidence(id).preads == 0,
+    pipeline.Send(Query("/note.txt") + Query("/one.bin"));
+    Require(::shutdown(pipeline.fd, SHUT_WR) == 0, "pipeline peer FIN");
+    Response(pipeline.ReadResponse(), 200, "hello from S3\n");
+    Response(pipeline.ReadResponse(), 200, "X");
+    pipeline.ExpectEof();
+    harness.Stop();
+    for (auto id = begin; id < FileCount(); ++id)
+      Require(Evidence(id).closes == 1 && Evidence(id).reads == 0 &&
+                  Evidence(id).preads == 0,
               "production each opened region closes exactly once");
   }
   send_buffer_scope.VerifyAndRestore();
 }
 
-void file_progress(const Fixture &fixture,
-                   const hp::http::StaticFileService &service) {
+void FileProgress(const Fixture &fixture,
+                  const hp::http::StaticFileService &service) {
   EventLoop loop;
   ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   int pair[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "progress pair");
   Socket peer(pair[1]);
   int small = 4096;
@@ -996,16 +1060,16 @@ void file_progress(const Fixture &fixture,
                           ResponseScenario1{providers, service}),
           &stats));
   auto &connection = *ShutdownAccess::entries(registry).at(pair[0]);
-  const auto request = query("/large.bin") + query("/note.txt");
-  require(::send(peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
+  const auto request = Query("/large.bin") + Query("/note.txt");
+  Require(::send(peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
               static_cast<ssize_t>(request.size()),
           "file pipeline trigger");
   loop.PollOnce(0);
-  const auto id = latest_file();
+  const auto id = LatestFile();
   auto previous = SendfileTestAccess::progress(connection);
   const auto queued = connection.pending_bytes();
-  SendfileTestAccess::write(connection);
-  require(SendfileTestAccess::progress(connection) == previous &&
+  SendfileTestAccess::Write(connection);
+  Require(SendfileTestAccess::progress(connection) == previous &&
               connection.pending_bytes() == queued &&
               !SendfileTestAccess::waiting(connection) && providers == 1 &&
               stats.responses == 1,
@@ -1014,63 +1078,68 @@ void file_progress(const Fixture &fixture,
   const auto began = Clock::now();
   for (int cycle = 0; cycle < 10; ++cycle) {
     std::this_thread::sleep_for(20ms);
-    collect(peer.fd(), received);
-    SendfileTestAccess::write(connection);
-    require(SendfileTestAccess::progress(connection) > previous &&
+    Collect(peer.fd(), received);
+    SendfileTestAccess::Write(connection);
+    Require(SendfileTestAccess::progress(connection) > previous &&
                 connection.pending_bytes() > 0,
             "actual sendfile progress refreshes idle");
     previous = SendfileTestAccess::progress(connection);
   }
-  require(Clock::now() - began >= 200ms && providers == 1,
+  Require(Clock::now() - began >= 200ms && providers == 1,
           "progress keeps transfer beyond idle duration");
   while (!ShutdownAccess::entries(registry).empty()) loop.PollOnce(200);
-  require(loop.timer_count() == 0 && evidence(id).closes == 1 && providers == 1,
+  Require(loop.timer_count() == 0 && Evidence(id).closes == 1 && providers == 1,
           "stalled file idle closes region without pipeline suffix");
-  std::cout << "M2 file_progress bytes=" << evidence(id).bytes
-            << " refreshed_cycles=10" << " EAGAIN=" << evidence(id).eagain
+  std::cout << "M2 file_progress bytes=" << Evidence(id).bytes
+            << " refreshed_cycles=10" << " EAGAIN=" << Evidence(id).eagain
             << " provider=" << providers << " timer=0 idle_closed=1\n";
   (void)fixture;
 }
 
-void unfinished_lifecycle(const hp::http::StaticFileService &service) {
-  const auto baseline = settle_threads({}, {}, "file-baseline", -1);
-  const auto fds = resources("/proc/self/fd");
-  const auto files = file_count();
+void UnfinishedLifecycle(const hp::http::StaticFileService &service) {
+  const auto baseline = SettleThreads({}, {}, "file-baseline", -1);
+  const auto fds = Resources("/proc/self/fd");
+  const auto files = FileCount();
   const auto sockets = accepted_sockets.load();
   for (int cycle = 0; cycle < 100; ++cycle) {
     ServerHarness harness(service, 2);
-    const auto owned = ready_threads(harness);
+    const auto owned = ReadyThreads(harness);
     Stream first(harness.port), second(harness.port);
-    first.send(query("/large.bin"));
-    second.send(query("/large.bin"));
-    await([&] {
-      return pending(harness, 2, 0) > 0 && pending(harness, 2, 1) > 0;
+    first.Send(Query("/large.bin"));
+    second.Send(Query("/large.bin"));
+    WaitUntil([&] {
+      return Pending(harness, 2, 0) > 0 && Pending(harness, 2, 1) > 0;
     });
     if (cycle == 99) {
-      require(TcpServerTestAccess::post(*harness.server,
-                                        0,
-                                        [](EventLoop &) {
-                                          throw std::runtime_error(
-                                              "file fatal original");
-                                        }),
+      struct ThrowWorkerFileFailureTask {
+        decltype(auto) ThrowWorkerFileFailure(EventLoop &) const {
+          throw std::runtime_error("file fatal original");
+        }
+      };
+      Require(TcpServerTestAccess::Post(
+                  *harness.server,
+                  0,
+                  std::bind(&ThrowWorkerFileFailureTask::ThrowWorkerFileFailure,
+                            ThrowWorkerFileFailureTask{},
+                            std::placeholders::_1)),
               "file fatal accepted");
-      harness.failed("file fatal original");
+      harness.ExpectFailure("file fatal original");
     } else {
       harness.server->RequestGracefulShutdown(Clock::now());
-      join_graceful(harness);
+      JoinGraceful(harness);
     }
-    settle_threads(owned, baseline, "file-joined", cycle);
+    SettleThreads(owned, baseline, "file-joined", cycle);
   }
-  require(file_count() - files == 200 && accepted_sockets - sockets == 200,
+  Require(FileCount() - files == 200 && accepted_sockets - sockets == 200,
           "100 rounds hold two unfinished file responses");
-  for (auto id = files; id < file_count(); ++id)
-    require(evidence(id).closes == 1 &&
-                evidence(id).bytes < hp::http::kMaxFileBytes,
+  for (auto id = files; id < FileCount(); ++id)
+    Require(Evidence(id).closes == 1 &&
+                Evidence(id).bytes < hp::http::kMaxFileBytes,
             "unfinished file identity closed exactly once");
-  require(resources("/proc/self/fd") == fds && task_ids() == baseline,
+  Require(Resources("/proc/self/fd") == fds && TaskIds() == baseline,
           "unfinished file lifecycle fd and exact TID baseline");
   std::cout << "M2 lifecycle cycles=100 files=200 sockets=200 fd=" << fds << '/'
-            << resources("/proc/self/fd") << " fatal_original_after_join=1\n";
+            << Resources("/proc/self/fd") << " fatal_original_after_join=1\n";
 }
 }  // namespace
 
@@ -1089,36 +1158,36 @@ int HP_SENDFILE_ENTRY(int argc, char **argv) {
       disabled_error = EIO;
     if (argc == 2 && std::string_view(argv[1]) == "--no-unsupported")
       disabled_error = ENOSYS;
-    raw_observation(fixture, disabled_error);
-    default_sigpipe_fixture(fixture);
-    transport_bounds(fixture, option == "--no-allocation");
-    call_budget_and_mask_failure(fixture,
-                                 option == "--no-budget-eintr",
-                                 option == "--no-mask-error");
-    file_registration_failure(fixture, option == "--no-file-registration");
-    transport_short_writes(fixture);
-    transport_errors(fixture, option == "--no-early-eof");
-    transport_fairness(fixture);
-    guarded_sigpipe(fixture, option == "--no-peer-close");
-    fixture_owner(fixture);
-    hp::http::StaticFileService service(fixture.root.string());
+    RawObservation(fixture, disabled_error);
+    DefaultSigpipeFixture(fixture);
+    TransportBounds(fixture, option == "--no-allocation");
+    CallBudgetAndMaskFailure(fixture,
+                             option == "--no-budget-eintr",
+                             option == "--no-mask-error");
+    FileRegistrationFailure(fixture, option == "--no-file-registration");
+    TransportShortWrites(fixture);
+    TransportErrors(fixture, option == "--no-early-eof");
+    TransportFairness(fixture);
+    GuardedSigpipe(fixture, option == "--no-peer-close");
+    FixtureOwner(fixture);
+    hp::http::StaticFileService service(fixture.root_.string());
     watched_root = hp::http::StaticFileServiceTestAccess::root_fd(service);
-    hp::app::set_session_observer_for_test(session_event);
-    prepare_compatibility(fixture, service);
-    changing_files(fixture, service, option == "--no-truncate");
-    production_files(fixture, service);
-    file_progress(fixture, service);
-    library_drain(service, fixture);
-    deadline_drain(service, fixture);
-    unfinished_lifecycle(service);
-    hp::app::set_session_observer_for_test(nullptr);
-    require(root_errors == 0 && live_sessions == 0,
+    hp::app::set_RecordSessionEvent_callback(RecordSessionEvent);
+    PrepareCompatibility(fixture, service);
+    ChangingFiles(fixture, service, option == "--no-truncate");
+    ProductionFiles(fixture, service);
+    FileProgress(fixture, service);
+    LibraryDrain(service, fixture);
+    DeadlineDrain(service, fixture);
+    UnfinishedLifecycle(service);
+    hp::app::set_RecordSessionEvent_callback(nullptr);
+    Require(root_errors == 0 && live_sessions == 0,
             "file session/service owner lifetime");
     {
       std::lock_guard lock(file_evidence_mutex);
-      require(active_files.empty(), "M0 all observed file identities closed");
+      Require(active_files.empty(), "M0 all observed file identities closed");
       for (const auto &item : file_evidence)
-        require(item.closes == 1, "M0 each file identity closed once");
+        Require(item.closes == 1, "M0 each file identity closed once");
     }
     std::cout << "sendfile_tests M2: PASS\n";
     return 0;

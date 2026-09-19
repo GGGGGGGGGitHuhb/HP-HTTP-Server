@@ -7,18 +7,18 @@
 
 namespace hp::base {
 
-AsyncLogger::AsyncLogger() : AsyncLogger(capacity, std::clog) {}
+AsyncLogger::AsyncLogger() : AsyncLogger(kCapacity, std::clog) {}
 
 AsyncLogger::AsyncLogger(std::size_t slots, std::ostream& sink)
     : slots_(slots), sink_(sink) {
-  if (slots == 0 || slots > capacity)
+  if (slots == 0 || slots > kCapacity)
     throw std::invalid_argument("invalid logger capacity");
-  consumer_ = std::thread([this] { consume(); });
+  consumer_ = std::thread(&AsyncLogger::ConsumeRecords, this);
 }
 
-AsyncLogger::~AsyncLogger() { stop(); }
+AsyncLogger::~AsyncLogger() { Stop(); }
 
-void AsyncLogger::submit(LogLevel level, std::string_view message) {
+void AsyncLogger::Submit(LogLevel level, std::string_view message) {
   const std::lock_guard lock(mutex_);
   ++stats_.submitted;
   if (!accepting_) {
@@ -32,13 +32,15 @@ void AsyncLogger::submit(LogLevel level, std::string_view message) {
 
   auto& record = slots_[(head_ + size_) % slots_.size()];
   record.level = level;
-  record.length = std::min(message.size(), message_limit);
+  record.length = std::min(message.size(), kMessageLimit);
   if (record.length != 0)
     std::memcpy(record.message.data(), message.data(), record.length);
-  if (message.size() > message_limit) {
-    constexpr std::string_view marker = "...[truncated]";
-    std::memcpy(record.message.data() + message_limit - marker.size(),
-                marker.data(), marker.size());
+  if (message.size() > kMessageLimit) {
+    constexpr std::string_view kTruncationMarker = "...[truncated]";
+    std::memcpy(
+        record.message.data() + kMessageLimit - kTruncationMarker.size(),
+        kTruncationMarker.data(),
+        kTruncationMarker.size());
     ++stats_.truncated;
   }
   ++size_;
@@ -47,7 +49,7 @@ void AsyncLogger::submit(LogLevel level, std::string_view message) {
   ready_.notify_one();
 }
 
-void AsyncLogger::consume() {
+void AsyncLogger::ConsumeRecords() {
   for (;;) {
     Record record;
     {
@@ -61,9 +63,9 @@ void AsyncLogger::consume() {
 
     bool written = false;
     try {
-      const auto level = record.level == LogLevel::Info   ? "INFO"
-                         : record.level == LogLevel::Warn ? "WARN"
-                                                          : "ERROR";
+      const auto level = record.level == LogLevel::kInfo   ? "INFO"
+                         : record.level == LogLevel::kWarn ? "WARN"
+                                                           : "ERROR";
       sink_ << '[' << level << "] ";
       sink_.write(record.message.data(), record.length);
       sink_.put('\n');
@@ -83,7 +85,7 @@ void AsyncLogger::consume() {
   }
 }
 
-void AsyncLogger::stop() {
+void AsyncLogger::Stop() {
   {
     const std::lock_guard lock(mutex_);
     accepting_ = false;

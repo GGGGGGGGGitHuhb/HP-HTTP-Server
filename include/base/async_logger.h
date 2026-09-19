@@ -12,7 +12,7 @@
 
 namespace hp::base {
 
-enum class LogLevel { Info, Warn, Error };
+enum class LogLevel { kInfo, kWarn, kError };
 
 struct LogStats {
   std::uint64_t submitted = 0;
@@ -27,29 +27,29 @@ struct LogStats {
 
 class AsyncLogger {
  public:
-  static constexpr std::size_t capacity = 1024;
-  static constexpr std::size_t message_limit = 1024;
+  static constexpr std::size_t kCapacity = 1024;
+  static constexpr std::size_t kMessageLimit = 1024;
 
   AsyncLogger();
   ~AsyncLogger();
   AsyncLogger(const AsyncLogger&) = delete;
   AsyncLogger& operator=(const AsyncLogger&) = delete;
 
-  void submit(LogLevel level, std::string_view message);
-  void stop();
+  void Submit(LogLevel level, std::string_view message);
+  void Stop();
   LogStats stats() const;
 
  private:
   friend struct AsyncLoggerTestAccess;
   struct Record {
-    LogLevel level = LogLevel::Info;
+    LogLevel level = LogLevel::kInfo;
     std::size_t length = 0;
-    std::array<char, message_limit> message{};
+    std::array<char, kMessageLimit> message{};
   };
 
-  // Only test access may replace the sink or reduce capacity.
+  // Only test access may replace the sink or reduce kCapacity.
   AsyncLogger(std::size_t slots, std::ostream& sink);
-  void consume();
+  void ConsumeRecords();
 
   std::vector<Record> slots_;
   std::ostream& sink_;
@@ -71,7 +71,7 @@ class LoggerSession {
   LoggerSession(const LoggerSession&) = delete;
   LoggerSession& operator=(const LoggerSession&) = delete;
 
-  void stop();
+  void Stop();
   LogStats stats() const;
 
  private:
