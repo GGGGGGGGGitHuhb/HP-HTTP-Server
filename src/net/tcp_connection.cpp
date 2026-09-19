@@ -10,153 +10,173 @@
 
 namespace hp::net {
 namespace {
-std::string error_message(int fd, const char* operation, int error) {
+std::string ErrorMessage(int fd, const char* operation, int error) {
   return "connection fd " + std::to_string(fd) + " " + operation +
          " failed: " + std::generic_category().message(error) + " (" +
          std::to_string(error) + ")";
 }
 }  // namespace
 
-TcpConnection::TcpConnection(EventLoop& loop, Socket socket, Identity identity,
-                             MessageCallback handler,
-                             std::size_t max_input_bytes,
-                             CloseCallback close_callback)
+TcpConnection::TcpConnection(EventLoop& loop,
+                             Socket socket,
+                             Identity identity,
+                             std::size_t max_input_bytes)
     : io_(std::move(socket), max_input_bytes),
-      message_callback_(std::move(handler)),
+      message_callback_(&TcpConnection::HandleEchoMessage),
       identity_(identity),
-      close_callback_(std::move(close_callback)),
-      channel_(loop, io_.fd(),
-               [this](std::uint32_t mask) { handle_event(mask); }) {
-  if (!message_callback_)
-    message_callback_ = [](TcpConnection& c, std::span<const std::byte> input,
-                           bool eof) {
-      c.send(input);
-      c.consume(input.size());
-      if (eof) c.close_after_flush();
-    };
-  if (identity == 0 || !close_callback_)
-    throw std::invalid_argument("invalid connection identity/callback");
+      connection_channel_(loop, io_.fd()) {
+  if (identity == 0) throw std::invalid_argument("invalid connection identity");
+  connection_channel_.set_HandleConnectionEvent_callback(
+      std::bind_front(&TcpConnection::HandleConnectionEvent, this));
 }
 
-TcpConnection::~TcpConnection() noexcept { stop(); }
+void TcpConnection::set_HandleMessage_callback(
+    MessageCallback message_callback) {
+  message_callback_ = message_callback
+                          ? std::move(message_callback)
+                          : MessageCallback{&TcpConnection::HandleEchoMessage};
+}
 
-void TcpConnection::start() {
-  if (state_ == State::closing)
+void TcpConnection::set_OnConnectionClosed_callback(
+    CloseCallback close_callback) {
+  close_callback_ = std::move(close_callback);
+}
+
+void TcpConnection::set_UpdateTimeout_callback(
+    std::function<void(TcpConnection&, bool)> timeout_activity_callback) {
+  timeout_activity_callback_ = std::move(timeout_activity_callback);
+}
+
+TcpConnection::~TcpConnection() noexcept { Stop(); }
+
+void TcpConnection::HandleEchoMessage(TcpConnection& connection,
+                                      std::span<const std::byte> input,
+                                      bool eof) {
+  connection.Send(input);
+  connection.Consume(input.size());
+  if (eof) connection.CloseAfterFlush();
+}
+
+void TcpConnection::Start() {
+  if (!close_callback_)
+    throw std::invalid_argument("missing connection close target");
+  if (state_ == State::kClosing)
     throw std::logic_error("cannot restart closed connection");
-  if (state_ == State::active) return;
-  channel_.set_interest(EPOLLIN | EPOLLRDHUP);
-  state_ = State::active;
+  if (state_ == State::kActive) return;
+  connection_channel_.set_interest(EPOLLIN | EPOLLRDHUP);
+  state_ = State::kActive;
 }
 
-void TcpConnection::stop() noexcept {
-  state_ = State::closing;
-  channel_.remove();
-  if (activity_callback_) activity_callback_(*this, false);
+void TcpConnection::Stop() noexcept {
+  state_ = State::kClosing;
+  connection_channel_.Remove();
+  if (timeout_activity_callback_) timeout_activity_callback_(*this, false);
 }
 
-void TcpConnection::request_close() noexcept {
-  if (state_ == State::closing) return;
-  stop();
+void TcpConnection::RequestClose() noexcept {
+  if (state_ == State::kClosing) return;
+  Stop();
   close_callback_(fd(), identity_);
 }
 
-void TcpConnection::send(std::span<const std::byte> bytes) {
-  if (state_ == State::closing || draining_)
+void TcpConnection::Send(std::span<const std::byte> bytes) {
+  if (state_ == State::kClosing || draining_)
     throw std::logic_error("send on closed or draining connection");
   try {
     io_.queue_output(bytes);  // Take independent storage before returning.
-    if (!handling_event_ && state_ == State::active) {
-      if (!write_complete_callback_) flush_output();
-      if (state_ == State::active) update_interest();
+    if (!handling_event_ && state_ == State::kActive) {
+      if (!write_complete_callback_) FlushOutput();
+      if (state_ == State::kActive) UpdateInterest();
     }
   } catch (...) {
-    request_close();
+    RequestClose();
     throw;
   }
 }
 
-void TcpConnection::send_file(std::span<const std::byte> header,
-                              base::FileRegion file) {
-  if (state_ == State::closing || draining_)
+void TcpConnection::SendFile(std::span<const std::byte> header,
+                             base::FileRegion file) {
+  if (state_ == State::kClosing || draining_)
     throw std::logic_error("send on closed or draining connection");
   try {
     io_.queue_file(header, std::move(file));
-    if (!handling_event_ && state_ == State::active) {
-      if (!write_complete_callback_) flush_output();
-      if (state_ == State::active) update_interest();
+    if (!handling_event_ && state_ == State::kActive) {
+      if (!write_complete_callback_) FlushOutput();
+      if (state_ == State::kActive) UpdateInterest();
     }
   } catch (...) {
-    request_close();
+    RequestClose();
     throw;
   }
 }
 
-void TcpConnection::consume(std::size_t count) { io_.consume(count); }
+void TcpConnection::Consume(std::size_t count) { io_.consume(count); }
 
-void TcpConnection::begin_drain() {
-  if (state_ == State::closing || draining_) return;
+void TcpConnection::BeginDrain() {
+  if (state_ == State::kClosing || draining_) return;
   draining_ = true;
   input_stopped_ = true;
   read_paused_ = true;
   idle_waiting_ = false;
-  // Suppress Session::drained before any future write can finish a response.
+  // Suppress Session::HandleWriteComplete before any future write can finish a
+  // response.
   write_complete_callback_ = {};
-  if (activity_callback_) activity_callback_(*this, false);
+  if (timeout_activity_callback_) timeout_activity_callback_(*this, false);
   if (!io_.has_pending_output())
-    request_close();
+    RequestClose();
   else
-    update_interest();
+    UpdateInterest();
 }
 
-void TcpConnection::close_after_flush() {
+void TcpConnection::CloseAfterFlush() {
   input_stopped_ = true;
   if (!io_.has_pending_output())
-    request_close();
-  else if (!handling_event_ && state_ == State::active) {
+    RequestClose();
+  else if (!handling_event_ && state_ == State::kActive) {
     try {
-      update_interest();
+      UpdateInterest();
     } catch (...) {
-      request_close();
+      RequestClose();
       throw;
     }
   }
 }
 
-void TcpConnection::set_write_complete_callback(
-    WriteCompleteCallback callback) {
-  write_complete_callback_ = std::move(callback);
+void TcpConnection::set_HandleWriteComplete_callback(
+    WriteCompleteCallback write_complete_callback) {
+  write_complete_callback_ = std::move(write_complete_callback);
 }
 
-void TcpConnection::pause_reading() {
+void TcpConnection::PauseReading() {
   read_paused_ = true;
-  if (!handling_event_ && state_ == State::active) update_interest();
+  if (!handling_event_ && state_ == State::kActive) UpdateInterest();
 }
 
-void TcpConnection::resume_reading() {
+void TcpConnection::ResumeReading() {
   read_paused_ = false;
-  if (!handling_event_ && state_ == State::active) update_interest();
+  if (!handling_event_ && state_ == State::kActive) UpdateInterest();
 }
 
 void TcpConnection::set_idle_wait(bool waiting) {
   if (idle_waiting_ == waiting) return;
   idle_waiting_ = waiting;
-  if (activity_callback_) activity_callback_(*this, false);
+  if (timeout_activity_callback_) timeout_activity_callback_(*this, false);
 }
 
-void TcpConnection::update_interest() {
+void TcpConnection::UpdateInterest() {
   std::uint32_t events = !input_stopped_ && !read_paused_ && io_.accepts_input()
                              ? EPOLLIN | EPOLLRDHUP
                              : 0U;
   if (io_.has_pending_output()) events |= EPOLLOUT;
-  channel_.set_interest(events);
+  connection_channel_.set_interest(events);
 }
 
-void TcpConnection::read_messages() {
-  while (state_ == State::active && !input_stopped_ && !read_paused_) {
+void TcpConnection::ReadMessages() {
+  while (state_ == State::kActive && !input_stopped_ && !read_paused_) {
     const auto read = io_.read_once();
     if (read.bytes_read) {
       idle_waiting_ = false;
-      if (activity_callback_) activity_callback_(*this, true);
+      if (timeout_activity_callback_) timeout_activity_callback_(*this, true);
     }
     last_result_.bytes_read += read.bytes_read;
     last_result_.read_error = read.error_number;
@@ -172,11 +192,11 @@ void TcpConnection::read_messages() {
   }
 }
 
-void TcpConnection::flush_output() {
-  while (state_ == State::active && io_.has_pending_output()) {
+void TcpConnection::FlushOutput() {
+  while (state_ == State::kActive && io_.has_pending_output()) {
     const auto written = io_.write_available();
-    if (written.bytes_written && activity_callback_)
-      activity_callback_(*this, true);
+    if (written.bytes_written && timeout_activity_callback_)
+      timeout_activity_callback_(*this, true);
     last_result_.bytes_written += written.bytes_written;
     last_result_.write_would_block = written.would_block;
     last_result_.write_error = written.error_number;
@@ -192,7 +212,7 @@ void TcpConnection::flush_output() {
     }
     if (!io_.has_pending_output() && written.bytes_written &&
         write_complete_callback_ && !input_stopped_) {
-      // Callback send only queues: the outer loop drives the next response.
+      // Callback Send only queues: the outer loop drives the next response.
       write_complete_callback_(*this);
     } else
       break;
@@ -202,11 +222,11 @@ void TcpConnection::flush_output() {
   }
   if (input_stopped_ && !io_.has_pending_output())
     last_result_.close_requested = true;
-  if (!handling_event_ && last_result_.close_requested) request_close();
+  if (!handling_event_ && last_result_.close_requested) RequestClose();
 }
 
-void TcpConnection::handle_event(std::uint32_t mask) noexcept {
-  if (state_ != State::active) return;
+void TcpConnection::HandleConnectionEvent(std::uint32_t mask) noexcept {
+  if (state_ != State::kActive) return;
   ++event_count_;
   last_mask_ = mask;
   last_result_ = {};
@@ -221,33 +241,34 @@ void TcpConnection::handle_event(std::uint32_t mask) noexcept {
       }
       last_result_.close_requested = true;
     }
-    if (mask & (EPOLLIN | EPOLLRDHUP)) read_messages();
-    if (state_ == State::active) flush_output();
+    if (mask & (EPOLLIN | EPOLLRDHUP)) ReadMessages();
+    if (state_ == State::kActive) FlushOutput();
     if (mask & EPOLLHUP) last_result_.close_requested = true;
     const auto& result = last_result_;
     if (result.socket_error_observed && result.socket_error)
-      base::warn(error_message(fd(), "SO_ERROR", result.socket_error));
+      base::warn(ErrorMessage(fd(), "SO_ERROR", result.socket_error));
     if (result.socket_error_query_error)
-      base::warn(error_message(fd(), "getsockopt(SO_ERROR)",
-                               result.socket_error_query_error));
+      base::warn(ErrorMessage(fd(),
+                              "getsockopt(SO_ERROR)",
+                              result.socket_error_query_error));
     if (result.read_error)
-      base::warn(error_message(fd(), "recv", result.read_error));
+      base::warn(ErrorMessage(fd(), "recv", result.read_error));
     if (result.write_error)
-      base::warn(error_message(fd(), "send", result.write_error));
-    if (state_ == State::active) {
+      base::warn(ErrorMessage(fd(), "send", result.write_error));
+    if (state_ == State::kActive) {
       if (result.close_requested)
-        request_close();
+        RequestClose();
       else
-        update_interest();
+        UpdateInterest();
     }
   } catch (const std::exception& error) {
-    request_close();
+    RequestClose();
     try {
       base::warn(std::string("connection event failed: ") + error.what());
     } catch (...) {
     }
   } catch (...) {
-    request_close();
+    RequestClose();
     try {
       base::warn("connection event failed");
     } catch (...) {

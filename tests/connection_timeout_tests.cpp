@@ -38,13 +38,13 @@ struct ConnectionTimeoutTestAccess {
   }
 
   static void event(TcpConnection& connection, std::uint32_t event) {
-    connection.handle_event(event);
+    connection.HandleConnectionEvent(event);
   }
 
   static void expire(ConnectionRegistry& registry,
                      int fd,
                      TcpConnection::Identity identity) {
-    registry.expire(fd, identity);
+    registry.ExpireConnection(fd, identity);
   }
 
   static bool stopping(TcpServer& server) { return server.stopping_.load(); }
@@ -178,7 +178,7 @@ void waiting_states(const hp::http::StaticFileService& service) {
       require(ticks(Clock::now()) >= state.deadline,
               "combined deadline not early");
     } else {
-      harness.server->request_stop();
+      harness.server->RequestStop();
     }
     harness.stop();
     std::cout << "waiting idle_ms=" << config.idle.count()
@@ -212,7 +212,8 @@ void owner_progress_and_failures(const hp::http::StaticFileService& service) {
   EventLoop loop;
   ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   Pair pair;
-  registry.add(Socket(pair.owned), hp::app::make_http_factory(service)());
+  registry.AddConnection(Socket(pair.owned),
+                         hp::app::MakeHttpFactory(service)());
   auto& connection = *Access::entries(registry).at(pair.owned);
   const auto initial = Access::progress(connection);
   const auto id = Access::timer(connection);
@@ -231,7 +232,7 @@ void owner_progress_and_failures(const hp::http::StaticFileService& service) {
       ::send(pair.peer.fd(), partial.data(), partial.size(), MSG_NOSIGNAL) ==
           static_cast<ssize_t>(partial.size()),
       "partial send bytes");
-  loop.poll_once(0);
+  loop.PollOnce(0);
   require(
       Access::progress(connection) > initial && !Access::wait_since(connection),
       "actual recv refresh");
@@ -243,12 +244,12 @@ void owner_progress_and_failures(const hp::http::StaticFileService& service) {
   } catch (const std::bad_alloc&) {
   }
   timer_allocation_failure = -1;
-  require(connection.state() == TcpConnection::State::closing &&
+  require(connection.state() == TcpConnection::State::kClosing &&
               loop.timer_count() == 0,
           "renew failure closes connection and cancels record");
-  registry.drain_closed_connections();
+  registry.DrainClosedConnections();
   require(Access::entries(registry).empty(), "failed renewal reclaimed");
-  require(!loop.cancel_timer(id), "old timer id invalid");
+  require(!loop.CancelTimer(id), "old timer id invalid");
   std::cout << "progress recv_bytes=" << partial.size()
             << " adopted_us=" << ticks(initial)
             << " recv_us=" << ticks(before_failure)
@@ -263,19 +264,29 @@ void write_progress(const hp::http::StaticFileService& service) {
   int small = 4096;
   ::setsockopt(pair.owned, SOL_SOCKET, SO_SNDBUF, &small, sizeof(small));
   int provider_calls = 0;
-  registry.add(
-      Socket(pair.owned),
-      hp::app::make_http_callback([&](const auto& request, auto policy) {
-        ++provider_calls;
-        return service.HandleResponse(request, policy);
-      }));
+  using ResponseScenario1State0 = decltype((provider_calls));
+  using ResponseScenario1State1 = decltype((service));
+  struct ResponseScenario1 {
+    ResponseScenario1State0 provider_calls;
+    ResponseScenario1State1 service;
+    hp::http::ResponseResult PrepareResponse(
+        const hp::http::HttpRequest& request,
+        hp::http::ConnectionPolicy policy) {
+      ++provider_calls;
+      return service.HandleResponse(request, policy);
+    }
+  };
+  registry.AddConnection(Socket(pair.owned),
+                         hp::app::MakeHttpCallback(std::bind_front(
+                             &ResponseScenario1::PrepareResponse,
+                             ResponseScenario1{provider_calls, service})));
   auto& connection = *Access::entries(registry).at(pair.owned);
   const std::string request = query("/large.bin") + query("/note.txt");
   require(
       ::send(pair.peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
           static_cast<ssize_t>(request.size()),
       "large request");
-  loop.poll_once(0);
+  loop.PollOnce(0);
   require(connection.pending_bytes() > 0 && !Access::wait_since(connection),
           "Writing never waits");
   auto progress = Access::progress(connection);
@@ -291,10 +302,10 @@ void write_progress(const hp::http::StaticFileService& service) {
     auto n = ::recv(pair.peer.fd(), bytes, sizeof(bytes), 0);
     require(n > 0, "drain real response bytes");
     received += static_cast<std::size_t>(n);
-    loop.poll_once(0);
+    loop.PollOnce(0);
     bool paced = false;
-    loop.add_timer(Clock::now() + 30ms, [&] { paced = true; });
-    while (!paced) loop.poll_once(-1);
+    loop.AddTimer(Clock::now() + 30ms, [&] { paced = true; });
+    while (!paced) loop.PollOnce(-1);
   }
   require(Clock::now() - began > 150ms,
           "write progress survives original idle deadline");
@@ -303,7 +314,7 @@ void write_progress(const hp::http::StaticFileService& service) {
           "actual send progress renews idle");
   progress = Access::progress(connection);
   const auto pending = connection.pending_bytes();
-  while (!Access::entries(registry).empty()) loop.poll_once(-1);
+  while (!Access::entries(registry).empty()) loop.PollOnce(-1);
   require(ticks(Clock::now()) >= ticks(progress) + 150000,
           "stalled writer deadline");
   require(loop.timer_count() == 0, "stalled writer timer reclaimed");
@@ -330,7 +341,8 @@ void paced_input(const hp::http::StaticFileService& service) {
   EventLoop loop;
   ConnectionRegistry registry(loop, hp::http::kMaxRequestBytes, {150ms, 100ms});
   Pair pair;
-  registry.add(Socket(pair.owned), hp::app::make_http_factory(service)());
+  registry.AddConnection(Socket(pair.owned),
+                         hp::app::MakeHttpFactory(service)());
   const auto began = Clock::now();
   std::size_t sent = 0;
   for (const std::string_view part :
@@ -339,10 +351,10 @@ void paced_input(const hp::http::StaticFileService& service) {
                 static_cast<ssize_t>(part.size()),
             "paced request send");
     sent += part.size();
-    loop.poll_once(0);
+    loop.PollOnce(0);
     bool paced = false;
-    loop.add_timer(Clock::now() + 50ms, [&] { paced = true; });
-    while (!paced) loop.poll_once(-1);
+    loop.AddTimer(Clock::now() + 50ms, [&] { paced = true; });
+    while (!paced) loop.PollOnce(-1);
     require(Access::entries(registry).size() == 1,
             "positive chunks keep connection alive");
   }
@@ -393,10 +405,10 @@ void rollback_and_reuse(const hp::http::StaticFileService& service) {
   int failures_seen = 0;
   for (int allocation = 0; allocation < 4; ++allocation) {
     Pair pair;
-    auto callback = hp::app::make_http_factory(service)();
+    auto callback = hp::app::MakeHttpFactory(service)();
     fail_after_registration = allocation;
     try {
-      registry.add(Socket(pair.owned), std::move(callback));
+      registry.AddConnection(Socket(pair.owned), std::move(callback));
       throw std::runtime_error("expected post-registration allocation failure");
     } catch (const std::bad_alloc&) {
       ++failures_seen;
@@ -409,43 +421,45 @@ void rollback_and_reuse(const hp::http::StaticFileService& service) {
             "adopt socket closed");
   }
   Pair original;
-  registry.add(Socket(original.owned), hp::app::make_http_factory(service)());
+  registry.AddConnection(Socket(original.owned),
+                         hp::app::MakeHttpFactory(service)());
   const auto old_identity =
       Access::entries(registry).at(original.owned)->identity();
   const auto old_timer =
       Access::timer(*Access::entries(registry).at(original.owned));
-  Access::entries(registry).at(original.owned)->request_close();
-  registry.drain_closed_connections();
+  Access::entries(registry).at(original.owned)->RequestClose();
+  registry.DrainClosedConnections();
   Pair replacement;
   require(replacement.owned == original.owned, "real fd reused by socketpair");
-  registry.add(Socket(replacement.owned),
-               hp::app::make_http_factory(service)());
+  registry.AddConnection(Socket(replacement.owned),
+                         hp::app::MakeHttpFactory(service)());
   auto& current = *Access::entries(registry).at(replacement.owned);
   require(current.identity() != old_identity, "connection identity not reused");
-  require(!loop.cancel_timer(old_timer), "old timer cannot cancel new one");
+  require(!loop.CancelTimer(old_timer), "old timer cannot cancel new one");
   Access::expire(registry, replacement.owned, old_identity);
-  require(current.state() == TcpConnection::State::active &&
+  require(current.state() == TcpConnection::State::kActive &&
               loop.timer_count() == 1,
           "old identity cannot close reused fd");
   bool callback_finished = false;
-  loop.add_timer(Clock::now(), [&] {
-    current.request_close();
+  loop.AddTimer(Clock::now(), [&] {
+    current.RequestClose();
     require(Access::entries(registry).size() == 1,
             "not destroyed inside callback");
     callback_finished = true;
   });
-  loop.poll_once(0);
+  loop.PollOnce(0);
   require(callback_finished && Access::entries(registry).empty() &&
               loop.timer_count() == 0,
           "after_dispatch owns destruction");
   // A ready EOF and expired timer share one poll; IO closes first and cancels
   // its timer.
   Pair eof;
-  registry.add(Socket(eof.owned), hp::app::make_http_factory(service)());
-  loop.reschedule_timer(Access::timer(*Access::entries(registry).at(eof.owned)),
-                        Clock::now());
+  registry.AddConnection(Socket(eof.owned),
+                         hp::app::MakeHttpFactory(service)());
+  loop.RescheduleTimer(Access::timer(*Access::entries(registry).at(eof.owned)),
+                       Clock::now());
   ::shutdown(eof.peer.fd(), SHUT_WR);
-  loop.poll_once(0);
+  loop.PollOnce(0);
   require(Access::entries(registry).empty() && loop.timer_count() == 0,
           "EOF and expiry once");
   std::cout << "rollback post_registration_failures=" << failures_seen
@@ -491,20 +505,19 @@ void fatal_timer(const hp::http::StaticFileService& service) {
                   ~Capture() {
                     ++released;
                     try {
-                      loop.add_timer(Clock::now(), [] {});
+                      loop.AddTimer(Clock::now(), [] {});
                       std::terminate();
                     } catch (const std::logic_error&) {
                     }
                   }
                 };
-                loop.add_timer(Clock::now(), [&] {
+                loop.AddTimer(Clock::now(), [&] {
                   ++callbacks;
                   throw std::runtime_error("fatal timer original");
                 });
                 auto capture =
                     std::shared_ptr<Capture>(new Capture{loop, captures});
-                loop.add_timer(Clock::now() + 1h,
-                               [&, capture] { ++forbidden; });
+                loop.AddTimer(Clock::now() + 1h, [&, capture] { ++forbidden; });
               }),
           "install real worker timers");
   await([&] { return Access::stopping(*harness.server); });

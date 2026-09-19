@@ -193,7 +193,7 @@ void partial_handshake(ServerHarness& harness,
           message.peer.sin_addr.s_addr == expected.sin_addr.s_addr &&
           message.peer.sin_port == expected.sin_port &&
           message.owner != std::thread::id{} && message.completed &&
-          message.state == TcpConnection::State::active && !message.eof &&
+          message.state == TcpConnection::State::kActive && !message.eof &&
           message.input == marker)
         ++matches;
     }
@@ -255,7 +255,7 @@ void partial_handshake(ServerHarness& harness,
     } catch (const std::exception& diagnostic) {
       std::cerr << "partial_registry unavailable=" << diagnostic.what() << '\n';
     }
-    harness.server->request_stop();
+    harness.server->RequestStop();
     harness.join();
     std::cerr << "partial_terminal joined=1 error="
               << (harness.error != nullptr) << '\n';
@@ -320,7 +320,7 @@ void library_drain(const hp::http::StaticFileService& service,
       bytes = writing_pending(harness, workers, writing);
       return bytes > 0;
     });
-    harness.server->request_graceful_shutdown(Clock::now() + 2s);
+    harness.server->RequestGracefulShutdown(Clock::now() + 2s);
     observe_drain(harness, workers);
     auto response = writing.next();
     require(
@@ -350,7 +350,7 @@ void deadline_drain(const hp::http::StaticFileService& service,
     await([&] { return pending(harness, 2) > 0; });
     const auto began = Clock::now();
     const auto deadline = began + timeout;
-    harness.server->request_graceful_shutdown(deadline);
+    harness.server->RequestGracefulShutdown(deadline);
     join_graceful(harness);
     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
         Clock::now() - began);
@@ -391,19 +391,29 @@ void provider_drain(const hp::http::StaticFileService& service,
   Socket peer(sockets[1]);
   int small = 4096, providers = 0;
   ::setsockopt(sockets[0], SOL_SOCKET, SO_SNDBUF, &small, sizeof(small));
-  registry.add(
-      Socket(sockets[0]),
-      hp::app::make_http_callback([&](const auto& request, auto policy) {
-        ++providers;
-        return service.HandleResponse(request, policy);
-      }));
+  using ResponseScenario1State0 = decltype((providers));
+  using ResponseScenario1State1 = decltype((service));
+  struct ResponseScenario1 {
+    ResponseScenario1State0 providers;
+    ResponseScenario1State1 service;
+    hp::http::ResponseResult PrepareResponse(
+        const hp::http::HttpRequest& request,
+        hp::http::ConnectionPolicy policy) {
+      ++providers;
+      return service.HandleResponse(request, policy);
+    }
+  };
+  registry.AddConnection(Socket(sockets[0]),
+                         hp::app::MakeHttpCallback(std::bind_front(
+                             &ResponseScenario1::PrepareResponse,
+                             ResponseScenario1{providers, service})));
   const auto request = query("/large.bin") + query("/note.txt");
   require(::send(peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
               static_cast<ssize_t>(request.size()),
           "provider pipeline");
-  loop.poll_once(0);
+  loop.PollOnce(0);
   require(providers == 1 && loop.timer_count() == 1, "one Writing provider");
-  registry.begin_drain();
+  registry.BeginDrain();
   require(loop.timer_count() == 0, "drain cancels idle and keep timers");
   std::string wire;
   char bytes[65536];
@@ -414,7 +424,7 @@ void provider_drain(const hp::http::StaticFileService& service,
       wire.append(bytes, static_cast<std::size_t>(n));
     else if (n == 0)
       break;
-    loop.poll_once(0);
+    loop.PollOnce(0);
     require(Clock::now() < deadline, "provider drain deadline");
   }
   const auto body = wire.find("\r\n\r\n") + 4;
@@ -458,7 +468,7 @@ void full_control(const hp::http::StaticFileService& service) {
             "fill main");
   require(!TcpServerTestAccess::main_post(*harness.server, [] {}),
           "main saturated");
-  harness.server->request_graceful_shutdown(Clock::now() + 1s);
+  harness.server->RequestGracefulShutdown(Clock::now() + 1s);
   release.set_value();
   join_graceful(harness);
   require(executed == 1023,
@@ -486,7 +496,7 @@ void full_control(const hp::http::StaticFileService& service) {
   const auto closed_before = closed_sockets.load();
   Stream normal(saturated.port), rejected(saturated.port);
   rejected.eof();
-  saturated.server->request_graceful_shutdown(Clock::now() + 1s);
+  saturated.server->RequestGracefulShutdown(Clock::now() + 1s);
   normal.eof();
   handoff_release.set_value();
   join_graceful(saturated);
@@ -522,7 +532,7 @@ void full_control(const hp::http::StaticFileService& service) {
                                           "graceful fatal original");
                                     }),
           "fatal accepted");
-  fatal.server->request_graceful_shutdown(Clock::now() + 1s);
+  fatal.server->RequestGracefulShutdown(Clock::now() + 1s);
   peer_release.set_value();
   fatal.failed("graceful fatal original");
   std::cout
@@ -632,14 +642,14 @@ ThreadIds mask_lifetime(bool startup_fault = true,
               "signalfd flags");
       if (mode == 1) {
         try {
-          TcpServer invalid(0, {}, 0, startup_fault ? 65 : 0);
+          TcpServer invalid(0, 0, startup_fault ? 65 : 0);
         } catch (const std::invalid_argument& error) {
           require(std::string(error.what()) == "worker count exceeds 64",
                   "exact server startup validation error");
           startup_failed = true;
         }
       } else {
-        TcpServer server(0, {}, 0, 2);
+        TcpServer server(0, 0, 2);
         for (std::size_t index = 0; index < 2; ++index) {
           std::promise<std::pair<bool, pid_t>> observed_mask;
           auto result = observed_mask.get_future();
@@ -663,7 +673,13 @@ ThreadIds mask_lifetime(bool startup_fault = true,
         }
         if (mode == 2) reject_any_registration = registration_fault;
         try {
-          server.watch_control_fd(watcher.fd(), [](std::uint32_t) {});
+          struct PassiveSignalObserver {
+            static void HandleShutdownSignal(std::uint32_t) {}
+          };
+          auto& signal_channel = server.WatchControlFd(watcher.fd());
+          signal_channel.set_HandleShutdownSignal_callback(
+              &PassiveSignalObserver::HandleShutdownSignal);
+          signal_channel.set_interest(EPOLLIN);
         } catch (const std::system_error& error) {
           require(
               mode == 2 &&
@@ -715,7 +731,7 @@ void repeated_lifecycle(const hp::http::StaticFileService& service,
     second.send(query("/missing"));
     response(first.next(), 200, "hello from S3\n");
     response(second.next(), 404, "404 Not Found\n");
-    harness.server->request_graceful_shutdown(Clock::now() + 200ms);
+    harness.server->RequestGracefulShutdown(Clock::now() + 200ms);
     first.eof();
     second.eof();
     join_graceful(harness);

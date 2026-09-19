@@ -9,37 +9,40 @@ ConnectionRegistry::ConnectionRegistry(EventLoop& loop,
                                        std::size_t max_input_bytes,
                                        ConnectionTimeouts timeouts)
     : timeouts_(timeouts), loop_(loop), max_input_bytes_(max_input_bytes) {
-  loop_.set_after_dispatch([this] { drain_closed_connections(); });
+  loop_.set_DrainClosedConnections_callback(
+      std::bind_front(&ConnectionRegistry::DrainClosedConnections, this));
 }
 
 ConnectionRegistry::~ConnectionRegistry() noexcept {
   for (auto& [fd, connection] : connections_) {
     (void)fd;
-    connection->stop();
+    connection->Stop();
   }
   connections_.clear();
-  loop_.set_after_dispatch({});
+  loop_.set_DrainClosedConnections_callback({});
 }
 
-void ConnectionRegistry::set_drained_callback(EventLoop::Task callback) {
-  drained_callback_ = std::move(callback);
+void ConnectionRegistry::set_RequestStop_callback(
+    EventLoop::LoopTask request_stop_callback) {
+  request_stop_callback_ = std::move(request_stop_callback);
 }
 
-void ConnectionRegistry::begin_drain(bool force) {
+void ConnectionRegistry::BeginDrain(bool force) {
   draining_ = true;
   for (auto& [fd, connection] : connections_) {
     (void)fd;
-    cancel_timeout(*connection);
+    CancelTimeout(*connection);
     if (force)
-      connection->request_close();
+      connection->RequestClose();
     else
-      connection->begin_drain();
+      connection->BeginDrain();
   }
-  drain_closed_connections();
+  DrainClosedConnections();
 }
 
-void ConnectionRegistry::add(Socket socket,
-                             TcpConnection::MessageCallback callback) {
+void ConnectionRegistry::AddConnection(
+    Socket socket,
+    TcpConnection::MessageCallback message_callback) {
   if (draining_) return;
   if (next_identity_ == 0)
     throw std::overflow_error("connection identity exhausted");
@@ -49,40 +52,41 @@ void ConnectionRegistry::add(Socket socket,
           ? 0
           : identity + 1;
   const int fd = socket.fd();
-  auto connection = std::make_unique<TcpConnection>(
-      loop_, std::move(socket), identity, std::move(callback), max_input_bytes_,
-      [this](int closed_fd, TcpConnection::Identity id) noexcept {
-        connection_closed(closed_fd, id);
-      });
-  connection->activity_callback_ = [this](TcpConnection& c, bool progress) {
-    update_timeout(c, progress);
-  };
+  auto connection = std::make_unique<TcpConnection>(loop_,
+                                                    std::move(socket),
+                                                    identity,
+                                                    max_input_bytes_);
+  connection->set_HandleMessage_callback(std::move(message_callback));
+  connection->set_OnConnectionClosed_callback(
+      std::bind_front(&ConnectionRegistry::OnConnectionClosed, this));
+  connection->set_UpdateTimeout_callback(
+      std::bind_front(&ConnectionRegistry::UpdateTimeout, this));
   auto [position, inserted] =
       connections_.try_emplace(fd, std::move(connection));
   if (!inserted) throw std::logic_error("duplicate connection fd");
   try {
-    position->second->start();
+    position->second->Start();
     position->second->last_progress_ = timer::TimerQueue::Clock::now();
-    update_timeout(*position->second, false);
+    UpdateTimeout(*position->second, false);
   } catch (...) {
-    position->second->stop();
-    drain_closed_connections();
+    position->second->Stop();
+    DrainClosedConnections();
     connections_.erase(fd);
     throw;
   }
 }
 
-void ConnectionRegistry::cancel_timeout(TcpConnection& connection) noexcept {
+void ConnectionRegistry::CancelTimeout(TcpConnection& connection) noexcept {
   if (connection.timeout_id_) {
-    loop_.cancel_timer(connection.timeout_id_);
+    loop_.CancelTimer(connection.timeout_id_);
     connection.timeout_id_ = 0;
   }
 }
 
-void ConnectionRegistry::update_timeout(TcpConnection& connection,
-                                        bool progress) {
-  if (draining_ || connection.state() == TcpConnection::State::closing) {
-    cancel_timeout(connection);
+void ConnectionRegistry::UpdateTimeout(TcpConnection& connection,
+                                       bool progress) {
+  if (draining_ || connection.state() == TcpConnection::State::kClosing) {
+    CancelTimeout(connection);
     return;
   }
   const auto now = timer::TimerQueue::Clock::now();
@@ -99,37 +103,40 @@ void ConnectionRegistry::update_timeout(TcpConnection& connection,
     if (!deadline || keep_deadline < *deadline) deadline = keep_deadline;
   }
   if (!deadline) {
-    cancel_timeout(connection);
+    CancelTimeout(connection);
     return;
   }
   try {
     if (connection.timeout_id_) {
-      if (!loop_.reschedule_timer(connection.timeout_id_, *deadline))
-        connection.request_close();
+      if (!loop_.RescheduleTimer(connection.timeout_id_, *deadline))
+        connection.RequestClose();
     } else {
-      connection.timeout_id_ = loop_.add_timer(
-          *deadline,
-          [this, fd = connection.fd(), identity = connection.identity()] {
-            expire(fd, identity);
-          });
+      connection.timeout_id_ =
+          loop_.AddTimer(*deadline,
+                         std::bind_front(&ConnectionRegistry::ExpireConnection,
+                                         this,
+                                         connection.fd(),
+                                         connection.identity()));
     }
   } catch (...) {
-    connection.request_close();
+    connection.RequestClose();
     throw;
   }
 }
 
-void ConnectionRegistry::expire(int fd, TcpConnection::Identity identity) {
+void ConnectionRegistry::ExpireConnection(int fd,
+                                          TcpConnection::Identity identity) {
   if (draining_) return;
   const auto found = connections_.find(fd);
   if (found == connections_.end() || found->second->identity() != identity)
     return;
   found->second->timeout_id_ = 0;
-  found->second->request_close();
+  found->second->RequestClose();
 }
 
-void ConnectionRegistry::connection_closed(
-    int fd, TcpConnection::Identity identity) noexcept {
+void ConnectionRegistry::OnConnectionClosed(
+    int fd,
+    TcpConnection::Identity identity) noexcept {
   const auto found = connections_.find(fd);
   if (found == connections_.end() || found->second->identity() != identity)
     return;
@@ -140,7 +147,7 @@ void ConnectionRegistry::connection_closed(
   closing_head_ = &connection;
 }
 
-void ConnectionRegistry::drain_closed_connections() noexcept {
+void ConnectionRegistry::DrainClosedConnections() noexcept {
   while (closing_head_) {
     auto* connection = closing_head_;
     closing_head_ = connection->next_closing_;
@@ -151,7 +158,7 @@ void ConnectionRegistry::drain_closed_connections() noexcept {
   }
   if (draining_ && connections_.empty() && !notified_) {
     notified_ = true;
-    if (drained_callback_) drained_callback_();
+    if (request_stop_callback_) request_stop_callback_();
   }
 }
 }  // namespace hp::net

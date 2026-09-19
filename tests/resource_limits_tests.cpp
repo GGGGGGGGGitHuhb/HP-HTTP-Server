@@ -50,7 +50,9 @@ void output_bounds() {
     }
   }
   int sockets[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0,
+  require(::socketpair(AF_UNIX,
+                       SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+                       0,
                        sockets) == 0,
           "bounded output socketpair");
   ConnectionIo io{Socket{sockets[0]}};
@@ -94,7 +96,7 @@ void loop_bounds() {
   for (int producer = 0; producer < 4; ++producer) {
     producers.emplace_back([&, producer] {
       for (int id = producer * 512; id < (producer + 1) * 512; ++id)
-        accepted[id] = loop.queue_in_loop([&, id] {
+        accepted[id] = loop.QueueInLoop([&, id] {
           ++calls[id];
           ++executed;
         });
@@ -103,10 +105,10 @@ void loop_bounds() {
   for (auto& producer : producers) producer.join();
   require(std::count(accepted.begin(), accepted.end(), 1) == 1024,
           "multi producer capacity");
-  loop.poll_once(0);
+  loop.PollOnce(0);
   require(accepted == calls && executed == 1024, "each accepted ID once");
-  require(loop.queue_in_loop([&] { ++executed; }), "capacity restored");
-  loop.poll_once(0);
+  require(loop.QueueInLoop([&] { ++executed; }), "capacity restored");
+  loop.PollOnce(0);
   std::cout << "loop accepted=1024 rejected=1024 executed=" << executed << '\n';
 }
 
@@ -117,7 +119,7 @@ void release_and_faults() {
   for (int index = 0; index < 100 && !injected; ++index) {
     timer_allocation_failure = 0;
     try {
-      require(loop.queue_in_loop([&] { ++executed_count; }),
+      require(loop.QueueInLoop([&] { ++executed_count; }),
               "allocation probe admitted");
       ++accepted_count;
     } catch (const std::bad_alloc&) {
@@ -128,10 +130,10 @@ void release_and_faults() {
   require(injected && ResourceLimitsTestAccess::count(loop) ==
                           static_cast<std::size_t>(accepted_count),
           "enqueue allocation failure returns reservation");
-  require(loop.queue_in_loop([&] { ++executed_count; }),
+  require(loop.QueueInLoop([&] { ++executed_count; }),
           "enqueue after allocation failure");
   ++accepted_count;
-  loop.poll_once(0);
+  loop.PollOnce(0);
   require(executed_count == accepted_count &&
               ResourceLimitsTestAccess::count(loop) == 0,
           "all reservations released");
@@ -143,19 +145,18 @@ void release_and_faults() {
 
     ~Capture() {
       ++released;
-      require(!loop.queue_in_loop([] {}),
-              "terminal destructor reentry rejected");
-      loop.request_force();
+      require(!loop.QueueInLoop([] {}), "terminal destructor reentry rejected");
+      loop.RequestForce();
     }
   };
 
   auto capture = std::shared_ptr<Capture>(new Capture{loop, released});
-  loop.queue_in_loop(
+  loop.QueueInLoop(
       [] { throw std::runtime_error("capacity original failure"); });
-  loop.queue_in_loop([capture] {});
+  loop.QueueInLoop([capture] {});
   capture.reset();
   try {
-    loop.poll_once(0);
+    loop.PollOnce(0);
     throw std::runtime_error("missing capacity failure");
   } catch (const std::runtime_error& error) {
     require(std::string(error.what()) == "capacity original failure",
@@ -171,26 +172,32 @@ void release_and_faults() {
 void saturated_controls() {
   EventLoop loop;
   int drain = 0, force = 0, ran = 0;
-  loop.set_control_callback(
-      [&](EventLoop::Control control, EventLoop::Deadline) {
-        require(loop.is_in_loop_thread(), "control owner");
-        if (control == EventLoop::Control::drain) ++drain;
-        if (control == EventLoop::Control::force) ++force;
-      });
+  struct SaturatedControlTarget {
+    EventLoop& loop;
+    int& drain;
+    int& force;
+    void HandleControl(EventLoop::Control control, EventLoop::Deadline) {
+      require(loop.is_in_loop_thread(), "control owner");
+      if (control == EventLoop::Control::kDrain) ++drain;
+      if (control == EventLoop::Control::kForce) ++force;
+    }
+  } control_target{loop, drain, force};
+  loop.set_HandleControl_callback(
+      std::bind_front(&SaturatedControlTarget::HandleControl, &control_target));
   for (int id = 0; id < 1024; ++id)
-    require(loop.queue_in_loop([&, id] {
+    require(loop.QueueInLoop([&, id] {
       require(drain == 1, "drain before first ordinary callback");
       if (id == 0)
-        loop.request_force();
+        loop.RequestForce();
       else
         require(force == 1, "force at callback boundary");
       ++ran;
     }),
             "control full queue");
-  require(!loop.queue_in_loop([] {}), "ordinary queue full");
-  loop.request_drain(hp::timer::TimerQueue::Clock::now() +
-                     std::chrono::hours(1));
-  loop.poll_once(0);
+  require(!loop.QueueInLoop([] {}), "ordinary queue full");
+  loop.RequestDrain(hp::timer::TimerQueue::Clock::now() +
+                    std::chrono::hours(1));
+  loop.PollOnce(0);
   require(drain == 1 && force == 1 && ran == 1024,
           "fixed control bypass and accepted drain");
   std::cout << "saturated_control drain=" << drain << " force=" << force
@@ -213,13 +220,21 @@ void oversized_connection() {
     accepted_sockets += 2;
   }
   std::vector<std::byte> excessive(ConnectionIo::output_limit + 1);
-  registry.add(Socket(first[0]), [&](TcpConnection& connection, auto, bool) {
-    connection.send(excessive);
-  });
-  registry.add(Socket(second[0]), {});
+  struct OversizedOutputHandler {
+    std::vector<std::byte>& excessive;
+    void HandleMessage(TcpConnection& connection,
+                       std::span<const std::byte>,
+                       bool) {
+      connection.Send(excessive);
+    }
+  };
+  registry.AddConnection(Socket(first[0]),
+                         std::bind_front(&OversizedOutputHandler::HandleMessage,
+                                         OversizedOutputHandler{excessive}));
+  registry.AddConnection(Socket(second[0]), {});
   require(::send(peer1.fd(), "x", 1, MSG_NOSIGNAL) == 1, "trigger overflow");
   require(::send(peer2.fd(), "ok", 2, MSG_NOSIGNAL) == 2, "healthy request");
-  loop.poll_once(0);
+  loop.PollOnce(0);
   char bytes[4];
   require(::recv(peer1.fd(), bytes, sizeof(bytes), 0) == 0,
           "overflow has no error response");
@@ -236,11 +251,11 @@ void batch_and_pool() {
   std::promise<void> entered, release;
   auto gate = release.get_future().share();
   std::atomic<int> completed{0};
-  thread.start([&](EventLoop& loop) {
+  thread.Start([&](EventLoop& loop) {
     for (int id = 0; id < 1024; ++id)
-      require(loop.queue_in_loop([&, id, owner = &loop] {
+      require(loop.QueueInLoop([&, id, owner = &loop] {
         if (id == 0) {
-          require(!owner->queue_in_loop([] {}),
+          require(!owner->QueueInLoop([] {}),
                   "executing task counts on self post");
           entered.set_value();
           require(gate.wait_for(3s) == std::future_status::ready, "batch gate");
@@ -251,18 +266,18 @@ void batch_and_pool() {
   });
   require(entered.get_future().wait_for(3s) == std::future_status::ready,
           "batch entered");
-  require(!thread.post([](EventLoop&) {}),
+  require(!thread.Post([](EventLoop&) {}),
           "thread rejects when local batch full");
   release.set_value();
-  thread.request_stop();
-  thread.join();
+  thread.RequestStop();
+  thread.Join();
   require(completed == 1024, "S1 accepted drain preserved");
   EventLoopThreadPool pool;
   std::promise<void> pool_entered, pool_release;
   auto pool_gate = pool_release.get_future().share();
-  pool.start(1, [&](std::size_t, EventLoop& loop) {
+  pool.Start(1, [&](std::size_t, EventLoop& loop) {
     for (int id = 0; id < 1024; ++id)
-      require(loop.queue_in_loop([&, id] {
+      require(loop.QueueInLoop([&, id] {
         if (id == 0) {
           pool_entered.set_value();
           require(pool_gate.wait_for(3s) == std::future_status::ready,
@@ -273,20 +288,146 @@ void batch_and_pool() {
   });
   require(pool_entered.get_future().wait_for(3s) == std::future_status::ready,
           "pool entered");
-  require(!pool.post(0, [](EventLoop&) {}),
+  require(!pool.Post(0, [](EventLoop&) {}),
           "pool rollback after loop rejection");
   require(EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 0,
           "double reservation restored");
   pool_release.set_value();
-  pool.request_stop();
-  pool.join();
+  pool.RequestStop();
+  pool.Join();
   std::cout << "batch executed=" << completed
             << " pool_rejected_outstanding=0\n";
 }
+void destruction_reservations() {
+  EventLoop loop;
+  int releases = 0;
+  std::size_t loop_destruction_count = 0;
+  bool loop_destruction_owner = false;
+  struct LoopCapture {
+    EventLoop& loop;
+    int& releases;
+    std::size_t& destruction_count;
+    bool& destruction_owner;
+    ~LoopCapture() {
+      destruction_count = ResourceLimitsTestAccess::count(loop);
+      destruction_owner = loop.is_in_loop_thread();
+      ++releases;
+    }
+  };
+  auto capture =
+      std::shared_ptr<LoopCapture>(new LoopCapture{loop,
+                                                   releases,
+                                                   loop_destruction_count,
+                                                   loop_destruction_owner});
+  struct LoopTaskTarget {
+    std::shared_ptr<LoopCapture> capture;
+    void RetainLoopReservation() const {}
+  };
+  EventLoop::LoopTask task =
+      std::bind_front(&LoopTaskTarget::RetainLoopReservation,
+                      LoopTaskTarget{capture});
+  capture.reset();
+  require(loop.QueueInLoop(std::move(task)), "destruction quota task admitted");
+  loop.PollOnce(0);
+  require(loop_destruction_count == 1,
+          "capacity includes user capture destruction");
+  require(loop_destruction_owner, "capture destruction on loop owner");
+  require(releases == 1 && ResourceLimitsTestAccess::count(loop) == 0,
+          "destruction returns reservation once");
+
+  EventLoopThreadPool pool;
+  std::thread::id owner;
+  struct WorkerOwnerTarget {
+    std::thread::id& owner;
+    void RecordWorkerOwner(std::size_t, EventLoop&) const {
+      owner = std::this_thread::get_id();
+    }
+  };
+  pool.Start(1,
+             std::bind_front(&WorkerOwnerTarget::RecordWorkerOwner,
+                             WorkerOwnerTarget{owner}));
+  struct PoolCapture {
+    EventLoopThreadPool& pool;
+    std::thread::id& owner;
+    int& releases;
+    ~PoolCapture() {
+      require(EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 1,
+              "pool ticket retained during user capture destruction");
+      require(owner == std::this_thread::get_id(),
+              "pool capture release owner");
+      ++releases;
+    }
+  };
+  auto pooled =
+      std::shared_ptr<PoolCapture>(new PoolCapture{pool, owner, releases});
+  struct PoolTaskTarget {
+    std::shared_ptr<PoolCapture> capture;
+    void RetainPoolReservation(EventLoop&) const {}
+  };
+  EventLoopThread::LoopTask posted =
+      std::bind_front(&PoolTaskTarget::RetainPoolReservation,
+                      PoolTaskTarget{pooled});
+  pooled.reset();
+  require(pool.Post(0, std::move(posted)), "pool destruction task admitted");
+  pool.RequestStop();
+  pool.Join();
+  require(
+      releases == 2 && EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 0,
+      "pool capture then ticket released exactly once");
+  std::cout << "destruction_quota loop=1 pool=1 final=0 owner=verified\n";
+}
+
+void post_wrapper_allocation_failure() {
+  EventLoopThread worker;
+  worker.Start();
+  int releases = 0;
+  const auto producer = std::this_thread::get_id();
+  struct Capture {
+    EventLoopThread& worker;
+    int& releases;
+    std::thread::id producer;
+    ~Capture() {
+      require(std::this_thread::get_id() == producer,
+              "rejected wrapper payload released on producer");
+      worker.RequestStop();  // Reenters the forwarding mutex; must be unlocked.
+      ++releases;
+    }
+  };
+  auto capture =
+      std::shared_ptr<Capture>(new Capture{worker, releases, producer});
+  struct RejectedTaskTarget {
+    std::shared_ptr<Capture> capture;
+    void RejectUnexpectedExecution(EventLoop&) const {
+      throw std::runtime_error("rejected wrapper executed");
+    }
+  };
+  EventLoopThread::LoopTask task =
+      std::bind_front(&RejectedTaskTarget::RejectUnexpectedExecution,
+                      RejectedTaskTarget{capture});
+  capture.reset();
+  bool rejected = false;
+  timer_allocation_failure =
+      0;  // Payload already built: fail wrapper allocation.
+  try {
+    (void)worker.Post(std::move(task));
+  } catch (const std::bad_alloc&) {
+    rejected = true;
+  }
+  timer_allocation_failure = -1;
+  worker.Join();
+  require(rejected && releases == 1,
+          "wrapper allocation failure releases payload once outside forwarding "
+          "lock");
+  std::cout << "post_wrapper injected=1 accepted=0 producer_release=1 "
+               "reentry=verified\n";
+}
+
 }  // namespace
 
 int main() {
   try {
+    destruction_reservations();
+    post_wrapper_allocation_failure();
     output_bounds();
     loop_bounds();
     batch_and_pool();

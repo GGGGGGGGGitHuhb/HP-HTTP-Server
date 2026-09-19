@@ -16,7 +16,7 @@
 namespace hp::net {
 struct EventLoopTestAccess {
   static void stale(EventLoop& loop, std::uint64_t token) {
-    loop.dispatch(token, EPOLLIN);
+    loop.Dispatch(token, EPOLLIN);
   }
 
   static void dispatch_after_kernel_detach(EventLoop& loop, int fd) {
@@ -27,25 +27,27 @@ struct EventLoopTestAccess {
       throw std::runtime_error("expected one pending event");
     const auto event = events.front();
     loop.epoller_.Remove(fd);
-    loop.dispatch(event.data.u64, event.events);
+    loop.Dispatch(event.data.u64, event.events);
   }
 };
 
 struct TcpConnectionTestAccess {
-  static auto token(TcpConnection& c) { return c.channel_.token(); }
+  static auto token(TcpConnection& c) { return c.connection_channel_.token(); }
 
   static auto events(TcpConnection& c) { return c.event_count_; }
 
   static auto pending(TcpConnection& c) { return c.io_.pending_bytes(); }
 
-  static auto interest(TcpConnection& c) { return c.channel_.interest(); }
+  static auto interest(TcpConnection& c) {
+    return c.connection_channel_.interest();
+  }
 
   static auto result(TcpConnection& c) { return c.last_result_; }
 
   static auto mask(TcpConnection& c) { return c.last_mask_; }
 
   static void interest(TcpConnection& c, std::uint32_t mask) {
-    c.channel_.set_interest(mask);
+    c.connection_channel_.set_interest(mask);
   }
 };
 
@@ -58,8 +60,10 @@ struct AcceptorTestAccess {
 struct TcpServerTestAccess {
   static EventLoop& loop(TcpServer& s) { return s.loop_; }
 
+  static void StartAccepting(TcpServer& server) { server.acceptor_.Start(); }
+
   static void add(TcpServer& s, Socket socket) {
-    s.add_connection(std::move(socket));
+    s.AddConnection(std::move(socket));
   }
 
   static TcpConnection& connection(TcpServer& s, int fd) {
@@ -71,11 +75,11 @@ struct TcpServerTestAccess {
   }
 
   static void close_notice(TcpServer& s, int fd, TcpConnection::Identity id) {
-    s.main_registry_->connection_closed(fd, id);
+    s.main_registry_->OnConnectionClosed(fd, id);
   }
 
   static void drain(TcpServer& s) {
-    s.main_registry_->drain_closed_connections();
+    s.main_registry_->DrainClosedConnections();
   }
 };
 }  // namespace hp::net
@@ -167,36 +171,71 @@ void acceptor_delivery() {
     std::vector<Socket> owners, clients;
     std::set<int> seen;
     bool stopped = false, fail_delivery = false;
-    Acceptor acceptor(loop, 0, [&](Socket socket) {
-      ++accepted;
-      if (stopped) ++callbacks_after_stop;
-      expect((::fcntl(socket.fd(), F_GETFL) & O_NONBLOCK) != 0,
-             "accepted nonblocking");
-      expect((::fcntl(socket.fd(), F_GETFD) & FD_CLOEXEC) != 0,
-             "accepted CLOEXEC");
-      if (fail_delivery) {
-        ++failures_seen;
-        fail_delivery = false;
-        throw std::runtime_error("delivery failure");
+    Acceptor acceptor(loop, 0);
+    using AddConnectionObserver1State0 = decltype((accepted));
+    using AddConnectionObserver1State1 = decltype((stopped));
+    using AddConnectionObserver1State2 = decltype((callbacks_after_stop));
+    using AddConnectionObserver1State3 = decltype((fail_delivery));
+    using AddConnectionObserver1State4 = decltype((failures_seen));
+    using AddConnectionObserver1State5 = decltype((seen));
+    using AddConnectionObserver1State6 = decltype((owners));
+    using AddConnectionObserver1State7 = decltype((transferred));
+    struct AddConnectionObserver1 {
+      AddConnectionObserver1State0 accepted;
+      AddConnectionObserver1State1 stopped;
+      AddConnectionObserver1State2 callbacks_after_stop;
+      AddConnectionObserver1State3 fail_delivery;
+      AddConnectionObserver1State4 failures_seen;
+      AddConnectionObserver1State5 seen;
+      AddConnectionObserver1State6 owners;
+      AddConnectionObserver1State7 transferred;
+      void AddConnection(Socket socket) {
+        ++accepted;
+        if (stopped) ++callbacks_after_stop;
+        expect((::fcntl(socket.fd(), F_GETFL) & O_NONBLOCK) != 0,
+               "accepted nonblocking");
+        expect((::fcntl(socket.fd(), F_GETFD) & FD_CLOEXEC) != 0,
+               "accepted CLOEXEC");
+        if (fail_delivery) {
+          ++failures_seen;
+          fail_delivery = false;
+          throw std::runtime_error("delivery failure");
+        }
+        expect(seen.insert(socket.fd()).second, "no duplicate delivery");
+        owners.push_back(std::move(socket));
+        ++transferred;
       }
-      expect(seen.insert(socket.fd()).second, "no duplicate delivery");
-      owners.push_back(std::move(socket));
-      ++transferred;
-    });
-    acceptor.start();
-    acceptor.start();
+    };
+    acceptor.set_AddConnection_callback(
+        std::bind_front(&AddConnectionObserver1::AddConnection,
+                        AddConnectionObserver1{accepted,
+                                               stopped,
+                                               callbacks_after_stop,
+                                               fail_delivery,
+                                               failures_seen,
+                                               seen,
+                                               owners,
+                                               transferred}));
+    acceptor.Start();
+    acceptor.Start();
     for (int i = 0; i < 8; ++i)
       clients.push_back(connect_to(acceptor.bound_port()));
     await_accept_queue(acceptor, 8);
     const auto dispatch_before = loop.counters().dispatches;
-    loop.poll_once(250);
+    loop.PollOnce(250);
     initial_drain = accepted;
     await_accept_queue(acceptor, 0);
     expect(accepted == 8 && transferred == 8 &&
                loop.counters().dispatches == dispatch_before + 1,
            "one listener callback drains eight queued clients");
     try {
-      Acceptor conflict(loop, acceptor.bound_port(), [](Socket) {});
+      Acceptor conflict(loop, acceptor.bound_port());
+      struct AddConnectionObserver2 {
+        void AddConnection(Socket) {}
+      };
+      conflict.set_AddConnection_callback(
+          std::bind_front(&AddConnectionObserver2::AddConnection,
+                          AddConnectionObserver2{}));
     } catch (const std::system_error&) {
       ++bind_failure;
     }
@@ -205,15 +244,15 @@ void acceptor_delivery() {
     clients.push_back(connect_to(acceptor.bound_port()));
     await_accept_queue(acceptor, 2);
     const auto fd_before_failure = fd_count();
-    loop.poll_once(250);
+    loop.PollOnce(250);
     expect(failures_seen == 1 && transferred == 9 &&
                fd_count() == fd_before_failure + 1,
            "failed delivery closes socket and next delivery succeeds");
-    acceptor.stop();
-    acceptor.stop();
+    acceptor.Stop();
+    acceptor.Stop();
     stopped = true;
     clients.push_back(connect_to(acceptor.bound_port()));
-    loop.poll_once(0);
+    loop.PollOnce(0);
     expect(accepted == 10 && callbacks_after_stop == 0 && bind_failure == 1,
            "stop and bind failure");
   }
@@ -237,16 +276,22 @@ void buffers_and_echo() {
                       sizeof(size)) == 0,
          "small send buffer");
   int closes{};
-  TcpConnection c(loop, std::move(pair.observed), 1, {}, 0, [&](int, auto) {
-    ++closes;
-  });
-  c.start();
-  c.start();
+  TcpConnection c(loop, std::move(pair.observed), 1, 0);
+  using OnConnectionClosedObserver3State0 = decltype((closes));
+  struct OnConnectionClosedObserver3 {
+    OnConnectionClosedObserver3State0 closes;
+    void OnConnectionClosed(int, TcpConnection::Identity) { ++closes; }
+  };
+  c.set_OnConnectionClosed_callback(
+      std::bind_front(&OnConnectionClosedObserver3::OnConnectionClosed,
+                      OnConnectionClosedObserver3{closes}));
+  c.Start();
+  c.Start();
   std::vector<std::byte> payload(65536);
   for (std::size_t i = 0; i < payload.size(); ++i)
     payload[i] = static_cast<std::byte>(i * 131U + 17U);
   pair.send(payload);
-  loop.poll_once(250);
+  loop.PollOnce(250);
   const auto pending = C::pending(c);
   expect(C::result(c).write_would_block && pending > 0 &&
              pending < payload.size() && (C::interest(c) & EPOLLOUT),
@@ -258,17 +303,17 @@ void buffers_and_echo() {
     ssize_t n;
     while ((n = ::recv(pair.peer.fd(), buffer, sizeof(buffer), 0)) > 0)
       received.insert(received.end(), buffer, buffer + n);
-    loop.poll_once(0);
+    loop.PollOnce(0);
   }
   expect(
       received == payload && C::pending(c) == 0 && !(C::interest(c) & EPOLLOUT),
       "exact echoed bytes and disable write");
   const auto events = C::events(c);
-  for (int i = 0; i < 10; ++i) loop.poll_once(0);
+  for (int i = 0; i < 10; ++i) loop.PollOnce(0);
   expect(C::events(c) == events && closes == 0,
          "no writable busy-loop after drain");
-  c.request_close();
-  c.request_close();
+  c.RequestClose();
+  c.RequestClose();
   expect(closes == 1, "one close notification");
   std::cout << "buffers: initial_pending=" << pending
             << " eagain=1 recovered_bytes=" << received.size()
@@ -280,53 +325,77 @@ void application_boundaries() {
   EventLoop loop;
   int calls{}, notices{};
   Pair pair;
-  TcpConnection c(
-      loop,
-      std::move(pair.observed),
-      2,
-      [&](TcpConnection& connection, std::span<const std::byte> input, bool) {
-        ++calls;
-        if (input.size() < 2) return;
-        expect(input.size() == 2, "accumulated borrowed input span");
-        const std::byte response[]{std::byte{0x78}, std::byte{0x79}};
-        connection.send(response);
-        connection.consume(input.size());
-        connection.close_after_flush();
-      },
-      2,
-      [&](int, auto) { ++notices; });
-  c.start();
+  TcpConnection c(loop, std::move(pair.observed), 2, 2);
+  using HandleMessageObserver4State0 = decltype((calls));
+  struct HandleMessageObserver4 {
+    HandleMessageObserver4State0 calls;
+    void HandleMessage(TcpConnection& connection,
+                       std::span<const std::byte> input,
+                       bool) {
+      ++calls;
+      if (input.size() < 2) return;
+      expect(input.size() == 2, "accumulated borrowed input span");
+      const std::byte response[]{std::byte{0x78}, std::byte{0x79}};
+      connection.Send(response);
+      connection.Consume(input.size());
+      connection.CloseAfterFlush();
+    }
+  };
+  c.set_HandleMessage_callback(
+      std::bind_front(&HandleMessageObserver4::HandleMessage,
+                      HandleMessageObserver4{calls}));
+  using OnConnectionClosedObserver5State0 = decltype((notices));
+  struct OnConnectionClosedObserver5 {
+    OnConnectionClosedObserver5State0 notices;
+    void OnConnectionClosed(int, TcpConnection::Identity) { ++notices; }
+  };
+  c.set_OnConnectionClosed_callback(
+      std::bind_front(&OnConnectionClosedObserver5::OnConnectionClosed,
+                      OnConnectionClosedObserver5{notices}));
+  c.Start();
   pair.ready();
-  loop.poll_once(250);
-  expect(calls == 1 && c.state() == TcpConnection::State::active,
+  loop.PollOnce(250);
+  expect(calls == 1 && c.state() == TcpConnection::State::kActive,
          "partial input no response");
   pair.ready();
-  loop.poll_once(250);
+  loop.PollOnce(250);
   std::byte bytes[8];
   const auto n = ::recv(pair.peer.fd(), bytes, sizeof(bytes), 0);
   expect(n == 2 && bytes[0] == std::byte{0x78} && bytes[1] == std::byte{0x79} &&
              calls == 2 && notices == 1,
          "one copied response after local application result lifetime");
   pair.ready();
-  loop.poll_once(0);
+  loop.PollOnce(0);
   expect(calls == 2, "removed connection does not call application again");
   Pair limit;
   int limit_calls{}, limit_closed{};
-  TcpConnection capped(
-      loop,
-      std::move(limit.observed),
-      3,
-      [&](TcpConnection& connection, std::span<const std::byte> input, bool) {
-        (void)connection;
-        ++limit_calls;
-        expect(input.size() <= 2, "input limit respected");
-      },
-      2,
-      [&](int, auto) { ++limit_closed; });
-  capped.start();
+  TcpConnection capped(loop, std::move(limit.observed), 3, 2);
+  using HandleMessageObserver6State0 = decltype((limit_calls));
+  struct HandleMessageObserver6 {
+    HandleMessageObserver6State0 limit_calls;
+    void HandleMessage(TcpConnection& connection,
+                       std::span<const std::byte> input,
+                       bool) {
+      (void)connection;
+      ++limit_calls;
+      expect(input.size() <= 2, "input limit respected");
+    }
+  };
+  capped.set_HandleMessage_callback(
+      std::bind_front(&HandleMessageObserver6::HandleMessage,
+                      HandleMessageObserver6{limit_calls}));
+  using OnConnectionClosedObserver7State0 = decltype((limit_closed));
+  struct OnConnectionClosedObserver7 {
+    OnConnectionClosedObserver7State0 limit_closed;
+    void OnConnectionClosed(int, TcpConnection::Identity) { ++limit_closed; }
+  };
+  capped.set_OnConnectionClosed_callback(
+      std::bind_front(&OnConnectionClosedObserver7::OnConnectionClosed,
+                      OnConnectionClosedObserver7{limit_closed}));
+  capped.Start();
   std::byte over[3]{};
   limit.send(over);
-  loop.poll_once(250);
+  loop.PollOnce(250);
   expect(limit_closed == 1 && C::result(capped).read_error == EMSGSIZE,
          "oversized input closes within original cap");
   std::cout << "application: segmented_calls=" << calls
@@ -341,21 +410,44 @@ void close_batch_and_reuse() {
   {
     TcpConnection* a{};
     TcpConnection* b{};
-    TcpServer server(0, [&] {
-      return [&](TcpConnection&, std::span<const std::byte> bytes, bool) {
+    TcpServer server(0);
+    using CloseBatchCallbacksState0 = decltype((a));
+    using CloseBatchCallbacksState1 = decltype((b));
+    using CloseBatchCallbacksState2 = decltype((survivor_calls));
+    using CloseBatchCallbacksState3 = decltype((self_calls));
+    using CloseBatchCallbacksState4 = decltype((in_callback_fd_alive));
+    struct CloseBatchCallbacks {
+      CloseBatchCallbacksState0 a;
+      CloseBatchCallbacksState1 b;
+      CloseBatchCallbacksState2 survivor_calls;
+      CloseBatchCallbacksState3 self_calls;
+      CloseBatchCallbacksState4 in_callback_fd_alive;
+      void HandleMessage(TcpConnection&,
+                         std::span<const std::byte> bytes,
+                         bool) {
         if (bytes[0] == std::byte{0x73}) {
           ++survivor_calls;
           return;
         }
         ++self_calls;
-        a->request_close();
-        a->request_close();
-        b->request_close();
+        a->RequestClose();
+        a->RequestClose();
+        b->RequestClose();
         if (::fcntl(a->fd(), F_GETFD) >= 0 && ::fcntl(b->fd(), F_GETFD) >= 0)
           ++in_callback_fd_alive;
         return;
-      };
-    });
+      }
+      TcpConnection::MessageCallback CreateMessageCallback() {
+        return std::bind_front(&CloseBatchCallbacks::HandleMessage, *this);
+      }
+    };
+    server.set_CreateMessageCallback_callback(
+        std::bind_front(&CloseBatchCallbacks::CreateMessageCallback,
+                        CloseBatchCallbacks{a,
+                                            b,
+                                            survivor_calls,
+                                            self_calls,
+                                            in_callback_fd_alive}));
     Pair x, y, z;
     int fx = x.observed.fd(), fy = y.observed.fd(), fz = z.observed.fd();
     S::add(server, std::move(x.observed));
@@ -367,7 +459,7 @@ void close_batch_and_reuse() {
     y.ready();
     std::byte marker{0x73};
     z.send({&marker, 1});
-    S::loop(server).poll_once(250);
+    S::loop(server).PollOnce(250);
     stale = S::loop(server).counters().stale;
     expect(self_calls == 1 && survivor_calls == 1 && stale == 1 &&
                S::size(server) == 1,
@@ -376,7 +468,7 @@ void close_batch_and_reuse() {
                in_callback_fd_alive == 1,
            "close only after callback returns");
     const auto survivor_events = C::events(S::connection(server, fz));
-    S::loop(server).poll_once(0);
+    S::loop(server).PollOnce(0);
     expect(C::events(S::connection(server, fz)) == survivor_events,
            "post remove no extra event");
     // Active survivor intentionally remains for server destructor cleanup.
@@ -390,7 +482,7 @@ void close_batch_and_reuse() {
     S::add(server, std::move(old.observed));
     auto& original = S::connection(server, fd);
     const auto old_token = C::token(original), old_id = original.identity();
-    original.request_close();
+    original.RequestClose();
     S::drain(server);
     Pair fresh;
     if (fresh.observed.fd() != fd) {
@@ -408,7 +500,7 @@ void close_batch_and_reuse() {
                C::events(current) == 0,
            "old close/token cannot destroy or reach new owner");
     fresh.ready();
-    S::loop(server).poll_once(250);
+    S::loop(server).PollOnce(250);
     expect(C::events(current) == 1, "new real readiness reaches TcpConnection");
     std::cout << "reuse: fd=" << fd << " old_id=" << old_id
               << " new_id=" << current.identity()
@@ -425,32 +517,40 @@ void close_batch_and_reuse() {
 
 void failures_and_recovery() {
   const auto before = fd_count();
-  int constructor_fail{}, listener_add_fail{}, add_fail{}, mod_fail{},
+  int construction_or_setup_fail{}, listener_add_fail{}, add_fail{}, mod_fail{},
       recovery{};
   {
     EventLoop loop;
     Pair pair;
     const int fd = pair.observed.fd();
     try {
-      TcpConnection bad(loop,
-                        std::move(pair.observed),
-                        0,
-                        {},
-                        0,
-                        [](int, auto) {});
+      TcpConnection bad(loop, std::move(pair.observed), 0, 0);
+      struct OnConnectionClosedObserver8 {
+        void OnConnectionClosed(int, TcpConnection::Identity) {}
+      };
+      bad.set_OnConnectionClosed_callback(
+          std::bind_front(&OnConnectionClosedObserver8::OnConnectionClosed,
+                          OnConnectionClosedObserver8{}));
     } catch (const std::invalid_argument&) {
-      ++constructor_fail;
+      ++construction_or_setup_fail;
     }
     expect(::fcntl(fd, F_GETFD) == -1, "failed constructor reclaims socket");
     try {
-      Acceptor invalid(loop, 0, {});
+      Acceptor invalid(loop, 0);
+      invalid.Start();
     } catch (const std::invalid_argument&) {
-      ++constructor_fail;
+      ++construction_or_setup_fail;
     }
-    Acceptor broken_listener(loop, 0, [](Socket) {});
+    Acceptor broken_listener(loop, 0);
+    struct AddConnectionObserver9 {
+      void AddConnection(Socket) {}
+    };
+    broken_listener.set_AddConnection_callback(
+        std::bind_front(&AddConnectionObserver9::AddConnection,
+                        AddConnectionObserver9{}));
     AcceptorTestAccess::invalidate_listener(broken_listener);
     try {
-      broken_listener.start();
+      broken_listener.Start();
     } catch (const std::system_error&) {
       ++listener_add_fail;
     }
@@ -460,18 +560,19 @@ void failures_and_recovery() {
     // /dev/null is a valid owned fd but cannot be epoll-registered (EPERM).
     Socket regular(::open("/dev/null", O_RDONLY | O_CLOEXEC));
     int regular_fd = regular.fd();
-    TcpConnection unsupported(loop,
-                              std::move(regular),
-                              4,
-                              {},
-                              0,
-                              [](int, auto) {});
+    TcpConnection unsupported(loop, std::move(regular), 4, 0);
+    struct OnConnectionClosedObserver10 {
+      void OnConnectionClosed(int, TcpConnection::Identity) {}
+    };
+    unsupported.set_OnConnectionClosed_callback(
+        std::bind_front(&OnConnectionClosedObserver10::OnConnectionClosed,
+                        OnConnectionClosedObserver10{}));
     try {
-      unsupported.start();
+      unsupported.Start();
     } catch (const std::system_error&) {
       ++add_fail;
     }
-    expect(unsupported.state() == TcpConnection::State::unregistered &&
+    expect(unsupported.state() == TcpConnection::State::kUnregistered &&
                C::token(unsupported) == 0 && ::fcntl(regular_fd, F_GETFD) >= 0,
            "failed ADD does not fake active registration or close owner early");
   }
@@ -498,11 +599,14 @@ void failures_and_recovery() {
     if (S::size(server) == 0 && ::fcntl(fd, F_GETFD) == -1) ++mod_fail;
     expect(mod_fail == 1,
            "real MOD failure closes only failed connection after dispatch");
+    // This fixture pumps the loop directly; Run normally enables acceptance
+    // after callback assembly and before entering that loop.
+    S::StartAccepting(server);
     Socket client = connect_to(server.bound_port());
-    S::loop(server).poll_once(250);
+    S::loop(server).PollOnce(250);
     expect(::send(client.fd(), "ok", 2, MSG_NOSIGNAL) == 2,
            "send after failures");
-    S::loop(server).poll_once(250);
+    S::loop(server).PollOnce(250);
     char output[2];
     pollfd readable{client.fd(), POLLIN, 0};
     expect(::poll(&readable, 1, 1000) == 1, "await actual TCP echo delivery");
@@ -513,7 +617,7 @@ void failures_and_recovery() {
            "real accepted connection succeeds after ADD/MOD failure");
   }
   expect(fd_count() == before, "failure resources return to baseline");
-  std::cout << "failures: constructors=" << constructor_fail
+  std::cout << "failures: constructors=" << construction_or_setup_fail
             << " listener_add=" << listener_add_fail << " add=" << add_fail
             << " mod=" << mod_fail << " recovery=" << recovery
             << " fd=" << before << "->" << fd_count() << '\n';
@@ -522,17 +626,31 @@ void failures_and_recovery() {
 void real_reset() {
   EventLoop loop;
   Socket accepted;
-  Acceptor acceptor(loop, 0, [&](Socket s) { accepted = std::move(s); });
-  acceptor.start();
+  Acceptor acceptor(loop, 0);
+  using AddConnectionObserver11State0 = decltype((accepted));
+  struct AddConnectionObserver11 {
+    AddConnectionObserver11State0 accepted;
+    void AddConnection(Socket s) { accepted = std::move(s); }
+  };
+  acceptor.set_AddConnection_callback(
+      std::bind_front(&AddConnectionObserver11::AddConnection,
+                      AddConnectionObserver11{accepted}));
+  acceptor.Start();
   Socket client = connect_to(acceptor.bound_port());
-  loop.poll_once(250);
-  acceptor.stop();
+  loop.PollOnce(250);
+  acceptor.Stop();
   expect(accepted.valid(), "accept real reset TCP client");
   int notices{};
-  TcpConnection c(loop, std::move(accepted), 7, {}, 0, [&](int, auto) {
-    ++notices;
-  });
-  c.start();
+  TcpConnection c(loop, std::move(accepted), 7, 0);
+  using OnConnectionClosedObserver12State0 = decltype((notices));
+  struct OnConnectionClosedObserver12 {
+    OnConnectionClosedObserver12State0 notices;
+    void OnConnectionClosed(int, TcpConnection::Identity) { ++notices; }
+  };
+  c.set_OnConnectionClosed_callback(
+      std::bind_front(&OnConnectionClosedObserver12::OnConnectionClosed,
+                      OnConnectionClosedObserver12{notices}));
+  c.Start();
   std::vector<std::byte> bytes(1053, std::byte{0x7a});
   expect(::send(client.fd(), bytes.data(), bytes.size(), MSG_NOSIGNAL) == 1053,
          "queue real reset bytes");
@@ -560,7 +678,7 @@ void real_reset() {
       if (e.events & EPOLLERR) error_ready = true;
   expect(error_ready, "kernel TCP reset pending");
   reset_ready.Remove(c.fd());
-  loop.poll_once(250);
+  loop.PollOnce(250);
   const auto result = C::result(c);
   const bool combined =
       (C::mask(c) & (EPOLLERR | EPOLLIN)) == (EPOLLERR | EPOLLIN);

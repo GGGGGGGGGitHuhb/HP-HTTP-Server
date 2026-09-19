@@ -19,9 +19,9 @@ struct EventLoopTestAccess;
 // cross-thread entry points.
 class EventLoop final : private base::NonCopyable {
  public:
-  static constexpr std::size_t task_capacity = 1024;
+  static constexpr std::size_t kTaskCapacity = 1024;
 
-  using Task = std::function<void()>;
+  using LoopTask = std::function<void()>;
 
   struct Counters {
     std::size_t adds{}, mods{}, removes{}, dispatches{}, stale{};
@@ -30,36 +30,37 @@ class EventLoop final : private base::NonCopyable {
   EventLoop();
   ~EventLoop() noexcept;
 
-  void loop();
-  void poll_once(int timeout_ms);
+  void Loop();
+  void PollOnce(int timeout_ms);
 
-  bool queue_in_loop(Task task);
-  void request_stop();
+  bool QueueInLoop(LoopTask task);
+  void RequestStop();
 
-  enum class Control { none, drain, force };
+  enum class Control { kNone, kDrain, kForce };
   using Deadline = timer::TimerQueue::TimePoint;
   using ControlCallback = std::function<void(Control, Deadline)>;
 
-  void set_control_callback(ControlCallback callback);
-  void request_drain(Deadline deadline);
-  void request_force();
-  void notify_control();
+  void set_HandleControl_callback(ControlCallback callback);
+  void set_HandleWorkerControl_callback(ControlCallback callback);
+  void RequestDrain(Deadline deadline);
+  void RequestForce();
+  void NotifyControl();
 
   bool failed() const;
 
   using TimerId = timer::TimerQueue::Id;
 
-  TimerId add_timer(timer::TimerQueue::TimePoint deadline, Task task);
-  bool reschedule_timer(TimerId id, timer::TimerQueue::TimePoint deadline);
-  bool cancel_timer(TimerId id);
+  TimerId AddTimer(timer::TimerQueue::TimePoint deadline, LoopTask task);
+  bool RescheduleTimer(TimerId id, timer::TimerQueue::TimePoint deadline);
+  bool CancelTimer(TimerId id);
   std::size_t timer_count() const;
 
   [[nodiscard]] bool is_in_loop_thread() const noexcept;
 
-  void update_channel(Channel& channel, std::uint32_t interest);
-  void remove_channel(Channel& channel) noexcept;
+  void UpdateChannel(Channel& channel, std::uint32_t interest);
+  void RemoveChannel(Channel& channel) noexcept;
 
-  void set_after_dispatch(std::function<void()> cleanup);
+  void set_DrainClosedConnections_callback(std::function<void()> cleanup);
 
   [[nodiscard]] const Counters& counters() const noexcept {
     assert(is_in_loop_thread());
@@ -72,24 +73,28 @@ class EventLoop final : private base::NonCopyable {
   friend struct ResourceLimitsTestAccess;
   friend class EventLoopThread;
 
-  bool enqueue(Task& task);
-  void release_task(Task& task);
-  void release_tasks(std::deque<Task>& tasks);
+  void HandleWakeupEvent(std::uint32_t mask);
+  void DispatchTimerTask(const LoopTask& task);
+  void InstallControlCallback(ControlCallback callback);
 
-  static std::uint64_t exchange_next_token_for_test(std::uint64_t value);
+  bool Enqueue(LoopTask& task);
+  void ReleaseTask(LoopTask& task);
+  void ReleaseTasks(std::deque<LoopTask>& tasks);
 
-  enum class State { Ready, Running, Stopping, Stopped, Failed };
+  static std::uint64_t ExchangeNextTokenForTest(std::uint64_t value);
 
-  void require_owner() const;
+  enum class State { kReady, kRunning, kStopping, kStopped, kFailed };
 
-  void dispatch_control();
-  bool timers_allowed();
-  void dispatch(std::uint64_t token, std::uint32_t mask);
+  void RequireOwner() const;
 
-  void wake_locked();
-  void drain_wakeup();
+  void DispatchControl();
+  bool TimersAllowed();
+  void Dispatch(std::uint64_t token, std::uint32_t mask);
 
-  void fail(std::exception_ptr error);
+  void WakeLocked();
+  void DrainWakeup();
+
+  void Fail(std::exception_ptr error);
 
   Epoller epoller_;
   timer::TimerQueue timers_;
@@ -97,7 +102,7 @@ class EventLoop final : private base::NonCopyable {
 
   std::unordered_map<std::uint64_t, Channel*> channels_;
   std::unordered_map<int, std::uint64_t> fds_;
-  std::function<void()> after_dispatch_;
+  std::function<void()> cleanup_after_dispatch_callback_;
   Counters counters_;
   bool polling_{false};
   bool failure_observed_{false};
@@ -108,14 +113,14 @@ class EventLoop final : private base::NonCopyable {
   mutable std::mutex mutex_;
 
   ControlCallback control_callback_;
-  Control control_{Control::none};
+  Control control_{Control::kNone};
   Deadline control_deadline_{};
   bool control_pending_{false};
 
-  std::deque<Task> tasks_;
+  std::deque<LoopTask> tasks_;
   std::size_t outstanding_{0};
 
-  State state_{State::Ready};
+  State state_{State::kReady};
   std::exception_ptr failure_;
 };
 }  // namespace hp::net

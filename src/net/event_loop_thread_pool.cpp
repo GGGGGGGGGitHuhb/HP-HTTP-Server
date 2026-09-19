@@ -19,10 +19,31 @@ struct EventLoopThreadPool::Ticket {
   }
 };
 
+void EventLoopThreadPool::WorkerInitTask::InitializeWorker(
+    EventLoop& loop) const {
+  if (init) init(index, loop);
+}
+
+void EventLoopThreadPool::WorkerCleanupTask::CleanupWorker(
+    EventLoop& loop) const {
+  // A planned drain may finish one owner before its peers; fatal stops all.
+  bool planned;
+  {
+    std::lock_guard lock(pool->mutex_);
+    planned = pool->draining_;
+  }
+  if (!planned || loop.failed()) pool->RequestStop();
+  if (cleanup) cleanup(index, loop);
+}
+
+void EventLoopThreadPool::ReservedPoolTask::RunTask(EventLoop& loop) const {
+  task(loop);
+}
+
 EventLoopThreadPool::~EventLoopThreadPool() noexcept {
   try {
-    request_stop();
-    join();
+    RequestStop();
+    Join();
   } catch (const std::exception& error) {
     base::error(error.what());
   } catch (...) {
@@ -30,8 +51,9 @@ EventLoopThreadPool::~EventLoopThreadPool() noexcept {
   }
 }
 
-void EventLoopThreadPool::start(std::size_t count, Callback init,
-                                Callback cleanup) {
+void EventLoopThreadPool::Start(std::size_t count,
+                                WorkerInitCallback init,
+                                WorkerCleanupCallback cleanup) {
   {
     std::lock_guard lock(mutex_);
     if (started_) throw std::logic_error("pool already started");
@@ -44,21 +66,10 @@ void EventLoopThreadPool::start(std::size_t count, Callback init,
   }
   try {
     for (std::size_t i = 0; i < count; ++i) {
-      workers_[i]->start(
-          [init, i](EventLoop& loop) {
-            if (init) init(i, loop);
-          },
-          [this, cleanup, i](EventLoop& loop) {
-            // Planned drain may finish one owner before its peers. A fatal
-            // still stops every peer without using the ordinary queue.
-            bool planned;
-            {
-              std::lock_guard lock(mutex_);
-              planned = draining_;
-            }
-            if (!planned || loop.failed()) request_stop();
-            if (cleanup) cleanup(i, loop);
-          });
+      workers_[i]->Start(std::bind_front(&WorkerInitTask::InitializeWorker,
+                                         WorkerInitTask{init, i}),
+                         std::bind_front(&WorkerCleanupTask::CleanupWorker,
+                                         WorkerCleanupTask{this, cleanup, i}));
     }
     bool stop;
     {
@@ -66,31 +77,30 @@ void EventLoopThreadPool::start(std::size_t count, Callback init,
       ready_ = true;
       stop = stopping_;
     }
-    if (stop) stop_workers();
+    if (stop) StopWorkers();
   } catch (...) {
     auto error = std::current_exception();
-    request_stop();
+    RequestStop();
     try {
-      join();
+      Join();
     } catch (...) {
     }
     std::rethrow_exception(error);
   }
 }
 
-bool EventLoopThreadPool::post(std::size_t index,
-                               EventLoopThread::Callback task) {
+bool EventLoopThreadPool::Post(std::size_t index,
+                               EventLoopThread::LoopTask task) {
   if (!task) throw std::invalid_argument("empty pool task");
   auto ticket = std::make_shared<Ticket>(Ticket{*this, index});
   auto* reservation = ticket.get();
-  EventLoopThread::Callback queued = [ticket = std::move(ticket),
-                                      task = std::move(task)](EventLoop& loop) {
-    task(loop);
-  };
+  EventLoopThread::LoopTask queued =
+      std::bind_front(&ReservedPoolTask::RunTask,
+                      ReservedPoolTask{std::move(ticket), std::move(task)});
   {
     std::lock_guard lock(mutex_);
     if (!ready_ || stopping_ || index >= workers_.size() ||
-        outstanding_[index] == task_capacity)
+        outstanding_[index] == kTaskCapacity)
       return false;
     ++outstanding_[index];
     reservation->armed = true;
@@ -99,16 +109,16 @@ bool EventLoopThreadPool::post(std::size_t index,
   // Stop records its cutoff now, but signals workers only after all accepted
   // forwards finish. No user capture is released under the pool mutex.
   try {
-    const bool accepted = workers_[index]->post(std::move(queued));
-    finish_forward();
+    const bool accepted = workers_[index]->Post(std::move(queued));
+    FinishForward();
     return accepted;
   } catch (...) {
-    finish_forward();
+    FinishForward();
     throw;
   }
 }
 
-void EventLoopThreadPool::finish_forward() noexcept {
+void EventLoopThreadPool::FinishForward() noexcept {
   bool stop;
   {
     std::lock_guard lock(mutex_);
@@ -116,30 +126,30 @@ void EventLoopThreadPool::finish_forward() noexcept {
     stop = stopping_ && forwarding_ == 0;
     forwarded_.notify_all();
   }
-  if (stop) stop_workers();
+  if (stop) StopWorkers();
 }
 
-void EventLoopThreadPool::stop_workers() {
-  for (auto& worker : workers_) worker->request_stop();
+void EventLoopThreadPool::StopWorkers() {
+  for (auto& worker : workers_) worker->RequestStop();
 }
 
-void EventLoopThreadPool::request_drain(EventLoop::Deadline deadline) {
+void EventLoopThreadPool::RequestDrain(EventLoop::Deadline deadline) {
   {
     std::lock_guard lock(mutex_);
     draining_ = true;
   }
-  for (auto& worker : workers_) worker->request_drain(deadline);
+  for (auto& worker : workers_) worker->RequestDrain(deadline);
 }
 
-void EventLoopThreadPool::request_force() {
+void EventLoopThreadPool::RequestForce() {
   {
     std::lock_guard lock(mutex_);
     draining_ = true;
   }
-  for (auto& worker : workers_) worker->request_force();
+  for (auto& worker : workers_) worker->RequestForce();
 }
 
-void EventLoopThreadPool::request_stop() {
+void EventLoopThreadPool::RequestStop() {
   bool stop;
   {
     std::lock_guard lock(mutex_);
@@ -147,10 +157,10 @@ void EventLoopThreadPool::request_stop() {
     stopping_ = true;
     stop = forwarding_ == 0;
   }
-  if (stop) stop_workers();
+  if (stop) StopWorkers();
 }
 
-void EventLoopThreadPool::join() {
+void EventLoopThreadPool::Join() {
   {
     std::unique_lock lock(mutex_);
     forwarded_.wait(lock, [this] { return forwarding_ == 0; });
@@ -158,7 +168,7 @@ void EventLoopThreadPool::join() {
   std::exception_ptr error;
   for (auto& worker : workers_) {
     try {
-      worker->join();
+      worker->Join();
     } catch (...) {
       if (!error) error = std::current_exception();
     }

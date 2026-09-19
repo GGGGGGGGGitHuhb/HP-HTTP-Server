@@ -11,7 +11,8 @@ std::mutex receive_mutex;
 std::map<int, ReceiveEvidence> receive_evidence;
 std::atomic<std::size_t> direct_hits{}, direct_errors{};
 
-void direct_probe(TcpConnection& connection, std::span<const std::byte> bytes,
+void direct_probe(TcpConnection& connection,
+                  std::span<const std::byte> bytes,
                   bool) {
   std::lock_guard lock(receive_mutex);
   auto& record = receive_evidence[connection.fd()];
@@ -32,7 +33,8 @@ struct BufferSnapshot {
   bool paused{};
 };
 
-BufferSnapshot snapshot(ServerHarness& harness, std::size_t workers,
+BufferSnapshot snapshot(ServerHarness& harness,
+                        std::size_t workers,
                         const sockaddr_in& peer) {
   BufferSnapshot found;
   for (std::size_t index = 0; index < std::max(std::size_t{1}, workers);
@@ -65,7 +67,8 @@ BufferSnapshot snapshot(ServerHarness& harness, std::size_t workers,
       promise.set_value(value);
     };
     if (workers)
-      require(TcpServerTestAccess::post(*harness.server, index,
+      require(TcpServerTestAccess::post(*harness.server,
+                                        index,
                                         [&](EventLoop&) { inspect(); }),
               "owner snapshot queued");
     else
@@ -135,7 +138,8 @@ void slow_pipeline(const Fixture& fixture,
           "control completes");
   const auto first = slow.next();
   require(first.status == 200 && first.body.size() == fixture.large.size() &&
-              std::memcmp(first.body.data(), fixture.large.data(),
+              std::memcmp(first.body.data(),
+                          fixture.large.data(),
                           fixture.large.size()) == 0,
           "slow first response exact bytes");
   for (int i = 0; i < 9; ++i) response(slow.next(), 200, "hello from S3\n");
@@ -155,6 +159,7 @@ void slow_pipeline(const Fixture& fixture,
 }
 
 void buffer_lifecycle(const hp::http::StaticFileService& service) {
+  ScopedAcceptedSendBuffer send_buffer_scope;
   const auto base_fds = resources("/proc/self/fd");
   const auto base_threads = task_ids();
   for (std::size_t workers : {0U, 1U, 2U}) {
@@ -172,7 +177,7 @@ void buffer_lifecycle(const hp::http::StaticFileService& service) {
         linger reset{1, 0};
         ::setsockopt(slow.fd, SOL_SOCKET, SO_LINGER, &reset, sizeof(reset));
         ::shutdown(slow.fd, SHUT_RDWR);
-        harness.server->force_shutdown();
+        harness.server->ForceShutdown();
         join_graceful(harness);
       }
       require(resources("/proc/self/fd") == base_fds,
@@ -183,12 +188,15 @@ void buffer_lifecycle(const hp::http::StaticFileService& service) {
               << " cycles=100 slow/error/shutdown fd_baseline=" << base_fds
               << " threads_restored=1 PASS\n";
   }
+  send_buffer_scope.VerifyAndRestore();
 }
 }  // namespace
 
 extern "C" ssize_t __real_recv(int, void*, std::size_t, int);
 
-extern "C" ssize_t __wrap_recv(int fd, void* data, std::size_t size,
+extern "C" ssize_t __wrap_recv(int fd,
+                               void* data,
+                               std::size_t size,
                                int flags) {
   const auto result = __real_recv(fd, data, size, flags);
   if (result > 0) {
@@ -207,8 +215,11 @@ int main(int argc, char** argv) {
     hp::http::StaticFileService service(fixture.root.string());
     const auto mode =
         argc == 2 ? std::string_view(argv[1]) : std::string_view{};
-    for (std::size_t workers : {0U, 1U, 2U})
+    for (std::size_t workers : {0U, 1U, 2U}) {
+      ScopedAcceptedSendBuffer send_buffer_scope;
       slow_pipeline(fixture, service, workers);
+      send_buffer_scope.VerifyAndRestore();
+    }
     if (mode != "--pipeline-only") buffer_lifecycle(service);
     require(direct_errors == 0 && active_files.empty(),
             "all observed files closed and direct recv valid");

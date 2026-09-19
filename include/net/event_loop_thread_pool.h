@@ -10,30 +10,54 @@ struct EventLoopThreadPoolTestAccess;
 // Concurrent post/stop callers must finish before destruction.
 class EventLoopThreadPool final : private base::NonCopyable {
  public:
-  using Callback = std::function<void(std::size_t, EventLoop&)>;
+  using WorkerInitCallback = std::function<void(std::size_t, EventLoop&)>;
 
-  static constexpr std::size_t task_capacity = 1024;
+  using WorkerCleanupCallback = std::function<void(std::size_t, EventLoop&)>;
+
+  static constexpr std::size_t kTaskCapacity = 1024;
 
   EventLoopThreadPool() = default;
   ~EventLoopThreadPool() noexcept;
 
-  void start(std::size_t count, Callback init = {}, Callback cleanup = {});
+  void Start(std::size_t count,
+             WorkerInitCallback init = {},
+             WorkerCleanupCallback cleanup = {});
 
-  bool post(std::size_t index, EventLoopThread::Callback task);
+  bool Post(std::size_t index, EventLoopThread::LoopTask task);
 
-  void request_stop();
-  void request_drain(EventLoop::Deadline deadline);
-  void request_force();
+  void RequestStop();
+  void RequestDrain(EventLoop::Deadline deadline);
+  void RequestForce();
 
-  void join();
+  void Join();
 
  private:
   friend struct EventLoopThreadPoolTestAccess;
 
   struct Ticket;
 
-  void finish_forward() noexcept;
-  void stop_workers();
+  struct WorkerInitTask {
+    WorkerInitCallback init;
+    std::size_t index;
+    void InitializeWorker(EventLoop& loop) const;
+  };
+
+  struct WorkerCleanupTask {
+    EventLoopThreadPool* pool;
+    WorkerCleanupCallback cleanup;
+    std::size_t index;
+    void CleanupWorker(EventLoop& loop) const;
+  };
+
+  struct ReservedPoolTask {
+    // Declaration order matters: user captures die before quota is returned.
+    std::shared_ptr<Ticket> ticket;
+    EventLoopThread::LoopTask task;
+    void RunTask(EventLoop& loop) const;
+  };
+
+  void FinishForward() noexcept;
+  void StopWorkers();
 
   std::mutex mutex_;
   std::condition_variable forwarded_;
