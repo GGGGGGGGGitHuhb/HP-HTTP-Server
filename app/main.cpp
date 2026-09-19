@@ -169,6 +169,27 @@ struct Options {
   return options;
 }
 
+struct ShutdownSignalHandler {
+  hp::app::SignalWatcher& signals;
+  hp::net::TcpServer& server;
+  std::chrono::milliseconds shutdown_timeout;
+  bool draining{false};
+
+  void HandleShutdownSignal(std::uint32_t) {
+    while (const int signal = signals.next()) {
+      if (draining) {
+        server.ForceShutdown();
+      } else {
+        draining = true;
+        server.RequestGracefulShutdown(hp::timer::TimerQueue::Clock::now() +
+                                       shutdown_timeout);
+      }
+      hp::base::info("Shutdown signal observed: " + std::to_string(signal) +
+                     ".");
+    }
+  }
+};
+
 int run(int argc, char* argv[]) {
   if (argc == 2 && std::string_view(argv[1]) == "--help") {
     print_usage(std::cout);
@@ -190,30 +211,26 @@ int run(int argc, char* argv[]) {
     hp::http::StaticFileService service(options.root);
     hp::app::SignalWatcher signals;
     hp::net::TcpServer server(options.port,
-                              hp::app::make_http_factory(service),
                               hp::http::kMaxRequestBytes,
                               options.threads,
                               options.timeouts);
-    bool draining = false;
-    server.watch_control_fd(signals.fd(), [&](std::uint32_t) {
-      while (const int signal = signals.next()) {
-        if (draining) {
-          server.force_shutdown();
-        } else {
-          draining = true;
-          server.request_graceful_shutdown(hp::timer::TimerQueue::Clock::now() +
-                                           options.shutdown_timeout);
-        }
-        hp::base::info("Shutdown signal observed: " + std::to_string(signal) +
-                       ".");
-      }
-    });
+    server.set_CreateMessageCallback_callback(
+        std::bind_front(&hp::app::HttpMessageFactory::CreateMessageCallback,
+                        hp::app::HttpMessageFactory{service}));
+    ShutdownSignalHandler shutdown_signals{signals,
+                                           server,
+                                           options.shutdown_timeout};
+    auto& signal_channel = server.WatchControlFd(signals.fd());
+    signal_channel.set_HandleShutdownSignal_callback(
+        std::bind_front(&ShutdownSignalHandler::HandleShutdownSignal,
+                        &shutdown_signals));
+    signal_channel.set_interest(EPOLLIN);
     const std::string port_text = std::to_string(server.bound_port());
     hp::base::info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");
     hp::base::info("Listening on TCP port " + port_text + ".");
     std::cout << "V0.1 / S3 minimal HTTP static file server listening on port "
               << port_text << "." << std::endl;
-    server.run();
+    server.Run();
     return 0;
   } catch (const std::exception& error) {
     hp::base::error(error.what());

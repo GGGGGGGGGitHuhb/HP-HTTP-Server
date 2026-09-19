@@ -43,16 +43,16 @@ struct EventLoopThreadPoolTestAccess {
 struct TcpServerTestAccess {
   static bool post(TcpServer& server,
                    std::size_t index,
-                   EventLoopThread::Callback task) {
-    return server.pool_.post(index, std::move(task));
+                   EventLoopThread::LoopTask task) {
+    return server.pool_.Post(index, std::move(task));
   }
 
   static std::size_t outstanding(TcpServer& server, std::size_t index) {
     return EventLoopThreadPoolTestAccess::outstanding(server.pool_, index);
   }
 
-  static bool main_post(TcpServer& server, EventLoop::Task task) {
-    return server.loop_.queue_in_loop(std::move(task));
+  static bool main_post(TcpServer& server, EventLoop::LoopTask task) {
+    return server.loop_.QueueInLoop(std::move(task));
   }
 };
 }  // namespace hp::net
@@ -66,6 +66,47 @@ std::mutex socket_probe_mutex;
 std::set<int> accepted_fds;
 std::atomic<int> accepted_sockets{}, closed_sockets{}, invalid_closes{},
     reject_registration{}, reject_allocation{};
+// Disabled outside the two real-backpressure fixture scopes.
+std::atomic<int> accepted_send_buffer_bytes{0};
+std::atomic<int> accepted_send_buffer_error{0};
+std::atomic<unsigned> configured_send_buffers{0};
+constexpr int kAcceptedSendBufferBytes = 16384;
+constexpr int kEffectiveSendBufferBytes = 32768;
+
+void ConfigureAcceptedSendBuffer(int accepted) {
+  const int requested = accepted_send_buffer_bytes.load();
+  if (requested == 0) return;
+  int effective = 0;
+  socklen_t length = sizeof(effective);
+  int error = 0;
+  if (::setsockopt(accepted,
+                   SOL_SOCKET,
+                   SO_SNDBUF,
+                   &requested,
+                   sizeof(requested)) < 0) {
+    error = errno;
+  } else if (::getsockopt(accepted,
+                          SOL_SOCKET,
+                          SO_SNDBUF,
+                          &effective,
+                          &length) < 0) {
+    error = errno;
+  } else if (length != sizeof(effective) ||
+             effective != kEffectiveSendBufferBytes) {
+    error = EPROTO;
+  }
+  if (error != 0) {
+    accepted_send_buffer_error.store(error);
+    // The fd was accepted and counted, but has not been handed to Acceptor.
+    ::close(accepted);
+    std::cerr << "accepted SO_SNDBUF fixture failed errno=" << error
+              << " effective=" << effective << '\n';
+    throw std::system_error(error,
+                            std::generic_category(),
+                            "accepted SO_SNDBUF fixture");
+  }
+  ++configured_send_buffers;
+}
 }  // namespace
 
 extern "C" {
@@ -74,9 +115,12 @@ int __real_accept4(int, sockaddr*, socklen_t*, int);
 int __wrap_accept4(int fd, sockaddr* address, socklen_t* size, int flags) {
   const int accepted = __real_accept4(fd, address, size, flags);
   if (accepted >= 0) {
-    std::lock_guard lock(socket_probe_mutex);
-    accepted_fds.insert(accepted);
-    ++accepted_sockets;
+    {
+      std::lock_guard lock(socket_probe_mutex);
+      accepted_fds.insert(accepted);
+      ++accepted_sockets;
+    }
+    ConfigureAcceptedSendBuffer(accepted);
   }
   return accepted;
 }
@@ -140,6 +184,45 @@ void require(bool value, const char* message) {
   if (!value) throw std::runtime_error(message);
 }
 
+class ScopedAcceptedSendBuffer {
+ public:
+  ScopedAcceptedSendBuffer()
+      : previous_(
+            accepted_send_buffer_bytes.exchange(kAcceptedSendBufferBytes)),
+        configured_before_(configured_send_buffers.load()) {
+    accepted_send_buffer_error.store(0);
+  }
+
+  ~ScopedAcceptedSendBuffer() {
+    if (active_) accepted_send_buffer_bytes.store(previous_);
+  }
+
+  ScopedAcceptedSendBuffer(const ScopedAcceptedSendBuffer&) = delete;
+  ScopedAcceptedSendBuffer& operator=(const ScopedAcceptedSendBuffer&) = delete;
+
+  // Call only after all servers/connections created in this scope are
+  // destroyed.
+  void VerifyAndRestore() {
+    const int requested = accepted_send_buffer_bytes.exchange(previous_);
+    active_ = false;
+    require(requested == kAcceptedSendBufferBytes &&
+                accepted_send_buffer_bytes.load() == previous_,
+            "accepted send buffer scope restores configuration");
+    require(accepted_send_buffer_error.load() == 0 &&
+                configured_send_buffers.load() > configured_before_,
+            "accepted SO_SNDBUF fixture configured and verified");
+    std::cout << "accepted SO_SNDBUF requested=" << kAcceptedSendBufferBytes
+              << " verified=" << kEffectiveSendBufferBytes << " sockets="
+              << configured_send_buffers.load() - configured_before_
+              << " restored=" << previous_ << '\n';
+  }
+
+ private:
+  int previous_;
+  unsigned configured_before_;
+  bool active_{true};
+};
+
 template <class F>
 void await(F predicate,
            std::source_location caller = std::source_location::current()) {
@@ -171,7 +254,7 @@ struct MessageObservation {
   sockaddr_in peer{};
   int peer_error{};
   std::thread::id owner;
-  TcpConnection::State state{TcpConnection::State::unregistered};
+  TcpConnection::State state{TcpConnection::State::kUnregistered};
   bool eof{}, completed{};
   std::size_t calls{};
   std::string input;
@@ -217,6 +300,74 @@ void session_event(bool created, const void* session) noexcept {
   }
 }
 
+struct ObservedHttpMessage {
+  TcpConnection::MessageCallback message_callback;
+  Probe* probe;
+  std::size_t id;
+
+  void set_HandleMessage_callback(TcpConnection::MessageCallback callback) {
+    message_callback = std::move(callback);
+  }
+  void HandleMessage(TcpConnection& connection,
+                     std::span<const std::byte> bytes,
+                     bool eof) {
+    {
+      std::lock_guard lock(probe->mutex);
+      auto& owner = probe->owners[id];
+      if (owner != std::thread::id{} && owner != std::this_thread::get_id())
+        ++probe->owner_errors;
+      owner = std::this_thread::get_id();
+      auto& message = probe->messages[id];
+      message.fd = connection.fd();
+      message.identity = connection.identity();
+      socklen_t size = sizeof(message.peer);
+      message.peer_error =
+          ::getpeername(message.fd,
+                        reinterpret_cast<sockaddr*>(&message.peer),
+                        &size) == 0
+              ? 0
+              : errno;
+      message.owner = owner;
+      message.state = connection.state();
+      message.eof = eof;
+      message.completed = false;
+      ++message.calls;
+      if (!bytes.empty())
+        message.input.append(
+            reinterpret_cast<const char*>(bytes.data()),
+            std::min(bytes.size(), std::size_t{128} - message.input.size()));
+    }
+    if (probe->before_message) probe->before_message(connection, bytes, eof);
+    message_callback(connection, bytes, eof);
+    {
+      std::lock_guard lock(probe->mutex);
+      probe->messages[id].completed = true;
+      probe->messages[id].state = connection.state();
+    }
+  }
+};
+
+struct ObservedHttpFactory {
+  hp::app::HttpMessageFactory production;
+  Probe* probe;
+  TcpConnection::MessageCallback CreateMessageCallback() {
+    auto callback = production.CreateMessageCallback();
+    if (!probe) return callback;
+    std::size_t id;
+    {
+      std::lock_guard lock(probe->mutex);
+      probe->factories.push_back(std::this_thread::get_id());
+      id = probe->owners.size();
+      probe->owners.push_back({});
+      probe->messages.emplace_back();
+    }
+    ObservedHttpMessage observer{{}, probe, id};
+    observer.set_HandleMessage_callback(std::move(callback));
+    return std::bind_front(&ObservedHttpMessage::HandleMessage,
+                           std::move(observer));
+  }
+};
+
 struct ServerHarness {
   std::thread control;
   TcpServer* server{};
@@ -236,74 +387,17 @@ struct ServerHarness {
     control = std::thread([&, workers, probe, timeouts] {
       bool published = false;
       try {
-        auto production = hp::app::make_http_factory(service);
-        TcpServer instance(
-            0,
-            [&, production]() mutable {
-              auto callback = production();
-              if (!probe) return callback;
-              std::size_t id;
-              {
-                std::lock_guard lock(probe->mutex);
-                probe->factories.push_back(std::this_thread::get_id());
-                id = probe->owners.size();
-                probe->owners.push_back({});
-                probe->messages.emplace_back();
-              }
-              return TcpConnection::MessageCallback(
-                  [callback = std::move(callback), probe, id](
-                      TcpConnection& connection,
-                      std::span<const std::byte> bytes,
-                      bool eof) mutable {
-                    {
-                      std::lock_guard lock(probe->mutex);
-                      auto& owner = probe->owners[id];
-                      if (owner != std::thread::id{} &&
-                          owner != std::this_thread::get_id())
-                        ++probe->owner_errors;
-                      owner = std::this_thread::get_id();
-                      auto& message = probe->messages[id];
-                      message.fd = connection.fd();
-                      message.identity = connection.identity();
-                      socklen_t size = sizeof(message.peer);
-                      message.peer_error =
-                          ::getpeername(
-                              message.fd,
-                              reinterpret_cast<sockaddr*>(&message.peer),
-                              &size) == 0
-                              ? 0
-                              : errno;
-                      message.owner = owner;
-                      message.state = connection.state();
-                      message.eof = eof;
-                      message.completed = false;
-                      ++message.calls;
-                      if (!bytes.empty())
-                        message.input.append(
-                            reinterpret_cast<const char*>(bytes.data()),
-                            std::min(bytes.size(),
-                                     std::size_t{128} - message.input.size()));
-                    }
-                    if (probe->before_message)
-                      probe->before_message(connection, bytes, eof);
-                    callback(connection, bytes, eof);
-                    {
-                      std::lock_guard lock(probe->mutex);
-                      probe->messages[id].completed = true;
-                      probe->messages[id].state = connection.state();
-                    }
-                  });
-            },
-            hp::http::kMaxRequestBytes,
-            workers,
-            timeouts);
+        TcpServer instance(0, hp::http::kMaxRequestBytes, workers, timeouts);
+        instance.set_CreateMessageCallback_callback(
+            std::bind_front(&ObservedHttpFactory::CreateMessageCallback,
+                            ObservedHttpFactory{{service}, probe}));
         if (probe) probe->main = std::this_thread::get_id();
         server = &instance;
         port = instance.bound_port();
         published = true;
         ready.set_value();
         try {
-          instance.run();
+          instance.Run();
         } catch (...) {
           error = std::current_exception();
         }
@@ -330,7 +424,7 @@ struct ServerHarness {
 
   ~ServerHarness() {
     if (control.joinable()) {
-      server->request_stop();
+      server->RequestStop();
       join();
     }
   }
@@ -345,7 +439,7 @@ struct ServerHarness {
   }
 
   void stop() {
-    server->request_stop();
+    server->RequestStop();
     join();
     if (error) std::rethrow_exception(error);
   }
@@ -580,7 +674,7 @@ void failures_and_pending(const hp::http::StaticFileService& service) {
     await([&] {
       return TcpServerTestAccess::outstanding(*harness.server, 1) == 2;
     });
-    harness.server->request_stop();
+    harness.server->RequestStop();
     release.set_value();
     harness.stop();
     active.eof();

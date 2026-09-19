@@ -246,7 +246,7 @@ void fixture_owner(const Fixture &fixture) {
   client.send(query("/note.txt", true));
   response(client.next(), 200, "hello from S3\n");
   client.eof();
-  harness.server->request_graceful_shutdown(Clock::now() + 1s);
+  harness.server->RequestGracefulShutdown(Clock::now() + 1s);
   join_graceful(harness);
   settle_threads(owned, baseline, "sendfile-M0", 0);
 }
@@ -353,12 +353,18 @@ void file_registration_failure(const Fixture &fixture, bool disabled) {
   bool failed = false;
   const auto before = registration_injections;
   {
-    TcpConnection connection(loop, Socket(pair[0]), 1, {}, 0, [](int, auto) {});
-    connection.send_file(view("header"), region(fixture, 1024));
+    TcpConnection connection(loop, Socket(pair[0]), 1, 0);
+    struct OnConnectionClosedObserver1 {
+      void OnConnectionClosed(int, TcpConnection::Identity) {}
+    };
+    connection.set_OnConnectionClosed_callback(
+        std::bind_front(&OnConnectionClosedObserver1::OnConnectionClosed,
+                        OnConnectionClosedObserver1{}));
+    connection.SendFile(view("header"), region(fixture, 1024));
     id = latest_file();
     reject_any_registration = !disabled;
     try {
-      connection.start();
+      connection.Start();
     } catch (const std::system_error &error) {
       require(error.code() == std::error_code(EIO, std::generic_category()),
               "file registration exact EIO");
@@ -508,19 +514,19 @@ void transport_errors(const Fixture &fixture, bool disable_eof) {
     require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
             "error pair");
     Socket peer(pair[1]);
-    registry.add(Socket(pair[0]),
-                 [&](TcpConnection &connection, auto bytes, bool) {
-                   auto file = region(
-                       fixture,
-                       error ? 32 : 1,
-                       (error || disable_eof) ? 0 : fixture.large.size());
-                   connection.consume(bytes.size());
-                   connection.send_file({}, std::move(file));
-                   sendfile_injection = error;
-                 });
+    registry.AddConnection(
+        Socket(pair[0]),
+        [&](TcpConnection &connection, auto bytes, bool) {
+          auto file = region(fixture,
+                             error ? 32 : 1,
+                             (error || disable_eof) ? 0 : fixture.large.size());
+          connection.Consume(bytes.size());
+          connection.SendFile({}, std::move(file));
+          sendfile_injection = error;
+        });
     require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "trigger file error");
     const auto before = sendfile_injection_consumed;
-    loop.poll_once(0);
+    loop.PollOnce(0);
     const auto id = latest_file();
     require(ShutdownAccess::entries(registry).empty() &&
                 evidence(id).closes == 1 &&
@@ -544,36 +550,53 @@ void transport_fairness(const Fixture &fixture) {
       "fairness pairs");
   Socket peer(pair[1]), other(healthy[1]);
   int completed = 0, healthy_calls = 0;
-  registry.add(
+  struct FileBudgetHandler {
+    const Fixture &fixture;
+    int &completed;
+
+    void HandleMessage(TcpConnection &connection,
+                       std::span<const std::byte> bytes,
+                       bool) {
+      connection.Consume(bytes.size());
+      connection.set_HandleWriteComplete_callback(
+          std::bind_front(&FileBudgetHandler::HandleWriteComplete, this));
+      connection.SendFile({}, region(fixture, 1));
+    }
+
+    void HandleWriteComplete(TcpConnection &current) {
+      ++completed;
+      if (completed < 100) current.SendFile({}, region(fixture, 1));
+    }
+  } file_handler{fixture, completed};
+  registry.AddConnection(
       Socket(pair[0]),
-      [&](TcpConnection &connection, auto bytes, bool) {
-        connection.consume(bytes.size());
-        connection.set_write_complete_callback([&](TcpConnection &current) {
-          ++completed;
-          if (completed < 100) current.send_file({}, region(fixture, 1));
-        });
-        connection.send_file({}, region(fixture, 1));
-      });
-  registry.add(Socket(healthy[0]),
-               [&](TcpConnection &connection, auto bytes, bool) {
-                 ++healthy_calls;
-                 connection.send(bytes);
-                 connection.consume(bytes.size());
-               });
+      std::bind_front(&FileBudgetHandler::HandleMessage, &file_handler));
+  registry.AddConnection(Socket(healthy[0]),
+                         [&](TcpConnection &connection, auto bytes, bool) {
+                           ++healthy_calls;
+                           connection.Send(bytes);
+                           connection.Consume(bytes.size());
+                         });
   require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1 &&
               ::send(other.fd(), "y", 1, MSG_NOSIGNAL) == 1,
           "fairness ready sockets");
-  loop.set_control_callback(
-      [&](EventLoop::Control, auto) { registry.begin_drain(true); });
+  struct ForceDrainTarget {
+    ConnectionRegistry &registry;
+    void HandleControl(EventLoop::Control, EventLoop::Deadline) {
+      registry.BeginDrain(true);
+    }
+  } control_target{registry};
+  loop.set_HandleControl_callback(
+      std::bind_front(&ForceDrainTarget::HandleControl, &control_target));
   bool task = false;
-  require(loop.queue_in_loop([&] {
+  require(loop.QueueInLoop([&] {
     require(completed == 1 && healthy_calls == 1,
             "outer write loop does not bypass file budget");
     task = true;
-    loop.request_force();
+    loop.RequestForce();
   }),
           "fairness task accepted");
-  loop.poll_once(0);
+  loop.PollOnce(0);
   require(task && completed == 1 && ShutdownAccess::entries(registry).empty(),
           "owner task and force run before reentrant file suffix");
   std::cout << "M1 fairness completed_before_control=" << completed
@@ -722,7 +745,7 @@ struct SendfileTestAccess {
   }
 
   static void write(TcpConnection &connection) {
-    connection.handle_event(EPOLLOUT);
+    connection.HandleConnectionEvent(EPOLLOUT);
   }
 };
 }  // namespace hp::net
@@ -861,14 +884,14 @@ void changing_files(const Fixture &fixture,
   require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
           "truncate pair");
   Socket peer(pair[1]);
-  registry.add(Socket(pair[0]),
-               [&](TcpConnection &connection, auto input, bool) {
-                 connection.consume(input.size());
-                 connection.send_file(truncated.bytes,
-                                      std::move(*truncated.file));
-               });
+  registry.AddConnection(Socket(pair[0]),
+                         [&](TcpConnection &connection, auto input, bool) {
+                           connection.Consume(input.size());
+                           connection.SendFile(truncated.bytes,
+                                               std::move(*truncated.file));
+                         });
   require(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "truncate trigger");
-  loop.poll_once(0);
+  loop.PollOnce(0);
   std::string wire;
   collect(peer.fd(), wire);
   require(ShutdownAccess::entries(registry).empty() &&
@@ -882,6 +905,7 @@ void changing_files(const Fixture &fixture,
 
 void production_files(const Fixture &fixture,
                       const hp::http::StaticFileService &service) {
+  ScopedAcceptedSendBuffer send_buffer_scope;
   for (std::size_t workers : {0U, 1U, 2U}) {
     const auto begin = file_count();
     ServerHarness harness(service, workers);
@@ -938,6 +962,7 @@ void production_files(const Fixture &fixture,
                   evidence(id).preads == 0,
               "production each opened region closes exactly once");
   }
+  send_buffer_scope.VerifyAndRestore();
 }
 
 void file_progress(const Fixture &fixture,
@@ -952,19 +977,30 @@ void file_progress(const Fixture &fixture,
   ::setsockopt(pair[0], SOL_SOCKET, SO_SNDBUF, &small, sizeof(small));
   int providers = 0;
   hp::app::HttpCallbackStats stats;
-  registry.add(Socket(pair[0]),
-               hp::app::make_http_callback(
-                   [&](const auto &request, auto policy) {
-                     ++providers;
-                     return service.PrepareResponse(request, policy);
-                   },
-                   &stats));
+  using ResponseScenario1State0 = decltype((providers));
+  using ResponseScenario1State1 = decltype((service));
+  struct ResponseScenario1 {
+    ResponseScenario1State0 providers;
+    ResponseScenario1State1 service;
+    hp::http::ResponseResult PrepareResponse(
+        const hp::http::HttpRequest &request,
+        hp::http::ConnectionPolicy policy) {
+      ++providers;
+      return service.PrepareResponse(request, policy);
+    }
+  };
+  registry.AddConnection(
+      Socket(pair[0]),
+      hp::app::MakeHttpCallback(
+          std::bind_front(&ResponseScenario1::PrepareResponse,
+                          ResponseScenario1{providers, service}),
+          &stats));
   auto &connection = *ShutdownAccess::entries(registry).at(pair[0]);
   const auto request = query("/large.bin") + query("/note.txt");
   require(::send(peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
               static_cast<ssize_t>(request.size()),
           "file pipeline trigger");
-  loop.poll_once(0);
+  loop.PollOnce(0);
   const auto id = latest_file();
   auto previous = SendfileTestAccess::progress(connection);
   const auto queued = connection.pending_bytes();
@@ -987,7 +1023,7 @@ void file_progress(const Fixture &fixture,
   }
   require(Clock::now() - began >= 200ms && providers == 1,
           "progress keeps transfer beyond idle duration");
-  while (!ShutdownAccess::entries(registry).empty()) loop.poll_once(200);
+  while (!ShutdownAccess::entries(registry).empty()) loop.PollOnce(200);
   require(loop.timer_count() == 0 && evidence(id).closes == 1 && providers == 1,
           "stalled file idle closes region without pipeline suffix");
   std::cout << "M2 file_progress bytes=" << evidence(id).bytes
@@ -1020,7 +1056,7 @@ void unfinished_lifecycle(const hp::http::StaticFileService &service) {
               "file fatal accepted");
       harness.failed("file fatal original");
     } else {
-      harness.server->request_graceful_shutdown(Clock::now());
+      harness.server->RequestGracefulShutdown(Clock::now());
       join_graceful(harness);
     }
     settle_threads(owned, baseline, "file-joined", cycle);

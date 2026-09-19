@@ -56,9 +56,9 @@ void modes_and_rollback() {
     std::atomic<int> init{}, cleanup{}, executed{};
     std::mutex mutex;
     std::set<std::thread::id> owners;
-    check(!pool.post(0, [](EventLoop&) {}), "post before start");
-    pool.request_stop();
-    pool.start(
+    check(!pool.Post(0, [](EventLoop&) {}), "post before start");
+    pool.RequestStop();
+    pool.Start(
         count,
         [&](std::size_t, EventLoop& loop) {
           check(loop.is_in_loop_thread(), "init owner");
@@ -73,18 +73,18 @@ void modes_and_rollback() {
     check(init == static_cast<int>(count) && owners.size() == count,
           "all ready fixed count");
     for (std::size_t i = 0; i < count; ++i)
-      check(pool.post(i,
+      check(pool.Post(i,
                       [&](EventLoop& loop) {
                         check(loop.is_in_loop_thread(), "task owner");
                         ++executed;
                       }),
             "post accepted");
-    check(!pool.post(count, [](EventLoop&) {}), "invalid index rejects");
-    throws([&] { pool.start(count); });
-    pool.request_stop();
-    pool.request_stop();
-    pool.join();
-    pool.join();
+    check(!pool.Post(count, [](EventLoop&) {}), "invalid index rejects");
+    throws([&] { pool.Start(count); });
+    pool.RequestStop();
+    pool.RequestStop();
+    pool.Join();
+    pool.Join();
     check(cleanup == static_cast<int>(count) &&
               executed == static_cast<int>(count),
           "stop drains all");
@@ -96,7 +96,7 @@ void modes_and_rollback() {
   EventLoopThreadPool failed;
   std::atomic<int> init{}, cleanup{};
   throws([&] {
-    failed.start(
+    failed.Start(
         2,
         [&](std::size_t index, EventLoop&) {
           ++init;
@@ -107,7 +107,7 @@ void modes_and_rollback() {
   until([&] { return count("/proc/self/task") == threads; });
   check(init == 2 && cleanup == 2 && count("/proc/self/fd") == fds,
         "rollback all workers");
-  failed.join();
+  failed.Join();
   std::cout << "second_start_failure: init=" << init << " cleanup=" << cleanup
             << " baseline_restored\n";
 }
@@ -118,7 +118,7 @@ void readiness() {
   auto gate = release.get_future().share();
   std::atomic<bool> returned{};
   std::thread control([&] {
-    pool.start(2, [&](std::size_t index, EventLoop&) {
+    pool.Start(2, [&](std::size_t index, EventLoop&) {
       if (index == 1) {
         entered.set_value();
         check(gate.wait_for(3s) == std::future_status::ready,
@@ -129,22 +129,22 @@ void readiness() {
   });
   check(entered.get_future().wait_for(3s) == std::future_status::ready,
         "init reached");
-  check(!returned && !pool.post(0, [](EventLoop&) {}),
+  check(!returned && !pool.Post(0, [](EventLoop&) {}),
         "pool unpublished before all ready");
-  pool.request_stop();
+  pool.RequestStop();
   release.set_value();
   control.join();
-  pool.join();
+  pool.Join();
   std::cout << "readiness: all_ready_barrier_and_start_stop=verified\n";
 }
 
 void capacity(bool fail) {
   EventLoopThreadPool pool;
-  pool.start(2);
+  pool.Start(2);
   std::promise<void> entered, release;
   auto gate = release.get_future().share();
   std::atomic<int> executed{}, cancelled{}, reentrant{};
-  check(pool.post(0,
+  check(pool.Post(0,
                   [&](EventLoop&) {
                     ++executed;
                     entered.set_value();
@@ -163,8 +163,8 @@ void capacity(bool fail) {
 
     ~Capture() {
       ++released;
-      pool.request_stop();
-      if (!pool.post(0, [](EventLoop&) {})) ++reentrant;
+      pool.RequestStop();
+      if (!pool.Post(0, [](EventLoop&) {})) ++reentrant;
     }
   };
 
@@ -172,28 +172,28 @@ void capacity(bool fail) {
     if (fail) {
       auto capture =
           std::shared_ptr<Capture>(new Capture{pool, cancelled, reentrant});
-      check(pool.post(0, [&, capture](EventLoop&) { ++executed; }),
+      check(pool.Post(0, [&, capture](EventLoop&) { ++executed; }),
             "capacity accept cancellation capture");
     } else {
-      check(pool.post(0, [&](EventLoop&) { ++executed; }), "capacity accept");
+      check(pool.Post(0, [&](EventLoop&) { ++executed; }), "capacity accept");
     }
   }
   const auto peak = EventLoopThreadPoolTestAccess::outstanding(pool, 0);
-  check(peak == 1024 && !pool.post(0, [](EventLoop&) {}),
+  check(peak == 1024 && !pool.Post(0, [](EventLoop&) {}),
         "1025 rejected including executing task");
-  check(pool.post(1, [](EventLoop&) {}), "per worker independent capacity");
+  check(pool.Post(1, [](EventLoop&) {}), "per worker independent capacity");
   if (!fail) {
     auto capture =
         std::shared_ptr<Capture>(new Capture{pool, cancelled, reentrant});
-    check(!pool.post(0, [capture](EventLoop&) {}), "reentrant reject");
+    check(!pool.Post(0, [capture](EventLoop&) {}), "reentrant reject");
     capture.reset();
   }
-  pool.request_stop();
+  pool.RequestStop();
   release.set_value();
   if (fail)
-    throws([&] { pool.join(); });
+    throws([&] { pool.Join(); });
   else
-    pool.join();
+    pool.Join();
   check(EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 0,
         "all tickets returned");
   check(fail ? executed == 1 && cancelled == 1023
@@ -204,10 +204,42 @@ void capacity(bool fail) {
             << " executed=" << executed << " captures_released=" << cancelled
             << " reentrant=" << reentrant << " outstanding=0\n";
 }
+void named_worker_first_error() {
+  struct WorkerTarget {
+    int init{0}, cleanup{0};
+    void Initialize(std::size_t index, EventLoop& loop) {
+      check(index == 0 && loop.is_in_loop_thread(),
+            "named pool init index and owner");
+      ++init;
+      throw std::runtime_error("pool init first");
+    }
+    void Cleanup(std::size_t index, EventLoop& loop) {
+      check(index == 0 && loop.is_in_loop_thread(),
+            "named pool cleanup index and owner");
+      ++cleanup;
+      throw std::runtime_error("pool cleanup second");
+    }
+  } target;
+  EventLoopThreadPool pool;
+  bool caught = false;
+  try {
+    pool.Start(2,
+               std::bind_front(&WorkerTarget::Initialize, &target),
+               std::bind_front(&WorkerTarget::Cleanup, &target));
+  } catch (const std::runtime_error& error) {
+    caught = std::string(error.what()) == "pool init first";
+  }
+  pool.Join();
+  check(caught && target.init == 1 && target.cleanup == 1,
+        "named worker rollback preserves first error without starting later "
+        "worker");
+}
+
 }  // namespace
 
 int main() {
   try {
+    named_worker_first_error();
     modes_and_rollback();
     readiness();
     capacity(false);

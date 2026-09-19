@@ -23,9 +23,7 @@ using namespace std::chrono_literals;
 
 namespace hp::net {
 struct EventLoopTestAccess {
-  static void token(std::uint64_t v) {
-    EventLoop::exchange_next_token_for_test(v);
-  }
+  static void token(std::uint64_t v) { EventLoop::ExchangeNextTokenForTest(v); }
 };
 }  // namespace hp::net
 
@@ -161,15 +159,21 @@ void owner_and_ready() {
   EventLoop loop;
   std::atomic<int> rejected{};
   int channel_fd = ::eventfd(0, EFD_NONBLOCK);
-  Channel channel(loop, channel_fd, [](std::uint32_t) {});
+  Channel channel(loop, channel_fd);
+  struct HandleConnectionEventObserver1 {
+    void HandleConnectionEvent(std::uint32_t) {}
+  };
+  channel.set_HandleConnectionEvent_callback(
+      std::bind_front(&HandleConnectionEventObserver1::HandleConnectionEvent,
+                      HandleConnectionEventObserver1{}));
   std::thread other([&] {
     try {
-      loop.poll_once(0);
+      loop.PollOnce(0);
     } catch (const std::logic_error&) {
       ++rejected;
     }
     try {
-      loop.set_after_dispatch({});
+      loop.set_DrainClosedConnections_callback({});
     } catch (const std::logic_error&) {
       ++rejected;
     }
@@ -183,22 +187,22 @@ void owner_and_ready() {
   check(rejected == 3, "owner rejection");
   ::close(channel_fd);
   int n = 0;
-  throws([&] { loop.queue_in_loop({}); });
-  check(loop.queue_in_loop([&] { ++n; }), "ready accepts");
-  loop.request_stop();
-  loop.request_stop();
-  check(!loop.queue_in_loop([] {}), "prestop rejects");
-  loop.loop();
+  throws([&] { loop.QueueInLoop({}); });
+  check(loop.QueueInLoop([&] { ++n; }), "ready accepts");
+  loop.RequestStop();
+  loop.RequestStop();
+  check(!loop.QueueInLoop([] {}), "prestop rejects");
+  loop.Loop();
   check(n == 1, "prestop drains");
-  loop.poll_once(0);
-  throws([&] { loop.loop(); });
+  loop.PollOnce(0);
+  throws([&] { loop.Loop(); });
   std::cout << "owner_ready: rejected=" << rejected << " executed=" << n
             << '\n';
 }
 
 void producers() {
   EventLoopThread worker;
-  worker.start();
+  worker.Start();
   std::barrier gate(5);
   std::vector<std::thread> producers;
   std::vector<int> seen(4000);
@@ -211,7 +215,7 @@ void producers() {
       for (int i = 0; i < 1000; ++i) {
         const auto deadline =
             std::chrono::steady_clock::now() + std::chrono::seconds(3);
-        while (!worker.post([&, p, i](EventLoop& loop) {
+        while (!worker.Post([&, p, i](EventLoop& loop) {
           check(loop.is_in_loop_thread(), "owner execution");
           check(next[p]++ == i, "producer order");
           ++seen[p * 1000 + i];
@@ -227,10 +231,10 @@ void producers() {
   gate.arrive_and_wait();
   for (auto& t : producers) t.join();
   std::promise<void> nested;
-  worker.post([&](EventLoop& loop) {
+  worker.Post([&](EventLoop& loop) {
     ++depth;
     max_depth = std::max(max_depth, depth);
-    loop.queue_in_loop([&] {
+    loop.QueueInLoop([&] {
       ++depth;
       max_depth = std::max(max_depth, depth);
       --depth;
@@ -240,8 +244,8 @@ void producers() {
   });
   check(nested.get_future().wait_for(3s) == std::future_status::ready,
         "nested deadline");
-  worker.request_stop();
-  worker.join();
+  worker.RequestStop();
+  worker.Join();
   check(accepted == 4000 && executed == accepted && max_depth == 1,
         "task accounting/depth");
   for (auto n : seen) check(n == 1, "unique execution");
@@ -252,7 +256,7 @@ void producers() {
 void wake() {
   EventLoopThread worker;
   pid_t tid{};
-  worker.start(
+  worker.Start(
       [&](EventLoop&) { tid = static_cast<pid_t>(::syscall(SYS_gettid)); });
   blocked(tid);
   auto before = waits.load();
@@ -260,19 +264,19 @@ void wake() {
   std::promise<void> done;
   write_fault = 1;
   read_fault = 1;
-  worker.post([&](EventLoop&) { done.set_value(); });
+  worker.Post([&](EventLoop&) { done.set_value(); });
   check(done.get_future().wait_for(500ms) == std::future_status::ready,
         "eventfd post wake");
   blocked(tid);
   write_fault = 2;
   read_fault = 2;
   std::promise<void> again;
-  worker.post([&](EventLoop&) { again.set_value(); });
+  worker.Post([&](EventLoop&) { again.set_value(); });
   check(again.get_future().wait_for(500ms) == std::future_status::ready,
         "EAGAIN wake");
   blocked(tid);
-  worker.request_stop();
-  worker.join();
+  worker.RequestStop();
+  worker.Join();
   auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                      std::chrono::steady_clock::now() - start)
                      .count();
@@ -289,9 +293,9 @@ void wake() {
 
 void stop_race() {
   EventLoopThread worker;
-  check(!worker.post([](EventLoop&) {}), "before start rejects");
-  worker.request_stop();
-  worker.start();
+  check(!worker.Post([](EventLoop&) {}), "before start rejects");
+  worker.RequestStop();
+  worker.Start();
   std::atomic<int> accepted{}, rejected{}, executed{};
   std::barrier gate(5);
   std::vector<std::thread> callers;
@@ -299,20 +303,20 @@ void stop_race() {
     callers.emplace_back([&] {
       gate.arrive_and_wait();
       for (int j = 0; j < 1000; ++j)
-        if (worker.post([&](EventLoop&) { ++executed; }))
+        if (worker.Post([&](EventLoop&) { ++executed; }))
           ++accepted;
         else
           ++rejected;
     });
   gate.arrive_and_wait();
-  worker.request_stop();
-  worker.request_stop();
+  worker.RequestStop();
+  worker.RequestStop();
   for (auto& t : callers) t.join();
-  worker.join();
-  worker.join();
+  worker.Join();
+  worker.Join();
   check(accepted == executed && accepted + rejected == 4000, "stop accounting");
-  check(!worker.post([](EventLoop&) {}), "after join rejects");
-  throws([&] { worker.start(); });
+  check(!worker.Post([](EventLoop&) {}), "after join rejects");
+  throws([&] { worker.Start(); });
   std::cout << "stop_race: accepted=" << accepted << " executed=" << executed
             << " rejected=" << rejected << '\n';
 }
@@ -322,11 +326,11 @@ void lifecycle() {
   int cleanup = 0;
   for (int i = 0; i < 100; ++i) {
     EventLoopThread worker;
-    worker.start({}, [&](EventLoop& loop) {
+    worker.Start({}, [&](EventLoop& loop) {
       check(loop.is_in_loop_thread(), "cleanup owner");
       ++cleanup;
     });
-    worker.post([](EventLoop&) {});
+    worker.Post([](EventLoop&) {});
   }
   until([&] { return count("/proc/self/task") == threads; });
   check(count("/proc/self/fd") == fds && cleanup == 100, "resource baseline");
@@ -335,6 +339,16 @@ void lifecycle() {
             << count("/proc/self/task") << '\n';
 }
 
+struct PassiveChannelObserver {
+  static void HandleConnectionEvent(std::uint32_t) {}
+};
+
+struct FailingChannelObserver {
+  static void HandleConnectionEvent(std::uint32_t) {
+    throw std::runtime_error("IO");
+  }
+};
+
 void failures() {
   int cleanup = 0;
   EventLoopThread init_fail;
@@ -342,23 +356,24 @@ void failures() {
   std::unique_ptr<Channel> partial_channel;
   auto before_fds = count("/proc/self/fd");
   throws([&] {
-    init_fail.start(
+    init_fail.Start(
         [&](EventLoop& loop) {
           partial_fd = ::eventfd(0, EFD_NONBLOCK);
-          partial_channel =
-              std::make_unique<Channel>(loop, partial_fd, [](std::uint32_t) {});
+          partial_channel = std::make_unique<Channel>(loop, partial_fd);
+          partial_channel->set_HandleConnectionEvent_callback(
+              &PassiveChannelObserver::HandleConnectionEvent);
           partial_channel->set_interest(EPOLLIN);
           throw std::runtime_error("init");
         },
         [&](EventLoop& loop) {
           check(loop.is_in_loop_thread(), "partial cleanup owner");
-          partial_channel->remove();
+          partial_channel->Remove();
           partial_channel.reset();
           ::close(partial_fd);
           ++cleanup;
         });
   });
-  init_fail.join();
+  init_fail.Join();
   check(cleanup == 1 && count("/proc/self/fd") == before_fds,
         "partial init cleanup once");
   EventLoopThread worker;
@@ -377,9 +392,9 @@ void failures() {
   };
 
   std::thread::id owner;
-  worker.start([&](EventLoop&) { owner = std::this_thread::get_id(); },
+  worker.Start([&](EventLoop&) { owner = std::this_thread::get_id(); },
                [&](EventLoop&) { ++cleanup; });
-  worker.post([&](EventLoop&) {
+  worker.Post([&](EventLoop&) {
     ++executed;
     entered.set_value();
     gate.wait();
@@ -388,29 +403,29 @@ void failures() {
   check(entered.get_future().wait_for(3s) == std::future_status::ready,
         "task entered");
   auto capture = std::shared_ptr<Capture>(new Capture{cancelled, owner});
-  worker.post([capture](EventLoop&) {});
+  worker.Post([capture](EventLoop&) {});
   capture.reset();
   release.set_value();
-  throws([&] { worker.join(); });
-  worker.join();
+  throws([&] { worker.Join(); });
+  worker.Join();
   check(executed == 1 && cancelled == 1 && cleanup == 2,
         "failure cancellation accounting");
   EventLoopThread self;
-  self.start();
-  self.post([&](EventLoop& loop) {
-    throws([&] { self.join(); });
-    loop.request_stop();
+  self.Start();
+  self.Post([&](EventLoop& loop) {
+    throws([&] { self.Join(); });
+    loop.RequestStop();
   });
-  self.join();
+  self.Join();
   EventLoopThread bad_cleanup;
-  bad_cleanup.start({},
+  bad_cleanup.Start({},
                     [](EventLoop&) { throw std::runtime_error("cleanup"); });
-  bad_cleanup.request_stop();
-  throws([&] { bad_cleanup.join(); });
+  bad_cleanup.RequestStop();
+  throws([&] { bad_cleanup.Join(); });
   {
     EventLoopThread unobserved;
-    unobserved.start([](EventLoop& loop) {
-      loop.queue_in_loop([] {
+    unobserved.Start([](EventLoop& loop) {
+      loop.QueueInLoop([] {
         throw std::runtime_error("expected unobserved worker failure");
       });
     });
@@ -425,7 +440,7 @@ void start_stop() {
   auto gate = release.get_future().share();
   std::atomic<bool> returned{};
   std::thread control([&] {
-    worker.start([&](EventLoop&) {
+    worker.Start([&](EventLoop&) {
       init.set_value();
       gate.wait();
     });
@@ -434,11 +449,11 @@ void start_stop() {
   check(init.get_future().wait_for(3s) == std::future_status::ready,
         "init handshake");
   check(!returned, "start waits for init");
-  worker.request_stop();
+  worker.RequestStop();
   release.set_value();
   control.join();
-  worker.join();
-  check(!worker.post([](EventLoop&) {}), "starting stop remembered");
+  worker.Join();
+  check(!worker.Post([](EventLoop&) {}), "starting stop remembered");
   std::cout << "start_stop: readiness_and_stop_intent=observed\n";
 }
 
@@ -447,18 +462,18 @@ void syscall_failures() {
   create_error = 1;
   throws([] {
     EventLoopThread w;
-    w.start();
+    w.Start();
   });
   register_error = 1;
   throws([] {
     EventLoopThread w;
-    w.start();
+    w.Start();
   });
   for (int fault : {3, 4}) {
     for (bool write : {false, true}) {
       EventLoopThread worker;
       pid_t tid{};
-      worker.start(
+      worker.Start(
           [&](EventLoop&) { tid = static_cast<pid_t>(::syscall(SYS_gettid)); });
       blocked(tid);
       if (write)
@@ -466,8 +481,8 @@ void syscall_failures() {
       else
         read_fault = fault;
       auto start = std::chrono::steady_clock::now();
-      check(worker.post([](EventLoop&) {}), "wake failure still accepted");
-      throws([&] { worker.join(); });
+      check(worker.Post([](EventLoop&) {}), "wake failure still accepted");
+      throws([&] { worker.Join(); });
       check(std::chrono::steady_clock::now() - start < 2s,
             "broken wake bounded");
     }
@@ -492,45 +507,62 @@ void io_failure_and_fairness() {
     }
   };
 
-  worker.start(
+  struct ChannelCleanupTarget {
+    std::unique_ptr<Channel>& channel;
+    int& dispatch_cleanup;
+    void DrainClosedConnections() {
+      channel->Remove();
+      ++dispatch_cleanup;
+    }
+  } cleanup_target{channel, dispatch_cleanup};
+
+  worker.Start(
       [&](EventLoop& loop) {
         fd = ::eventfd(1, EFD_NONBLOCK);
-        channel = std::make_unique<Channel>(
-            loop, fd, [](std::uint32_t) { throw std::runtime_error("IO"); });
+        channel = std::make_unique<Channel>(loop, fd);
+        channel->set_HandleConnectionEvent_callback(
+            &FailingChannelObserver::HandleConnectionEvent);
         channel->set_interest(EPOLLIN);
-        loop.set_after_dispatch([&] {
-          channel->remove();
-          ++dispatch_cleanup;
-        });
+        loop.set_DrainClosedConnections_callback(
+            std::bind_front(&ChannelCleanupTarget::DrainClosedConnections,
+                            &cleanup_target));
         auto capture = std::shared_ptr<Capture>(
             new Capture{cancelled, std::this_thread::get_id()});
-        loop.queue_in_loop([capture] {});
+        loop.QueueInLoop([capture] {});
       },
       [&](EventLoop&) {
         ++cleanup;
-        channel->remove();
+        channel->Remove();
         channel.reset();
         ::close(fd);
       });
   // Successful init is distinct from a subsequent immediate IO failure.
-  throws([&] { worker.join(); });
+  throws([&] { worker.Join(); });
   check(dispatch_cleanup == 1 && cleanup == 1 && cancelled == 1,
         "IO exceptional cleanup");
   EventLoop loop;
   fd = ::eventfd(1, EFD_NONBLOCK);
   int io = 0, tasks = 0;
-  Channel readable(loop, fd, [&](std::uint32_t) { ++io; });
+  Channel readable(loop, fd);
+  using HandleConnectionEventObserver2State0 = decltype((io));
+  struct HandleConnectionEventObserver2 {
+    HandleConnectionEventObserver2State0 io;
+    void HandleConnectionEvent(std::uint32_t) { ++io; }
+  };
+  readable.set_HandleConnectionEvent_callback(
+      std::bind_front(&HandleConnectionEventObserver2::HandleConnectionEvent,
+                      HandleConnectionEventObserver2{io}));
   readable.set_interest(EPOLLIN);
   std::function<void()> chain;
   chain = [&] {
-    if (++tasks < 5) loop.queue_in_loop(chain);
+    if (++tasks < 5) loop.QueueInLoop(chain);
   };
-  loop.queue_in_loop(chain);
-  loop.poll_once(0);
+  loop.QueueInLoop(chain);
+  loop.PollOnce(0);
   check(tasks == 1, "manual snapshot only");
-  for (int i = 0; i < 4; ++i) loop.poll_once(0);
+  for (int i = 0; i < 4; ++i) loop.PollOnce(0);
   check(tasks == 5 && io == 5, "IO advances with nested tasks");
-  readable.remove();
+  readable.Remove();
   ::close(fd);
   std::cout << "io_failure: task_accepted=1 executed=0 cancelled=" << cancelled
             << " after_dispatch=" << dispatch_cleanup << " cleanup=" << cleanup
@@ -551,19 +583,19 @@ void snapshot_cancellation() {
     }
   };
 
-  worker.start([&](EventLoop& loop) {
-    loop.queue_in_loop([&] {
+  worker.Start([&](EventLoop& loop) {
+    loop.QueueInLoop([&] {
       ++executed;
       auto nested = std::shared_ptr<Capture>(
           new Capture{cancelled, std::this_thread::get_id()});
-      loop.queue_in_loop([nested] {});
+      loop.QueueInLoop([nested] {});
       throw std::runtime_error("snapshot");
     });
     auto capture = std::shared_ptr<Capture>(
         new Capture{cancelled, std::this_thread::get_id()});
-    loop.queue_in_loop([capture] {});
+    loop.QueueInLoop([capture] {});
   });
-  throws([&] { worker.join(); });
+  throws([&] { worker.Join(); });
   check(executed == 1 && cancelled == 2, "snapshot and pending cancelled");
   std::cout << "snapshot_failure: accepted=3 executed=" << executed
             << " cancelled=" << cancelled << '\n';
@@ -578,9 +610,11 @@ void owner_assertions() {
       ::setrlimit(RLIMIT_CORE, &limit);
       auto loop = std::make_unique<EventLoop>();
       int fd = ::eventfd(0, EFD_NONBLOCK);
-      auto channel = std::make_unique<Channel>(*loop, fd, [](std::uint32_t) {});
+      auto channel = std::make_unique<Channel>(*loop, fd);
+      channel->set_HandleConnectionEvent_callback(
+          &PassiveChannelObserver::HandleConnectionEvent);
       std::thread wrong([&] {
-        if (operation == 0) channel->remove();
+        if (operation == 0) channel->Remove();
         if (operation == 1) channel.reset();
         if (operation == 2) loop.reset();
       });
@@ -601,11 +635,17 @@ void tokens() {
   auto run = [&] {
     EventLoop loop;
     int fd = ::eventfd(0, EFD_NONBLOCK);
-    Channel channel(loop, fd, [](std::uint32_t) {});
+    Channel channel(loop, fd);
+    struct HandleConnectionEventObserver3 {
+      void HandleConnectionEvent(std::uint32_t) {}
+    };
+    channel.set_HandleConnectionEvent_callback(
+        std::bind_front(&HandleConnectionEventObserver3::HandleConnectionEvent,
+                        HandleConnectionEventObserver3{}));
     gate.arrive_and_wait();
     for (int i = 0; i < 1000; ++i) {
       channel.set_interest(EPOLLIN);
-      channel.remove();
+      channel.Remove();
       ++registrations;
     }
     ::close(fd);
@@ -618,12 +658,18 @@ void tokens() {
   if (!child) {
     EventLoop loop;
     int fd = ::eventfd(0, EFD_NONBLOCK);
-    Channel channel(loop, fd, [](std::uint32_t) {});
+    Channel channel(loop, fd);
+    struct HandleConnectionEventObserver4 {
+      void HandleConnectionEvent(std::uint32_t) {}
+    };
+    channel.set_HandleConnectionEvent_callback(
+        std::bind_front(&HandleConnectionEventObserver4::HandleConnectionEvent,
+                        HandleConnectionEventObserver4{}));
     EventLoopTestAccess::token(std::numeric_limits<std::uint64_t>::max());
     channel.set_interest(EPOLLIN);
     check(channel.token() == std::numeric_limits<std::uint64_t>::max(),
           "last token");
-    channel.remove();
+    channel.Remove();
     throws([&] { channel.set_interest(EPOLLIN); });
     throws([&] { channel.set_interest(EPOLLIN); });
     ::close(fd);
@@ -636,6 +682,36 @@ void tokens() {
   std::cout << "tokens: concurrent_registrations=" << registrations
             << " exhaustion_latched=2\n";
 }
+void named_startup_first_error() {
+  struct StartupTarget {
+    int cleanup{0};
+    std::thread::id init_owner;
+    void Initialize(EventLoop& loop) {
+      init_owner = std::this_thread::get_id();
+      check(loop.is_in_loop_thread(), "named init owns loop");
+      throw std::runtime_error("named init first");
+    }
+    void Cleanup(EventLoop& loop) {
+      check(
+          loop.is_in_loop_thread() && init_owner == std::this_thread::get_id(),
+          "named partial cleanup same owner");
+      ++cleanup;
+      throw std::runtime_error("named cleanup second");
+    }
+  } target;
+  EventLoopThread worker;
+  bool caught = false;
+  try {
+    worker.Start(std::bind_front(&StartupTarget::Initialize, &target),
+                 std::bind_front(&StartupTarget::Cleanup, &target));
+  } catch (const std::runtime_error& error) {
+    caught = std::string(error.what()) == "named init first";
+  }
+  worker.Join();
+  check(caught && target.cleanup == 1,
+        "thread entry preserves first startup error once");
+}
+
 }  // namespace
 
 int main() {
@@ -644,6 +720,7 @@ int main() {
     producers();
     wake();
     stop_race();
+    named_startup_first_error();
     lifecycle();
     failures();
     start_stop();

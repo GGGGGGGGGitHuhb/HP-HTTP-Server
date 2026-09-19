@@ -14,36 +14,42 @@ struct TcpConnectionTestAccess;
 // callback returns.
 class TcpConnection final : private base::NonCopyable {
  public:
-  // Borrowed input is invalidated by consume; never retain it after callback.
+  // Borrowed input is invalidated by Consume; never retain it after callback.
   using MessageCallback =
       std::function<void(TcpConnection&, std::span<const std::byte>, bool)>;
   using Identity = std::uint64_t;
   using CloseCallback = std::function<void(int, Identity)>;
-  enum class State { unregistered, active, closing };
+  enum class State { kUnregistered, kActive, kClosing };
 
-  TcpConnection(EventLoop& loop, Socket socket, Identity identity,
-                MessageCallback handler, std::size_t max_input_bytes,
-                CloseCallback close_callback);
+  TcpConnection(EventLoop& loop,
+                Socket socket,
+                Identity identity,
+                std::size_t max_input_bytes);
+  void set_HandleMessage_callback(MessageCallback message_callback);
+  void set_OnConnectionClosed_callback(CloseCallback close_callback);
+  void set_UpdateTimeout_callback(
+      std::function<void(TcpConnection&, bool)> timeout_activity_callback);
   ~TcpConnection() noexcept;
 
-  void start();
-  void request_close() noexcept;
+  void Start();
+  void RequestClose() noexcept;
 
-  void send(std::span<const std::byte> bytes);
-  void send_file(std::span<const std::byte> header, base::FileRegion file);
-  void consume(std::size_t count);
+  void Send(std::span<const std::byte> bytes);
+  void SendFile(std::span<const std::byte> header, base::FileRegion file);
+  void Consume(std::size_t count);
 
-  void close_after_flush();
-  void begin_drain();
+  void CloseAfterFlush();
+  void BeginDrain();
 
-  void pause_reading();
-  void resume_reading();
+  void PauseReading();
+  void ResumeReading();
 
   void set_idle_wait(bool waiting);
 
   using WriteCompleteCallback = std::function<void(TcpConnection&)>;
 
-  void set_write_complete_callback(WriteCompleteCallback callback);
+  void set_HandleWriteComplete_callback(
+      WriteCompleteCallback write_complete_callback);
 
   [[nodiscard]] std::span<const std::byte> input_view() const noexcept {
     return io_.input_view();
@@ -58,7 +64,7 @@ class TcpConnection final : private base::NonCopyable {
   }
 
   // Owner teardown: unregister without notifying a possibly destructing owner.
-  void stop() noexcept;
+  void Stop() noexcept;
 
   [[nodiscard]] int fd() const noexcept { return io_.fd(); }
   [[nodiscard]] Identity identity() const noexcept { return identity_; }
@@ -72,13 +78,16 @@ class TcpConnection final : private base::NonCopyable {
   friend class ConnectionRegistry;
   friend struct TcpConnectionTestAccess;
 
-  void handle_event(std::uint32_t mask) noexcept;
-  void update_interest();
+  static void HandleEchoMessage(TcpConnection& connection,
+                                std::span<const std::byte> input,
+                                bool eof);
+  void HandleConnectionEvent(std::uint32_t mask) noexcept;
+  void UpdateInterest();
 
-  void read_messages();
-  void flush_output();
+  void ReadMessages();
+  void FlushOutput();
 
-  std::function<void(TcpConnection&, bool)> activity_callback_;
+  std::function<void(TcpConnection&, bool)> timeout_activity_callback_;
   bool idle_waiting_{false};
   std::chrono::steady_clock::time_point last_progress_{};
   std::optional<std::chrono::steady_clock::time_point> wait_since_;
@@ -88,7 +97,7 @@ class TcpConnection final : private base::NonCopyable {
   MessageCallback message_callback_;
   const Identity identity_;
   CloseCallback close_callback_;
-  Channel channel_;
+  Channel connection_channel_;
 
   bool input_stopped_{false};
   bool draining_{false};
@@ -98,7 +107,7 @@ class TcpConnection final : private base::NonCopyable {
   bool handling_event_{false};
   bool eof_notified_{false};
   std::size_t message_count_{0};
-  State state_{State::unregistered};
+  State state_{State::kUnregistered};
 
   // Intrusive owner recovery record: no allocation when an event requests
   // close.

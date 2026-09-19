@@ -6,8 +6,10 @@
 
 ## 当前独立重构进度
 
+- 当前覆盖状态（2026-09-19）：R2按Approved R006、Builder007/008、Reviewer005 PASS与Leader012完成验收；纠正2/2的停工记录及其后用户单问题恢复、六处绑定修复授权保留，不重置返工额度。R2未提交推送，整体重构及后续阶段仍未完成。下方R005记录仅属历史。
+
 - 2026-09-17：R1基础类型与协议契约已完成。REF-R1-DESIGN/review revision2 Approved及R001为基线，Builder001、独立Reviewer001 PASS、Leader005收口齐备；接口调用闭合、具名parser helper、显式结果、局部formatter/暂存范围hook已交付。独立Debug28/28、五项ASan/UBSan、13项hook、双smoke及反证通过。
-- R1仅本地提交，不推送；R2–R5未开始，不自动启动R2，V0.6范围和阶段顺序不变。五轮安排在本地`docs/leader/designs/refractor/overall-plan.md`；本次不宣称性能提升。
+- 2026-09-19：R2按Approved R005完成，Builder004与独立Reviewer003 PASS、Leader007收口齐备。完整TCP/HTTP回调链的具名化已从原R3/R4提前完成；剩余R3运输层、R4其他应用辅助、R5日志与全局一致性尚未启动，整体重构未完成。R1已合并并发布refactor-r1；R2在codex/refactor-r2验收，未提交、未推送。当前安排以本地overall-plan及R005为准；V0.6顺序不变，无新性能声明。
 
 ## 项目概览
 

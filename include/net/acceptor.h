@@ -11,12 +11,14 @@ class Acceptor final : private base::NonCopyable {
  public:
   using AcceptedCallback = std::function<void(Socket)>;
 
-  Acceptor(EventLoop& loop, std::uint16_t port, AcceptedCallback callback);
+  Acceptor(EventLoop& loop, std::uint16_t port);
+  void set_AddConnection_callback(
+      AcceptedCallback accepted_connection_callback);
   ~Acceptor() noexcept;
 
-  void start();
-  void stop() noexcept;
-  void close() noexcept;
+  void Start();
+  void Stop() noexcept;
+  void Close() noexcept;
 
   [[nodiscard]] std::uint16_t bound_port() const noexcept {
     return bound_port_;
@@ -25,14 +27,14 @@ class Acceptor final : private base::NonCopyable {
  private:
   friend struct AcceptorTestAccess;
 
-  static Socket create_listener(std::uint16_t port);
-  void handle_event(std::uint32_t mask);
-  void accept_ready();
+  static Socket CreateListener(std::uint16_t port);
+  void HandleListenerEvent(std::uint32_t mask);
+  void AcceptReady();
 
   Socket listener_;
-  AcceptedCallback callback_;
+  AcceptedCallback accepted_connection_callback_;
   const std::uint16_t bound_port_;
 
-  Channel channel_;
+  Channel listener_channel_;
 };
 }  // namespace hp::net

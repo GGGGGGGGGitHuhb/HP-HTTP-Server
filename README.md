@@ -4,7 +4,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.5/S4可复现压测基线已完成，Reviewer002唯一PASS、Leader005按五项版本条件关闭V0.5；S1–S4全部完成，本地基线`ecddb98`已包含PR #17合并，未新增版本标签。R1基础接口重构已完成（独立Reviewer001 PASS）：接口和调用者同步迁移、parser具名helper及显式结果、局部格式化与暂存范围hook已交付；独立28/28、五项ASan/UBSan、13项hook回归和双smoke通过。分支`codex/refactor-r1`仅本地提交、不推送，R2未启动。运行命令、环境与完整数据见 [压测说明](benchmark/README.md) 和 [独立结果](benchmark/results/V0.5-S4-reviewer-002.md)。1KiB实测A/B中位QPS为21373.88/713.56，B/A=0.033385；A组noisy，不能宣称性能改善、稳定降幅或根因。1MiB双方noisy，同样无稳定收益结论。
+- 当前阶段：V0.5/S4可复现压测基线已完成，Reviewer002唯一PASS、Leader005按五项版本条件关闭V0.5；S1–S4全部完成，本地基线`ecddb98`已包含PR #17合并，未新增版本标签。R1基础接口重构已完成（独立Reviewer001 PASS）：接口和调用者同步迁移、parser具名helper及显式结果、局部格式化与暂存范围hook已交付；独立28/28、五项ASan/UBSan、13项hook回归和双smoke通过。R1已合并并发布`refactor-r1`。R2按Approved R006完成独立验收（Reviewer005 PASS、Leader012）：组件回调注册可定位、持久目标显式具名绑定，通用任务容器保存已绑定任务；历史失败、停工及用户逐次授权的窄范围修复均保留；分支`codex/refactor-r2`尚未提交、推送。R3/R4剩余范围与R5尚未执行，整体重构未完成。运行命令、环境与完整数据见 [压测说明](benchmark/README.md) 和 [独立结果](benchmark/results/V0.5-S4-reviewer-002.md)。1KiB实测A/B中位QPS为21373.88/713.56，B/A=0.033385；A组noisy，不能宣称性能改善、稳定降幅或根因。1MiB双方noisy，同样无稳定收益结论。
 
 - S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
@@ -268,8 +268,8 @@ main执行accept和callback factory；未注册Socket按0→1→…固定轮转�
 这是固定交接边界；活跃连接仍没有总量上限；S3已提供普通idle及keep-alive等待超时，S4已将所有普通EventLoop入口统一限制为1024个尚未完成/释放的任务，含batch和执行者。
 S1独立EventLoopThread接口现在也遵守1024上限，返回false后调用者可在自身截止内重试或放弃。
 
-`TcpServer::request_stop()` 可跨普通线程调用，立即停止接收并回收所有worker/活动连接，不保证响应排空，也不是信号安全或进程优雅关闭。
-server构造/run/析构由main owner执行，stop调用者需在server析构前结束。任意worker致命失败会通过独立停止通知唤醒main，所有worker join后run再上报错误。
+`TcpServer::RequestStop()` 可跨普通线程调用，立即停止接收并回收所有worker/活动连接，不保证响应排空，也不是信号安全或进程优雅关闭。
+server构造/Run/析构由main owner执行，stop调用者需在server析构前结束。任意worker致命失败会通过独立停止通知唤醒main，所有worker join后Run再上报错误。
 C++ TcpServer末尾worker_count默认0，旧组件调用保持单Reactor；app显式传入默认2。
 
 ```bash
@@ -294,16 +294,16 @@ CTest自动传入当前server，sanitizer命令保持整个同进程网络/HTTP�
 
 ### V0.4/S1 线程原语与专项验证
 
-`EventLoopThread::start(init, cleanup)` 在 worker 构造 loop 并完成 init 后返回；
-`post([](EventLoop& loop) { ... })` 异步投递，`request_stop()` 截止接收并唤醒，
-`join()` 等待 owner 清理和线程退出，传播首次工作异常（重复 join 无操作）。
+`EventLoopThread::Start(init, cleanup)` 在 worker 构造 loop 并完成 init 后返回；
+`Post(named_loop_task)` 异步投递，`RequestStop()` 截止接收并唤醒，
+`Join()` 等待 owner 清理和线程退出，传播首次工作异常（重复 join 无操作）。
 start/join/析构由控制线程串行调用，post/stop 调用者必须在 wrapper 析构前结束。
 cleanup 在 init 开始后的退出路径各一次，由 owner 移除外部 Channel、释放 fd；不得抛异常。
 
-仅 `queue_in_loop`、`request_stop` 与不可变线程身份可跨线程访问 EventLoop。
+仅 `QueueInLoop`、`RequestStop` 与不可变线程身份可跨线程访问 EventLoop。
 正常停止排空已接收任务，异常则取消未执行任务并在 owner 释放捕获；失败不等于正常排空。
-每次 poll 执行当前任务快照，嵌套投递进入后续轮次。终态 `poll_once` 不推进，loop 不可重启。
-S1历史上普通任务队列无容量上限；当前S4每loop限制1024个未完成任务。单loop的普通request_stop仍排空已接受任务，HTTP优雅关闭使用独立控制路径。
+每次 poll 执行当前任务快照，嵌套投递进入后续轮次。终态 `PollOnce` 不推进，loop 不可重启。
+S1历史上普通任务队列无容量上限；当前S4每loop限制1024个未完成任务。单loop的普通RequestStop仍排空已接受任务，HTTP优雅关闭使用独立控制路径。
 健康阻塞由 eventfd 唤醒；1000 ms 有限等待只作为坏唤醒的故障兜底，不是定时器。
 
 ```bash
@@ -397,11 +397,11 @@ ctest --test-dir build-v0.4-s3 --output-on-failure --timeout 60
 
 每连接最多9437184字节（9 MiB）逻辑待发送输出；恰好上限可用，超限整次拒绝并关闭该连接，不追加错误响应。追加前压缩已发送前缀，vector存储受固定上限约束。合法8 MiB静态文件仍可完整发送。临时provider结果、内核缓冲、活跃连接总量及任意任务捕获对象另计，这不是进程RSS配额。
 
-每EventLoop最多1024个已接受且未执行/释放完的普通任务，包括本地batch和执行者；直接queue_in_loop、EventLoopThread与pool均受限。drain/force/完成通知使用固定控制状态，不占普通任务额度。HTTP仍一次一个响应并在Writing停读。
+每EventLoop最多1024个已接受且未执行/释放完的普通任务，包括本地batch和执行者；直接QueueInLoop、EventLoopThread与pool均受限。drain/force/完成通知使用固定控制状态，不占普通任务额度。HTTP仍一次一个响应并在Writing停读。
 
 优雅关闭停止并关闭listener，未adopt的handoff释放fd。owner观察drain后不再读取/解析新请求或调用后续provider；idle/partial立即关闭，已有响应排空后EOF，不继续缓存pipeline。排空期间取消idle/keep-alive计时，所有owner共享关闭绝对截止；到期可能截断原响应。已发送的keep-alive头不改写。同步provider或用户回调必须有限返回，截止不能抢占阻塞代码，也不承诺硬实时或完整抗DoS。
 
-库调用 `TcpServer::request_graceful_shutdown(steady_clock::time_point)` 发起排空，`force_shutdown()`强关；原`request_stop()`继续表示立即停止。库不接管宿主信号；应用的SignalWatcher在创建worker前阻塞信号，server回收Channel并join后恢复原mask。
+库调用 `TcpServer::RequestGracefulShutdown(steady_clock::time_point)` 发起排空，`ForceShutdown()`强关；原`RequestStop()`继续表示立即停止。库不接管宿主信号；应用的SignalWatcher在创建worker前阻塞信号，server回收Channel并join后恢复原mask。
 
 ```bash
 mkdir -p .cache/v0.4-s4/builder/{tmp,cache}

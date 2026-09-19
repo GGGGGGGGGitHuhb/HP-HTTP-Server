@@ -8,23 +8,32 @@ namespace hp::net {
 // callers must finish before destruction. No loop pointer escapes this wrapper.
 class EventLoopThread final : private base::NonCopyable {
  public:
-  using Callback = std::function<void(EventLoop&)>;
+  using InitCallback = std::function<void(EventLoop&)>;
+
+  using CleanupCallback = std::function<void(EventLoop&)>;
+  using LoopTask = std::function<void(EventLoop&)>;
 
   EventLoopThread() = default;
   ~EventLoopThread() noexcept;
 
-  void start(Callback init = {}, Callback cleanup = {});
+  void Start(InitCallback init = {}, CleanupCallback cleanup = {});
 
-  bool post(Callback task);
+  bool Post(LoopTask task);
 
-  void request_stop();
-  void request_drain(EventLoop::Deadline deadline);
-  void request_force();
+  void RequestStop();
+  void RequestDrain(EventLoop::Deadline deadline);
+  void RequestForce();
 
-  void join();
+  void Join();
 
  private:
-  void run(Callback init, Callback cleanup) noexcept;
+  struct LoopBoundTask {
+    EventLoop* target;
+    LoopTask task;
+    void RunInLoop() const;
+  };
+
+  void Run(InitCallback init, CleanupCallback cleanup) noexcept;
 
   std::mutex mutex_;
   std::condition_variable ready_;

@@ -6,7 +6,9 @@
 
 ## 当前状态与目标架构
 
-2026-09-17：R1基础接口重构已完成，独立Reviewer001 PASS、Leader005收口。基础/HTTP/Socket/Epoller普通操作与枚举/常量命名统一，当前调用者同步适配；RequestParser将ASCII比较和Header空白裁剪提取为同步具名私有方法，扫描计数、借用及拥有型请求结果保持。PathResult/ResponseResult状态和file/policy显式表达。所有权、线程和协议行为不变；后轮持久回调装配尚未迁移，R2未启动，不据此宣称全项目重构完成或性能收益。
+2026-09-17：R1基础接口重构已完成，独立Reviewer001 PASS、Leader005收口。基础/HTTP/Socket/Epoller普通操作与枚举/常量命名统一，当前调用者同步适配；RequestParser将ASCII比较和Header空白裁剪提取为同步具名私有方法，扫描计数、借用及拥有型请求结果保持。PathResult/ResponseResult状态和file/policy显式表达。所有权、线程和协议行为不变。
+
+2026-09-19：R2按R006及Reviewer005 PASS完成：Channel分别通过头文件可定位的setter绑定Acceptor::HandleListenerEvent、TcpConnection::HandleConnectionEvent、EventLoop::HandleWakeupEvent和ShutdownSignalHandler::HandleShutdownSignal；Acceptor通过set_AddConnection_callback绑定服务器。app通过TcpServer::set_CreateMessageCallback_callback显式绑定HttpMessageFactory::CreateMessageCallback；构造仍创建监听socket/worker，Run在外部装配后启用接收。WatchControlFd返回未启用的所属Channel，完成信号绑定后才启用兴趣。HTTP消息显式绑定按值持有的HttpMessageHandler::HandleMessage，Session仍在IO owner首次消息时创建；provider通过可定位setter转交，写完成绑定原共享Session，保留复制与pipeline语义。Registry的关闭/超时/活动目标具名注册；通用队列、定时器及任务转交保存已显式绑定的任务，线程/池载体使用具名方法而非自定义operator()。普通依赖仍可构造注入；无新共享所有权、协议架构或性能承诺。ConnectionIo及范围外辅助模块尚未迁移，不宣称全项目重构完成。
 
 V0.5/S3已完成：Approved revision1、Builder001/002、Reviewer002最终PASS与Leader003收口齐备。base Buffer使用独占连续字节块和读/写/prepare游标，consume不搬移后缀；ConnectionIo直接recv到持有尾区，成功只commit实际字节。构造不分配，首次懒分配4KiB，生产输入容量≤16KiB；通用max_input=0仍无输入硬限。尾区不足才整理或增长，新块成功后转移所有权，失败保留原字节/游标。
 
@@ -316,7 +318,7 @@ V0.5/S4已交付独立于生产依赖的Python构建/协调脚本及wrk Lua summ
 
 ### 静态文件请求流
 
-当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::read_messages -> MessageCallback -> app Session -> RequestParser/HTTP`。每个factory创建共享会话Reading/Writing/Closing及独立parser；`RequestParser::Feed`接收新字节后立即由连接consume并丢弃旧view。解析成功后暂停读取，生产`service.PrepareResponse`返回内存头/拥有型文件区域或内存响应及effective_policy；策略先决定再序列化，服务400收紧close，`Handle`委托以保持兼容。app保存最终策略并移动提交完整响应，write-complete排空通知后close或reset并优先处理缓存后缀，无须新socket事件。Session不拥有连接/service，ConnectionIo只读写字节；service生命周期覆盖回调并保留root文件fd。
+当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::ReadMessages -> MessageCallback -> app Session -> RequestParser/HTTP`。每个factory创建共享会话Reading/Writing/Closing及独立parser；`RequestParser::Feed`接收新字节后立即由连接consume并丢弃旧view。解析成功后暂停读取，生产`service.PrepareResponse`返回内存头/拥有型文件区域或内存响应及effective_policy；策略先决定再序列化，服务400收紧close，`Handle`委托以保持兼容。app保存最终策略并移动提交完整响应，write-complete排空通知后close或reset并优先处理缓存后缀，无须新socket事件。Session不拥有连接/service，ConnectionIo只读写字节；service生命周期覆盖回调并保留root文件fd。
 
 以下请求流包含已交付连接复用与长期扩展；sendfile已交付，完整指标仍非当前能力：
 

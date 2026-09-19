@@ -14,24 +14,25 @@ class TcpServer final : private base::NonCopyable {
       std::function<TcpConnection::MessageCallback()>;
 
   explicit TcpServer(std::uint16_t requested_port,
-                     MessageCallbackFactory factory = {},
                      std::size_t max_input_bytes = 0,
                      std::size_t worker_count = 0,
                      ConnectionTimeouts timeouts = {});
   ~TcpServer() noexcept;
+  void set_CreateMessageCallback_callback(
+      MessageCallbackFactory message_callback_factory);
 
   [[nodiscard]] std::uint16_t bound_port() const noexcept;
 
-  void run();
+  void Run();
 
   // Thread-safe immediate stop, not signal-safe or graceful HTTP draining.
-  void request_stop();
-  void request_graceful_shutdown(EventLoop::Deadline deadline);
-  void force_shutdown();
+  void RequestStop();
+  void RequestGracefulShutdown(EventLoop::Deadline deadline);
+  void ForceShutdown();
 
-  // Owner-only attachment; server removes this Channel before destroying its
-  // loop.
-  void watch_control_fd(int fd, Channel::Callback callback);
+  // Owner-only attachment, initially disabled. Register the named signal target
+  // and enable interest before Run. Server owns/removes the returned Channel.
+  Channel& WatchControlFd(int fd);
 
  private:
   friend struct GracefulShutdownTestAccess;
@@ -39,12 +40,25 @@ class TcpServer final : private base::NonCopyable {
   friend struct ConnectionTimeoutTestAccess;
   friend struct TcpServerTestAccess;
 
-  void add_connection(Socket socket);
-  void shutdown();
-  void control(EventLoop::Control kind, EventLoop::Deadline deadline);
+  struct ConnectionHandoff {
+    Socket socket;
+    TcpConnection::MessageCallback message_callback;
+  };
+
+  void AddConnection(Socket socket);
+  void InitializeWorkerRegistry(std::size_t index, EventLoop& loop);
+  void CleanupWorkerRegistry(std::size_t index, EventLoop& worker);
+  void AdoptConnection(std::size_t index,
+                       const std::shared_ptr<ConnectionHandoff>& handoff,
+                       EventLoop& loop);
+  void Shutdown();
+  void HandleWorkerControl(std::size_t index,
+                           EventLoop::Control kind,
+                           EventLoop::Deadline deadline);
+  void HandleControl(EventLoop::Control kind, EventLoop::Deadline deadline);
 
   EventLoop loop_;
-  MessageCallbackFactory callback_factory_;
+  MessageCallbackFactory message_callback_factory_;
   std::size_t max_input_bytes_;
   const std::size_t worker_count_;
   const ConnectionTimeouts timeouts_;

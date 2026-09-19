@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 #include "base/logger.h"
@@ -10,8 +11,8 @@ namespace hp::net {
 EventLoopThread::~EventLoopThread() noexcept {
   assert(std::this_thread::get_id() != worker_id_);
   try {
-    request_stop();
-    join();
+    RequestStop();
+    Join();
   } catch (const std::exception& e) {
     hp::base::error(e.what());
   } catch (...) {
@@ -19,15 +20,17 @@ EventLoopThread::~EventLoopThread() noexcept {
   }
 }
 
-void EventLoopThread::start(Callback init, Callback cleanup) {
+void EventLoopThread::LoopBoundTask::RunInLoop() const { task(*target); }
+
+void EventLoopThread::Start(InitCallback init, CleanupCallback cleanup) {
   std::unique_lock lock(mutex_);
   if (started_) throw std::logic_error("EventLoopThread already started");
   started_ = true;
   try {
-    thread_ = std::thread(
-        [this, init = std::move(init), cleanup = std::move(cleanup)]() mutable {
-          run(std::move(init), std::move(cleanup));
-        });
+    thread_ = std::thread(&EventLoopThread::Run,
+                          this,
+                          std::move(init),
+                          std::move(cleanup));
   } catch (...) {
     ready_flag_ = true;
     throw;
@@ -35,41 +38,48 @@ void EventLoopThread::start(Callback init, Callback cleanup) {
   ready_.wait(lock, [this] { return ready_flag_; });
   if (!startup_succeeded_) {
     lock.unlock();
-    join();
+    Join();
   }
 }
 
-bool EventLoopThread::post(Callback task) {
+bool EventLoopThread::Post(LoopTask task) {
   if (!task) throw std::invalid_argument("empty EventLoopThread task");
-  // Rejection leaves the capture here until after forwarding unlocks. On
-  // acceptance enqueue moves sole ownership to the loop, including
-  // cancellation.
-  EventLoop::Task queued;
+  // Reject before allocating. Allocate an empty binding before moving user
+  // captures; queued is destroyed after the lock on every failure path.
+  EventLoop::LoopTask queued;
   std::lock_guard lock(mutex_);
   if (!loop_) return false;
   EventLoop* target = loop_;
-  queued = [target, task = std::move(task)] { task(*target); };
-  return target->enqueue(queued);
+  using BoundTask = decltype(std::bind_front(&LoopBoundTask::RunInLoop,
+                                             LoopBoundTask{target, {}}));
+  static_assert(std::is_nothrow_move_assignable_v<BoundTask>);
+  static_assert(std::is_nothrow_move_constructible_v<BoundTask>);
+  queued =
+      std::bind_front(&LoopBoundTask::RunInLoop, LoopBoundTask{target, {}});
+  *queued.target<BoundTask>() =
+      std::bind_front(&LoopBoundTask::RunInLoop,
+                      LoopBoundTask{target, std::move(task)});
+  return target->Enqueue(queued);
 }
 
-void EventLoopThread::request_drain(EventLoop::Deadline deadline) {
+void EventLoopThread::RequestDrain(EventLoop::Deadline deadline) {
   std::lock_guard lock(mutex_);
-  if (loop_) loop_->request_drain(deadline);
+  if (loop_) loop_->RequestDrain(deadline);
 }
 
-void EventLoopThread::request_force() {
+void EventLoopThread::RequestForce() {
   std::lock_guard lock(mutex_);
-  if (loop_) loop_->request_force();
+  if (loop_) loop_->RequestForce();
 }
 
-void EventLoopThread::request_stop() {
+void EventLoopThread::RequestStop() {
   std::lock_guard lock(mutex_);
   if (!started_) return;
   stop_ = true;
-  if (loop_) loop_->request_stop();
+  if (loop_) loop_->RequestStop();
 }
 
-void EventLoopThread::join() {
+void EventLoopThread::Join() {
   {
     std::lock_guard lock(mutex_);
     if (std::this_thread::get_id() == worker_id_)
@@ -85,7 +95,7 @@ void EventLoopThread::join() {
   if (error) std::rethrow_exception(error);
 }
 
-void EventLoopThread::run(Callback init, Callback cleanup) noexcept {
+void EventLoopThread::Run(InitCallback init, CleanupCallback cleanup) noexcept {
   std::exception_ptr error;
   {
     std::lock_guard lock(mutex_);
@@ -97,13 +107,13 @@ void EventLoopThread::run(Callback init, Callback cleanup) noexcept {
       if (init) init(loop);
       {
         std::lock_guard lock(mutex_);
-        if (stop_) loop.request_stop();
+        if (stop_) loop.RequestStop();
         loop_ = &loop;
         startup_succeeded_ = true;
         ready_flag_ = true;
       }
       ready_.notify_all();
-      loop.loop();
+      loop.Loop();
     } catch (...) {
       error = std::current_exception();
     }

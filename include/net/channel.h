@@ -12,13 +12,17 @@ class EventLoop;
 // loop starts).
 class Channel final : private base::NonCopyable {
  public:
-  using Callback = std::function<void(std::uint32_t)>;
+  using EventCallback = std::function<void(std::uint32_t)>;
 
-  Channel(EventLoop& loop, int fd, Callback callback);
+  Channel(EventLoop& loop, int fd);
+  void set_HandleListenerEvent_callback(EventCallback event_callback);
+  void set_HandleConnectionEvent_callback(EventCallback event_callback);
+  void set_HandleWakeupEvent_callback(EventCallback event_callback);
+  void set_HandleShutdownSignal_callback(EventCallback event_callback);
   ~Channel() noexcept;
 
   void set_interest(std::uint32_t events);
-  void remove() noexcept;
+  void Remove() noexcept;
 
   [[nodiscard]] int fd() const noexcept { return fd_; }
   [[nodiscard]] std::uint32_t interest() const noexcept { return interest_; }
@@ -31,7 +35,7 @@ class Channel final : private base::NonCopyable {
 
   EventLoop& loop_;
   const int fd_;
-  Callback callback_;
+  EventCallback event_callback_;
 
   std::uint32_t interest_{0};
   std::uint32_t revents_{0};

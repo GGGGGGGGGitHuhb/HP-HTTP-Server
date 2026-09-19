@@ -17,31 +17,31 @@ class TimerQueue final : private base::NonCopyable {
   using Clock = std::chrono::steady_clock;
   using TimePoint = Clock::time_point;
   using Id = std::uint64_t;
-  using Task = std::function<void()>;
+  using TimerTask = std::function<void()>;
 
   TimerQueue() = default;
   ~TimerQueue() noexcept;
 
-  Id add(TimePoint deadline, Task callback);
-  bool reschedule(Id id, TimePoint deadline);
-  bool cancel(Id id);
+  Id Add(TimePoint deadline, TimerTask expiry_task);
+  bool Reschedule(Id id, TimePoint deadline);
+  bool Cancel(Id id);
 
   std::optional<TimePoint> next_deadline() const;
   std::size_t size() const;
   Id last_id() const;
 
-  void run_due(TimePoint now, Id cutoff = UINT64_MAX);
-  void clear() noexcept;
+  void RunDue(TimePoint now, Id cutoff = UINT64_MAX);
+  void Clear() noexcept;
 
  private:
   friend struct TimerQueueTestAccess;
 
-  static Id exchange_next_id_for_test(Id value);
-  void require_owner() const;
+  static Id ExchangeNextIdForTest(Id value);
+  void RequireOwner() const;
 
   struct Record {
     TimePoint deadline;
-    Task callback;
+    TimerTask expiry_task;
   };
 
   const std::thread::id owner_{std::this_thread::get_id()};

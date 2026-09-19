@@ -19,7 +19,7 @@
 namespace hp::net {
 struct TcpConnectionTestAccess {
   static ConnectionEventResult event(TcpConnection& c, std::uint32_t mask) {
-    c.handle_event(mask);
+    c.HandleConnectionEvent(mask);
     return c.last_result_;
   }
 };
@@ -475,13 +475,14 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
          "real reset event must contain EPOLLERR");
 
   hp::net::EventLoop loop;
-  hp::net::TcpConnection connection(loop,
-                                    std::move(accepted),
-                                    1,
-                                    {},
-                                    0,
-                                    [](int, auto) {});
-  connection.start();
+  hp::net::TcpConnection connection(loop, std::move(accepted), 1, 0);
+  struct OnConnectionClosedObserver1 {
+    void OnConnectionClosed(int, hp::net::TcpConnection::Identity) {}
+  };
+  connection.set_OnConnectionClosed_callback(
+      std::bind_front(&OnConnectionClosedObserver1::OnConnectionClosed,
+                      OnConnectionClosedObserver1{}));
+  connection.Start();
   const hp::net::ConnectionEventResult result =
       hp::net::TcpConnectionTestAccess::event(connection, observed_events);
   expect(result.socket_error_observed,

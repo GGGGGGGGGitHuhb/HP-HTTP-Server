@@ -12,28 +12,30 @@ struct TcpServerTestAccess;
 // One owner loop, one registry. The same recovery algorithm serves all modes.
 class ConnectionRegistry final : private base::NonCopyable {
  public:
-  ConnectionRegistry(EventLoop& loop, std::size_t max_input_bytes,
+  ConnectionRegistry(EventLoop& loop,
+                     std::size_t max_input_bytes,
                      ConnectionTimeouts timeouts = {});
   ~ConnectionRegistry() noexcept;
 
-  void set_drained_callback(EventLoop::Task callback);
-  void begin_drain(bool force = false);
+  void set_RequestStop_callback(EventLoop::LoopTask request_stop_callback);
+  void BeginDrain(bool force = false);
 
-  void add(Socket socket, TcpConnection::MessageCallback callback);
-  void connection_closed(int fd, TcpConnection::Identity identity) noexcept;
-  void drain_closed_connections() noexcept;
+  void AddConnection(Socket socket,
+                     TcpConnection::MessageCallback message_callback);
+  void OnConnectionClosed(int fd, TcpConnection::Identity identity) noexcept;
+  void DrainClosedConnections() noexcept;
 
  private:
   friend struct GracefulShutdownTestAccess;
   friend struct ConnectionTimeoutTestAccess;
   friend struct TcpServerTestAccess;
 
-  void update_timeout(TcpConnection& connection, bool progress);
-  void cancel_timeout(TcpConnection& connection) noexcept;
-  void expire(int fd, TcpConnection::Identity identity);
+  void UpdateTimeout(TcpConnection& connection, bool progress);
+  void CancelTimeout(TcpConnection& connection) noexcept;
+  void ExpireConnection(int fd, TcpConnection::Identity identity);
 
   bool draining_{false}, notified_{false};
-  EventLoop::Task drained_callback_;
+  EventLoop::LoopTask request_stop_callback_;
 
   const ConnectionTimeouts timeouts_;
   EventLoop& loop_;
