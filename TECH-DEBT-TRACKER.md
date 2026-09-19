@@ -391,3 +391,7 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 ## R3 ConnectionIo收口检查点
 
 - 2026-09-19：Approved R3 revision1、Builder001、独立Reviewer001 PASS及Leader003齐备，七文件命名/三处显式结果迁移与现行接口文档同步，TD-005本轮检查点关闭但总体继续Open。无新债务、延期、风险豁免或性能声明；R3返工0/2，未提交推送。TD-001/TD-002/RO-002不变；剩余R4应用辅助与R5日志/整体一致性未启动。R2已提交合并并发布refactor-r2，历史未发布检查点保留原时点含义。
+
+## R4 CLI与信号辅助收口检查点
+
+- 2026-09-19：Approved R4 revision1、Builder001、独立Reviewer001 PASS及Leader003齐备，四文件迁移与状态同步，TD-005本轮检查点关闭、总体仍Open。源码返工0；Reviewer格式参数及Leader审查构建清单遗漏造成两次证据纠正2/2，已补齐且保留首批NOT RUN。无新债务、风险豁免或性能声明；R4未提交推送，R5未启动。TD-001/TD-002/RO-002不变；R3已合并发布refactor-r3。

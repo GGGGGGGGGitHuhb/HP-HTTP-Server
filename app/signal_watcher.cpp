@@ -16,7 +16,8 @@ SignalWatcher::SignalWatcher() {
   ::sigaddset(&signals, SIGTERM);
   const int result = ::pthread_sigmask(SIG_BLOCK, &signals, &previous_);
   if (result)
-    throw std::system_error(result, std::generic_category(),
+    throw std::system_error(result,
+                            std::generic_category(),
                             "block shutdown signals");
   fd_ = ::signalfd(-1, &signals, SFD_NONBLOCK | SFD_CLOEXEC);
   if (fd_ < 0) {
@@ -31,7 +32,7 @@ SignalWatcher::~SignalWatcher() noexcept {
   ::pthread_sigmask(SIG_SETMASK, &previous_, nullptr);
 }
 
-int SignalWatcher::next() {
+int SignalWatcher::ReadNextSignal() {
   signalfd_siginfo signal{};
   for (;;) {
     const auto count = ::read(fd_, &signal, sizeof(signal));

@@ -565,7 +565,7 @@ void options_boundaries() {
   auto parse = [](std::vector<std::string> values) {
     std::vector<char*> argv;
     for (auto& value : values) argv.push_back(value.data());
-    return parse_options(static_cast<int>(argv.size()), argv.data());
+    return ParseServerOptions(static_cast<int>(argv.size()), argv.data());
   };
   const auto defaults = parse({"server", "--port", "0", "--root", "."});
   require(defaults.shutdown_timeout == 5000ms,

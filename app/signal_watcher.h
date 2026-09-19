@@ -13,7 +13,7 @@ class SignalWatcher final : private base::NonCopyable {
 
   int fd() const noexcept { return fd_; }
 
-  int next();
+  int ReadNextSignal();
 
  private:
   sigset_t previous_{};

@@ -6,7 +6,7 @@
 
 ## 当前独立重构进度
 
-- 当前覆盖状态（2026-09-19）：R2按Approved R006、Builder007/008、Reviewer005 PASS与Leader012完成验收；纠正2/2的停工记录及其后用户单问题恢复、六处绑定修复授权保留，不重置返工额度。R2已提交5317298、PR #19合并d7693da并发布refactor-r2。R3按Approved revision1、Builder001、独立Reviewer001 PASS和Leader003完成ConnectionIo迁移，返工0/2，未提交推送。剩余R4/R5尚未开始，整体重构未完成。下方R005记录仅属历史。
+- 当前覆盖状态（2026-09-19）：R2按Approved R006、Builder007/008、Reviewer005 PASS与Leader012完成验收；纠正2/2的停工记录及其后用户单问题恢复、六处绑定修复授权保留，不重置返工额度。R2已提交5317298、PR #19合并d7693da并发布refactor-r2。R3按Approved revision1、Builder001、独立Reviewer001 PASS和Leader003完成ConnectionIo迁移，返工0/2；R3已提交ffb20a6、合并9a49667并发布refactor-r3。R4按Approved revision1、Builder001、Reviewer001 PASS和Leader003完成CLI/信号辅助迁移，源码返工0、证据纠正2/2，未提交推送。R5未启动，整体重构未完成。下方R005记录仅属历史。
 
 - 2026-09-17：R1基础类型与协议契约已完成。REF-R1-DESIGN/review revision2 Approved及R001为基线，Builder001、独立Reviewer001 PASS、Leader005收口齐备；接口调用闭合、具名parser helper、显式结果、局部formatter/暂存范围hook已交付。独立Debug28/28、五项ASan/UBSan、13项hook、双smoke及反证通过。
 - 2026-09-19：R2按Approved R005完成，Builder004与独立Reviewer003 PASS、Leader007收口齐备。完整TCP/HTTP回调链的具名化已从原R3/R4提前完成；剩余R3运输层、R4其他应用辅助、R5日志与全局一致性尚未启动，整体重构未完成。R1已合并并发布refactor-r1；R2在codex/refactor-r2验收，未提交、未推送。当前安排以本地overall-plan及R005为准；V0.6顺序不变，无新性能声明。

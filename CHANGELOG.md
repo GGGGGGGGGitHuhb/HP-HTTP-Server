@@ -6,7 +6,9 @@
 
 ### 重构
 
-- 2026-09-19：R3完成ConnectionIo全部操作、常量和SendFileWithoutSigpipe辅助入口改名，同步全部直接调用；三处读写结果显式初始化。七个C++文件只包含批准的符号替换与等价初始化，不改算法、回调、所有权、测试断言或参数。Builder一次完整28/28；独立Reviewer001六项Debug6/6、ASan/UBSan/LSan2/2，规范/语义检查PASS，返工0/2。R3未提交推送，R4/R5未开始。
+- 2026-09-19：R4完成CLI/startup/SignalWatcher入口命名及三个数字验证函数提取，共四个C++文件；保留参数规则、诊断、退出码及信号生命周期，直接测试调用同步。Builder一次28/28，独立Reviewer001 PASS：首批三项通过、server_integration_tests因缺失构建目标NOT RUN，补建后仅该项1/1通过。两次证据纠正（格式参数与构建清单），源码返工0；原记录保留，不声称首批4/4。R4未提交推送，R5未启动。
+
+- 2026-09-19：R3完成ConnectionIo全部操作、常量和SendFileWithoutSigpipe辅助入口改名，同步全部直接调用；三处读写结果显式初始化。七个C++文件只包含批准的符号替换与等价初始化，不改算法、回调、所有权、测试断言或参数。Builder一次完整28/28；独立Reviewer001六项Debug6/6、ASan/UBSan/LSan2/2，规范/语义检查PASS，返工0/2。R3后续已提交ffb20a6、PR #20合并9a49667并发布refactor-r3；R4结果见上文。
 
 - 2026-09-19：R2按R006完成Reactor/线程/定时器及TCP→HTTP回调装配重构：组件槽提供可导航的具名注册入口，HTTP工厂/消息及调度载体显式绑定具名方法，移除迁移范围内自定义operator()回调入口。服务器在外部装配后于Run启用接收；保留惰性Session、原复制/线程/所有权、协议与生产缓冲策略。
 - 独立Reviewer005 PASS，F-C01六处测试绑定违规已关闭：Debug11/11、真实背压两目标各三次、ASan/UBSan/LSan6/6通过。Builder先前完整回归27/28及授权单项修复1/1分别保留，另有threads=0 3/3、专项sanitizer7/7和六处修复涉及的两目标Debug/sanitizer各2/2；不声称新跑完整28/28。R2第2/2轮停工、单问题修复及六处修复的逐次用户授权均保留，不重置额度。无新性能声明；R2后续已提交5317298、PR #19合并d7693da并发布refactor-r2，整体重构未完成。
