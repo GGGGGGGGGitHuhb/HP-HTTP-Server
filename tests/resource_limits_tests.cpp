@@ -23,17 +23,17 @@ struct ConnectionIoTestAccess {
 
 namespace {
 void output_bounds() {
-  constexpr auto limit = ConnectionIo::output_limit;
-  require(ConnectionIo::output_fits(limit - 1, 1) &&
-              !ConnectionIo::output_fits(limit, 1) &&
-              !ConnectionIo::output_fits(1, SIZE_MAX),
+  constexpr auto limit = ConnectionIo::kOutputLimit;
+  require(ConnectionIo::OutputFits(limit - 1, 1) &&
+              !ConnectionIo::OutputFits(limit, 1) &&
+              !ConnectionIo::OutputFits(1, SIZE_MAX),
           "overflow safe capacity arithmetic");
   std::vector<std::byte> bytes(limit + 1);
   for (auto size : {limit - 1, limit, limit + 1}) {
     ConnectionIo io{Socket{}};
     bool rejected = false;
     try {
-      io.queue_output(std::span(bytes).first(size));
+      io.QueueOutput(std::span(bytes).first(size));
     } catch (const std::length_error&) {
       rejected = true;
     }
@@ -42,7 +42,7 @@ void output_bounds() {
             "whole append or no append");
     if (!rejected) {
       try {
-        io.queue_output(std::span(bytes).first(2));
+        io.QueueOutput(std::span(bytes).first(2));
         throw std::runtime_error("overflow append accepted");
       } catch (const std::length_error&) {
       }
@@ -62,8 +62,8 @@ void output_bounds() {
   std::size_t total = 0, peak_size = 0, peak_capacity = 0, blocked = 0;
   char received[65536];
   for (int cycle = 0; cycle < 1000; ++cycle) {
-    io.queue_output(std::span(bytes).first(16384));
-    auto written = io.write_available();
+    io.QueueOutput(std::span(bytes).first(16384));
+    auto written = io.WriteAvailable();
     blocked += written.would_block;
     peak_size = std::max(peak_size, ConnectionIoTestAccess::size(io));
     peak_capacity =
@@ -76,7 +76,7 @@ void output_bounds() {
         break;
     }
     while (io.pending_bytes() > 16384) {
-      (void)io.write_available();
+      (void)io.WriteAvailable();
       const auto n = ::recv(peer.fd(), received, sizeof(received), 0);
       if (n > 0) total += static_cast<std::size_t>(n);
     }
@@ -219,7 +219,7 @@ void oversized_connection() {
     accepted_fds.insert(second[0]);
     accepted_sockets += 2;
   }
-  std::vector<std::byte> excessive(ConnectionIo::output_limit + 1);
+  std::vector<std::byte> excessive(ConnectionIo::kOutputLimit + 1);
   struct OversizedOutputHandler {
     std::vector<std::byte>& excessive;
     void HandleMessage(TcpConnection& connection,

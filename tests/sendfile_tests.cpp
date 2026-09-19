@@ -307,24 +307,24 @@ void call_budget_and_mask_failure(const Fixture &fixture,
   int large = 1024 * 1024;
   ::setsockopt(pair[0], SOL_SOCKET, SO_SNDBUF, &large, sizeof(large));
   ConnectionIo io{Socket(pair[0])};
-  io.queue_file({}, region(fixture, 1024 * 1024));
+  io.QueueFile({}, region(fixture, 1024 * 1024));
   const auto id = latest_file();
   const auto before = sendfile_injection_consumed;
   sendfile_injection = disable_budget ? 0 : EINTR;
   sendfile_injection_repeats = 100;
-  const auto interrupted = io.write_available();
+  const auto interrupted = io.WriteAvailable();
   sendfile_injection = 0;
   sendfile_injection_repeats = 0;
   require(interrupted.bytes_written == 0 && interrupted.error_number == 0 &&
               sendfile_injection_consumed - before ==
-                  ConnectionIo::file_call_budget &&
+                  ConnectionIo::kFileCallBudget &&
               io.pending_bytes() == 1024 * 1024,
           "EINTR call budget must stop at sixteen");
   sigset_t original, restored;
   ::pthread_sigmask(SIG_SETMASK, nullptr, &original);
   const auto mask_before = mask_injection_consumed;
   mask_injection = disable_mask ? 0 : EIO;
-  const auto rejected = io.write_available();
+  const auto rejected = io.WriteAvailable();
   require(rejected.error_number == EIO && evidence(id).calls == 0 &&
               mask_injection_consumed == mask_before + 1,
           "mask failure must prevent unprotected sendfile");
@@ -333,12 +333,12 @@ void call_budget_and_mask_failure(const Fixture &fixture,
     require(
         ::sigismember(&original, signal) == ::sigismember(&restored, signal),
         "mask failure preserves full mask");
-  const auto progress = io.write_available();
+  const auto progress = io.WriteAvailable();
   require(progress.error_number == 0 &&
-              progress.bytes_written == ConnectionIo::file_write_budget &&
-              evidence(id).bytes == ConnectionIo::file_write_budget,
+              progress.bytes_written == ConnectionIo::kFileWriteBudget &&
+              evidence(id).bytes == ConnectionIo::kFileWriteBudget,
           "real writable socket reaches exact file byte budget then yields");
-  std::cout << "M1 call_budget=" << ConnectionIo::file_call_budget
+  std::cout << "M1 call_budget=" << ConnectionIo::kFileCallBudget
             << " real_byte_budget=" << progress.bytes_written
             << " guard_failure_calls=0\n";
 }
@@ -393,9 +393,9 @@ void transport_bounds(const Fixture &fixture, bool disable_allocation) {
   replacement.Advance(7);
   require(evidence(moved_id).closes == 1,
           "region completes and releases file immediately");
-  for (const auto length : {ConnectionIo::output_limit - 2,
-                            ConnectionIo::output_limit - 1,
-                            ConnectionIo::output_limit}) {
+  for (const auto length : {ConnectionIo::kOutputLimit - 2,
+                            ConnectionIo::kOutputLimit - 1,
+                            ConnectionIo::kOutputLimit}) {
     int pair[2];
     require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
             "bounds pair");
@@ -405,11 +405,11 @@ void transport_bounds(const Fixture &fixture, bool disable_allocation) {
     const auto id = latest_file();
     bool rejected = false;
     try {
-      io.queue_file(view("H"), std::move(file));
+      io.QueueFile(view("H"), std::move(file));
     } catch (const std::length_error &) {
       rejected = true;
     }
-    require(rejected == (length == ConnectionIo::output_limit),
+    require(rejected == (length == ConnectionIo::kOutputLimit),
             "header plus file limit +/-1");
     if (rejected) {
       require(io.pending_bytes() == 0 && evidence(id).closes == 1,
@@ -420,7 +420,7 @@ void transport_bounds(const Fixture &fixture, bool disable_allocation) {
               "logical file bytes do not allocate body vector");
       bool append_rejected = false;
       try {
-        io.queue_output(view("late"));
+        io.QueueOutput(view("late"));
       } catch (const std::logic_error &) {
         append_rejected = true;
       }
@@ -428,8 +428,8 @@ void transport_bounds(const Fixture &fixture, bool disable_allocation) {
               "append cannot reorder a pending file");
     }
   }
-  require(!ConnectionIo::output_fits(1, SIZE_MAX) &&
-              !ConnectionIo::output_fits(SIZE_MAX, 1),
+  require(!ConnectionIo::OutputFits(1, SIZE_MAX) &&
+              !ConnectionIo::OutputFits(SIZE_MAX, 1),
           "overflow-safe file sum predicate");
   int pair[2];
   require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, pair) == 0,
@@ -441,7 +441,7 @@ void transport_bounds(const Fixture &fixture, bool disable_allocation) {
   bool failed = false;
   timer_allocation_failure = disable_allocation ? -1 : 0;
   try {
-    io.queue_file(view("header"), std::move(file));
+    io.QueueFile(view("header"), std::move(file));
   } catch (const std::bad_alloc &) {
     failed = true;
   }
@@ -449,7 +449,7 @@ void transport_bounds(const Fixture &fixture, bool disable_allocation) {
   require(
       failed && io.pending_bytes() == 0 && evidence(id).closes == 1,
       "submission allocation failure preserves empty output and closes region");
-  std::cout << "M1 bounds limit=" << ConnectionIo::output_limit
+  std::cout << "M1 bounds limit=" << ConnectionIo::kOutputLimit
             << " region_move=1 allocation_rollback=1 body_vector=0\n";
 }
 
@@ -465,9 +465,9 @@ void transport_short_writes(const Fixture &fixture) {
   ConnectionIo io{Socket(pair[0])};
   constexpr std::size_t length = 1024 * 1024;
   const std::string header(32768, 'H');
-  io.queue_file(view(header), region(fixture, length, 17));
+  io.QueueFile(view(header), region(fixture, length, 17));
   const auto id = latest_file();
-  const auto first = io.write_available();
+  const auto first = io.WriteAvailable();
   require(first.would_block && first.bytes_written > 0 &&
               first.bytes_written < header.size() && evidence(id).calls == 0,
           "real header short write precedes any sendfile");
@@ -479,9 +479,9 @@ void transport_short_writes(const Fixture &fixture) {
   while (io.has_pending_output()) {
     collect(peer.fd(), wire);
     const auto before = evidence(id).bytes;
-    const auto written = io.write_available();
+    const auto written = io.WriteAvailable();
     require(written.error_number == 0, "short-write transport succeeds");
-    require(evidence(id).bytes - before <= ConnectionIo::file_write_budget,
+    require(evidence(id).bytes - before <= ConnectionIo::kFileWriteBudget,
             "per-turn file progress budget");
     require(Clock::now() < deadline, "short-write complete deadline");
     ++turns;
@@ -632,8 +632,8 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
         sigset_t saved_mask;
         ::pthread_sigmask(SIG_SETMASK, nullptr, &saved_mask);
         ConnectionIo io{Socket(pair[0])};
-        io.queue_file({}, region(fixture, 1));
-        const auto result = io.write_available();
+        io.QueueFile({}, region(fixture, 1));
+        const auto result = io.WriteAvailable();
         require(result.error_number == EPIPE,
                 "real sendfile EPIPE returned safely");
         ::pthread_sigmask(SIG_SETMASK, nullptr, &actual);
@@ -677,12 +677,12 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
                   << " errno=" << errno << std::endl;
         require(polled == 1 && (event.revents & POLLERR), "TCP reset observed");
         ConnectionIo reset_io(std::move(accepted));
-        reset_io.queue_file({}, region(fixture, 1));
-        const auto reset_result = reset_io.write_available();
+        reset_io.QueueFile({}, region(fixture, 1));
+        const auto reset_result = reset_io.WriteAvailable();
         require(reset_result.error_number == ECONNRESET ||
                     reset_result.error_number == EPIPE,
                 "real TCP reset is connection-local");
-        require(reset_io.write_available().error_number == EPIPE,
+        require(reset_io.WriteAvailable().error_number == EPIPE,
                 "TCP reset followed by safe EPIPE");
       }
       int pair[2];
@@ -690,8 +690,8 @@ void guarded_sigpipe(const Fixture &fixture, bool disable_peer_close) {
               "healthy pipe pair");
       Socket peer(pair[1]);
       ConnectionIo healthy{Socket(pair[0])};
-      healthy.queue_file({}, region(fixture, 1));
-      require(healthy.write_available().bytes_written == 1,
+      healthy.QueueFile({}, region(fixture, 1));
+      require(healthy.WriteAvailable().bytes_written == 1,
               "next connection survives SIGPIPE");
       ::sigaction(SIGPIPE, nullptr, &action);
       require(action.sa_handler == SIG_DFL,
@@ -790,11 +790,11 @@ std::string materialize_prepared(hp::http::ResponseResult prepared) {
           "prepare comparison pair");
   Socket peer(pair[1]);
   ConnectionIo io{Socket(pair[0])};
-  io.queue_file(prepared.bytes, std::move(*prepared.file));
+  io.QueueFile(prepared.bytes, std::move(*prepared.file));
   std::string wire;
   const auto deadline = Clock::now() + 3s;
   while (io.has_pending_output()) {
-    const auto result = io.write_available();
+    const auto result = io.WriteAvailable();
     require(result.error_number == 0, "prepared file transfer");
     collect(peer.fd(), wire);
     require(Clock::now() < deadline, "prepared file transfer deadline");

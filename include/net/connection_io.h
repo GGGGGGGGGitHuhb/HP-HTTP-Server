@@ -39,11 +39,11 @@ struct ConnectionEventResult {
 
 class ConnectionIo final : private base::NonCopyable {
  public:
-  static constexpr std::size_t output_limit = 9U * 1024U * 1024U;
-  static constexpr std::size_t file_write_budget = 256U * 1024U;
-  static constexpr std::size_t file_call_budget = 16;
+  static constexpr std::size_t kOutputLimit = 9U * 1024U * 1024U;
+  static constexpr std::size_t kFileWriteBudget = 256U * 1024U;
+  static constexpr std::size_t kFileCallBudget = 16;
 
-  static bool output_fits(std::size_t pending, std::size_t incoming) noexcept;
+  static bool OutputFits(std::size_t pending, std::size_t incoming) noexcept;
 
   explicit ConnectionIo(Socket socket,
                         std::size_t max_input_bytes = 0) noexcept;
@@ -52,19 +52,19 @@ class ConnectionIo final : private base::NonCopyable {
 
   [[nodiscard]] int fd() const noexcept;
 
-  [[nodiscard]] ReadResult read_available();
-  [[nodiscard]] WriteResult write_available();
-  [[nodiscard]] ReadResult read_once();
+  [[nodiscard]] ReadResult ReadAvailable();
+  [[nodiscard]] WriteResult WriteAvailable();
+  [[nodiscard]] ReadResult ReadOnce();
 
   [[nodiscard]] int socket_error() const;
 
   [[nodiscard]] std::span<const std::byte> input_view() const noexcept;
-  void consume(std::size_t count);
+  void Consume(std::size_t count);
 
-  void queue_output(std::span<const std::byte> bytes);
-  void queue_file(std::span<const std::byte> header, base::FileRegion file);
+  void QueueOutput(std::span<const std::byte> bytes);
+  void QueueFile(std::span<const std::byte> header, base::FileRegion file);
 
-  void mark_peer_half_closed() noexcept;
+  void MarkPeerHalfClosed() noexcept;
   [[nodiscard]] bool peer_half_closed() const noexcept;
   [[nodiscard]] bool has_pending_output() const noexcept;
   [[nodiscard]] bool accepts_input() const noexcept;
@@ -79,7 +79,7 @@ class ConnectionIo final : private base::NonCopyable {
   std::size_t max_input_bytes_{0};
   base::Buffer input_;
 
-  base::Buffer output_{output_limit};
+  base::Buffer output_{kOutputLimit};
   std::optional<base::FileRegion> file_;
 
   bool peer_half_closed_{false};
