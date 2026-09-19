@@ -15,63 +15,63 @@ namespace {
 
 int failures = 0;
 
-void expect(bool condition, const std::string& message) {
+void Expect(bool condition, const std::string& message) {
   if (!condition) {
     std::cerr << "FAIL: " << message << '\n';
     ++failures;
   }
 }
 
-bool create_pipe(int (&fds)[2], const std::string& purpose) {
+bool CreatePipe(int (&fds)[2], const std::string& purpose) {
   fds[0] = -1;
   fds[1] = -1;
   const bool created = ::pipe(fds) == 0;
-  expect(created, "pipe creation failed for " + purpose);
+  Expect(created, "pipe creation failed for " + purpose);
   return created;
 }
 
-bool is_open(int fd) {
+bool IsOpen(int fd) {
   errno = 0;
   return ::fcntl(fd, F_GETFD) != -1;
 }
 
-bool is_closed(int fd) {
+bool IsClosed(int fd) {
   errno = 0;
   return ::fcntl(fd, F_GETFD) == -1 && errno == EBADF;
 }
 
-void close_fd(int fd) {
+void CloseFd(int fd) {
   if (fd >= 0) {
     ::close(fd);
   }
 }
 
-void test_default_state() {
+void TestDefaultState() {
   hp::net::Socket socket;
-  expect(!socket.valid(), "default socket must be invalid");
-  expect(socket.fd() == -1, "default fd must be -1");
-  expect(socket.Release() == -1, "release on invalid socket must return -1");
+  Expect(!socket.valid(), "default socket must be invalid");
+  Expect(socket.fd() == -1, "default fd must be -1");
+  Expect(socket.Release() == -1, "release on invalid socket must return -1");
   socket.Reset();
 }
 
-void test_destructor() {
+void TestDestructor() {
   int fds[2];
-  if (!create_pipe(fds, "destructor test")) {
+  if (!CreatePipe(fds, "destructor test")) {
     return;
   }
 
   const int owned_fd = fds[0];
   {
     hp::net::Socket socket(owned_fd);
-    expect(socket.valid(), "socket must own the pipe fd");
+    Expect(socket.valid(), "socket must own the pipe fd");
   }
-  expect(is_closed(owned_fd), "destructor must close its owned fd");
-  close_fd(fds[1]);
+  Expect(IsClosed(owned_fd), "destructor must close its owned fd");
+  CloseFd(fds[1]);
 }
 
-void test_move_constructor() {
+void TestMoveConstructor() {
   int fds[2];
-  if (!create_pipe(fds, "move constructor test")) {
+  if (!CreatePipe(fds, "move constructor test")) {
     return;
   }
 
@@ -79,23 +79,23 @@ void test_move_constructor() {
   {
     hp::net::Socket source(owned_fd);
     hp::net::Socket destination(std::move(source));
-    expect(!source.valid(), "move source must become invalid");
-    expect(destination.fd() == owned_fd, "destination must own source fd");
-    expect(is_open(owned_fd), "moved fd must remain open");
+    Expect(!source.valid(), "move source must become invalid");
+    Expect(destination.fd() == owned_fd, "destination must own source fd");
+    Expect(IsOpen(owned_fd), "moved fd must remain open");
   }
-  expect(is_closed(owned_fd), "moved fd must close with destination");
-  close_fd(fds[1]);
+  Expect(IsClosed(owned_fd), "moved fd must close with destination");
+  CloseFd(fds[1]);
 }
 
-void test_move_assignment() {
+void TestMoveAssignment() {
   int target_pipe[2];
   int source_pipe[2];
-  if (!create_pipe(target_pipe, "move assignment target")) {
+  if (!CreatePipe(target_pipe, "move assignment target")) {
     return;
   }
-  if (!create_pipe(source_pipe, "move assignment source")) {
-    close_fd(target_pipe[0]);
-    close_fd(target_pipe[1]);
+  if (!CreatePipe(source_pipe, "move assignment source")) {
+    CloseFd(target_pipe[0]);
+    CloseFd(target_pipe[1]);
     return;
   }
 
@@ -105,19 +105,19 @@ void test_move_assignment() {
     hp::net::Socket target(old_target_fd);
     hp::net::Socket source(source_fd);
     target = std::move(source);
-    expect(!source.valid(), "move-assigned source must become invalid");
-    expect(is_closed(old_target_fd), "assignment must close old target fd");
-    expect(target.fd() == source_fd, "target must own source fd");
-    expect(is_open(source_fd), "new target fd must remain open");
+    Expect(!source.valid(), "move-assigned source must become invalid");
+    Expect(IsClosed(old_target_fd), "assignment must close old target fd");
+    Expect(target.fd() == source_fd, "target must own source fd");
+    Expect(IsOpen(source_fd), "new target fd must remain open");
   }
-  expect(is_closed(source_fd), "source fd must close with target");
-  close_fd(target_pipe[1]);
-  close_fd(source_pipe[1]);
+  Expect(IsClosed(source_fd), "source fd must close with target");
+  CloseFd(target_pipe[1]);
+  CloseFd(source_pipe[1]);
 }
 
-void test_release() {
+void TestRelease() {
   int fds[2];
-  if (!create_pipe(fds, "release test")) {
+  if (!CreatePipe(fds, "release test")) {
     return;
   }
 
@@ -125,23 +125,23 @@ void test_release() {
   {
     hp::net::Socket socket(fds[0]);
     released_fd = socket.Release();
-    expect(!socket.valid(), "release must invalidate socket");
-    expect(released_fd == fds[0], "release must return owned fd");
+    Expect(!socket.valid(), "release must invalidate socket");
+    Expect(released_fd == fds[0], "release must return owned fd");
   }
-  expect(is_open(released_fd), "released fd must outlive former owner");
-  close_fd(released_fd);
-  close_fd(fds[1]);
+  Expect(IsOpen(released_fd), "released fd must outlive former owner");
+  CloseFd(released_fd);
+  CloseFd(fds[1]);
 }
 
-void test_reset() {
+void TestReset() {
   int first_pipe[2];
   int second_pipe[2];
-  if (!create_pipe(first_pipe, "reset old fd")) {
+  if (!CreatePipe(first_pipe, "reset old fd")) {
     return;
   }
-  if (!create_pipe(second_pipe, "reset new fd")) {
-    close_fd(first_pipe[0]);
-    close_fd(first_pipe[1]);
+  if (!CreatePipe(second_pipe, "reset new fd")) {
+    CloseFd(first_pipe[0]);
+    CloseFd(first_pipe[1]);
     return;
   }
 
@@ -149,38 +149,38 @@ void test_reset() {
   const int new_fd = second_pipe[0];
   hp::net::Socket socket(old_fd);
   socket.Reset(new_fd);
-  expect(is_closed(old_fd), "reset must close the old fd");
-  expect(socket.fd() == new_fd, "reset must own the new fd");
-  expect(is_open(new_fd), "new fd must remain open");
+  Expect(IsClosed(old_fd), "reset must close the old fd");
+  Expect(socket.fd() == new_fd, "reset must own the new fd");
+  Expect(IsOpen(new_fd), "new fd must remain open");
 
   socket.Reset(new_fd);
-  expect(socket.fd() == new_fd, "same-fd reset must preserve ownership");
-  expect(is_open(new_fd), "same-fd reset must not close the fd");
+  Expect(socket.fd() == new_fd, "same-fd reset must preserve ownership");
+  Expect(IsOpen(new_fd), "same-fd reset must not close the fd");
 
   socket.Reset();
-  expect(!socket.valid(), "empty reset must invalidate socket");
-  expect(is_closed(new_fd), "empty reset must close the owned fd");
-  close_fd(first_pipe[1]);
-  close_fd(second_pipe[1]);
+  Expect(!socket.valid(), "empty reset must invalidate socket");
+  Expect(IsClosed(new_fd), "empty reset must close the owned fd");
+  CloseFd(first_pipe[1]);
+  CloseFd(second_pipe[1]);
 }
 
-void test_non_blocking() {
+void TestNonBlocking() {
   int fds[2];
-  if (!create_pipe(fds, "non-blocking test")) {
+  if (!CreatePipe(fds, "non-blocking test")) {
     return;
   }
 
   hp::net::Socket socket(fds[0]);
   socket.set_non_blocking();
   const int flags = ::fcntl(socket.fd(), F_GETFL);
-  expect(flags != -1, "non-blocking fd flags must be readable");
-  expect((flags & O_NONBLOCK) != 0, "O_NONBLOCK must be enabled");
-  close_fd(fds[1]);
+  Expect(flags != -1, "non-blocking fd flags must be readable");
+  Expect((flags & O_NONBLOCK) != 0, "O_NONBLOCK must be enabled");
+  CloseFd(fds[1]);
 }
 
-void test_reuse_address() {
+void TestReuseAddress() {
   const int fd = ::socket(AF_INET, SOCK_STREAM, 0);
-  expect(fd >= 0, "AF_INET socket creation must succeed");
+  Expect(fd >= 0, "AF_INET socket creation must succeed");
   if (fd < 0) {
     return;
   }
@@ -190,40 +190,40 @@ void test_reuse_address() {
 
   int option = 0;
   socklen_t option_length = sizeof(option);
-  expect(
+  Expect(
       ::getsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, &option_length) == 0,
       "SO_REUSEADDR must be readable");
-  expect(option != 0, "SO_REUSEADDR must be enabled");
+  Expect(option != 0, "SO_REUSEADDR must be enabled");
 
   socket.set_reuse_address(false);
   option = 1;
-  expect(
+  Expect(
       ::getsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, &option_length) == 0,
       "SO_REUSEADDR must remain readable");
-  expect(option == 0, "SO_REUSEADDR must be disabled");
+  Expect(option == 0, "SO_REUSEADDR must be disabled");
 }
 
-void test_invalid_fd_failures() {
+void TestInvalidFdFailures() {
   hp::net::Socket socket;
 
   try {
     socket.set_non_blocking();
-    expect(false, "invalid non-blocking operation must throw");
+    Expect(false, "invalid non-blocking operation must throw");
   } catch (const std::system_error& error) {
-    expect(error.code().value() == EBADF,
+    Expect(error.code().value() == EBADF,
            "non-blocking failure must preserve EBADF");
-    expect(
+    Expect(
         std::string(error.what()).find("fcntl(F_GETFL)") != std::string::npos,
         "non-blocking error must name its operation");
   }
 
   try {
     socket.set_reuse_address(true);
-    expect(false, "invalid reuse-address operation must throw");
+    Expect(false, "invalid reuse-address operation must throw");
   } catch (const std::system_error& error) {
-    expect(error.code().value() == EBADF,
+    Expect(error.code().value() == EBADF,
            "reuse-address failure must preserve EBADF");
-    expect(std::string(error.what()).find("setsockopt(SO_REUSEADDR)") !=
+    Expect(std::string(error.what()).find("setsockopt(SO_REUSEADDR)") !=
                std::string::npos,
            "reuse-address error must name its operation");
   }
@@ -238,15 +238,15 @@ static_assert(std::is_nothrow_destructible_v<hp::net::Socket>);
 }  // namespace
 
 int main() {
-  test_default_state();
-  test_destructor();
-  test_move_constructor();
-  test_move_assignment();
-  test_release();
-  test_reset();
-  test_non_blocking();
-  test_reuse_address();
-  test_invalid_fd_failures();
+  TestDefaultState();
+  TestDestructor();
+  TestMoveConstructor();
+  TestMoveAssignment();
+  TestRelease();
+  TestReset();
+  TestNonBlocking();
+  TestReuseAddress();
+  TestInvalidFdFailures();
 
   if (failures != 0) {
     std::cerr << failures << " socket test assertion(s) failed\n";

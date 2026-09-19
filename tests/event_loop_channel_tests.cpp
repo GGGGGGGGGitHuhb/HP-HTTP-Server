@@ -16,14 +16,14 @@
 namespace hp::net {
 // Controlled stale payload seam: uses the exact production token dispatch path.
 struct TcpConnectionTestAccess {
-  static ConnectionEventResult event(TcpConnection& c, std::uint32_t mask) {
+  static ConnectionEventResult Event(TcpConnection& c, std::uint32_t mask) {
     c.HandleConnectionEvent(mask);
     return c.last_result_;
   }
 };
 
 struct EventLoopTestAccess {
-  static void dispatch(EventLoop& loop,
+  static void Dispatch(EventLoop& loop,
                        std::uint64_t token,
                        std::uint32_t mask) {
     loop.Dispatch(token, mask);
@@ -35,7 +35,7 @@ namespace {
 using namespace hp::net;
 int failures{};
 
-void expect(bool condition, const char* message) {
+void Expect(bool condition, const char* message) {
   if (!condition) {
     ++failures;
     std::cerr << "FAIL: " << message << '\n';
@@ -56,12 +56,12 @@ struct Pair {
     peer.Reset(fds[1]);
   }
 
-  void ready() {
-    expect(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "send readiness");
+  void SendReadiness() {
+    Expect(::send(peer.fd(), "x", 1, MSG_NOSIGNAL) == 1, "send readiness");
   }
 };
 
-void interest_and_remove() {
+void InterestAndRemove() {
   EventLoop loop;
   Pair pair;
   int reads{}, writes{};
@@ -76,10 +76,10 @@ void interest_and_remove() {
     HandleConnectionEventObserver1State2 reads;
     HandleConnectionEventObserver1State3 writes;
     void HandleConnectionEvent(std::uint32_t mask) {
-      expect(mask == channel.revents(), "full revents retained");
+      Expect(mask == channel.revents(), "full revents retained");
       if (mask & EPOLLIN) {
         char c;
-        expect(::recv(pair.observed.fd(), &c, 1, 0) == 1, "read byte");
+        Expect(::recv(pair.observed.fd(), &c, 1, 0) == 1, "read byte");
         ++reads;
       }
       if (mask & EPOLLOUT) ++writes;
@@ -90,28 +90,28 @@ void interest_and_remove() {
       HandleConnectionEventObserver1{channel, pair, reads, writes}));
   channel.set_interest(EPOLLIN);
   channel.set_interest(EPOLLIN);
-  pair.ready();
+  pair.SendReadiness();
   loop.PollOnce(250);
   channel.set_interest(EPOLLIN | EPOLLOUT);
   loop.PollOnce(250);
   channel.set_interest(EPOLLIN);
   for (int i = 0; i < 10; ++i) loop.PollOnce(0);
-  expect(reads == 1 && writes == 1, "read/write and no writable busy-loop");
+  Expect(reads == 1 && writes == 1, "read/write and no writable busy-loop");
   channel.Remove();
   channel.Remove();
-  pair.ready();
+  pair.SendReadiness();
   const auto before = loop.counters().dispatches;
   for (int i = 0; i < 10; ++i) loop.PollOnce(0);
-  expect(loop.counters().dispatches == before, "no callback after removal");
+  Expect(loop.counters().dispatches == before, "no callback after removal");
   const auto c = loop.counters();
-  expect(c.adds == 1 && c.mods == 2 && c.removes == 1,
+  Expect(c.adds == 1 && c.mods == 2 && c.removes == 1,
          "ADD/MOD/DEL and idempotence");
   std::cout << "interest: add=" << c.adds << " mod=" << c.mods
             << " del=" << c.removes << " read=" << reads << " write=" << writes
             << " disable_write=1 empty_polls=20 post_remove=0\n";
 }
 
-void callback_lifetime_and_same_batch() {
+void CallbackLifetimeAndSameBatch() {
   EventLoop loop;
   Pair first, second;
   int self_callbacks{}, other_callbacks{}, deferred_destroy{};
@@ -126,7 +126,7 @@ void callback_lifetime_and_same_batch() {
     void HandleConnectionEvent(std::uint32_t) {
       ++self_callbacks;
       self->Remove();
-      expect(!self->registered() && ::fcntl(first.observed.fd(), F_GETFD) >= 0,
+      Expect(!self->registered() && ::fcntl(first.observed.fd(), F_GETFD) >= 0,
              "invalidate registry before fd close");
       returned = true;
     }
@@ -156,7 +156,7 @@ void callback_lifetime_and_same_batch() {
     void DrainClosedConnections() {
       if (returned && self) {
         self.reset();
-        expect(::fcntl(first.observed.fd(), F_GETFD) >= 0,
+        Expect(::fcntl(first.observed.fd(), F_GETFD) >= 0,
                "Channel destruction does not close fd");
         first.observed.Reset();
         ++deferred_destroy;
@@ -168,10 +168,10 @@ void callback_lifetime_and_same_batch() {
                       &cleanup_target));
   self->set_interest(EPOLLIN);
   other.set_interest(EPOLLIN);
-  first.ready();
-  second.ready();
+  first.SendReadiness();
+  second.SendReadiness();
   loop.PollOnce(250);
-  expect(self_callbacks == 1 && other_callbacks == 1 && deferred_destroy == 1,
+  Expect(self_callbacks == 1 && other_callbacks == 1 && deferred_destroy == 1,
          "current callback returns before destruction; same batch survivor "
          "dispatched");
   other.Remove();
@@ -205,18 +205,18 @@ void callback_lifetime_and_same_batch() {
   cb_ptr = &cb;
   ca.set_interest(EPOLLIN);
   cb.set_interest(EPOLLIN);
-  a.ready();
-  b.ready();
+  a.SendReadiness();
+  b.SendReadiness();
   batch.PollOnce(250);
   ca.Remove();
   cb.Remove();
-  expect(callbacks == 1 && batch.counters().stale == 1,
+  Expect(callbacks == 1 && batch.counters().stale == 1,
          "same batch removed token skipped");
   std::cout << "batch: dispatch=" << callbacks
             << " stale=" << batch.counters().stale << "\n";
 }
 
-void fd_reuse_and_failures() {
+void FdReuseAndFailures() {
   EventLoop loop;
   Pair old;
   const int reused_fd = old.observed.fd();
@@ -236,11 +236,11 @@ void fd_reuse_and_failures() {
     old_token = channel.token();
     channel.Remove();
   }
-  expect(::fcntl(reused_fd, F_GETFD) >= 0, "non-owning destructor");
+  Expect(::fcntl(reused_fd, F_GETFD) >= 0, "non-owning destructor");
   old.observed.Reset();
   Pair fresh;
   if (fresh.observed.fd() != reused_fd) {
-    expect(::dup2(fresh.observed.fd(), reused_fd) == reused_fd,
+    Expect(::dup2(fresh.observed.fd(), reused_fd) == reused_fd,
            "controlled numeric fd reuse");
     fresh.observed.Reset(reused_fd);
   }
@@ -253,7 +253,7 @@ void fd_reuse_and_failures() {
     void HandleConnectionEvent(std::uint32_t) {
       ++new_callbacks;
       char c;
-      expect(::recv(reused_fd, &c, 1, 0) == 1, "new owner byte");
+      Expect(::recv(reused_fd, &c, 1, 0) == 1, "new owner byte");
     }
   };
   replacement.set_HandleConnectionEvent_callback(std::bind_front(
@@ -261,11 +261,11 @@ void fd_reuse_and_failures() {
       HandleConnectionEventObserver4{new_callbacks, reused_fd}));
   replacement.set_interest(EPOLLIN);
   const auto new_token = replacement.token();
-  EventLoopTestAccess::dispatch(loop, old_token, EPOLLIN | EPOLLOUT);
-  expect(new_callbacks == 0, "old token not delivered to new fd owner");
-  fresh.ready();
+  EventLoopTestAccess::Dispatch(loop, old_token, EPOLLIN | EPOLLOUT);
+  Expect(new_callbacks == 0, "old token not delivered to new fd owner");
+  fresh.SendReadiness();
   loop.PollOnce(250);
-  expect(new_token != old_token && old_callbacks == 0 && new_callbacks == 1 &&
+  Expect(new_token != old_token && old_callbacks == 0 && new_callbacks == 1 &&
              loop.counters().stale == 1,
          "fresh token isolates fd reuse");
   replacement.Remove();
@@ -295,7 +295,7 @@ void fd_reuse_and_failures() {
   } catch (const std::logic_error&) {
     ++errors;
   }
-  expect(!duplicate.registered() && duplicate.interest() == 0,
+  Expect(!duplicate.registered() && duplicate.interest() == 0,
          "duplicate ADD fails without state commit");
   EventLoop wrong;
   try {
@@ -311,7 +311,7 @@ void fd_reuse_and_failures() {
   } catch (const std::system_error&) {
     ++errors;
   }
-  expect(good.registered() && good.interest() == EPOLLIN,
+  Expect(good.registered() && good.interest() == EPOLLIN,
          "failed MOD retains committed state");
   good.Remove();
   Channel invalid(loop, reused_fd);
@@ -326,13 +326,13 @@ void fd_reuse_and_failures() {
   } catch (const std::system_error&) {
     ++errors;
   }
-  expect(!invalid.registered() && invalid.interest() == 0,
+  Expect(!invalid.registered() && invalid.interest() == 0,
          "kernel ADD failure rolls back registry");
-  expect(errors == 4, "controlled registration/update/ownership failures");
+  Expect(errors == 4, "controlled registration/update/ownership failures");
   std::cout << "failures: controlled=" << errors << " false_registration=0\n";
 }
 
-int connect_loopback(std::uint16_t port) {
+int ConnectLoopback(std::uint16_t port) {
   int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
   sockaddr_in address{};
   address.sin_family = AF_INET;
@@ -344,7 +344,7 @@ int connect_loopback(std::uint16_t port) {
   return fd;
 }
 
-void real_reset_through_channel() {
+void RealResetThroughChannel() {
   EventLoop loop;
   Socket listener = Socket::CreateTcp();
   listener.BindAny(0);
@@ -362,7 +362,7 @@ void real_reset_through_channel() {
     HandleConnectionEventObserver8State2 listener;
     HandleConnectionEventObserver8State3 listening;
     void HandleConnectionEvent(std::uint32_t mask) {
-      expect(mask & EPOLLIN, "real listener read mask");
+      Expect(mask & EPOLLIN, "real listener read mask");
       ++listener_callbacks;
       accepted = listener.AcceptNonBlocking();
       listening.Remove();
@@ -375,10 +375,10 @@ void real_reset_through_channel() {
                                                      listener,
                                                      listening}));
   listening.set_interest(EPOLLIN);
-  Socket client(connect_loopback(listener.local_port()));
+  Socket client(ConnectLoopback(listener.local_port()));
   loop.PollOnce(250);
   listening.Remove();
-  expect(accepted.valid(), "Channel listener accepted TCP connection");
+  Expect(accepted.valid(), "Channel listener accepted TCP connection");
   EventLoop io_loop;
   TcpConnection io(io_loop, std::move(accepted), 1, 0);
   struct OnConnectionClosedObserver9 {
@@ -413,9 +413,9 @@ void real_reset_through_channel() {
       ++connection_callbacks;
       if (mask & EPOLLERR) error_ready = true;
       if (consume) {
-        expect(mask == connection.revents(), "reset mask preserved in Channel");
+        Expect(mask == connection.revents(), "reset mask preserved in Channel");
         if ((mask & (EPOLLERR | EPOLLIN)) == (EPOLLERR | EPOLLIN)) ++combined;
-        result = TcpConnectionTestAccess::event(io, mask);
+        result = TcpConnectionTestAccess::Event(io, mask);
         if (result.socket_error_observed && result.socket_error == ECONNRESET)
           ++so_errors;
         connection.Remove();
@@ -434,7 +434,7 @@ void real_reset_through_channel() {
                                                       so_errors}));
   connection.set_interest(EPOLLIN | EPOLLRDHUP);
   std::vector<std::byte> payload(1053, std::byte{0x5a});
-  expect(
+  Expect(
       ::send(client.fd(), payload.data(), payload.size(), MSG_NOSIGNAL) == 1053,
       "queue TCP bytes before reset");
   std::vector<std::byte> peeked(payload.size());
@@ -444,26 +444,26 @@ void real_reset_through_channel() {
     if (count == 1053) break;
     loop.PollOnce(250);
   }
-  expect(count == 1053 && peeked == payload,
+  Expect(count == 1053 && peeked == payload,
          "all TCP bytes queued without consuming");
   connection.set_interest(0);
   linger reset{1, 0};
-  expect(
+  Expect(
       ::setsockopt(client.fd(), SOL_SOCKET, SO_LINGER, &reset, sizeof(reset)) ==
           0,
       "zero linger");
   client.Reset();
   for (int i = 0; i < 8 && !error_ready; ++i) loop.PollOnce(250);
-  expect(error_ready, "kernel reset pending");
+  Expect(error_ready, "kernel reset pending");
   consume = true;
   connection.set_interest(EPOLLIN | EPOLLRDHUP);
   loop.PollOnce(250);
   connection.Remove();
-  expect(
+  Expect(
       combined == 1 && so_errors == 1 && result.bytes_read == payload.size() &&
           result.close_requested,
       "Channel -> SO_ERROR ECONNRESET -> all queued bytes read before close");
-  expect(io.pending_bytes() + result.bytes_written == payload.size(),
+  Expect(io.pending_bytes() + result.bytes_written == payload.size(),
          "queued bytes preserved");
   std::cout << "reset: listener=" << listener_callbacks
             << " connection=" << connection_callbacks
@@ -473,7 +473,7 @@ void real_reset_through_channel() {
             << " dispatch=" << loop.counters().dispatches << '\n';
 }
 
-void callback_exception() {
+void CallbackException() {
   EventLoop loop;
   Pair pair;
   int cleanup{}, caught{};
@@ -497,7 +497,7 @@ void callback_exception() {
       std::bind_front(&CleanupCounter::DrainClosedConnections,
                       &cleanup_target));
   channel.set_interest(EPOLLIN);
-  pair.ready();
+  pair.SendReadiness();
   try {
     loop.PollOnce(250);
   } catch (const std::runtime_error&) {
@@ -505,12 +505,12 @@ void callback_exception() {
   }
   channel.Remove();
   loop.PollOnce(0);
-  expect(cleanup == 1 && caught == 1,
+  Expect(cleanup == 1 && caught == 1,
          "exception cleanup and polling guard restored");
   std::cout << "exception: cleanup=" << cleanup << " propagated=" << caught
             << '\n';
 }
-void named_control_slot() {
+void NamedControlSlot() {
   EventLoop loop;
   struct ControlTarget {
     EventLoop& loop;
@@ -538,7 +538,7 @@ void named_control_slot() {
       std::bind_front(&ControlTarget::HandleWorkerControl, &target));
   loop.RequestForce();
   loop.PollOnce(0);
-  expect(
+  Expect(
       target.main_calls == 0 && target.worker_calls == 1 && target.refused == 2,
       "named control setters share one slot and dispatch guard");
 }
@@ -546,12 +546,12 @@ void named_control_slot() {
 }  // namespace
 
 int main() {
-  named_control_slot();
-  interest_and_remove();
-  callback_lifetime_and_same_batch();
-  fd_reuse_and_failures();
-  real_reset_through_channel();
-  callback_exception();
+  NamedControlSlot();
+  InterestAndRemove();
+  CallbackLifetimeAndSameBatch();
+  FdReuseAndFailures();
+  RealResetThroughChannel();
+  CallbackException();
   std::cout << "EventLoop/Channel assertions_failed=" << failures << '\n';
   return failures ? 1 : 0;
 }

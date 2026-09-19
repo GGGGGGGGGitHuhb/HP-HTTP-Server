@@ -40,123 +40,124 @@ void* recv_target = nullptr;
 int recv_error = 0, send_phase = -1;
 int watched_file = -1, file_closes = 0;
 
-void require(bool value, const char* text) {
+void Require(bool value, const char* text) {
   if (!value) throw std::runtime_error(text);
 }
 
-std::span<const std::byte> bytes(std::string_view text) {
+std::span<const std::byte> Bytes(std::string_view text) {
   return std::as_bytes(std::span(text.data(), text.size()));
 }
 
-std::string text(const Buffer& buffer) {
+std::string Text(const Buffer& buffer) {
   const auto view = buffer.readable_view();
   return {reinterpret_cast<const char*>(view.data()), view.size()};
 }
 
 template <class E, class F>
-void rejects(F operation, const char* message) {
+void ExpectThrows(F operation, const char* message) {
   bool rejected = false;
   try {
     operation();
   } catch (const E&) {
     rejected = true;
   }
-  require(rejected, message);
+  Require(rejected, message);
 }
 
-void buffer_contract() {
+void BufferContract() {
   Buffer b(8);
-  require(b.readable_bytes() == 0 && b.capacity() == 0, "lazy empty buffer");
-  b.Append(bytes(std::string_view("ab\0cdefg", 8)));
+  Require(b.readable_bytes() == 0 && b.capacity() == 0, "lazy empty buffer");
+  b.Append(Bytes(std::string_view("ab\0cdefg", 8)));
   const auto* suffix = b.readable_view().data() + 3;
   b.Consume(3);
-  require(b.readable_view().data() == suffix && text(b) == "cdefg",
+  Require(b.readable_view().data() == suffix && Text(b) == "cdefg",
           "consume advances without moving suffix");
-  rejects<std::out_of_range>([&] { b.Consume(6); }, "consume bounds");
-  rejects<std::length_error>([&] { b.Prepare(SIZE_MAX); },
-                             "SIZE_MAX overflow rejection");
-  rejects<std::out_of_range>([&] { b.Commit(1); },
-                             "unprepared commit rejection");
-  require(text(b) == "cdefg", "rejection preserves readable bytes");
-  b.Append(bytes("hij"));
-  require(text(b) == "cdefghij" && b.capacity() == 8,
+  ExpectThrows<std::out_of_range>([&] { b.Consume(6); }, "consume bounds");
+  ExpectThrows<std::length_error>([&] { b.Prepare(SIZE_MAX); },
+                                  "SIZE_MAX overflow rejection");
+  ExpectThrows<std::out_of_range>([&] { b.Commit(1); },
+                                  "unprepared commit rejection");
+  Require(Text(b) == "cdefg", "rejection preserves readable bytes");
+  b.Append(Bytes("hij"));
+  Require(Text(b) == "cdefghij" && b.capacity() == 8,
           "necessary compaction exact bytes");
-  rejects<std::length_error>([&] { b.Append(bytes("x")); }, "limit plus one");
+  ExpectThrows<std::length_error>([&] { b.Append(Bytes("x")); },
+                                  "limit plus one");
   b.Consume(8);
-  require(b.readable_bytes() == 0 && b.capacity() == 8,
+  Require(b.readable_bytes() == 0 && b.capacity() == 8,
           "full consume resets cursors");
   auto tail = b.Prepare(7);
   std::memcpy(tail.data(), "1234567", 7);
-  rejects<std::out_of_range>([&] { b.Commit(8); },
-                             "commit exceeds reservation");
+  ExpectThrows<std::out_of_range>([&] { b.Commit(8); },
+                                  "commit exceeds reservation");
   b.Commit(7);
-  require(text(b) == "1234567", "limit minus one");
-  b.Append(bytes("8"));
-  require(text(b) == "12345678", "limit exact");
+  Require(Text(b) == "1234567", "limit minus one");
+  b.Append(Bytes("8"));
+  Require(Text(b) == "12345678", "limit exact");
   Buffer moved(std::move(b));
-  require(
-      text(moved) == "12345678" && b.readable_bytes() == 0 && b.capacity() == 0,
+  Require(
+      Text(moved) == "12345678" && b.readable_bytes() == 0 && b.capacity() == 0,
       "move constructor valid source");
-  b.Append(bytes("reuse"));
+  b.Append(Bytes("reuse"));
   b = std::move(moved);
-  require(text(b) == "12345678" && moved.readable_bytes() == 0,
+  Require(Text(b) == "12345678" && moved.readable_bytes() == 0,
           "move assignment valid source");
   auto& alias = b;
   b = std::move(alias);
-  require(text(b) == "12345678", "self move");
+  Require(Text(b) == "12345678", "self move");
   Buffer growing(32);
-  growing.Append(bytes("abcd"));
+  growing.Append(Bytes("abcd"));
   growing.Consume(1);
   fail_allocation = true;
-  rejects<std::bad_alloc>([&] { growing.Append(bytes("12345")); },
-                          "growth allocation failure");
-  require(text(growing) == "bcd" && growing.capacity() == 4,
+  ExpectThrows<std::bad_alloc>([&] { growing.Append(Bytes("12345")); },
+                               "growth allocation failure");
+  Require(Text(growing) == "bcd" && growing.capacity() == 4,
           "failed growth strong guarantee");
-  growing.Append(bytes("12345"));
-  require(text(growing) == "bcd12345" && growing.capacity() == 8,
+  growing.Append(Bytes("12345"));
+  Require(Text(growing) == "bcd12345" && growing.capacity() == 8,
           "growth preserves suffix");
   std::cout << "Buffer consume_move=0 NUL bounds overflow prepare commit move "
                "failure PASS\n";
 }
 
-void direct_receive() {
+void DirectReceive() {
   ConnectionIo io{Socket{}, 16384};
   recv_error = EINTR;
   const auto read = io.ReadOnce();
-  require(read.bytes_read == 8 && io.input_view().data() == recv_target,
+  Require(read.bytes_read == 8 && io.input_view().data() == recv_target,
           "recv targets owned committed storage without second copy");
   io.Consume(4);
   const auto* remaining = io.input_view().data();
   recv_error = EAGAIN;
-  require(io.ReadOnce().would_block && io.input_view().data() == remaining &&
+  Require(io.ReadOnce().would_block && io.input_view().data() == remaining &&
               io.input_view().size() == 4,
           "EAGAIN preserves suffix");
   recv_error = ECONNRESET;
-  require(
+  Require(
       io.ReadOnce().error_number == ECONNRESET && io.input_view().size() == 4,
       "read error preserves suffix");
   incoming_size = 0;
-  require(io.ReadOnce().peer_closed && io.input_view().size() == 4,
+  Require(io.ReadOnce().peer_closed && io.input_view().size() == 4,
           "EOF preserves suffix");
 
   std::string block(4096, 'x');
   incoming = block.data();
   incoming_size = block.size();
   ConnectionIo full{Socket{}, 16384};
-  require(full.ReadOnce().bytes_read == 4096, "initial lazy 4KiB recv");
+  Require(full.ReadOnce().bytes_read == 4096, "initial lazy 4KiB recv");
   const auto old_calls = recv_calls;
   fail_allocation = true;
-  rejects<std::bad_alloc>([&] { (void)full.ReadOnce(); },
-                          "receive prepare allocation failure");
-  require(recv_calls == old_calls && full.input_view().size() == 4096,
+  ExpectThrows<std::bad_alloc>([&] { (void)full.ReadOnce(); },
+                               "receive prepare allocation failure");
+  Require(recv_calls == old_calls && full.input_view().size() == 4096,
           "prepare failure precedes recv and preserves bytes");
   while (full.input_view().size() < 16384) (void)full.ReadOnce();
-  require(full.ReadOnce().error_number == EMSGSIZE &&
+  Require(full.ReadOnce().error_number == EMSGSIZE &&
               ConnectionIoTestAccess::input_capacity(full) <= 16384,
           "production input actual capacity limit");
   ConnectionIo unlimited{Socket{}};
   for (int i = 0; i < 5; ++i) (void)unlimited.ReadOnce();
-  require(unlimited.input_view().size() == 20480,
+  Require(unlimited.input_view().size() == 20480,
           "zero max input retains unlimited library semantics");
   std::cout << "recv owned_address=1 second_copy=0 error/EINTR/EOF "
                "allocation_before_recv=1 input_capacity="
@@ -164,11 +165,11 @@ void direct_receive() {
             << " unlimited=20480 PASS\n";
 }
 
-hp::base::FileRegion empty_file() {
+hp::base::FileRegion EmptyFile() {
   return {hp::base::UniqueFd(::open("/dev/null", O_RDONLY)), 0, 0};
 }
 
-void output_storage() {
+void OutputStorage() {
   ConnectionIo io{Socket{}};
   std::vector<std::byte> warm(64);
   io.QueueOutput(warm);
@@ -178,7 +179,7 @@ void output_storage() {
   (void)io.WriteAvailable();
   auto suffix = ConnectionIoTestAccess::output(io);
   io.QueueOutput(std::span(warm).first(1));
-  require(ConnectionIoTestAccess::output(io).data() == suffix.data() &&
+  Require(ConnectionIoTestAccess::output(io).data() == suffix.data() &&
               io.pending_bytes() == 29,
           "append with tail room preserves suffix address");
   send_phase = -1;
@@ -187,10 +188,10 @@ void output_storage() {
     ConnectionIo exact{Socket{}};
     std::vector<std::byte> payload(size);
     exact.QueueOutput(payload);
-    require(ConnectionIoTestAccess::output_capacity(exact) == size,
+    Require(ConnectionIoTestAccess::output_capacity(exact) == size,
             "explicit output allocation capacity");
     (void)exact.WriteAvailable();
-    require(ConnectionIoTestAccess::output_capacity(exact) ==
+    Require(ConnectionIoTestAccess::output_capacity(exact) ==
                 (size == 65536 ? size : 0),
             "idle output exact64KiB retains larger releases");
   }
@@ -198,44 +199,44 @@ void output_storage() {
   for (int i = 0; i < 100; ++i) {
     io.QueueOutput(big);
     (void)io.WriteAvailable();
-    require(ConnectionIoTestAccess::output_capacity(io) == 0,
+    Require(ConnectionIoTestAccess::output_capacity(io) == 0,
             "100 large drains release capacity");
   }
-  io.QueueFile(std::span(warm).first(16), empty_file());
+  io.QueueFile(std::span(warm).first(16), EmptyFile());
   (void)io.WriteAvailable();
   allocations = 0;
   allocated_bytes = 0;
   for (int i = 0; i < 1000; ++i) {
-    auto file = empty_file();
+    auto file = EmptyFile();
     count_allocation = true;
     io.QueueFile(std::span(warm).first(16), std::move(file));
     count_allocation = false;
     (void)io.WriteAvailable();
   }
-  require(allocations == 0, "1000 warm file headers reuse allocation");
+  Require(allocations == 0, "1000 warm file headers reuse allocation");
   io.QueueOutput(std::span(warm).first(8));
   fail_allocation = true;
-  rejects<std::bad_alloc>([&] { io.QueueOutput(big); },
-                          "output growth allocation failure");
-  require(io.pending_bytes() == 8, "output growth failure preserves pending");
+  ExpectThrows<std::bad_alloc>([&] { io.QueueOutput(big); },
+                               "output growth allocation failure");
+  Require(io.pending_bytes() == 8, "output growth failure preserves pending");
   ConnectionIo header{Socket{}};
-  auto file = empty_file();
+  auto file = EmptyFile();
   watched_file = file.fd();
   file_closes = 0;
   fail_allocation = true;
-  rejects<std::bad_alloc>([&] { header.QueueFile(warm, std::move(file)); },
-                          "header allocation failure");
-  require(file_closes == 1 && header.pending_bytes() == 0,
+  ExpectThrows<std::bad_alloc>([&] { header.QueueFile(warm, std::move(file)); },
+                               "header allocation failure");
+  Require(file_closes == 1 && header.pending_bytes() == 0,
           "file header failure closes exactly once no partial publish");
   watched_file = -1;
   auto held =
       hp::base::FileRegion(hp::base::UniqueFd(::open("/dev/null", O_RDONLY)),
                            0,
                            100);
-  header.QueueFile(bytes("HDR"), std::move(held));
-  require(header.pending_bytes() == 103,
+  header.QueueFile(Bytes("HDR"), std::move(held));
+  Require(header.pending_bytes() == 103,
           "logical pending includes file remaining");
-  require(allocation_hits == 4, "four allocation failures precisely consumed");
+  Require(allocation_hits == 4, "four allocation failures precisely consumed");
   Buffer peak(ConnectionIo::kOutputLimit);
   std::vector<std::byte> first(5U * 1024U * 1024U), second(4U * 1024U * 1024U);
   peak.Append(first);
@@ -245,7 +246,7 @@ void output_storage() {
   count_allocation = true;
   peak.Append(second);
   count_allocation = false;
-  require(allocations == 1 && allocated_bytes == ConnectionIo::kOutputLimit &&
+  Require(allocations == 1 && allocated_bytes == ConnectionIo::kOutputLimit &&
               peak.capacity() == ConnectionIo::kOutputLimit &&
               old_capacity + allocated_bytes <= 2 * ConnectionIo::kOutputLimit,
           "output allocation trace bounds final and transient old plus new");
@@ -307,9 +308,9 @@ extern "C" ssize_t __wrap_send(int, const void*, std::size_t n, int) {
 int main(int argc, char** argv) {
   try {
     const std::string mode = argc == 2 ? argv[1] : "all";
-    if (mode == "all" || mode == "buffer") buffer_contract();
-    if (mode == "all" || mode == "recv") direct_receive();
-    if (mode == "all" || mode == "output") output_storage();
+    if (mode == "all" || mode == "buffer") BufferContract();
+    if (mode == "all" || mode == "recv") DirectReceive();
+    if (mode == "all" || mode == "output") OutputStorage();
     return 0;
   } catch (const std::exception& e) {
     std::cerr << "buffer assertion: " << e.what() << '\n';

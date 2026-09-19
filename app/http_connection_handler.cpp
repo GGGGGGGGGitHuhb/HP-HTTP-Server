@@ -99,7 +99,7 @@ void Session::HandleMessage(net::TcpConnection& connection) {
     connection.Send(response);
   completed = true;
   if (stats) ++stats->responses;
-  base::info(
+  base::Info(
       "S3 evidence: HTTP message callback produced one response via "
       "incremental parser.");
 }
@@ -146,8 +146,8 @@ net::TcpConnection::MessageCallback HttpMessageFactory::CreateMessageCallback()
 
 // Narrow test-only observation seam; no scheduling or product behavior is
 // injected.
-void set_session_observer_for_test(void (*observer)(bool,
-                                                    const void*) noexcept) {
+void set_RecordSessionEvent_callback(void (*observer)(bool,
+                                                      const void*) noexcept) {
   session_observer.store(observer);
 }
 

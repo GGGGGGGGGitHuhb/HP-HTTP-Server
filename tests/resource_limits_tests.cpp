@@ -1,10 +1,12 @@
+#include <functional>
+#include <type_traits>
 #define HP_MULTI_REACTOR_ENTRY legacy_multi_capacity_entry
 #include "multi_reactor_tests.cpp"
 #undef HP_MULTI_REACTOR_ENTRY
 
 namespace hp::net {
 struct ResourceLimitsTestAccess {
-  static std::size_t count(EventLoop& loop) {
+  static std::size_t CountResources(EventLoop& loop) {
     std::lock_guard lock(loop.mutex_);
     return loop.outstanding_;
   }
@@ -22,14 +24,17 @@ struct ConnectionIoTestAccess {
 }  // namespace hp::net
 
 namespace {
-void output_bounds() {
-  constexpr auto limit = ConnectionIo::kOutputLimit;
-  require(ConnectionIo::OutputFits(limit - 1, 1) &&
-              !ConnectionIo::OutputFits(limit, 1) &&
+void ResourceLimitsCompleteQueuedProbe() {}
+void ResourceLimitsCompleteLoopProbe(EventLoop&) {}
+
+void OutputBounds() {
+  constexpr auto kLimit = ConnectionIo::kOutputLimit;
+  Require(ConnectionIo::OutputFits(kLimit - 1, 1) &&
+              !ConnectionIo::OutputFits(kLimit, 1) &&
               !ConnectionIo::OutputFits(1, SIZE_MAX),
           "overflow safe capacity arithmetic");
-  std::vector<std::byte> bytes(limit + 1);
-  for (auto size : {limit - 1, limit, limit + 1}) {
+  std::vector<std::byte> bytes(kLimit + 1);
+  for (auto size : {kLimit - 1, kLimit, kLimit + 1}) {
     ConnectionIo io{Socket{}};
     bool rejected = false;
     try {
@@ -37,8 +42,8 @@ void output_bounds() {
     } catch (const std::length_error&) {
       rejected = true;
     }
-    require(rejected == (size > limit), "actual output boundary");
-    require(io.pending_bytes() == (rejected ? 0 : size),
+    Require(rejected == (size > kLimit), "actual output boundary");
+    Require(io.pending_bytes() == (rejected ? 0 : size),
             "whole append or no append");
     if (!rejected) {
       try {
@@ -46,11 +51,11 @@ void output_bounds() {
         throw std::runtime_error("overflow append accepted");
       } catch (const std::length_error&) {
       }
-      require(io.pending_bytes() == size, "rejected append unchanged");
+      Require(io.pending_bytes() == size, "rejected append unchanged");
     }
   }
   int sockets[2];
-  require(::socketpair(AF_UNIX,
+  Require(::socketpair(AF_UNIX,
                        SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
                        0,
                        sockets) == 0,
@@ -81,45 +86,89 @@ void output_bounds() {
       if (n > 0) total += static_cast<std::size_t>(n);
     }
   }
-  require(blocked > 0 && peak_size <= limit && peak_capacity <= limit * 2,
+  Require(blocked > 0 && peak_size <= kLimit && peak_capacity <= kLimit * 2,
           "bounded storage");
   std::cout << "output cycles=1000 sent=" << total << " EAGAIN=" << blocked
             << " peak_size=" << peak_size << " peak_capacity=" << peak_capacity
             << '\n';
 }
 
-void loop_bounds() {
+void LoopBounds() {
   EventLoop loop;
   std::atomic<int> executed{0};
   std::vector<int> accepted(2048), calls(2048);
   std::vector<std::thread> producers;
   for (int producer = 0; producer < 4; ++producer) {
-    producers.emplace_back([&, producer] {
-      for (int id = producer * 512; id < (producer + 1) * 512; ++id)
-        accepted[id] = loop.QueueInLoop([&, id] {
-          ++calls[id];
-          ++executed;
-        });
-    });
+    using SubmitCapacityBatchTaskProducerState =
+        std::remove_cvref_t<decltype(producer)>;
+    using SubmitCapacityBatchTaskAcceptedState = decltype((accepted));
+    using SubmitCapacityBatchTaskLoopState = decltype((loop));
+    using SubmitCapacityBatchTaskCallsState = decltype((calls));
+    using SubmitCapacityBatchTaskExecutedState = decltype((executed));
+    struct SubmitCapacityBatchTask {
+      SubmitCapacityBatchTaskProducerState producer;
+      SubmitCapacityBatchTaskAcceptedState accepted;
+      SubmitCapacityBatchTaskLoopState loop;
+      SubmitCapacityBatchTaskCallsState calls;
+      SubmitCapacityBatchTaskExecutedState executed;
+      decltype(auto) SubmitCapacityBatch() const {
+        using RecordAcceptedTaskIdState = std::remove_cvref_t<int>;
+        using RecordAcceptedTaskCallsState = decltype((calls));
+        using RecordAcceptedTaskExecutedState = decltype((executed));
+        struct RecordAcceptedTaskTarget {
+          RecordAcceptedTaskIdState id;
+          RecordAcceptedTaskCallsState calls;
+          RecordAcceptedTaskExecutedState executed;
+          decltype(auto) RecordAcceptedTask() const {
+            ++calls[id];
+            ++executed;
+          }
+        };
+        for (int id = producer * 512; id < (producer + 1) * 512; ++id)
+          accepted[id] = loop.QueueInLoop(
+              std::bind(&RecordAcceptedTaskTarget::RecordAcceptedTask,
+                        RecordAcceptedTaskTarget{id, calls, executed}));
+      }
+    };
+    producers.emplace_back(std::bind(
+        &SubmitCapacityBatchTask::SubmitCapacityBatch,
+        SubmitCapacityBatchTask{producer, accepted, loop, calls, executed}));
   }
   for (auto& producer : producers) producer.join();
-  require(std::count(accepted.begin(), accepted.end(), 1) == 1024,
+  Require(std::count(accepted.begin(), accepted.end(), 1) == 1024,
           "multi producer capacity");
   loop.PollOnce(0);
-  require(accepted == calls && executed == 1024, "each accepted ID once");
-  require(loop.QueueInLoop([&] { ++executed; }), "capacity restored");
+  Require(accepted == calls && executed == 1024, "each accepted ID once");
+
+  using RecordRestoredCapacityTaskExecutedState = decltype((executed));
+  struct RecordRestoredCapacityTask {
+    RecordRestoredCapacityTaskExecutedState executed;
+    decltype(auto) RecordRestoredCapacity() const { ++executed; }
+  };
+  Require(loop.QueueInLoop(
+              std::bind(&RecordRestoredCapacityTask::RecordRestoredCapacity,
+                        RecordRestoredCapacityTask{executed})),
+          "capacity restored");
   loop.PollOnce(0);
   std::cout << "loop accepted=1024 rejected=1024 executed=" << executed << '\n';
 }
 
-void release_and_faults() {
+void ReleaseAndFaults() {
   EventLoop loop;
   int accepted_count = 0, executed_count = 0;
   bool injected = false;
   for (int index = 0; index < 100 && !injected; ++index) {
     timer_allocation_failure = 0;
     try {
-      require(loop.QueueInLoop([&] { ++executed_count; }),
+      using RecordAllocationProbeTaskExecutedCountState =
+          decltype((executed_count));
+      struct RecordAllocationProbeTask {
+        RecordAllocationProbeTaskExecutedCountState executed_count;
+        decltype(auto) RecordAllocationProbe() const { ++executed_count; }
+      };
+      Require(loop.QueueInLoop(
+                  std::bind(&RecordAllocationProbeTask::RecordAllocationProbe,
+                            RecordAllocationProbeTask{executed_count})),
               "allocation probe admitted");
       ++accepted_count;
     } catch (const std::bad_alloc&) {
@@ -127,15 +176,23 @@ void release_and_faults() {
     }
     timer_allocation_failure = -1;
   }
-  require(injected && ResourceLimitsTestAccess::count(loop) ==
+  Require(injected && ResourceLimitsTestAccess::CountResources(loop) ==
                           static_cast<std::size_t>(accepted_count),
           "enqueue allocation failure returns reservation");
-  require(loop.QueueInLoop([&] { ++executed_count; }),
-          "enqueue after allocation failure");
+
+  using RecordRestoredQuotaTaskExecutedCountState = decltype((executed_count));
+  struct RecordRestoredQuotaTask {
+    RecordRestoredQuotaTaskExecutedCountState executed_count;
+    decltype(auto) RecordRestoredQuota() const { ++executed_count; }
+  };
+  Require(
+      loop.QueueInLoop(std::bind(&RecordRestoredQuotaTask::RecordRestoredQuota,
+                                 RecordRestoredQuotaTask{executed_count})),
+      "enqueue after allocation failure");
   ++accepted_count;
   loop.PollOnce(0);
-  require(executed_count == accepted_count &&
-              ResourceLimitsTestAccess::count(loop) == 0,
+  Require(executed_count == accepted_count &&
+              ResourceLimitsTestAccess::CountResources(loop) == 0,
           "all reservations released");
   int released = 0;
 
@@ -145,31 +202,48 @@ void release_and_faults() {
 
     ~Capture() {
       ++released;
-      require(!loop.QueueInLoop([] {}), "terminal destructor reentry rejected");
+      Require(!loop.QueueInLoop(&ResourceLimitsCompleteQueuedProbe),
+              "terminal destructor reentry rejected");
       loop.RequestForce();
     }
   };
 
   auto capture = std::shared_ptr<Capture>(new Capture{loop, released});
+
+  struct ThrowCapacityFailureTask {
+    decltype(auto) ThrowCapacityFailure() const {
+      throw std::runtime_error("capacity original failure");
+    }
+  };
+  loop.QueueInLoop(std::bind(&ThrowCapacityFailureTask::ThrowCapacityFailure,
+                             ThrowCapacityFailureTask{}));
+
+  using RetainCancellationPayloadTaskCaptureState =
+      std::remove_cvref_t<decltype(capture)>;
+  struct RetainCancellationPayloadTask {
+    RetainCancellationPayloadTaskCaptureState capture;
+    decltype(auto) RetainCancellationPayload() const {}
+  };
   loop.QueueInLoop(
-      [] { throw std::runtime_error("capacity original failure"); });
-  loop.QueueInLoop([capture] {});
+      std::bind(&RetainCancellationPayloadTask::RetainCancellationPayload,
+                RetainCancellationPayloadTask{capture}));
   capture.reset();
   try {
     loop.PollOnce(0);
     throw std::runtime_error("missing capacity failure");
   } catch (const std::runtime_error& error) {
-    require(std::string(error.what()) == "capacity original failure",
+    Require(std::string(error.what()) == "capacity original failure",
             "original task failure");
   }
-  require(released == 1 && ResourceLimitsTestAccess::count(loop) == 0,
+  Require(released == 1 && ResourceLimitsTestAccess::CountResources(loop) == 0,
           "fatal batch count released");
   std::cout << "task_fault accepted=" << accepted_count
             << " executed=" << executed_count << " capture_release=" << released
-            << " outstanding=" << ResourceLimitsTestAccess::count(loop) << '\n';
+            << " outstanding=" << ResourceLimitsTestAccess::CountResources(loop)
+            << '\n';
 }
 
-void saturated_controls() {
+void SaturatedControls() {
   EventLoop loop;
   int drain = 0, force = 0, ran = 0;
   struct SaturatedControlTarget {
@@ -177,40 +251,57 @@ void saturated_controls() {
     int& drain;
     int& force;
     void HandleControl(EventLoop::Control control, EventLoop::Deadline) {
-      require(loop.is_in_loop_thread(), "control owner");
+      Require(loop.is_in_loop_thread(), "control owner");
       if (control == EventLoop::Control::kDrain) ++drain;
       if (control == EventLoop::Control::kForce) ++force;
     }
   } control_target{loop, drain, force};
   loop.set_HandleControl_callback(
       std::bind_front(&SaturatedControlTarget::HandleControl, &control_target));
-  for (int id = 0; id < 1024; ++id)
-    require(loop.QueueInLoop([&, id] {
-      require(drain == 1, "drain before first ordinary callback");
+
+  using VerifyControlBeforeTaskIdState = std::remove_cvref_t<int>;
+  using VerifyControlBeforeTaskDrainState = decltype((drain));
+  using VerifyControlBeforeTaskLoopState = decltype((loop));
+  using VerifyControlBeforeTaskForceState = decltype((force));
+  using VerifyControlBeforeTaskRanState = decltype((ran));
+  struct VerifyControlBeforeTaskTarget {
+    VerifyControlBeforeTaskIdState id;
+    VerifyControlBeforeTaskDrainState drain;
+    VerifyControlBeforeTaskLoopState loop;
+    VerifyControlBeforeTaskForceState force;
+    VerifyControlBeforeTaskRanState ran;
+    decltype(auto) VerifyControlBeforeTask() const {
+      Require(drain == 1, "drain before first ordinary callback");
       if (id == 0)
         loop.RequestForce();
       else
-        require(force == 1, "force at callback boundary");
+        Require(force == 1, "force at callback boundary");
       ++ran;
-    }),
+    }
+  };
+  for (int id = 0; id < 1024; ++id)
+    Require(loop.QueueInLoop(std::bind(
+                &VerifyControlBeforeTaskTarget::VerifyControlBeforeTask,
+                VerifyControlBeforeTaskTarget{id, drain, loop, force, ran})),
             "control full queue");
-  require(!loop.QueueInLoop([] {}), "ordinary queue full");
+  Require(!loop.QueueInLoop(&ResourceLimitsCompleteQueuedProbe),
+          "ordinary queue full");
   loop.RequestDrain(hp::timer::TimerQueue::Clock::now() +
                     std::chrono::hours(1));
   loop.PollOnce(0);
-  require(drain == 1 && force == 1 && ran == 1024,
+  Require(drain == 1 && force == 1 && ran == 1024,
           "fixed control bypass and accepted drain");
   std::cout << "saturated_control drain=" << drain << " force=" << force
             << " tasks=" << ran << '\n';
 }
 
-void oversized_connection() {
+void OversizedConnection() {
   EventLoop loop;
   ConnectionRegistry registry(loop, 0);
   int first[2], second[2];
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, first) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, first) == 0,
           "overflow pair");
-  require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, second) == 0,
+  Require(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, second) == 0,
           "healthy pair");
   Socket peer1(first[1]), peer2(second[1]);
   {
@@ -232,65 +323,121 @@ void oversized_connection() {
                          std::bind_front(&OversizedOutputHandler::HandleMessage,
                                          OversizedOutputHandler{excessive}));
   registry.AddConnection(Socket(second[0]), {});
-  require(::send(peer1.fd(), "x", 1, MSG_NOSIGNAL) == 1, "trigger overflow");
-  require(::send(peer2.fd(), "ok", 2, MSG_NOSIGNAL) == 2, "healthy request");
+  Require(::send(peer1.fd(), "x", 1, MSG_NOSIGNAL) == 1, "trigger overflow");
+  Require(::send(peer2.fd(), "ok", 2, MSG_NOSIGNAL) == 2, "healthy request");
   loop.PollOnce(0);
   char bytes[4];
-  require(::recv(peer1.fd(), bytes, sizeof(bytes), 0) == 0,
+  Require(::recv(peer1.fd(), bytes, sizeof(bytes), 0) == 0,
           "overflow has no error response");
-  require(::recv(peer2.fd(), bytes, sizeof(bytes), 0) == 2 &&
+  Require(::recv(peer2.fd(), bytes, sizeof(bytes), 0) == 2 &&
               std::string_view(bytes, 2) == "ok",
           "healthy connection unaffected");
-  require(!loop.failed(), "oversized output is not worker fatal");
+  Require(!loop.failed(), "oversized output is not worker fatal");
   std::cout << "oversized_connection rejected_bytes=" << excessive.size()
             << " healthy_bytes=2\n";
 }
 
-void batch_and_pool() {
+void BatchAndPool() {
   EventLoopThread thread;
   std::promise<void> entered, release;
   auto gate = release.get_future().share();
   std::atomic<int> completed{0};
-  thread.Start([&](EventLoop& loop) {
-    for (int id = 0; id < 1024; ++id)
-      require(loop.QueueInLoop([&, id, owner = &loop] {
-        if (id == 0) {
-          require(!owner->QueueInLoop([] {}),
-                  "executing task counts on self post");
-          entered.set_value();
-          require(gate.wait_for(3s) == std::future_status::ready, "batch gate");
+
+  using FillWorkerQueueTaskEnteredState = decltype((entered));
+  using FillWorkerQueueTaskGateState = decltype((gate));
+  using FillWorkerQueueTaskCompletedState = decltype((completed));
+  struct FillWorkerQueueTask {
+    FillWorkerQueueTaskEnteredState entered;
+    FillWorkerQueueTaskGateState gate;
+    FillWorkerQueueTaskCompletedState completed;
+    decltype(auto) FillWorkerQueue(EventLoop& loop) const {
+      using WaitForWorkerQueueReleaseTaskIdState = std::remove_cvref_t<int>;
+      using WaitForWorkerQueueReleaseTaskEnteredState = decltype((entered));
+      using WaitForWorkerQueueReleaseTaskGateState = decltype((gate));
+      using WaitForWorkerQueueReleaseTaskCompletedState = decltype((completed));
+      using WaitForWorkerQueueReleaseTaskOwnerState = decltype(&loop);
+      struct WaitForWorkerQueueReleaseTask {
+        WaitForWorkerQueueReleaseTaskIdState id;
+        WaitForWorkerQueueReleaseTaskEnteredState entered;
+        WaitForWorkerQueueReleaseTaskGateState gate;
+        WaitForWorkerQueueReleaseTaskCompletedState completed;
+        WaitForWorkerQueueReleaseTaskOwnerState owner;
+        decltype(auto) WaitForWorkerQueueRelease() const {
+          if (id == 0) {
+            Require(!owner->QueueInLoop(&ResourceLimitsCompleteQueuedProbe),
+                    "executing task counts on self post");
+            entered.set_value();
+            Require(gate.wait_for(3s) == std::future_status::ready,
+                    "batch gate");
+          }
+          ++completed;
         }
-        ++completed;
-      }),
-              "ready task accepted");
-  });
-  require(entered.get_future().wait_for(3s) == std::future_status::ready,
+      };
+      for (int id = 0; id < 1024; ++id)
+        Require(loop.QueueInLoop(std::bind(
+                    &WaitForWorkerQueueReleaseTask::WaitForWorkerQueueRelease,
+                    WaitForWorkerQueueReleaseTask{id,
+                                                  entered,
+                                                  gate,
+                                                  completed,
+                                                  &loop})),
+                "ready task accepted");
+    }
+  };
+  thread.Start(std::bind(&FillWorkerQueueTask::FillWorkerQueue,
+                         FillWorkerQueueTask{entered, gate, completed},
+                         std::placeholders::_1));
+  Require(entered.get_future().wait_for(3s) == std::future_status::ready,
           "batch entered");
-  require(!thread.Post([](EventLoop&) {}),
+  Require(!thread.Post(&ResourceLimitsCompleteLoopProbe),
           "thread rejects when local batch full");
   release.set_value();
   thread.RequestStop();
   thread.Join();
-  require(completed == 1024, "S1 accepted drain preserved");
+  Require(completed == 1024, "S1 accepted drain preserved");
   EventLoopThreadPool pool;
   std::promise<void> pool_entered, pool_release;
   auto pool_gate = pool_release.get_future().share();
-  pool.Start(1, [&](std::size_t, EventLoop& loop) {
-    for (int id = 0; id < 1024; ++id)
-      require(loop.QueueInLoop([&, id] {
-        if (id == 0) {
-          pool_entered.set_value();
-          require(pool_gate.wait_for(3s) == std::future_status::ready,
-                  "pool gate");
+
+  using FillPoolQueueTaskPoolEnteredState = decltype((pool_entered));
+  using FillPoolQueueTaskPoolGateState = decltype((pool_gate));
+  struct FillPoolQueueTask {
+    FillPoolQueueTaskPoolEnteredState pool_entered;
+    FillPoolQueueTaskPoolGateState pool_gate;
+    decltype(auto) FillPoolQueue(std::size_t, EventLoop& loop) const {
+      using WaitForPoolQueueReleaseTaskIdState = std::remove_cvref_t<int>;
+      using WaitForPoolQueueReleaseTaskPoolEnteredState =
+          decltype((pool_entered));
+      using WaitForPoolQueueReleaseTaskPoolGateState = decltype((pool_gate));
+      struct WaitForPoolQueueReleaseTask {
+        WaitForPoolQueueReleaseTaskIdState id;
+        WaitForPoolQueueReleaseTaskPoolEnteredState pool_entered;
+        WaitForPoolQueueReleaseTaskPoolGateState pool_gate;
+        decltype(auto) WaitForPoolQueueRelease() const {
+          if (id == 0) {
+            pool_entered.set_value();
+            Require(pool_gate.wait_for(3s) == std::future_status::ready,
+                    "pool gate");
+          }
         }
-      }),
-              "fill loop bypassing pool");
-  });
-  require(pool_entered.get_future().wait_for(3s) == std::future_status::ready,
+      };
+      for (int id = 0; id < 1024; ++id)
+        Require(loop.QueueInLoop(std::bind(
+                    &WaitForPoolQueueReleaseTask::WaitForPoolQueueRelease,
+                    WaitForPoolQueueReleaseTask{id, pool_entered, pool_gate})),
+                "fill loop bypassing pool");
+    }
+  };
+  pool.Start(1,
+             std::bind(&FillPoolQueueTask::FillPoolQueue,
+                       FillPoolQueueTask{pool_entered, pool_gate},
+                       std::placeholders::_1,
+                       std::placeholders::_2));
+  Require(pool_entered.get_future().wait_for(3s) == std::future_status::ready,
           "pool entered");
-  require(!pool.Post(0, [](EventLoop&) {}),
+  Require(!pool.Post(0, &ResourceLimitsCompleteLoopProbe),
           "pool rollback after loop rejection");
-  require(EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 0,
+  Require(EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 0,
           "double reservation restored");
   pool_release.set_value();
   pool.RequestStop();
@@ -298,7 +445,7 @@ void batch_and_pool() {
   std::cout << "batch executed=" << completed
             << " pool_rejected_outstanding=0\n";
 }
-void destruction_reservations() {
+void DestructionReservations() {
   EventLoop loop;
   int releases = 0;
   std::size_t loop_destruction_count = 0;
@@ -309,7 +456,7 @@ void destruction_reservations() {
     std::size_t& destruction_count;
     bool& destruction_owner;
     ~LoopCapture() {
-      destruction_count = ResourceLimitsTestAccess::count(loop);
+      destruction_count = ResourceLimitsTestAccess::CountResources(loop);
       destruction_owner = loop.is_in_loop_thread();
       ++releases;
     }
@@ -327,12 +474,12 @@ void destruction_reservations() {
       std::bind_front(&LoopTaskTarget::RetainLoopReservation,
                       LoopTaskTarget{capture});
   capture.reset();
-  require(loop.QueueInLoop(std::move(task)), "destruction quota task admitted");
+  Require(loop.QueueInLoop(std::move(task)), "destruction quota task admitted");
   loop.PollOnce(0);
-  require(loop_destruction_count == 1,
+  Require(loop_destruction_count == 1,
           "capacity includes user capture destruction");
-  require(loop_destruction_owner, "capture destruction on loop owner");
-  require(releases == 1 && ResourceLimitsTestAccess::count(loop) == 0,
+  Require(loop_destruction_owner, "capture destruction on loop owner");
+  Require(releases == 1 && ResourceLimitsTestAccess::CountResources(loop) == 0,
           "destruction returns reservation once");
 
   EventLoopThreadPool pool;
@@ -351,9 +498,9 @@ void destruction_reservations() {
     std::thread::id& owner;
     int& releases;
     ~PoolCapture() {
-      require(EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 1,
+      Require(EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 1,
               "pool ticket retained during user capture destruction");
-      require(owner == std::this_thread::get_id(),
+      Require(owner == std::this_thread::get_id(),
               "pool capture release owner");
       ++releases;
     }
@@ -368,16 +515,16 @@ void destruction_reservations() {
       std::bind_front(&PoolTaskTarget::RetainPoolReservation,
                       PoolTaskTarget{pooled});
   pooled.reset();
-  require(pool.Post(0, std::move(posted)), "pool destruction task admitted");
+  Require(pool.Post(0, std::move(posted)), "pool destruction task admitted");
   pool.RequestStop();
   pool.Join();
-  require(
+  Require(
       releases == 2 && EventLoopThreadPoolTestAccess::outstanding(pool, 0) == 0,
       "pool capture then ticket released exactly once");
   std::cout << "destruction_quota loop=1 pool=1 final=0 owner=verified\n";
 }
 
-void post_wrapper_allocation_failure() {
+void PostWrapperAllocationFailure() {
   EventLoopThread worker;
   worker.Start();
   int releases = 0;
@@ -387,7 +534,7 @@ void post_wrapper_allocation_failure() {
     int& releases;
     std::thread::id producer;
     ~Capture() {
-      require(std::this_thread::get_id() == producer,
+      Require(std::this_thread::get_id() == producer,
               "rejected wrapper payload released on producer");
       worker.RequestStop();  // Reenters the forwarding mutex; must be unlocked.
       ++releases;
@@ -415,7 +562,7 @@ void post_wrapper_allocation_failure() {
   }
   timer_allocation_failure = -1;
   worker.Join();
-  require(rejected && releases == 1,
+  Require(rejected && releases == 1,
           "wrapper allocation failure releases payload once outside forwarding "
           "lock");
   std::cout << "post_wrapper injected=1 accepted=0 producer_release=1 "
@@ -426,15 +573,15 @@ void post_wrapper_allocation_failure() {
 
 int main() {
   try {
-    destruction_reservations();
-    post_wrapper_allocation_failure();
-    output_bounds();
-    loop_bounds();
-    batch_and_pool();
-    release_and_faults();
-    saturated_controls();
-    oversized_connection();
-    require(accepted_sockets == closed_sockets && invalid_closes == 0,
+    DestructionReservations();
+    PostWrapperAllocationFailure();
+    OutputBounds();
+    LoopBounds();
+    BatchAndPool();
+    ReleaseAndFaults();
+    SaturatedControls();
+    OversizedConnection();
+    Require(accepted_sockets == closed_sockets && invalid_closes == 0,
             "observed fd closes once");
     std::cout << "socket_closes accepted=" << accepted_sockets
               << " closed=" << closed_sockets << " invalid=" << invalid_closes

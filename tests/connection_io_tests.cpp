@@ -18,7 +18,7 @@
 
 namespace hp::net {
 struct TcpConnectionTestAccess {
-  static ConnectionEventResult event(TcpConnection& c, std::uint32_t mask) {
+  static ConnectionEventResult Event(TcpConnection& c, std::uint32_t mask) {
     c.HandleConnectionEvent(mask);
     return c.last_result_;
   }
@@ -29,14 +29,14 @@ namespace {
 
 int failures = 0;
 
-void expect(bool condition, const std::string& message) {
+void Expect(bool condition, const std::string& message) {
   if (!condition) {
     std::cerr << "FAIL: " << message << '\n';
     ++failures;
   }
 }
 
-std::vector<std::byte> make_payload(std::size_t size) {
+std::vector<std::byte> MakePayload(std::size_t size) {
   std::vector<std::byte> payload(size);
   for (std::size_t index = 0; index < size; ++index) {
     payload[index] = static_cast<std::byte>((index * 131U + 17U) & 0xffU);
@@ -44,9 +44,9 @@ std::vector<std::byte> make_payload(std::size_t size) {
   return payload;
 }
 
-void test_binary_read_echo_and_half_close() {
+void TestBinaryReadEchoAndHalfClose() {
   int fds[2] = {-1, -1};
-  expect(::socketpair(AF_UNIX,
+  Expect(::socketpair(AF_UNIX,
                       SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
                       0,
                       fds) == 0,
@@ -56,7 +56,7 @@ void test_binary_read_echo_and_half_close() {
   }
 
   hp::net::ConnectionIo connection{hp::net::Socket(fds[0])};
-  const auto payload = make_payload(48 * 1024 + 37);
+  const auto payload = MakePayload(48 * 1024 + 37);
   std::size_t sent = 0;
   while (sent < payload.size()) {
     const ssize_t count =
@@ -68,27 +68,27 @@ void test_binary_read_echo_and_half_close() {
     if (count == -1 && errno == EINTR) {
       continue;
     }
-    expect(false, "binary payload must fit controlled socketpair");
+    Expect(false, "binary payload must fit controlled socketpair");
     break;
   }
-  expect(::shutdown(fds[1], SHUT_WR) == 0, "peer write half must shut down");
+  Expect(::shutdown(fds[1], SHUT_WR) == 0, "peer write half must shut down");
 
   const hp::net::ReadResult read = connection.ReadAvailable();
-  expect(read.bytes_read == payload.size(),
+  Expect(read.bytes_read == payload.size(),
          "read loop must consume all binary bytes across chunks");
-  expect(read.peer_closed && connection.peer_half_closed(),
+  Expect(read.peer_closed && connection.peer_half_closed(),
          "read EOF must mark peer half closed");
   connection.QueueOutput(connection.input_view());
   connection.Consume(connection.input_view().size());
-  expect(connection.pending_bytes() == payload.size(),
+  Expect(connection.pending_bytes() == payload.size(),
          "every read byte must enter output state");
 
   const hp::net::WriteResult written = connection.WriteAvailable();
-  expect(written.bytes_written == payload.size(),
+  Expect(written.bytes_written == payload.size(),
          "echo write must emit the full binary payload");
-  expect(!connection.has_pending_output(),
+  Expect(!connection.has_pending_output(),
          "successful echo must clear output state");
-  expect(connection.ready_to_close(),
+  Expect(connection.ready_to_close(),
          "half-closed peer must become closable after drain");
 
   std::vector<std::byte> received(payload.size());
@@ -105,17 +105,17 @@ void test_binary_read_echo_and_half_close() {
     if (count == -1 && errno == EINTR) {
       continue;
     }
-    expect(false, "echo payload must be readable in full");
+    Expect(false, "echo payload must be readable in full");
     break;
   }
-  expect(received == payload,
+  Expect(received == payload,
          "binary echo must preserve byte order, length and embedded zeros");
   ::close(fds[1]);
 }
 
-void test_short_write_and_eagain_resume() {
+void TestShortWriteAndEagainResume() {
   int fds[2] = {-1, -1};
-  expect(::socketpair(AF_UNIX,
+  Expect(::socketpair(AF_UNIX,
                       SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
                       0,
                       fds) == 0,
@@ -125,7 +125,7 @@ void test_short_write_and_eagain_resume() {
   }
 
   int send_buffer = 4096;
-  expect(::setsockopt(fds[0],
+  Expect(::setsockopt(fds[0],
                       SOL_SOCKET,
                       SO_SNDBUF,
                       &send_buffer,
@@ -133,13 +133,13 @@ void test_short_write_and_eagain_resume() {
          "controlled send buffer must be configured");
 
   hp::net::ConnectionIo connection{hp::net::Socket(fds[0])};
-  const auto payload = make_payload(4 * 1024 * 1024 + 19);
+  const auto payload = MakePayload(4 * 1024 * 1024 + 19);
   connection.QueueOutput(payload);
   const hp::net::WriteResult first = connection.WriteAvailable();
-  expect(first.would_block, "paused peer must trigger write EAGAIN");
-  expect(first.bytes_written > 0 && first.bytes_written < payload.size(),
+  Expect(first.would_block, "paused peer must trigger write EAGAIN");
+  Expect(first.bytes_written > 0 && first.bytes_written < payload.size(),
          "first write must make partial positive progress before EAGAIN");
-  expect(connection.pending_bytes() == payload.size() - first.bytes_written,
+  Expect(connection.pending_bytes() == payload.size() - first.bytes_written,
          "pending cursor must advance by exactly the bytes written");
 
   std::vector<std::byte> received;
@@ -164,32 +164,32 @@ void test_short_write_and_eagain_resume() {
     }
   }
 
-  expect(!connection.has_pending_output(),
+  Expect(!connection.has_pending_output(),
          "resumed writes must eventually drain output");
-  expect(received.size() == payload.size(),
+  Expect(received.size() == payload.size(),
          "resumed peer must receive the original byte count");
-  expect(received == payload,
+  Expect(received == payload,
          "short-write resume must not lose, duplicate or reorder bytes");
   ::close(fds[1]);
 }
 
 volatile std::sig_atomic_t signal_count = 0;
 
-extern "C" void count_signal(int) { signal_count = 1; }
+extern "C" void CountSignal(int) { signal_count = 1; }
 
-void install_signal_handler(struct sigaction& old_action) {
+void InstallSignalHandler(struct sigaction& old_action) {
   struct sigaction action {};
 
-  action.sa_handler = count_signal;
+  action.sa_handler = CountSignal;
   ::sigemptyset(&action.sa_mask);
   action.sa_flags = 0;
-  expect(::sigaction(SIGUSR1, &action, &old_action) == 0,
+  Expect(::sigaction(SIGUSR1, &action, &old_action) == 0,
          "SIGUSR1 handler must install");
 }
 
-void test_read_retries_eintr() {
+void TestReadRetriesEintr() {
   int fds[2] = {-1, -1};
-  expect(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds) == 0,
+  Expect(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds) == 0,
          "blocking read socketpair must be created");
   if (fds[0] == -1) {
     return;
@@ -197,9 +197,9 @@ void test_read_retries_eintr() {
 
   struct sigaction old_action {};
 
-  install_signal_handler(old_action);
+  InstallSignalHandler(old_action);
   const pid_t child = ::fork();
-  expect(child >= 0, "read EINTR child must fork");
+  Expect(child >= 0, "read EINTR child must fork");
   if (child == 0) {
     ::close(fds[0]);
     ::usleep(20'000);
@@ -220,33 +220,33 @@ void test_read_retries_eintr() {
   ::close(fds[1]);
   hp::net::ConnectionIo connection{hp::net::Socket(fds[0])};
   const hp::net::ReadResult read = connection.ReadAvailable();
-  expect(signal_count > 0, "controlled signal must interrupt blocking recv");
-  expect(read.bytes_read == sizeof("eintr-read") && read.peer_closed,
+  Expect(signal_count > 0, "controlled signal must interrupt blocking recv");
+  Expect(read.bytes_read == sizeof("eintr-read") && read.peer_closed,
          "recv must retry EINTR, retain bytes and reach EOF");
   int status = 0;
   (void)::waitpid(child, &status, 0);
-  expect(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+  Expect(WIFEXITED(status) && WEXITSTATUS(status) == 0,
          "read EINTR helper must exit cleanly");
   (void)::sigaction(SIGUSR1, &old_action, nullptr);
 }
 
-void test_write_retries_eintr() {
+void TestWriteRetriesEintr() {
   int fds[2] = {-1, -1};
-  expect(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds) == 0,
+  Expect(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds) == 0,
          "blocking write socketpair must be created");
   if (fds[0] == -1) {
     return;
   }
 
   int send_buffer = 4096;
-  expect(::setsockopt(fds[0],
+  Expect(::setsockopt(fds[0],
                       SOL_SOCKET,
                       SO_SNDBUF,
                       &send_buffer,
                       sizeof(send_buffer)) == 0,
          "EINTR write send buffer must be constrained");
   const int original_flags = ::fcntl(fds[0], F_GETFL);
-  expect(original_flags != -1 &&
+  Expect(original_flags != -1 &&
              ::fcntl(fds[0], F_SETFL, original_flags | O_NONBLOCK) == 0,
          "sender must become non-blocking for deterministic prefill");
 
@@ -262,21 +262,21 @@ void test_write_retries_eintr() {
     if (count == -1 && errno == EINTR) {
       continue;
     }
-    expect(count == -1 && (errno == EAGAIN || errno == EWOULDBLOCK),
+    Expect(count == -1 && (errno == EAGAIN || errno == EWOULDBLOCK),
            "socket prefill must stop at EAGAIN");
     break;
   }
-  expect(prefilled > 0, "socket prefill must occupy the send buffer");
-  expect(::fcntl(fds[0], F_SETFL, original_flags & ~O_NONBLOCK) == 0,
+  Expect(prefilled > 0, "socket prefill must occupy the send buffer");
+  Expect(::fcntl(fds[0], F_SETFL, original_flags & ~O_NONBLOCK) == 0,
          "sender must return to blocking mode");
 
   struct sigaction old_action {};
 
-  install_signal_handler(old_action);
+  InstallSignalHandler(old_action);
   signal_count = 0;
-  const auto payload = make_payload(512 * 1024 + 23);
+  const auto payload = MakePayload(512 * 1024 + 23);
   const pid_t child = ::fork();
-  expect(child >= 0, "write EINTR helper must fork");
+  Expect(child >= 0, "write EINTR helper must fork");
   if (child == 0) {
     ::close(fds[0]);
     ::usleep(20'000);
@@ -309,35 +309,35 @@ void test_write_retries_eintr() {
   hp::net::ConnectionIo connection{hp::net::Socket(fds[0])};
   connection.QueueOutput(payload);
   const hp::net::WriteResult write = connection.WriteAvailable();
-  expect(signal_count > 0, "controlled signal must interrupt blocking send");
-  expect(
+  Expect(signal_count > 0, "controlled signal must interrupt blocking send");
+  Expect(
       write.bytes_written == payload.size() && !connection.has_pending_output(),
       "send must retry EINTR and drain the exact queued payload");
   int status = 0;
   (void)::waitpid(child, &status, 0);
-  expect(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+  Expect(WIFEXITED(status) && WEXITSTATUS(status) == 0,
          "write EINTR helper must receive prefill plus payload");
   (void)::sigaction(SIGUSR1, &old_action, nullptr);
 }
 
-void test_sigpipe_is_suppressed() {
+void TestSigpipeIsSuppressed() {
   int fds[2] = {-1, -1};
-  expect(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds) == 0,
+  Expect(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds) == 0,
          "SIGPIPE socketpair must be created");
   if (fds[0] == -1) {
     return;
   }
   hp::net::ConnectionIo connection{hp::net::Socket(fds[0])};
   ::close(fds[1]);
-  const auto payload = make_payload(64);
+  const auto payload = MakePayload(64);
   connection.QueueOutput(payload);
   const hp::net::WriteResult write = connection.WriteAvailable();
-  expect(write.error_number == EPIPE || write.error_number == ECONNRESET,
+  Expect(write.error_number == EPIPE || write.error_number == ECONNRESET,
          "closed peer write must preserve a connection error");
-  expect(true, "MSG_NOSIGNAL must keep the test process alive");
+  Expect(true, "MSG_NOSIGNAL must keep the test process alive");
 }
 
-int connect_loopback(std::uint16_t port) {
+int ConnectLoopback(std::uint16_t port) {
   const int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (fd == -1) {
     return -1;
@@ -355,41 +355,41 @@ int connect_loopback(std::uint16_t port) {
   return fd;
 }
 
-void test_real_epoll_error_preserves_same_batch_bytes() {
+void TestRealEpollErrorPreservesSameBatchBytes() {
   hp::net::Socket listener = hp::net::Socket::CreateTcp();
   listener.set_reuse_address(true);
   listener.BindAny(0);
   listener.Listen(4);
   hp::net::Epoller epoller;
-  constexpr std::uint64_t listener_token = 0x55aa7700ULL;
-  constexpr std::uint64_t connection_token = 0x55aa7711ULL;
-  epoller.Add(listener.fd(), EPOLLIN, listener_token);
+  constexpr std::uint64_t kListenerToken = 0x55aa7700ULL;
+  constexpr std::uint64_t kConnectionToken = 0x55aa7711ULL;
+  epoller.Add(listener.fd(), EPOLLIN, kListenerToken);
 
-  const int client = connect_loopback(listener.local_port());
-  expect(client >= 0, "RST combination client must connect");
+  const int client = ConnectLoopback(listener.local_port());
+  Expect(client >= 0, "RST combination client must connect");
   if (client < 0) {
     return;
   }
   bool listener_ready = false;
   for (int attempt = 0; attempt < 8 && !listener_ready; ++attempt) {
     for (const epoll_event& event : epoller.Wait(250)) {
-      if (event.data.u64 == listener_token && (event.events & EPOLLIN) != 0U) {
+      if (event.data.u64 == kListenerToken && (event.events & EPOLLIN) != 0U) {
         listener_ready = true;
       }
     }
   }
-  expect(listener_ready, "RST combination listener must become readable");
+  Expect(listener_ready, "RST combination listener must become readable");
   hp::net::Socket accepted = listener.AcceptNonBlocking();
-  expect(accepted.valid(), "RST combination connection must be accepted");
+  Expect(accepted.valid(), "RST combination connection must be accepted");
   if (!accepted.valid()) {
     ::close(client);
     return;
   }
 
   epoller.Remove(listener.fd());
-  epoller.Add(accepted.fd(), EPOLLIN | EPOLLRDHUP, connection_token);
+  epoller.Add(accepted.fd(), EPOLLIN | EPOLLRDHUP, kConnectionToken);
 
-  const auto payload = make_payload(1024 + 29);
+  const auto payload = MakePayload(1024 + 29);
   std::size_t sent = 0;
   while (sent < payload.size()) {
     const ssize_t count = ::send(client,
@@ -403,7 +403,7 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
     if (count == -1 && errno == EINTR) {
       continue;
     }
-    expect(false, "RST combination payload must be sent before reset");
+    Expect(false, "RST combination payload must be sent before reset");
     break;
   }
 
@@ -421,19 +421,19 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
     }
     (void)epoller.Wait(250);
   }
-  expect(peeked_bytes == static_cast<ssize_t>(payload.size()),
+  Expect(peeked_bytes == static_cast<ssize_t>(payload.size()),
          "RST combination payload must be fully queued before reset");
   if (peeked_bytes == static_cast<ssize_t>(payload.size())) {
-    expect(
+    Expect(
         std::equal(peeked.begin(), peeked.end(), payload.begin()),
         "MSG_PEEK must observe the exact queued payload without consuming it");
   }
 
   // ERR/HUP are reported regardless of the requested interest. Suppress the
   // level-triggered readable wakeup while the real TCP reset becomes pending.
-  epoller.Modify(accepted.fd(), 0U, connection_token);
+  epoller.Modify(accepted.fd(), 0U, kConnectionToken);
   linger reset_linger{1, 0};
-  expect(::setsockopt(client,
+  Expect(::setsockopt(client,
                       SOL_SOCKET,
                       SO_LINGER,
                       &reset_linger,
@@ -444,22 +444,22 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
   bool error_ready = false;
   for (int attempt = 0; attempt < 8 && !error_ready; ++attempt) {
     for (const epoll_event& event : epoller.Wait(250)) {
-      if (event.data.u64 == connection_token &&
+      if (event.data.u64 == kConnectionToken &&
           (event.events & EPOLLERR) != 0U) {
         error_ready = true;
       }
     }
   }
-  expect(error_ready, "real reset must make EPOLLERR observable");
+  Expect(error_ready, "real reset must make EPOLLERR observable");
   // Restoring the production interest obtains a kernel-produced same-batch
   // EPOLLIN|EPOLLERR mask while the peeked bytes remain unread.
-  epoller.Modify(accepted.fd(), EPOLLIN | EPOLLRDHUP, connection_token);
+  epoller.Modify(accepted.fd(), EPOLLIN | EPOLLRDHUP, kConnectionToken);
 
   std::uint32_t observed_events = 0;
   for (int attempt = 0; attempt < 8; ++attempt) {
     const auto events = epoller.Wait(250);
     for (const epoll_event& event : events) {
-      if (event.data.u64 == connection_token &&
+      if (event.data.u64 == kConnectionToken &&
           (event.events & EPOLLIN) != 0U && (event.events & EPOLLERR) != 0U) {
         observed_events = event.events;
       }
@@ -469,9 +469,9 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
     }
   }
 
-  expect((observed_events & EPOLLIN) != 0U,
+  Expect((observed_events & EPOLLIN) != 0U,
          "real reset event must contain EPOLLIN for queued bytes");
-  expect((observed_events & EPOLLERR) != 0U,
+  Expect((observed_events & EPOLLERR) != 0U,
          "real reset event must contain EPOLLERR");
 
   hp::net::EventLoop loop;
@@ -484,29 +484,29 @@ void test_real_epoll_error_preserves_same_batch_bytes() {
                       OnConnectionClosedObserver1{}));
   connection.Start();
   const hp::net::ConnectionEventResult result =
-      hp::net::TcpConnectionTestAccess::event(connection, observed_events);
-  expect(result.socket_error_observed,
+      hp::net::TcpConnectionTestAccess::Event(connection, observed_events);
+  Expect(result.socket_error_observed,
          "production event path must query SO_ERROR for EPOLLERR");
-  expect(result.socket_error == ECONNRESET,
+  Expect(result.socket_error == ECONNRESET,
          "SO_ERROR must preserve the real ECONNRESET diagnosis");
-  expect(
+  Expect(
       result.bytes_read == payload.size(),
       "production event path must consume every same-batch byte before close");
-  expect(result.close_requested,
+  Expect(result.close_requested,
          "ERR/HUP production event path must request connection close");
-  expect(connection.pending_bytes() + result.bytes_written == payload.size(),
+  Expect(connection.pending_bytes() + result.bytes_written == payload.size(),
          "same-batch bytes must be retained or written, never discarded");
   epoller.Remove(connection.fd());
 }
 }  // namespace
 
 int main() {
-  test_binary_read_echo_and_half_close();
-  test_short_write_and_eagain_resume();
-  test_read_retries_eintr();
-  test_write_retries_eintr();
-  test_sigpipe_is_suppressed();
-  test_real_epoll_error_preserves_same_batch_bytes();
+  TestBinaryReadEchoAndHalfClose();
+  TestShortWriteAndEagainResume();
+  TestReadRetriesEintr();
+  TestWriteRetriesEintr();
+  TestSigpipeIsSuppressed();
+  TestRealEpollErrorPreservesSameBatchBytes();
 
   if (failures != 0) {
     std::cerr << failures << " connection IO assertion(s) failed\n";

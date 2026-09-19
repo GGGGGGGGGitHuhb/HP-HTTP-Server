@@ -13,6 +13,11 @@ using ResponseProvider =
     std::function<http::ResponseResult(const http::HttpRequest&,
                                        http::ConnectionPolicy)>;
 
+// Test observation hook. Install before session creation; clear after owners
+// stop.
+void set_RecordSessionEvent_callback(void (*observer)(bool,
+                                                      const void*) noexcept);
+
 // Response strategies are registered explicitly; Session stays lazy and bound
 // to its original IO owner. Copies before first dispatch retain independent
 // state.

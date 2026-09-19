@@ -29,9 +29,9 @@ int bad_request_hits = 0;
 int forbidden_hits = 0;
 int not_found_hits = 0;
 int internal_error_hits = 0;
-constexpr std::string_view secret = "S3-SIBLING-SECRET-DO-NOT-SERVE";
+constexpr std::string_view kSecret = "S3-SIBLING-SECRET-DO-NOT-SERVE";
 
-void expect(bool condition, std::string_view message) {
+void Expect(bool condition, std::string_view message) {
   if (!condition) {
     std::cerr << "FAIL: " << message << '\n';
     ++failures;
@@ -54,22 +54,22 @@ class Fixture {
     if (created == nullptr) {
       throw std::runtime_error(std::string("mkdtemp: ") + std::strerror(errno));
     }
-    workspace = created;
-    root = workspace / "root";
-    sibling = workspace / "sibling-secret.txt";
-    std::filesystem::create_directories(root / "assets");
-    write_text(root / "index.html", "<h1>S3 index</h1>\n");
-    write_text(root / "assets" / "note.txt", "static text\n");
-    write_text(root / "assets" / "blob.weird", "unknown mime\n");
-    write_text(sibling, secret);
+    workspace_ = created;
+    root_ = workspace_ / "root";
+    sibling_ = workspace_ / "sibling-secret.txt";
+    std::filesystem::create_directories(root_ / "assets");
+    WriteText(root_ / "index.html", "<h1>S3 index</h1>\n");
+    WriteText(root_ / "assets" / "note.txt", "static text\n");
+    WriteText(root_ / "assets" / "blob.weird", "unknown mime\n");
+    WriteText(sibling_, kSecret);
     const std::vector<unsigned char> binary{0x00, 0x01, 0x7f, 0xff, 0x41};
-    std::ofstream output(root / "assets" / "data.png", std::ios::binary);
+    std::ofstream output(root_ / "assets" / "data.png", std::ios::binary);
     output.write(reinterpret_cast<const char*>(binary.data()),
                  static_cast<std::streamsize>(binary.size()));
     output.close();
-    std::filesystem::create_symlink(sibling, root / "escape.txt");
-    std::filesystem::create_directory_symlink(workspace, root / "escape-dir");
-    const auto oversized = root / "oversized.bin";
+    std::filesystem::create_symlink(sibling_, root_ / "escape.txt");
+    std::filesystem::create_directory_symlink(workspace_, root_ / "escape-dir");
+    const auto oversized = root_ / "oversized.bin";
     const int fd = ::open(oversized.c_str(),
                           O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
                           0600);
@@ -86,11 +86,11 @@ class Fixture {
 
   ~Fixture() {
     std::error_code ignored;
-    std::filesystem::remove_all(workspace, ignored);
+    std::filesystem::remove_all(workspace_, ignored);
   }
 
-  static void write_text(const std::filesystem::path& path,
-                         std::string_view content) {
+  static void WriteText(const std::filesystem::path& path,
+                        std::string_view content) {
     std::ofstream output(path, std::ios::binary);
     output.write(content.data(), static_cast<std::streamsize>(content.size()));
     if (!output) {
@@ -98,9 +98,9 @@ class Fixture {
     }
   }
 
-  std::filesystem::path workspace;
-  std::filesystem::path root;
-  std::filesystem::path sibling;
+  std::filesystem::path workspace_;
+  std::filesystem::path root_;
+  std::filesystem::path sibling_;
 };
 
 struct Response {
@@ -109,7 +109,7 @@ struct Response {
   std::vector<std::byte> body;
 };
 
-Response parse_response(const std::vector<std::byte>& bytes) {
+Response ParseResponse(const std::vector<std::byte>& bytes) {
   const std::string_view raw(reinterpret_cast<const char*>(bytes.data()),
                              bytes.size());
   const std::size_t boundary = raw.find("\r\n\r\n");
@@ -127,12 +127,12 @@ Response parse_response(const std::vector<std::byte>& bytes) {
           std::vector<std::byte>(bytes.begin() + boundary + 4, bytes.end())};
 }
 
-std::string body_text(const Response& response) {
+std::string BodyText(const Response& response) {
   return {reinterpret_cast<const char*>(response.body.data()),
           response.body.size()};
 }
 
-std::size_t open_fd_count() {
+std::size_t OpenFdCount() {
   std::size_t count = 0;
   for (const auto& ignored :
        std::filesystem::directory_iterator("/proc/self/fd")) {
@@ -142,43 +142,42 @@ std::size_t open_fd_count() {
   return count;
 }
 
-Response request(const hp::http::StaticFileService& service,
+Response Request(const hp::http::StaticFileService& service,
                  std::string target) {
-  return parse_response(
+  return ParseResponse(
       service.Handle(hp::http::HttpRequest{"GET", std::move(target)}));
 }
 
-void test_success_and_mime(const hp::http::StaticFileService& service) {
-  const Response index = request(service, "/");
-  expect(index.status == 200, "root must map to index.html");
-  expect(body_text(index) == "<h1>S3 index</h1>\n",
-         "index bytes must be exact");
-  expect(index.header.find("Content-Type: text/html; charset=utf-8\r\n") !=
+void TestSuccessAndMime(const hp::http::StaticFileService& service) {
+  const Response index = Request(service, "/");
+  Expect(index.status == 200, "root must map to index.html");
+  Expect(BodyText(index) == "<h1>S3 index</h1>\n", "index bytes must be exact");
+  Expect(index.header.find("Content-Type: text/html; charset=utf-8\r\n") !=
              std::string::npos,
          "index MIME must be HTML");
 
-  const Response query = request(service, "/assets/note.txt?download=1");
-  expect(query.status == 200 && body_text(query) == "static text\n",
+  const Response query = Request(service, "/assets/note.txt?download=1");
+  Expect(query.status == 200 && BodyText(query) == "static text\n",
          "query must be ignored for file mapping");
 
-  const Response binary = request(service, "/assets/data.png");
+  const Response binary = Request(service, "/assets/data.png");
   const std::vector<std::byte> expected{std::byte{0x00},
                                         std::byte{0x01},
                                         std::byte{0x7f},
                                         std::byte{0xff},
                                         std::byte{0x41}};
-  expect(binary.status == 200 && binary.body == expected,
+  Expect(binary.status == 200 && binary.body == expected,
          "binary bytes including NUL must be exact");
 
-  const Response unknown = request(service, "/assets/blob.weird");
-  expect(
+  const Response unknown = Request(service, "/assets/blob.weird");
+  Expect(
       unknown.status == 200 &&
           unknown.header.find("Content-Type: application/octet-stream\r\n") !=
               std::string::npos,
       "unknown extension must use octet-stream");
 }
 
-void test_rejections(const hp::http::StaticFileService& service) {
+void TestRejections(const hp::http::StaticFileService& service) {
   const std::vector<std::pair<std::string, int>> cases = {
       {"/missing.txt", 404},
       {"/assets", 404},
@@ -194,64 +193,63 @@ void test_rejections(const hp::http::StaticFileService& service) {
       {"/oversized.bin", 403},
   };
   for (const auto& [target, expected_status] : cases) {
-    const Response response = request(service, target);
-    expect(response.status == expected_status,
+    const Response response = Request(service, target);
+    Expect(response.status == expected_status,
            "path policy must return its deterministic status");
-    expect(body_text(response).find(secret) == std::string::npos,
+    Expect(BodyText(response).find(kSecret) == std::string::npos,
            "rejected response must not contain sibling secret");
   }
 
-  const Response internal = request(service, "/" + std::string(300, 'x'));
-  expect(internal.status == 500,
+  const Response internal = Request(service, "/" + std::string(300, 'x'));
+  Expect(internal.status == 500,
          "unclassified open failure must become a deterministic 500");
-  expect(body_text(internal) == "500 Internal Server Error\n",
+  Expect(BodyText(internal) == "500 Internal Server Error\n",
          "500 body must be deterministic");
 }
 
-void test_fd_stability_and_read_only(
-    Fixture& fixture,
-    const hp::http::StaticFileService& service) {
-  const auto note_path = fixture.root / "assets" / "note.txt";
+void TestFdStabilityAndReadOnly(Fixture& fixture,
+                                const hp::http::StaticFileService& service) {
+  const auto note_path = fixture.root_ / "assets" / "note.txt";
   const auto before_mtime = std::filesystem::last_write_time(note_path);
   std::ifstream before_file(note_path, std::ios::binary);
   const std::string before((std::istreambuf_iterator<char>(before_file)),
                            std::istreambuf_iterator<char>());
-  const std::size_t baseline = open_fd_count();
+  const std::size_t baseline = OpenFdCount();
   for (int iteration = 0; iteration < 500; ++iteration) {
-    (void)request(service,
+    (void)Request(service,
                   iteration % 2 == 0 ? "/assets/note.txt"
                                      : "/escape-dir/sibling-secret.txt");
   }
-  const std::size_t after = open_fd_count();
-  expect(after == baseline,
+  const std::size_t after = OpenFdCount();
+  Expect(after == baseline,
          "repeated success/failure requests must keep fd count stable");
 
   std::ifstream after_file(note_path, std::ios::binary);
   const std::string after_bytes((std::istreambuf_iterator<char>(after_file)),
                                 std::istreambuf_iterator<char>());
-  expect(after_bytes == before, "static service must not modify a served file");
-  expect(std::filesystem::last_write_time(note_path) == before_mtime,
+  Expect(after_bytes == before, "static service must not modify a served file");
+  Expect(std::filesystem::last_write_time(note_path) == before_mtime,
          "static service must not change a served file mtime");
 }
 
-void test_root_validation(Fixture& fixture) {
+void TestRootValidation(Fixture& fixture) {
   bool file_rejected = false;
   try {
-    hp::http::StaticFileService invalid(fixture.sibling.string());
+    hp::http::StaticFileService invalid(fixture.sibling_.string());
   } catch (const std::system_error&) {
     file_rejected = true;
   }
-  expect(file_rejected, "non-directory root must be rejected");
+  Expect(file_rejected, "non-directory root must be rejected");
 
-  const auto root_link = fixture.workspace / "root-link";
-  std::filesystem::create_directory_symlink(fixture.root, root_link);
+  const auto root_link = fixture.workspace_ / "root-link";
+  std::filesystem::create_directory_symlink(fixture.root_, root_link);
   bool symlink_rejected = false;
   try {
     hp::http::StaticFileService invalid(root_link.string());
   } catch (const std::system_error&) {
     symlink_rejected = true;
   }
-  expect(symlink_rejected, "symlink root must be rejected by no-follow open");
+  Expect(symlink_rejected, "symlink root must be rejected by no-follow open");
 }
 
 }  // namespace
@@ -259,7 +257,7 @@ void test_root_validation(Fixture& fixture) {
 int main() {
   try {
     Fixture fixture;
-    hp::http::StaticFileService service(fixture.root.string());
+    hp::http::StaticFileService service(fixture.root_.string());
     for (const auto& target :
          std::vector<std::string>{"/",
                                   "/missing",
@@ -273,23 +271,23 @@ int main() {
                             result.bytes.size());
       const bool close =
           std::string_view(target).find('%') != std::string_view::npos;
-      expect(result.effective_policy ==
+      Expect(result.effective_policy ==
                  (close ? hp::http::ConnectionPolicy::kClose
                         : hp::http::ConnectionPolicy::kKeepAlive),
              "service effective policy");
-      expect(
+      Expect(
           raw.find(close ? "Connection: close\r\n"
                          : "Connection: keep-alive\r\n") != std::string::npos,
           "service bytes and metadata agree");
-      expect(service.Handle({"GET", target},
+      Expect(service.Handle({"GET", target},
                             hp::http::ConnectionPolicy::kKeepAlive) ==
                  result.bytes,
              "legacy handle delegates without changing bytes");
     }
-    test_success_and_mime(service);
-    test_rejections(service);
-    test_fd_stability_and_read_only(fixture, service);
-    test_root_validation(fixture);
+    TestSuccessAndMime(service);
+    TestRejections(service);
+    TestFdStabilityAndReadOnly(fixture, service);
+    TestRootValidation(fixture);
   } catch (const std::exception& error) {
     std::cerr << "FAIL: " << error.what() << '\n';
     return 1;

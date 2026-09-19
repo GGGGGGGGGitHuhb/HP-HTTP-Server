@@ -21,61 +21,62 @@ namespace {
 
 int failures = 0;
 
-void expect(bool condition, const std::string& message) {
+void Expect(bool condition, const std::string& message) {
   if (!condition) {
     std::cerr << "FAIL: " << message << '\n';
     ++failures;
   }
 }
 
-bool is_non_blocking(int fd) {
+bool IsNonBlocking(int fd) {
   const int flags = ::fcntl(fd, F_GETFL);
   return flags != -1 && (flags & O_NONBLOCK) != 0;
 }
 
-bool is_close_on_exec(int fd) {
+bool IsCloseOnExec(int fd) {
   const int flags = ::fcntl(fd, F_GETFD);
   return flags != -1 && (flags & FD_CLOEXEC) != 0;
 }
 
-void test_epoller_lifecycle_and_lt() {
+void TestEpollerLifecycleAndLt() {
   hp::net::Epoller epoller(4);
-  expect(is_close_on_exec(epoller.fd()),
+  Expect(IsCloseOnExec(epoller.fd()),
          "epoll fd must have close-on-exec semantics");
 
   int pipe_fds[2] = {-1, -1};
-  expect(::pipe2(pipe_fds, O_NONBLOCK | O_CLOEXEC) == 0,
+  Expect(::pipe2(pipe_fds, O_NONBLOCK | O_CLOEXEC) == 0,
          "pipe2 must succeed for LT test");
   if (pipe_fds[0] == -1) {
     return;
   }
 
-  constexpr std::uint64_t token = 0x12345678ULL;
-  epoller.Add(pipe_fds[0], EPOLLIN, token);
+  constexpr std::uint64_t kToken = 0x12345678ULL;
+  epoller.Add(pipe_fds[0], EPOLLIN, kToken);
   const char byte = 'x';
-  expect(::write(pipe_fds[1], &byte, 1) == 1, "LT test byte must be written");
+  Expect(::write(pipe_fds[1], &byte, 1) == 1, "LT test byte must be written");
 
   const auto first = epoller.Wait(0);
-  expect(first.size() == 1, "first LT wait must observe unread data");
+  Expect(first.size() == 1, "first LT wait must observe unread data");
   if (!first.empty()) {
-    expect(first.front().data.u64 == token, "epoll must preserve caller token");
-    expect((first.front().events & EPOLLIN) != 0U,
+    Expect(first.front().data.u64 == kToken,
+           "epoll must preserve caller token");
+    Expect((first.front().events & EPOLLIN) != 0U,
            "first LT event must be readable");
   }
 
   const auto second = epoller.Wait(0);
-  expect(second.size() == 1,
+  Expect(second.size() == 1,
          "LT must report the same unread level on a second wait");
 
-  epoller.Modify(pipe_fds[0], EPOLLIN, token + 1);
+  epoller.Modify(pipe_fds[0], EPOLLIN, kToken + 1);
   const auto modified = epoller.Wait(0);
-  expect(modified.size() == 1 && modified.front().data.u64 == token + 1,
+  Expect(modified.size() == 1 && modified.front().data.u64 == kToken + 1,
          "modify must replace the observation token");
 
   char received = 0;
-  expect(::read(pipe_fds[0], &received, 1) == 1,
+  Expect(::read(pipe_fds[0], &received, 1) == 1,
          "LT test byte must be drained");
-  expect(epoller.Wait(0).empty(), "drained level must no longer be ready");
+  Expect(epoller.Wait(0).empty(), "drained level must no longer be ready");
 
   epoller.Remove(pipe_fds[0]);
   epoller.Remove(pipe_fds[0]);
@@ -85,18 +86,18 @@ void test_epoller_lifecycle_and_lt() {
 
 volatile std::sig_atomic_t signal_count = 0;
 
-extern "C" void count_signal(int) { signal_count = 1; }
+extern "C" void CountSignal(int) { signal_count = 1; }
 
-void test_epoll_wait_retries_eintr() {
+void TestEpollWaitRetriesEintr() {
   struct sigaction action {};
 
-  action.sa_handler = count_signal;
+  action.sa_handler = CountSignal;
   ::sigemptyset(&action.sa_mask);
   action.sa_flags = 0;
 
   struct sigaction old_action {};
 
-  expect(::sigaction(SIGALRM, &action, &old_action) == 0,
+  Expect(::sigaction(SIGALRM, &action, &old_action) == 0,
          "SIGALRM handler must install");
 
   hp::net::Epoller epoller;
@@ -104,13 +105,13 @@ void test_epoll_wait_retries_eintr() {
   const auto events = epoller.Wait(30);
   ::ualarm(0, 0);
 
-  expect(events.empty(), "EINTR retry wait must eventually time out empty");
-  expect(signal_count > 0, "controlled signal must interrupt epoll_wait");
-  expect(::sigaction(SIGALRM, &old_action, nullptr) == 0,
+  Expect(events.empty(), "EINTR retry wait must eventually time out empty");
+  Expect(signal_count > 0, "controlled signal must interrupt epoll_wait");
+  Expect(::sigaction(SIGALRM, &old_action, nullptr) == 0,
          "SIGALRM handler must restore");
 }
 
-int connect_loopback(std::uint16_t port) {
+int ConnectLoopback(std::uint16_t port) {
   const int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (fd == -1) {
     return -1;
@@ -128,9 +129,9 @@ int connect_loopback(std::uint16_t port) {
   return fd;
 }
 
-void test_accept_retries_eintr() {
+void TestAcceptRetriesEintr() {
   const int raw_listener = ::socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
-  expect(raw_listener >= 0, "blocking listener socket must be created");
+  Expect(raw_listener >= 0, "blocking listener socket must be created");
   if (raw_listener < 0) {
     return;
   }
@@ -141,23 +142,23 @@ void test_accept_retries_eintr() {
 
   struct sigaction action {};
 
-  action.sa_handler = count_signal;
+  action.sa_handler = CountSignal;
   ::sigemptyset(&action.sa_mask);
   action.sa_flags = 0;
 
   struct sigaction old_action {};
 
-  expect(::sigaction(SIGUSR2, &action, &old_action) == 0,
+  Expect(::sigaction(SIGUSR2, &action, &old_action) == 0,
          "SIGUSR2 handler must install");
   signal_count = 0;
 
   const pid_t child = ::fork();
-  expect(child >= 0, "accept EINTR helper must fork");
+  Expect(child >= 0, "accept EINTR helper must fork");
   if (child == 0) {
     ::usleep(20'000);
     ::kill(::getppid(), SIGUSR2);
     ::usleep(20'000);
-    const int client = connect_loopback(listener.local_port());
+    const int client = ConnectLoopback(listener.local_port());
     if (client >= 0) {
       ::close(client);
     }
@@ -169,35 +170,35 @@ void test_accept_retries_eintr() {
   }
 
   hp::net::Socket accepted = listener.AcceptNonBlocking();
-  expect(signal_count > 0, "controlled signal must interrupt blocking accept4");
-  expect(accepted.valid(), "accept4 must retry EINTR and accept the client");
+  Expect(signal_count > 0, "controlled signal must interrupt blocking accept4");
+  Expect(accepted.valid(), "accept4 must retry EINTR and accept the client");
   if (accepted.valid()) {
-    expect(is_non_blocking(accepted.fd()),
+    Expect(IsNonBlocking(accepted.fd()),
            "EINTR-retried accepted fd must be non-blocking");
-    expect(is_close_on_exec(accepted.fd()),
+    Expect(IsCloseOnExec(accepted.fd()),
            "EINTR-retried accepted fd must be close-on-exec");
   }
   int status = 0;
   (void)::waitpid(child, &status, 0);
-  expect(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+  Expect(WIFEXITED(status) && WEXITSTATUS(status) == 0,
          "accept EINTR helper must connect and exit cleanly");
   (void)::sigaction(SIGUSR2, &old_action, nullptr);
 }
 
-void test_listener_accept_drain_and_flags() {
+void TestListenerAcceptDrainAndFlags() {
   hp::net::Socket listener = hp::net::Socket::CreateTcp();
-  expect(is_non_blocking(listener.fd()), "listener must be non-blocking");
-  expect(is_close_on_exec(listener.fd()), "listener must be close-on-exec");
+  Expect(IsNonBlocking(listener.fd()), "listener must be non-blocking");
+  Expect(IsCloseOnExec(listener.fd()), "listener must be close-on-exec");
   listener.set_reuse_address(true);
   listener.BindAny(0);
   listener.Listen(16);
   const std::uint16_t port = listener.local_port();
-  expect(port != 0, "port 0 bind must report an actual non-zero port");
+  Expect(port != 0, "port 0 bind must report an actual non-zero port");
 
   std::vector<int> clients;
   for (int index = 0; index < 4; ++index) {
-    const int client = connect_loopback(port);
-    expect(client >= 0, "loopback client must connect");
+    const int client = ConnectLoopback(port);
+    Expect(client >= 0, "loopback client must connect");
     if (client >= 0) {
       clients.push_back(client);
     }
@@ -212,7 +213,7 @@ void test_listener_accept_drain_and_flags() {
       --readiness;
       continue;
     }
-    expect(poll_result == 1 && (descriptor.revents & POLLIN) != 0,
+    Expect(poll_result == 1 && (descriptor.revents & POLLIN) != 0,
            "listener must become readable for queued connections");
     if (poll_result != 1) {
       continue;
@@ -223,16 +224,16 @@ void test_listener_accept_drain_and_flags() {
       if (!connection.valid()) {
         break;
       }
-      expect(is_non_blocking(connection.fd()),
+      Expect(IsNonBlocking(connection.fd()),
              "accepted connection must be non-blocking");
-      expect(is_close_on_exec(connection.fd()),
+      Expect(IsCloseOnExec(connection.fd()),
              "accepted connection must be close-on-exec");
       accepted.push_back(std::move(connection));
     }
   }
-  expect(accepted.size() == clients.size(),
+  Expect(accepted.size() == clients.size(),
          "readiness-driven accept drains must consume every queued connection");
-  expect(!listener.AcceptNonBlocking().valid(),
+  Expect(!listener.AcceptNonBlocking().valid(),
          "drained listener must keep reporting EAGAIN as invalid Socket");
 
   for (int client : clients) {
@@ -240,22 +241,22 @@ void test_listener_accept_drain_and_flags() {
   }
 }
 
-void test_epoller_invalid_operation() {
+void TestEpollerInvalidOperation() {
   hp::net::Epoller epoller;
   try {
     epoller.Add(-1, EPOLLIN, 1);
-    expect(false, "invalid epoll add must throw");
+    Expect(false, "invalid epoll add must throw");
   } catch (const std::system_error& error) {
-    expect(error.code().value() == EBADF,
+    Expect(error.code().value() == EBADF,
            "invalid epoll add must preserve EBADF");
-    expect(std::string(error.what()).find("epoll_ctl") != std::string::npos,
+    Expect(std::string(error.what()).find("epoll_ctl") != std::string::npos,
            "invalid epoll add must name epoll_ctl");
   }
 }
 
-void test_registration_failure_preserves_unique_ownership() {
+void TestRegistrationFailurePreservesUniqueOwnership() {
   int fds[2] = {-1, -1};
-  expect(::socketpair(AF_UNIX,
+  Expect(::socketpair(AF_UNIX,
                       SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
                       0,
                       fds) == 0,
@@ -269,25 +270,25 @@ void test_registration_failure_preserves_unique_ownership() {
   epoller.Add(sole_owner.fd(), EPOLLIN, 10);
   try {
     epoller.Add(sole_owner.fd(), EPOLLIN, 11);
-    expect(false, "duplicate epoll registration must fail");
+    Expect(false, "duplicate epoll registration must fail");
   } catch (const std::system_error& error) {
-    expect(error.code().value() == EEXIST,
+    Expect(error.code().value() == EEXIST,
            "duplicate registration must preserve EEXIST");
   }
-  expect(::fcntl(sole_owner.fd(), F_GETFD) != -1,
+  Expect(::fcntl(sole_owner.fd(), F_GETFD) != -1,
          "registration failure must not close the sole Socket owner");
   epoller.Remove(sole_owner.fd());
   const int formerly_owned_fd = sole_owner.fd();
   sole_owner.Reset();
   errno = 0;
-  expect(::fcntl(formerly_owned_fd, F_GETFD) == -1 && errno == EBADF,
+  Expect(::fcntl(formerly_owned_fd, F_GETFD) == -1 && errno == EBADF,
          "Socket destruction path must release the failed-registration fd");
   ::close(fds[1]);
 }
 
-void test_combined_read_and_half_close_event() {
+void TestCombinedReadAndHalfCloseEvent() {
   int fds[2] = {-1, -1};
-  expect(::socketpair(AF_UNIX,
+  Expect(::socketpair(AF_UNIX,
                       SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
                       0,
                       fds) == 0,
@@ -297,20 +298,20 @@ void test_combined_read_and_half_close_event() {
   }
 
   hp::net::Epoller epoller;
-  constexpr std::uint64_t token = 0xabcdefULL;
-  epoller.Add(fds[0], EPOLLIN | EPOLLRDHUP, token);
+  constexpr std::uint64_t kToken = 0xabcdefULL;
+  epoller.Add(fds[0], EPOLLIN | EPOLLRDHUP, kToken);
   const char payload[] = {'a', '\0', 'z'};
-  expect(::send(fds[1], payload, sizeof(payload), MSG_NOSIGNAL) ==
+  Expect(::send(fds[1], payload, sizeof(payload), MSG_NOSIGNAL) ==
              static_cast<ssize_t>(sizeof(payload)),
          "combined-event payload must be sent");
-  expect(::shutdown(fds[1], SHUT_WR) == 0,
+  Expect(::shutdown(fds[1], SHUT_WR) == 0,
          "combined-event peer must half-close writes");
 
   std::uint32_t observed = 0;
   for (int attempt = 0; attempt < 4; ++attempt) {
     const auto events = epoller.Wait(250);
     for (const epoll_event& event : events) {
-      if (event.data.u64 == token) {
+      if (event.data.u64 == kToken) {
         observed |= event.events;
       }
     }
@@ -318,16 +319,16 @@ void test_combined_read_and_half_close_event() {
       break;
     }
   }
-  expect((observed & EPOLLIN) != 0U,
+  Expect((observed & EPOLLIN) != 0U,
          "combined close event must retain readable bytes");
-  expect((observed & EPOLLRDHUP) != 0U,
+  Expect((observed & EPOLLRDHUP) != 0U,
          "combined close event must retain peer half-close state");
 
   char received[sizeof(payload)]{};
-  expect(::recv(fds[0], received, sizeof(received), 0) ==
+  Expect(::recv(fds[0], received, sizeof(received), 0) ==
              static_cast<ssize_t>(sizeof(received)),
          "readable bytes must remain available after combined observation");
-  expect(
+  Expect(
       std::equal(std::begin(payload), std::end(payload), std::begin(received)),
       "combined event must not alter readable binary bytes");
   epoller.Remove(fds[0]);
@@ -338,13 +339,13 @@ void test_combined_read_and_half_close_event() {
 }  // namespace
 
 int main() {
-  test_epoller_lifecycle_and_lt();
-  test_epoll_wait_retries_eintr();
-  test_accept_retries_eintr();
-  test_listener_accept_drain_and_flags();
-  test_epoller_invalid_operation();
-  test_registration_failure_preserves_unique_ownership();
-  test_combined_read_and_half_close_event();
+  TestEpollerLifecycleAndLt();
+  TestEpollWaitRetriesEintr();
+  TestAcceptRetriesEintr();
+  TestListenerAcceptDrainAndFlags();
+  TestEpollerInvalidOperation();
+  TestRegistrationFailurePreservesUniqueOwnership();
+  TestCombinedReadAndHalfCloseEvent();
 
   if (failures != 0) {
     std::cerr << failures << " network primitive assertion(s) failed\n";

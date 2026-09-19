@@ -33,7 +33,7 @@ struct TcpConnectionTestAccess {
 struct TcpServerTestAccess {
   static auto& loop(TcpServer& s) { return s.loop_; }
 
-  static void add(TcpServer& s, Socket socket) {
+  static void Add(TcpServer& s, Socket socket) {
     s.AddConnection(std::move(socket));
   }
 
@@ -45,17 +45,17 @@ struct TcpServerTestAccess {
     return s.main_registry_->connections_.size();
   }
 
-  static void notice(TcpServer& s, int fd, TcpConnection::Identity id) {
+  static void Notice(TcpServer& s, int fd, TcpConnection::Identity id) {
     s.main_registry_->OnConnectionClosed(fd, id);
   }
 
-  static void drain(TcpServer& s) {
+  static void Drain(TcpServer& s) {
     s.main_registry_->DrainClosedConnections();
   }
 };
 
 struct EventLoopTestAccess {
-  static void stale(EventLoop& loop, std::uint64_t token) {
+  static void Stale(EventLoop& loop, std::uint64_t token) {
     loop.Dispatch(token, EPOLLIN);
   }
 };
@@ -68,18 +68,18 @@ using C = TcpConnectionTestAccess;
 using S = TcpServerTestAccess;
 int failures{};
 
-void expect(bool ok, const char* why) {
+void Expect(bool ok, const char* why) {
   if (!ok) {
     ++failures;
     std::cerr << "FAIL: " << why << '\n';
   }
 }
 
-std::span<const std::byte> bytes(std::string_view s) {
+std::span<const std::byte> Bytes(std::string_view s) {
   return {reinterpret_cast<const std::byte*>(s.data()), s.size()};
 }
 
-std::size_t fds() {
+std::size_t Fds() {
   return static_cast<std::size_t>(
       std::distance(std::filesystem::directory_iterator("/proc/self/fd"),
                     std::filesystem::directory_iterator{}));
@@ -99,14 +99,14 @@ struct Pair {
     peer.Reset(fd[1]);
   }
 
-  void send(std::string_view s) {
-    expect(::send(peer.fd(), s.data(), s.size(), MSG_NOSIGNAL) ==
+  void Send(std::string_view s) {
+    Expect(::send(peer.fd(), s.data(), s.size(), MSG_NOSIGNAL) ==
                static_cast<ssize_t>(s.size()),
            "send controlled input");
   }
 };
 
-std::vector<std::byte> collect(int fd) {
+std::vector<std::byte> Collect(int fd) {
   std::vector<std::byte> out;
   std::byte buffer[16384];
   ssize_t n;
@@ -115,21 +115,21 @@ std::vector<std::byte> collect(int fd) {
   return out;
 }
 
-std::vector<std::byte> response(std::string_view body) {
-  return http::MakeResponse(http::Status::kOk, bytes(body), "text/plain");
+std::vector<std::byte> Response(std::string_view body) {
+  return http::MakeResponse(http::Status::kOk, Bytes(body), "text/plain");
 }
 
-const std::string request =
+const std::string kRequest =
     "GET /first HTTP/1.1\r\nHost: test\r\nConnection: close\r\n\r\n";
 
-void interleaved_and_eof() {
+void InterleavedAndEof() {
   EventLoop loop;
   Pair a, b;
   app::HttpCallbackStats sa, sb;
   struct ResponseScenario1 {
     hp::http::ResponseResult PrepareResponse(const http::HttpRequest& r,
                                              http::ConnectionPolicy policy) {
-      return http::ResponseResult{response(r.target), policy};
+      return http::ResponseResult{Response(r.target), policy};
     }
   };
   auto provider =
@@ -157,20 +157,20 @@ void interleaved_and_eof() {
                       OnConnectionClosedObserver2{closed}));
   ca.Start();
   cb.Start();
-  a.send("GET /one HTTP/1.1\r\n");
+  a.Send("GET /one HTTP/1.1\r\n");
   loop.PollOnce(250);
-  b.send("GET /two HTTP/1.1\r\nHost: test\r\nConnection: close\r\n");
+  b.Send("GET /two HTTP/1.1\r\nHost: test\r\nConnection: close\r\n");
   loop.PollOnce(250);
-  expect(collect(a.peer.fd()).empty() && collect(b.peer.fd()).empty(),
+  Expect(Collect(a.peer.fd()).empty() && Collect(b.peer.fd()).empty(),
          "independent NeedMore no response");
-  a.send("Host: test\r\nConnection: close\r\n\r\n");
+  a.Send("Host: test\r\nConnection: close\r\n\r\n");
   loop.PollOnce(250);
-  b.send("\r\n");
+  b.Send("\r\n");
   loop.PollOnce(250);
-  expect(collect(a.peer.fd()) == response("/one") &&
-             collect(b.peer.fd()) == response("/two"),
+  Expect(Collect(a.peer.fd()) == Response("/one") &&
+             Collect(b.peer.fd()) == Response("/two"),
          "interleaved exact distinct responses");
-  expect(sa.responses == 1 && sb.responses == 1 && sa.need_more == 1 &&
+  Expect(sa.responses == 1 && sb.responses == 1 && sa.need_more == 1 &&
              sb.need_more == 1 && closed == 2,
          "per-connection done state");
   Pair eof;
@@ -184,11 +184,11 @@ void interleaved_and_eof() {
       std::bind_front(&OnConnectionClosedObserver3::OnConnectionClosed,
                       OnConnectionClosedObserver3{}));
   ce.Start();
-  eof.send("GET / HTTP/1.1\r\n");
+  eof.Send("GET / HTTP/1.1\r\n");
   loop.PollOnce(250);
   ::shutdown(eof.peer.fd(), SHUT_WR);
   loop.PollOnce(250);
-  expect(collect(eof.peer.fd()) ==
+  Expect(Collect(eof.peer.fd()) ==
                  http::MakeErrorResponse(http::Status::kBadRequest) &&
              se.eof_notifications == 1,
          "EOF without new bytes incomplete400");
@@ -217,21 +217,21 @@ void interleaved_and_eof() {
   cc.Start();
   ::shutdown(empty.peer.fd(), SHUT_WR);
   loop.PollOnce(250);
-  expect(eof_empty == 1, "empty EOF notification once");
+  Expect(eof_empty == 1, "empty EOF notification once");
   std::cout << "isolation: callbacks=" << sa.callbacks + sb.callbacks
             << " need_more=" << sa.need_more + sb.need_more
             << " unique_responses=" << closed << " eof400=" << se.responses
             << " empty_eof=" << eof_empty << '\n';
 }
 
-void incremental_consumption() {
+void IncrementalConsumption() {
   EventLoop loop;
   Pair a, b;
   app::HttpCallbackStats sa, sb;
   struct ResponseScenario2 {
     hp::http::ResponseResult PrepareResponse(const http::HttpRequest& r,
                                              http::ConnectionPolicy policy) {
-      return http::ResponseResult{response(r.target), policy};
+      return http::ResponseResult{Response(r.target), policy};
     }
   };
   auto provider =
@@ -262,26 +262,26 @@ void incremental_consumption() {
                                        "\nConnection: close\r\n\r\n"};
   std::size_t sent_a = 0, sent_b = 0;
   for (std::size_t i = 0; i < pa.size(); ++i) {
-    a.send(pa[i]);
+    a.Send(pa[i]);
     sent_a += pa[i].size();
     loop.PollOnce(250);
-    expect(sa.parses == i + 1 && sa.accepted_bytes == sent_a &&
+    Expect(sa.parses == i + 1 && sa.accepted_bytes == sent_a &&
                sa.submitted_bytes == sent_a && sa.consumed_bytes == sent_a &&
                C::buffered(ca) == 0,
            "each A segment fed once and released before next write");
-    b.send(pb[i]);
+    b.Send(pb[i]);
     sent_b += pb[i].size();
     loop.PollOnce(250);
-    expect(sb.parses == i + 1 && sb.accepted_bytes == sent_b &&
+    Expect(sb.parses == i + 1 && sb.accepted_bytes == sent_b &&
                sb.submitted_bytes == sent_b && sb.consumed_bytes == sent_b &&
                C::buffered(cb) == 0,
            "each B segment fed once and released before next write");
     if (i < 2)
-      expect(sa.responses == 0 && sb.responses == 0,
+      Expect(sa.responses == 0 && sb.responses == 0,
              "incremental partial states independent");
   }
-  expect(collect(a.peer.fd()) == response("/a") &&
-             collect(b.peer.fd()) == response("/b") && sa.need_more == 2 &&
+  Expect(Collect(a.peer.fd()) == Response("/a") &&
+             Collect(b.peer.fd()) == Response("/b") && sa.need_more == 2 &&
              sb.need_more == 2,
          "three fragments preserve independent request fields");
   Pair empty;
@@ -297,7 +297,7 @@ void incremental_consumption() {
   ce.Start();
   ::shutdown(empty.peer.fd(), SHUT_WR);
   loop.PollOnce(250);
-  expect(collect(empty.peer.fd()) ==
+  Expect(Collect(empty.peer.fd()) ==
                  http::MakeErrorResponse(http::Status::kBadRequest) &&
              se.accepted_bytes == 0 && se.eof_notifications == 1,
          "empty HTTP EOF feed produces400 without consumed bytes");
@@ -310,12 +310,12 @@ void incremental_consumption() {
       << " network_buffer=0 independent_responses=2 empty_http_eof400=1\n";
 }
 
-void limits_and_500() {
+void LimitsAnd500() {
   EventLoop loop;
   struct ResponseScenario3 {
     hp::http::ResponseResult PrepareResponse(const http::HttpRequest&,
                                              http::ConnectionPolicy policy) {
-      return http::ResponseResult{response("ok"), policy};
+      return http::ResponseResult{Response("ok"), policy};
     }
   };
   auto provider =
@@ -337,11 +337,11 @@ void limits_and_500() {
     c.Start();
     std::string input =
         over ? std::string(http::kMaxRequestBytes + 1, 'a') : exact;
-    p.send(input);
+    p.Send(input);
     loop.PollOnce(250);
-    auto got = collect(p.peer.fd());
-    expect(got == (over ? http::MakeErrorResponse(http::Status::kBadRequest)
-                        : response("ok")),
+    auto got = Collect(p.peer.fd());
+    Expect(got == (over ? http::MakeErrorResponse(http::Status::kBadRequest)
+                        : Response("ok")),
            "precise HTTP input bound response");
   }
   Pair p;
@@ -363,9 +363,9 @@ void limits_and_500() {
       std::bind_front(&OnConnectionClosedObserver10::OnConnectionClosed,
                       OnConnectionClosedObserver10{}));
   c.Start();
-  p.send(request);
+  p.Send(kRequest);
   loop.PollOnce(250);
-  expect(collect(p.peer.fd()) ==
+  Expect(Collect(p.peer.fd()) ==
                  http::MakeErrorResponse(http::Status::kInternalServerError) &&
              st.responses == 1,
          "adapter exception maps500");
@@ -391,9 +391,9 @@ void limits_and_500() {
       std::bind_front(&OnConnectionClosedObserver12::OnConnectionClosed,
                       OnConnectionClosedObserver12{limit_closed}));
   cap.Start();
-  bounded.send("12345");
+  bounded.Send("12345");
   loop.PollOnce(250);
-  expect(exact_seen == 1 && limit_closed == 1 &&
+  Expect(exact_seen == 1 && limit_closed == 1 &&
              C::result(cap).read_error == EMSGSIZE,
          "notify exact cap before controlled overflow close");
   std::cout << "limits: exact_http=1 over_http=1 exact_cap_notification="
@@ -401,7 +401,7 @@ void limits_and_500() {
             << " adapter500=" << st.responses << '\n';
 }
 
-void drain_pipeline_and_borrow() {
+void DrainPipelineAndBorrow() {
   EventLoop loop;
   Pair p;
   int sndbuf = 4096;
@@ -440,29 +440,29 @@ void drain_pipeline_and_borrow() {
       std::bind_front(&OnConnectionClosedObserver13::OnConnectionClosed,
                       OnConnectionClosedObserver13{closes}));
   c.Start();
-  p.send(request + request);
+  p.Send(kRequest + kRequest);
   loop.PollOnce(250);
   const auto pending = c.pending_bytes();
-  expect(pending > 0 && C::result(c).write_would_block && closes == 0,
+  Expect(pending > 0 && C::result(c).write_would_block && closes == 0,
          "CloseAfterFlush retains temporary response tail");
   const auto parses = stats.parses, sends = stats.responses,
              callbacks = stats.callbacks;
-  p.send(request);
+  p.Send(kRequest);
   ::shutdown(p.peer.fd(), SHUT_WR);
   std::vector<std::byte> received;
   for (int i = 0; i < 1000 && received.size() < expected.size(); ++i) {
-    auto part = collect(p.peer.fd());
+    auto part = Collect(p.peer.fd());
     received.insert(received.end(), part.begin(), part.end());
     loop.PollOnce(0);
   }
-  auto part = collect(p.peer.fd());
+  auto part = Collect(p.peer.fd());
   received.insert(received.end(), part.begin(), part.end());
-  expect(received == expected && c.pending_bytes() == 0 && closes == 1 &&
+  Expect(received == expected && c.pending_bytes() == 0 && closes == 1 &&
              !(C::interest(c) & EPOLLOUT),
          "owned temporary bytes drain exactly before close");
   const auto events = C::events(c);
   for (int i = 0; i < 10; ++i) loop.PollOnce(0);
-  expect(stats.parses == parses && stats.responses == sends &&
+  Expect(stats.parses == parses && stats.responses == sends &&
              stats.callbacks == callbacks && C::events(c) == events,
          "same/later pipeline and EOF no second parse/send or busyloop");
   Pair invalid;
@@ -487,9 +487,9 @@ void drain_pipeline_and_borrow() {
       std::bind_front(&OnConnectionClosedObserver15::OnConnectionClosed,
                       OnConnectionClosedObserver15{consumed_close}));
   bad.Start();
-  invalid.send("x");
+  invalid.Send("x");
   loop.PollOnce(250);
-  expect(consumed_close == 1, "consume overflow contained");
+  Expect(consumed_close == 1, "consume overflow contained");
   std::cout << "drain: pending=" << pending
             << " eagain=1 full_bytes=" << received.size()
             << " final_pending=" << c.pending_bytes() << " close=" << closes
@@ -498,8 +498,8 @@ void drain_pipeline_and_borrow() {
             << " empty_polls=10 consume_error=" << consumed_close << '\n';
 }
 
-void factory_message_lifetime() {
-  const auto before = fds();
+void FactoryMessageLifetime() {
+  const auto before = Fds();
   int factory_errors{}, message_errors{}, callback_alive{}, recovered{};
   {
     int factories{};
@@ -550,39 +550,39 @@ void factory_message_lifetime() {
     Pair first;
     int ff = first.owner.fd();
     try {
-      S::add(server, std::move(first.owner));
+      S::Add(server, std::move(first.owner));
     } catch (const std::runtime_error&) {
     }
-    expect(S::size(server) == 0 && ::fcntl(ff, F_GETFD) == -1,
+    Expect(S::size(server) == 0 && ::fcntl(ff, F_GETFD) == -1,
            "factory failure owns/closes socket");
     Pair second;
     int oldfd = second.owner.fd();
-    S::add(server, std::move(second.owner));
+    S::Add(server, std::move(second.owner));
     auto& old = S::connection(server, oldfd);
     auto oldtoken = C::token(old), oldid = old.identity();
-    second.send("x");
+    second.Send("x");
     S::loop(server).PollOnce(250);
-    expect(S::size(server) == 0, "message exception closes one");
+    Expect(S::size(server) == 0, "message exception closes one");
     Pair fresh;
     if (fresh.owner.fd() != oldfd) {
-      expect(::dup2(fresh.owner.fd(), oldfd) == oldfd, "reuse numeric fd");
+      Expect(::dup2(fresh.owner.fd(), oldfd) == oldfd, "reuse numeric fd");
       fresh.owner.Reset(oldfd);
     }
-    S::add(server, std::move(fresh.owner));
-    EventLoopTestAccess::stale(S::loop(server), oldtoken);
-    S::notice(server, oldfd, oldid);
-    S::drain(server);
-    expect(
+    S::Add(server, std::move(fresh.owner));
+    EventLoopTestAccess::Stale(S::loop(server), oldtoken);
+    S::Notice(server, oldfd, oldid);
+    S::Drain(server);
+    Expect(
         S::size(server) == 1 && C::messages(S::connection(server, oldfd)) == 0,
         "old close/token no misdelete");
-    fresh.send("ok");
+    fresh.Send("ok");
     S::loop(server).PollOnce(250);
-    expect(collect(fresh.peer.fd()) ==
-               std::vector<std::byte>(bytes("ok").begin(), bytes("ok").end()),
+    Expect(Collect(fresh.peer.fd()) ==
+               std::vector<std::byte>(Bytes("ok").begin(), Bytes("ok").end()),
            "new callback recovers echo");
-    fresh.send("c");
+    fresh.Send("c");
     S::loop(server).PollOnce(250);
-    expect(S::size(server) == 0 && ::fcntl(oldfd, F_GETFD) == -1,
+    Expect(S::size(server) == 0 && ::fcntl(oldfd, F_GETFD) == -1,
            "callback returns before fd close");
     Pair output;
     TcpConnection c(S::loop(server), std::move(output.owner), 77, 0);
@@ -594,24 +594,24 @@ void factory_message_lifetime() {
                         OnConnectionClosedObserver16{}));
     c.Start();
     output.peer.Reset();
-    c.Send(bytes("out"));
-    expect(c.state() == TcpConnection::State::kClosing,
+    c.Send(Bytes("out"));
+    Expect(c.state() == TcpConnection::State::kClosing,
            "send output error closes");
     Pair active;
-    S::add(server, std::move(active.owner));  // destructor with live owner
+    S::Add(server, std::move(active.owner));  // destructor with live owner
     std::cout << "identity: stale=" << S::loop(server).counters().stale
               << " old_close_misdelete=0 new_callback=" << recovered << '\n';
   }
-  expect(fds() == before && factory_errors == 1 && message_errors == 1 &&
+  Expect(Fds() == before && factory_errors == 1 && message_errors == 1 &&
              callback_alive == 1 && recovered == 1,
          "failure lifecycle and fd restoration");
   std::cout << "failures: factory=" << factory_errors
             << " message=" << message_errors
             << " callback_alive=" << callback_alive << " recovery=" << recovered
-            << " output_error=1 fd=" << before << "->" << fds() << '\n';
+            << " output_error=1 fd=" << before << "->" << Fds() << '\n';
 }
 
-void reset_new_message() {
+void ResetNewMessage() {
   EventLoop loop;
   Socket accepted;
   Acceptor acceptor(loop, 0);
@@ -629,7 +629,7 @@ void reset_new_message() {
   address.sin_family = AF_INET;
   address.sin_port = htons(acceptor.bound_port());
   address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  expect(::connect(client.fd(),
+  Expect(::connect(client.fd(),
                    reinterpret_cast<sockaddr*>(&address),
                    sizeof(address)) == 0,
          "reset TCP connect");
@@ -664,7 +664,7 @@ void reset_new_message() {
                       OnConnectionClosedObserver19{closed}));
   c.Start();
   std::vector<std::byte> queued(1053, std::byte{0x5a});
-  expect(
+  Expect(
       ::send(client.fd(), queued.data(), queued.size(), MSG_NOSIGNAL) == 1053,
       "reset queue bytes");
   std::vector<std::byte> peek(1053);
@@ -674,7 +674,7 @@ void reset_new_message() {
     if (count == 1053) break;
     ::usleep(1000);
   }
-  expect(count == 1053 && peek == queued, "reset full queued");
+  Expect(count == 1053 && peek == queued, "reset full queued");
   Epoller waiting;
   waiting.Add(c.fd(), 0, 1);
   linger reset{1, 0};
@@ -685,12 +685,12 @@ void reset_new_message() {
     for (const auto& e : waiting.Wait(250))
       if (e.events & EPOLLERR) pending = true;
   }
-  expect(pending, "reset error ready");
+  Expect(pending, "reset error ready");
   waiting.Remove(c.fd());
   loop.PollOnce(250);
   auto result = C::result(c);
   bool combined = (C::mask(c) & (EPOLLERR | EPOLLIN)) == (EPOLLERR | EPOLLIN);
-  expect(combined && result.socket_error == ECONNRESET &&
+  Expect(combined && result.socket_error == ECONNRESET &&
              result.bytes_read == 1053 && received == queued && messages > 0 &&
              closed == 1,
          "new callback receives all diagnosed reset bytes");
@@ -703,12 +703,12 @@ void reset_new_message() {
 }  // namespace
 
 int main() {
-  interleaved_and_eof();
-  incremental_consumption();
-  limits_and_500();
-  drain_pipeline_and_borrow();
-  factory_message_lifetime();
-  reset_new_message();
+  InterleavedAndEof();
+  IncrementalConsumption();
+  LimitsAnd500();
+  DrainPipelineAndBorrow();
+  FactoryMessageLifetime();
+  ResetNewMessage();
   std::cout << "HTTP callback assertions_failed=" << failures << '\n';
   return failures ? 1 : 0;
 }

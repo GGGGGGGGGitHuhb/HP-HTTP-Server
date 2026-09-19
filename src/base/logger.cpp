@@ -10,24 +10,24 @@ namespace hp::base {
 namespace {
 
 std::mutex output_mutex;
-std::shared_ptr<AsyncLogger> current;
+std::shared_ptr<AsyncLogger> active_logger;
 bool session_active = false;
 
-void log(LogLevel level, std::string_view message) {
+void WriteLog(LogLevel level, std::string_view message) {
   std::shared_ptr<AsyncLogger> logger;
   {
     const std::lock_guard lock(output_mutex);
-    logger = current;
+    logger = active_logger;
     if (!logger) {
-      const auto text = level == LogLevel::Info   ? "INFO"
-                        : level == LogLevel::Warn ? "WARN"
-                                                  : "ERROR";
+      const auto text = level == LogLevel::kInfo   ? "INFO"
+                        : level == LogLevel::kWarn ? "WARN"
+                                                   : "ERROR";
       std::clog << '[' << text << "] " << message << '\n';
       return;
     }
   }
-  // Shared ownership spans the complete submission, including concurrent stop.
-  logger->submit(level, message);
+  // Shared ownership spans the complete submission, including concurrent Stop.
+  logger->Submit(level, message);
 }
 
 }  // namespace
@@ -36,25 +36,25 @@ LoggerSession::LoggerSession() {
   const std::lock_guard lock(output_mutex);
   if (session_active) throw std::logic_error("logger session already active");
   logger_ = std::make_shared<AsyncLogger>();
-  current = logger_;
+  active_logger = logger_;
   session_active = true;
 }
 
 LoggerSession::~LoggerSession() {
-  stop();
+  Stop();
   const std::lock_guard lock(output_mutex);
   session_active = false;
   // Retain the stopped instance for late submissions: never fall back to IO.
 }
 
-void LoggerSession::stop() { logger_->stop(); }
+void LoggerSession::Stop() { logger_->Stop(); }
 
 LogStats LoggerSession::stats() const { return logger_->stats(); }
 
-void info(std::string_view message) { log(LogLevel::Info, message); }
+void Info(std::string_view message) { WriteLog(LogLevel::kInfo, message); }
 
-void warn(std::string_view message) { log(LogLevel::Warn, message); }
+void Warn(std::string_view message) { WriteLog(LogLevel::kWarn, message); }
 
-void error(std::string_view message) { log(LogLevel::Error, message); }
+void Error(std::string_view message) { WriteLog(LogLevel::kError, message); }
 
 }  // namespace hp::base

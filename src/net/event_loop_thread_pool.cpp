@@ -45,9 +45,9 @@ EventLoopThreadPool::~EventLoopThreadPool() noexcept {
     RequestStop();
     Join();
   } catch (const std::exception& error) {
-    base::error(error.what());
+    base::Error(error.what());
   } catch (...) {
-    base::error("unobserved EventLoopThreadPool failure");
+    base::Error("unobserved EventLoopThreadPool failure");
   }
 }
 

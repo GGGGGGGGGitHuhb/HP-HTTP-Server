@@ -51,9 +51,9 @@ TcpServer::~TcpServer() noexcept {
   try {
     Shutdown();
   } catch (const std::exception& error) {
-    base::error(error.what());
+    base::Error(error.what());
   } catch (...) {
-    base::error("unobserved TcpServer failure");
+    base::Error("unobserved TcpServer failure");
   }
 }
 
@@ -199,9 +199,9 @@ void TcpServer::AdoptConnection(
   } catch (const std::bad_alloc&) {
     throw;
   } catch (const std::exception& error) {
-    base::warn(error.what());
+    base::Warn(error.what());
   } catch (...) {
-    base::warn("connection adoption failed");
+    base::Warn("connection adoption failed");
   }
 }
 }  // namespace hp::net

@@ -63,7 +63,7 @@ void Acceptor::AcceptReady() {
       accepted = listener_.AcceptNonBlocking();
     } catch (const std::system_error& error) {
       try {
-        base::warn(std::string("accept4 failed: ") + error.what());
+        base::Warn(std::string("accept4 failed: ") + error.what());
       } catch (...) {
       }
       return;
@@ -74,7 +74,7 @@ void Acceptor::AcceptReady() {
     } catch (...) {
       // Delivery owns a by-value Socket, so unwinding closes only that fd.
       try {
-        base::warn("accepted connection delivery failed");
+        base::Warn("accepted connection delivery failed");
       } catch (...) {
       }
     }

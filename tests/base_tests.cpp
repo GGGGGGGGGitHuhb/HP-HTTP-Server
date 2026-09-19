@@ -21,9 +21,9 @@ static_assert(std::is_nothrow_move_assignable_v<ExampleResource>);
 }  // namespace
 
 int main() {
-  hp::base::info("base test info");
-  hp::base::warn("base test warning");
-  hp::base::error("base test error");
+  hp::base::Info("base test info");
+  hp::base::Warn("base test warning");
+  hp::base::Error("base test error");
 
   ExampleResource source;
   ExampleResource destination(std::move(source));

@@ -395,3 +395,11 @@ V0.2/S3与版本关闭证据（2026-09-08）：
 ## R4 CLI与信号辅助收口检查点
 
 - 2026-09-19：Approved R4 revision1、Builder001、独立Reviewer001 PASS及Leader003齐备，四文件迁移与状态同步，TD-005本轮检查点关闭、总体仍Open。源码返工0；Reviewer格式参数及Leader审查构建清单遗漏造成两次证据纠正2/2，已补齐且保留首批NOT RUN。无新债务、风险豁免或性能声明；R4未提交推送，R5未启动。TD-001/TD-002/RO-002不变；R3已合并发布refactor-r3。
+
+## R5与整体渐进重构收口检查点
+
+- 2026-09-19：Approved R5 revision1、Builder001、Reviewer001 PASS及Leader003完成日志迁移和规定生产/测试入口一致性，R1–R5批准的渐进计划关闭。TD-005此次同步检查点关闭；其退出标准明确属于持续治理风险、需V1.0评估，故总体仍Open而非据本次永久关闭。TD-001/TD-002/RO-002不变，无新债务或风险豁免。明确允许的同步谓词、标准deleter/API/seam及历史未改目标fixture不是新增延期；不声称全测试风格迁移。R5源码返工0、路线纠正1/2，未提交推送；R4已合并发布refactor-r4。
+
+## 全测试清理收口检查点
+
+- 2026-09-19：Approved final-test-cleanup revision1、Builder002、独立Reviewer002 PASS与Leader002完成全部29个测试文件及窄范围观察接口的审查与文档同步。FS-01–04/FTC-01均关闭，原final-static001 FAIL保留为历史；历史fixture不再是当前豁免。全75格式、独立Debug28/28与sanitizer3/3通过，两轮纠正2/2成功且原失败保留。TD-005本次检查点关闭，总体仍按V1.0持续治理退出规则保持Open；TD-001/TD-002/RO-002不变，无新债务、延期或风险豁免。R5及清理尚未提交推送。

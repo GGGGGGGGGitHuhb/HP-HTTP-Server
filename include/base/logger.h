@@ -4,8 +4,8 @@
 
 namespace hp::base {
 
-void info(std::string_view message);
-void warn(std::string_view message);
-void error(std::string_view message);
+void Info(std::string_view message);
+void Warn(std::string_view message);
+void Error(std::string_view message);
 
 }  // namespace hp::base

@@ -195,7 +195,7 @@ struct ShutdownSignalHandler {
         server.RequestGracefulShutdown(hp::timer::TimerQueue::Clock::now() +
                                        shutdown_timeout);
       }
-      hp::base::info("Shutdown signal observed: " + std::to_string(signal) +
+      hp::base::Info("Shutdown signal observed: " + std::to_string(signal) +
                      ".");
     }
   }
@@ -237,16 +237,16 @@ int RunServer(int argc, char* argv[]) {
                         &shutdown_signals));
     signal_channel.set_interest(EPOLLIN);
     const std::string port_text = std::to_string(server.bound_port());
-    hp::base::info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");
-    hp::base::info("Listening on TCP port " + port_text + ".");
+    hp::base::Info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");
+    hp::base::Info("Listening on TCP port " + port_text + ".");
     std::cout << "V0.1 / S3 minimal HTTP static file server listening on port "
               << port_text << "." << std::endl;
     server.Run();
     return 0;
   } catch (const std::exception& error) {
-    hp::base::error(error.what());
+    hp::base::Error(error.what());
   } catch (...) {
-    hp::base::error("Unknown fatal error.");
+    hp::base::Error("Unknown fatal error.");
   }
   return 1;
 }
@@ -257,9 +257,9 @@ int main(int argc, char* argv[]) {
   try {
     return RunServer(argc, argv);
   } catch (const std::exception& error) {
-    hp::base::error(error.what());
+    hp::base::Error(error.what());
   } catch (...) {
-    hp::base::error("Unknown fatal error.");
+    hp::base::Error("Unknown fatal error.");
   }
   return 1;
 }

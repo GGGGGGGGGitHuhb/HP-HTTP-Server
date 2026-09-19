@@ -24,9 +24,9 @@
 
 namespace {
 
-constexpr std::size_t request_limit = 16U * 1024U;
-constexpr std::size_t file_limit = 8U * 1024U * 1024U;
-constexpr std::string_view secret = "S3-INTEGRATION-SIBLING-SECRET";
+constexpr std::size_t kRequestLimit = 16U * 1024U;
+constexpr std::size_t kFileLimit = 8U * 1024U * 1024U;
+constexpr std::string_view kSecret = "S3-INTEGRATION-SIBLING-SECRET";
 int failures = 0;
 int status_200_hits = 0;
 int status_400_hits = 0;
@@ -40,7 +40,7 @@ int isolation_successes = 0;
 std::size_t server_fd_baseline = 0;
 std::size_t server_fd_after = 0;
 
-void expect(bool condition, std::string_view message) {
+void Expect(bool condition, std::string_view message) {
   if (!condition) {
     std::cerr << "FAIL: " << message << '\n';
     ++failures;
@@ -63,29 +63,34 @@ class Fixture {
     if (created == nullptr) {
       throw std::runtime_error(std::string("mkdtemp: ") + std::strerror(errno));
     }
-    workspace = created;
-    root = workspace / "root";
-    sibling = workspace / "sibling-secret.txt";
-    std::filesystem::create_directories(root / "assets");
-    write_text(root / "index.html", "<h1>integration index</h1>\n");
-    write_text(root / "note.txt", "hello from S3\n");
-    write_text(root / "assets" / "unknown.blob", "unknown mime\n");
-    write_text(sibling, secret);
-    std::filesystem::create_symlink(sibling, root / "escape.txt");
+    workspace_ = created;
+    root_ = workspace_ / "root";
+    sibling_ = workspace_ / "sibling-secret.txt";
+    std::filesystem::create_directories(root_ / "assets");
+    WriteText(root_ / "index.html", "<h1>integration index</h1>\n");
+    WriteText(root_ / "note.txt", "hello from S3\n");
+    WriteText(root_ / "assets" / "unknown.blob", "unknown mime\n");
+    WriteText(sibling_, kSecret);
+    std::filesystem::create_symlink(sibling_, root_ / "escape.txt");
 
-    binary = {std::byte{0x00}, std::byte{0x01}, std::byte{0x7f},
-              std::byte{0xff}, std::byte{0x41}, std::byte{0x00}};
-    write_bytes(root / "assets" / "binary.png", binary);
+    binary_ = {std::byte{0x00},
+               std::byte{0x01},
+               std::byte{0x7f},
+               std::byte{0xff},
+               std::byte{0x41},
+               std::byte{0x00}};
+    WriteBytes(root_ / "assets" / "binary.png", binary_);
 
-    large.resize(file_limit);
-    for (std::size_t index = 0; index < large.size(); ++index) {
-      large[index] = static_cast<std::byte>((index * 31U + 7U) & 0xffU);
+    large_.resize(kFileLimit);
+    for (std::size_t index = 0; index < large_.size(); ++index) {
+      large_[index] = static_cast<std::byte>((index * 31U + 7U) & 0xffU);
     }
-    write_bytes(root / "large.bin", large);
+    WriteBytes(root_ / "large.bin", large_);
 
-    const int fd = ::open((root / "oversized.bin").c_str(),
-                          O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
-    if (fd == -1 || ::ftruncate(fd, static_cast<off_t>(file_limit + 1)) == -1) {
+    const int fd = ::open((root_ / "oversized.bin").c_str(),
+                          O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
+                          0600);
+    if (fd == -1 || ::ftruncate(fd, static_cast<off_t>(kFileLimit + 1)) == -1) {
       const int error_number = errno;
       if (fd >= 0) ::close(fd);
       throw std::runtime_error(std::string("oversized fixture: ") +
@@ -96,41 +101,43 @@ class Fixture {
 
   ~Fixture() {
     std::error_code ignored;
-    std::filesystem::remove_all(workspace, ignored);
+    std::filesystem::remove_all(workspace_, ignored);
   }
 
-  static void write_text(const std::filesystem::path& path,
-                         std::string_view data) {
+  static void WriteText(const std::filesystem::path& path,
+                        std::string_view data) {
     std::ofstream output(path, std::ios::binary);
     output.write(data.data(), static_cast<std::streamsize>(data.size()));
     if (!output) throw std::runtime_error("fixture text write failed");
   }
 
-  static void write_bytes(const std::filesystem::path& path,
-                          const std::vector<std::byte>& data) {
+  static void WriteBytes(const std::filesystem::path& path,
+                         const std::vector<std::byte>& data) {
     std::ofstream output(path, std::ios::binary);
     output.write(reinterpret_cast<const char*>(data.data()),
                  static_cast<std::streamsize>(data.size()));
     if (!output) throw std::runtime_error("fixture binary write failed");
   }
 
-  std::filesystem::path workspace;
-  std::filesystem::path root;
-  std::filesystem::path sibling;
-  std::vector<std::byte> binary;
-  std::vector<std::byte> large;
+  std::filesystem::path workspace_;
+  std::filesystem::path root_;
+  std::filesystem::path sibling_;
+  std::vector<std::byte> binary_;
+  std::vector<std::byte> large_;
 };
 
 class ServerProcess {
  public:
-  ServerProcess(pid_t pid, int output_fd, std::uint16_t port,
+  ServerProcess(pid_t pid,
+                int output_fd,
+                std::uint16_t port,
                 std::string output)
       : pid_(pid),
         output_fd_(output_fd),
         port_(port),
         output_(std::move(output)) {}
 
-  ~ServerProcess() { stop(); }
+  ~ServerProcess() { Stop(); }
 
   ServerProcess(const ServerProcess&) = delete;
   ServerProcess& operator=(const ServerProcess&) = delete;
@@ -145,7 +152,7 @@ class ServerProcess {
 
   [[nodiscard]] const std::string& output() const noexcept { return output_; }
 
-  [[nodiscard]] bool running() const noexcept {
+  [[nodiscard]] bool Running() const noexcept {
     return pid_ > 0 && ::kill(pid_, 0) == 0;
   }
 
@@ -167,7 +174,7 @@ class ServerProcess {
         {}));
   }
 
-  void drain_output(std::chrono::milliseconds duration) {
+  void DrainOutput(std::chrono::milliseconds duration) {
     const auto deadline = std::chrono::steady_clock::now() + duration;
     while (std::chrono::steady_clock::now() < deadline) {
       pollfd descriptor{output_fd_, POLLIN, 0};
@@ -187,7 +194,7 @@ class ServerProcess {
     }
   }
 
-  void stop() noexcept {
+  void Stop() noexcept {
     if (pid_ > 0) {
       (void)::kill(pid_, SIGTERM);
       int status = 0;
@@ -208,9 +215,9 @@ class ServerProcess {
   std::string output_;
 };
 
-ServerProcess start_server(const char* executable,
-                           const std::filesystem::path& root,
-                           bool root_first = false) {
+ServerProcess StartServer(const char* executable,
+                          const std::filesystem::path& root,
+                          bool root_first = false) {
   int output_pipe[2] = {-1, -1};
   if (::pipe2(output_pipe, O_CLOEXEC) == -1) {
     throw std::runtime_error(std::string("pipe2: ") + std::strerror(errno));
@@ -255,7 +262,7 @@ ServerProcess start_server(const char* executable,
   }
 
   std::string output;
-  constexpr std::string_view marker =
+  constexpr std::string_view kMarker =
       "V0.1 / S3 minimal HTTP static file server listening on port ";
   const auto deadline =
       std::chrono::steady_clock::now() + std::chrono::seconds(5);
@@ -275,15 +282,17 @@ ServerProcess start_server(const char* executable,
         break;
       }
     }
-    const std::size_t marker_position = output.find(marker);
+    const std::size_t marker_position = output.find(kMarker);
     if (marker_position != std::string::npos) {
-      const std::size_t start = marker_position + marker.size();
+      const std::size_t start = marker_position + kMarker.size();
       const std::size_t end = output.find_first_not_of("0123456789", start);
       const unsigned long parsed =
           std::stoul(output.substr(start, end - start));
       if (parsed > 0 && parsed <= 65535) {
-        return ServerProcess(child, output_pipe[0],
-                             static_cast<std::uint16_t>(parsed), output);
+        return ServerProcess(child,
+                             output_pipe[0],
+                             static_cast<std::uint16_t>(parsed),
+                             output);
       }
     }
     int status = 0;
@@ -298,13 +307,16 @@ ServerProcess start_server(const char* executable,
   throw std::runtime_error("timed out waiting for startup: " + output);
 }
 
-int connect_client(std::uint16_t port, int receive_buffer = 0) {
+int ConnectClient(std::uint16_t port, int receive_buffer = 0) {
   const int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (fd == -1) {
     throw std::runtime_error(std::string("socket: ") + std::strerror(errno));
   }
   if (receive_buffer > 0) {
-    (void)::setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &receive_buffer,
+    (void)::setsockopt(fd,
+                       SOL_SOCKET,
+                       SO_RCVBUF,
+                       &receive_buffer,
                        sizeof(receive_buffer));
   }
   timeval timeout{8, 0};
@@ -314,7 +326,8 @@ int connect_client(std::uint16_t port, int receive_buffer = 0) {
   address.sin_family = AF_INET;
   address.sin_port = htons(port);
   address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  if (::connect(fd, reinterpret_cast<const sockaddr*>(&address),
+  if (::connect(fd,
+                reinterpret_cast<const sockaddr*>(&address),
                 sizeof(address)) == -1) {
     const int error_number = errno;
     ::close(fd);
@@ -324,7 +337,7 @@ int connect_client(std::uint16_t port, int receive_buffer = 0) {
   return fd;
 }
 
-void send_all(int fd, std::string_view data) {
+void SendAll(int fd, std::string_view data) {
   std::size_t offset = 0;
   while (offset < data.size()) {
     const ssize_t count =
@@ -338,7 +351,7 @@ void send_all(int fd, std::string_view data) {
   }
 }
 
-std::vector<std::byte> receive_to_eof(int fd) {
+std::vector<std::byte> ReceiveToEof(int fd) {
   std::vector<std::byte> received;
   std::vector<std::byte> buffer(64 * 1024);
   while (true) {
@@ -354,17 +367,18 @@ std::vector<std::byte> receive_to_eof(int fd) {
   return received;
 }
 
-std::vector<std::byte> transact(std::uint16_t port, std::string_view request,
+std::vector<std::byte> Transact(std::uint16_t port,
+                                std::string_view request,
                                 int receive_buffer = 0,
                                 std::chrono::milliseconds pause_before_read =
                                     std::chrono::milliseconds(0)) {
-  const int client = connect_client(port, receive_buffer);
-  send_all(client, request);
+  const int client = ConnectClient(port, receive_buffer);
+  SendAll(client, request);
   (void)::shutdown(client, SHUT_WR);
   if (pause_before_read.count() > 0) {
     ::usleep(static_cast<useconds_t>(pause_before_read.count() * 1000));
   }
-  auto response = receive_to_eof(client);
+  auto response = ReceiveToEof(client);
   ::close(client);
   return response;
 }
@@ -375,7 +389,7 @@ struct Response {
   std::vector<std::byte> body;
 };
 
-Response parse_response(const std::vector<std::byte>& bytes) {
+Response ParseResponse(const std::vector<std::byte>& bytes) {
   const std::string_view raw(reinterpret_cast<const char*>(bytes.data()),
                              bytes.size());
   const std::size_t boundary = raw.find("\r\n\r\n");
@@ -391,66 +405,68 @@ Response parse_response(const std::vector<std::byte>& bytes) {
   std::string header(raw.substr(0, boundary + 4));
   const std::string length_name = "Content-Length: ";
   const std::size_t length_start = header.find(length_name);
-  expect(length_start != std::string::npos,
+  Expect(length_start != std::string::npos,
          "every response must include Content-Length");
   if (length_start != std::string::npos) {
     const std::size_t value_start = length_start + length_name.size();
     const std::size_t value_end = header.find("\r\n", value_start);
     const std::size_t declared =
         std::stoull(header.substr(value_start, value_end - value_start));
-    expect(declared == bytes.size() - boundary - 4,
+    Expect(declared == bytes.size() - boundary - 4,
            "Content-Length must equal body bytes");
   }
-  expect(header.find("Connection: close\r\n") != std::string::npos,
+  Expect(header.find("Connection: close\r\n") != std::string::npos,
          "every response must declare Connection: close");
-  return {status, std::move(header),
+  return {status,
+          std::move(header),
           std::vector<std::byte>(bytes.begin() + boundary + 4, bytes.end())};
 }
 
-std::string body_text(const Response& response) {
+std::string BodyText(const Response& response) {
   return {reinterpret_cast<const char*>(response.body.data()),
           response.body.size()};
 }
 
-Response request(std::uint16_t port, std::string_view target,
+Response Request(std::uint16_t port,
+                 std::string_view target,
                  std::string_view method = "GET",
                  std::string_view extra_headers = {}) {
   std::string raw = std::string(method) + " " + std::string(target) +
                     " HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n" +
                     std::string(extra_headers) + "\r\n";
-  return parse_response(transact(port, raw));
+  return ParseResponse(Transact(port, raw));
 }
 
-void test_success(std::uint16_t port, const Fixture& fixture) {
-  const Response index = request(port, "/");
-  expect(
-      index.status == 200 && body_text(index) == "<h1>integration index</h1>\n",
+void TestSuccess(std::uint16_t port, const Fixture& fixture) {
+  const Response index = Request(port, "/");
+  Expect(
+      index.status == 200 && BodyText(index) == "<h1>integration index</h1>\n",
       "GET / must return exact index bytes");
-  expect(index.header.find("Content-Type: text/html; charset=utf-8\r\n") !=
+  Expect(index.header.find("Content-Type: text/html; charset=utf-8\r\n") !=
              std::string::npos,
          "index must use HTML MIME");
 
-  const Response text = request(port, "/note.txt?cache=no");
-  expect(text.status == 200 && body_text(text) == "hello from S3\n",
+  const Response text = Request(port, "/note.txt?cache=no");
+  Expect(text.status == 200 && BodyText(text) == "hello from S3\n",
          "text query request must return exact file");
 
-  const Response binary = request(port, "/assets/binary.png");
-  expect(binary.status == 200 && binary.body == fixture.binary,
+  const Response binary = Request(port, "/assets/binary.png");
+  Expect(binary.status == 200 && binary.body == fixture.binary_,
          "binary file body must preserve NUL and all bytes");
 
-  const Response unknown = request(port, "/assets/unknown.blob");
-  expect(
+  const Response unknown = Request(port, "/assets/unknown.blob");
+  Expect(
       unknown.status == 200 &&
           unknown.header.find("Content-Type: application/octet-stream\r\n") !=
               std::string::npos,
       "unknown extension must use octet-stream");
 }
 
-void test_errors_and_paths(std::uint16_t port) {
-  expect(request(port, "/missing.txt").status == 404,
+void TestErrorsAndPaths(std::uint16_t port) {
+  Expect(Request(port, "/missing.txt").status == 404,
          "missing file must return 404");
-  const Response post = request(port, "/", "POST");
-  expect(post.status == 405 &&
+  const Response post = Request(port, "/", "POST");
+  Expect(post.status == 405 &&
              post.header.find("Allow: GET\r\n") != std::string::npos,
          "POST must return 405 with Allow");
 
@@ -460,7 +476,7 @@ void test_errors_and_paths(std::uint16_t port) {
       "GET / HTTP/1.1\nHost: x\n\n",
   };
   for (const auto& raw : bad_requests) {
-    expect(parse_response(transact(port, raw)).status == 400,
+    Expect(ParseResponse(Transact(port, raw)).status == 400,
            "bad request must return 400");
   }
 
@@ -474,60 +490,61 @@ void test_errors_and_paths(std::uint16_t port) {
       {"/oversized.bin", 403},
   };
   for (const auto& [target, status] : paths) {
-    const Response response = request(port, target);
-    expect(response.status == status,
+    const Response response = Request(port, target);
+    Expect(response.status == status,
            "path rejection must use its designed status");
-    expect(body_text(response).find(secret) == std::string::npos,
+    Expect(BodyText(response).find(kSecret) == std::string::npos,
            "rejected path must never return sibling secret");
   }
 }
 
-void test_accept_drain(std::uint16_t port) {
+void TestAcceptDrain(std::uint16_t port) {
   std::vector<int> clients;
   for (int index = 0; index < 8; ++index) {
-    clients.push_back(connect_client(port));
+    clients.push_back(ConnectClient(port));
   }
   const std::string raw =
       "GET /note.txt HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
   for (int client : clients) {
-    send_all(client, raw);
+    SendAll(client, raw);
     (void)::shutdown(client, SHUT_WR);
   }
   for (int client : clients) {
-    const Response response = parse_response(receive_to_eof(client));
-    if (response.status == 200 && body_text(response) == "hello from S3\n") {
+    const Response response = ParseResponse(ReceiveToEof(client));
+    if (response.status == 200 && BodyText(response) == "hello from S3\n") {
       ++accept_drain_successes;
     }
     ::close(client);
   }
-  expect(accept_drain_successes == 8,
+  Expect(accept_drain_successes == 8,
          "eight queued connections must each receive their own response");
 }
 
-void test_segmented_limits_and_half_close(std::uint16_t port) {
-  const int segmented = connect_client(port);
-  send_all(segmented, "GET /note.txt HTTP/1.1\r\nHost:");
+void TestSegmentedLimitsAndHalfClose(std::uint16_t port) {
+  const int segmented = ConnectClient(port);
+  SendAll(segmented, "GET /note.txt HTTP/1.1\r\nHost:");
   pollfd descriptor{segmented, POLLIN, 0};
   const int early = ::poll(&descriptor, 1, 100);
-  expect(early == 0, "first request fragment must not produce a response");
+  Expect(early == 0, "first request fragment must not produce a response");
   if (early == 0) ++segmented_need_more_hits;
-  send_all(segmented, " localhost\r\nConnection: close\r\n\r\n");
+  SendAll(segmented, " localhost\r\nConnection: close\r\n\r\n");
   (void)::shutdown(segmented, SHUT_WR);
-  const Response completed = parse_response(receive_to_eof(segmented));
-  expect(completed.status == 200, "second fragment must complete one response");
+  const Response completed = ParseResponse(ReceiveToEof(segmented));
+  Expect(completed.status == 200, "second fragment must complete one response");
   ::close(segmented);
 
   std::string request_at_limit =
       "GET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\nX-Limit: ";
-  request_at_limit.append(request_limit - request_at_limit.size(), 'a');
-  expect(request_at_limit.size() == request_limit,
+  request_at_limit.append(kRequestLimit - request_at_limit.size(), 'a');
+  Expect(request_at_limit.size() == kRequestLimit,
          "limit fixture must be exactly 16 KiB");
-  expect(parse_response(transact(port, request_at_limit)).status == 400,
+  Expect(ParseResponse(Transact(port, request_at_limit)).status == 400,
          "16 KiB incomplete headers must return 400");
 
-  const Response half_closed = parse_response(transact(
-      port, "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n"));
-  expect(half_closed.status == 400,
+  const Response half_closed = ParseResponse(
+      Transact(port,
+               "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n"));
+  Expect(half_closed.status == 400,
          "incomplete request followed by write half-close must return 400");
 
   const std::string first =
@@ -535,47 +552,49 @@ void test_segmented_limits_and_half_close(std::uint16_t port) {
   const std::string second =
       "GET /missing.txt HTTP/1.1\r\nHost: localhost\r\nConnection: "
       "close\r\n\r\n";
-  const auto pipelined_bytes = transact(port, first + second);
-  const Response pipelined = parse_response(pipelined_bytes);
+  const auto pipelined_bytes = Transact(port, first + second);
+  const Response pipelined = ParseResponse(pipelined_bytes);
   const std::string raw(reinterpret_cast<const char*>(pipelined_bytes.data()),
                         pipelined_bytes.size());
-  expect(
+  Expect(
       pipelined.status == 200 &&
           raw.find("HTTP/1.1", raw.find("HTTP/1.1") + 1) == std::string::npos,
       "pipelined bytes must produce exactly one response");
 }
 
-void test_short_write_and_isolation(ServerProcess& server,
-                                    const Fixture& fixture) {
+void TestShortWriteAndIsolation(ServerProcess& server, const Fixture& fixture) {
   const std::string raw =
       "GET /large.bin HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
-  const Response large = parse_response(
-      transact(server.port(), raw, 4096, std::chrono::milliseconds(300)));
-  expect(large.status == 200 && large.body == fixture.large,
+  const Response large = ParseResponse(
+      Transact(server.port(), raw, 4096, std::chrono::milliseconds(300)));
+  Expect(large.status == 200 && large.body == fixture.large_,
          "paused large response must drain without loss after EAGAIN");
-  server.drain_output(std::chrono::milliseconds(300));
+  server.DrainOutput(std::chrono::milliseconds(300));
   if (server.output().find("S3 evidence: connection write reached EAGAIN") !=
       std::string::npos) {
     ++write_eagain_hits;
   }
-  expect(write_eagain_hits > 0,
+  Expect(write_eagain_hits > 0,
          "paused client must dynamically reach production write EAGAIN");
 
-  const int reset_client = connect_client(server.port());
+  const int reset_client = ConnectClient(server.port());
   linger reset_linger{1, 0};
-  (void)::setsockopt(reset_client, SOL_SOCKET, SO_LINGER, &reset_linger,
+  (void)::setsockopt(reset_client,
+                     SOL_SOCKET,
+                     SO_LINGER,
+                     &reset_linger,
                      sizeof(reset_linger));
-  send_all(
+  SendAll(
       reset_client,
       "GET /large.bin HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n");
   ::close(reset_client);
 
   for (int attempt = 0; attempt < 20; ++attempt) {
-    if (request(server.port(), "/note.txt").status == 200) {
+    if (Request(server.port(), "/note.txt").status == 200) {
       ++isolation_successes;
     }
   }
-  expect(isolation_successes == 20 && server.running(),
+  Expect(isolation_successes == 20 && server.Running(),
          "reset connection must not affect 20 later requests");
 }
 
@@ -590,23 +609,23 @@ int main(int argc, char* argv[]) {
 
   try {
     Fixture fixture;
-    ServerProcess reverse = start_server(argv[1], fixture.root, true);
-    expect(reverse.port() != 0, "root-first CLI order and port 0 must start");
-    reverse.stop();
+    ServerProcess reverse = StartServer(argv[1], fixture.root_, true);
+    Expect(reverse.port() != 0, "root-first CLI order and port 0 must start");
+    reverse.Stop();
 
-    ServerProcess server = start_server(argv[1], fixture.root);
-    expect(server.port() != 0, "port 0 must report a real port");
-    expect(server.output().find("V0.1 / S3 minimal HTTP static file server") !=
+    ServerProcess server = StartServer(argv[1], fixture.root_);
+    Expect(server.port() != 0, "port 0 must report a real port");
+    Expect(server.output().find("V0.1 / S3 minimal HTTP static file server") !=
                std::string::npos,
            "startup must identify S3 HTTP");
     server_fd_baseline = server.fd_count();
-    test_success(server.port(), fixture);
-    test_errors_and_paths(server.port());
-    test_accept_drain(server.port());
-    test_segmented_limits_and_half_close(server.port());
-    test_short_write_and_isolation(server, fixture);
+    TestSuccess(server.port(), fixture);
+    TestErrorsAndPaths(server.port());
+    TestAcceptDrain(server.port());
+    TestSegmentedLimitsAndHalfClose(server.port());
+    TestShortWriteAndIsolation(server, fixture);
     server_fd_after = server.fd_count();
-    expect(server_fd_after == server_fd_baseline,
+    Expect(server_fd_after == server_fd_baseline,
            "server fd count must return to its startup baseline");
   } catch (const std::exception& error) {
     std::cerr << "FAIL: " << error.what() << '\n';

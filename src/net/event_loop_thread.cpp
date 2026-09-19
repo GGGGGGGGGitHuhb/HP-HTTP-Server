@@ -14,9 +14,9 @@ EventLoopThread::~EventLoopThread() noexcept {
     RequestStop();
     Join();
   } catch (const std::exception& e) {
-    hp::base::error(e.what());
+    hp::base::Error(e.what());
   } catch (...) {
-    hp::base::error("unobserved EventLoopThread failure");
+    hp::base::Error("unobserved EventLoopThread failure");
   }
 }
 

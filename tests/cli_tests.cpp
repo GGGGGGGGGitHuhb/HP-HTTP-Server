@@ -23,8 +23,8 @@ struct RunResult {
   std::string output;
 };
 
-RunResult run_process(const char* executable,
-                      const std::vector<std::string>& arguments) {
+RunResult RunProcess(const char* executable,
+                     const std::vector<std::string>& arguments) {
   int output_pipe[2];
   if (::pipe(output_pipe) == -1) {
     throw std::runtime_error(std::string("pipe: ") + std::strerror(errno));
@@ -100,38 +100,39 @@ class Fixture {
     if (created == nullptr) {
       throw std::runtime_error(std::string("mkdtemp: ") + std::strerror(errno));
     }
-    workspace = created;
-    root = workspace / "root";
-    file = workspace / "not-a-directory";
-    std::filesystem::create_directory(root);
-    std::ofstream(file) << "not a root";
+    workspace_ = created;
+    root_ = workspace_ / "root";
+    file_ = workspace_ / "not-a-directory";
+    std::filesystem::create_directory(root_);
+    std::ofstream(file_) << "not a root";
   }
 
   ~Fixture() {
     std::error_code ignored;
-    std::filesystem::remove_all(workspace, ignored);
+    std::filesystem::remove_all(workspace_, ignored);
   }
 
-  std::filesystem::path workspace;
-  std::filesystem::path root;
-  std::filesystem::path file;
+  std::filesystem::path workspace_;
+  std::filesystem::path root_;
+  std::filesystem::path file_;
 };
 
 int failures = 0;
 
-void expect(bool condition, const std::string& message) {
+void Expect(bool condition, const std::string& message) {
   if (!condition) {
     std::cerr << "FAIL: " << message << '\n';
     ++failures;
   }
 }
 
-void expect_contains(const std::string& output, const std::string& text,
-                     const std::string& message) {
-  expect(output.find(text) != std::string::npos, message);
+void ExpectContains(const std::string& output,
+                    const std::string& text,
+                    const std::string& message) {
+  Expect(output.find(text) != std::string::npos, message);
 }
 
-int reserve_loopback_port(std::uint16_t& port) {
+int ReserveLoopbackPort(std::uint16_t& port) {
   const int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (fd == -1) {
     throw std::runtime_error(std::string("socket: ") + std::strerror(errno));
@@ -140,7 +141,8 @@ int reserve_loopback_port(std::uint16_t& port) {
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   address.sin_port = 0;
-  if (::bind(fd, reinterpret_cast<const sockaddr*>(&address),
+  if (::bind(fd,
+             reinterpret_cast<const sockaddr*>(&address),
              sizeof(address)) == -1 ||
       ::listen(fd, 1) == -1) {
     const int error_number = errno;
@@ -169,12 +171,14 @@ int main(int argc, char* argv[]) {
 
   try {
     Fixture fixture;
-    const RunResult help = run_process(argv[1], {"--help"});
-    expect(help.exit_code == 0, "--help must exit 0");
-    expect_contains(help.output, "V0.1 / S3 minimal HTTP static file server",
-                    "--help must identify S3 HTTP");
-    expect_contains(help.output, "--root <directory>",
-                    "--help must document root");
+    const RunResult help = RunProcess(argv[1], {"--help"});
+    Expect(help.exit_code == 0, "--help must exit 0");
+    ExpectContains(help.output,
+                   "V0.1 / S3 minimal HTTP static file server",
+                   "--help must identify S3 HTTP");
+    ExpectContains(help.output,
+                   "--root <directory>",
+                   "--help must document root");
 
     const std::vector<std::vector<std::string>> invalid_cases = {
         {},
@@ -182,123 +186,177 @@ int main(int argc, char* argv[]) {
         {"--port"},
         {"--root"},
         {"--port", "0"},
-        {"--root", fixture.root.string()},
+        {"--root", fixture.root_.string()},
         {"--port", ""},
-        {"--port", "invalid", "--root", fixture.root.string()},
-        {"--port", "-1", "--root", fixture.root.string()},
-        {"--port", "65536", "--root", fixture.root.string()},
-        {"--port", "12x", "--root", fixture.root.string()},
-        {"--port", "1", "--port", "2", "--root", fixture.root.string()},
-        {"--port", "0", "--root", fixture.root.string(), "--root",
-         fixture.root.string()},
-        {"--help", "--port", "0", "--root", fixture.root.string()},
+        {"--port", "invalid", "--root", fixture.root_.string()},
+        {"--port", "-1", "--root", fixture.root_.string()},
+        {"--port", "65536", "--root", fixture.root_.string()},
+        {"--port", "12x", "--root", fixture.root_.string()},
+        {"--port", "1", "--port", "2", "--root", fixture.root_.string()},
+        {"--port",
+         "0",
+         "--root",
+         fixture.root_.string(),
+         "--root",
+         fixture.root_.string()},
+        {"--help", "--port", "0", "--root", fixture.root_.string()},
     };
     for (const auto& arguments : invalid_cases) {
-      const RunResult invalid = run_process(argv[1], arguments);
-      expect(invalid.exit_code != 0,
+      const RunResult invalid = RunProcess(argv[1], arguments);
+      Expect(invalid.exit_code != 0,
              "malformed, missing or duplicate CLI must fail");
-      expect_contains(invalid.output,
-                      "Usage:", "invalid CLI must include concise usage");
+      ExpectContains(invalid.output,
+                     "Usage:",
+                     "invalid CLI must include concise usage");
     }
 
     for (const auto& value : {"65", "-1", "+1", "2x", "", "x"}) {
-      const auto result = run_process(
-          argv[1],
-          {"--port", "0", "--root", fixture.root.string(), "--threads", value});
-      expect(result.exit_code == 2, "invalid threads exit2");
+      const auto result = RunProcess(argv[1],
+                                     {"--port",
+                                      "0",
+                                      "--root",
+                                      fixture.root_.string(),
+                                      "--threads",
+                                      value});
+      Expect(result.exit_code == 2, "invalid threads exit2");
     }
-    expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
-                                 "--threads"})
+    Expect(RunProcess(
+               argv[1],
+               {"--port", "0", "--root", fixture.root_.string(), "--threads"})
                    .exit_code == 2,
            "threads missing value exit2");
-    expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
-                                 "--threads", "1", "--threads", "2"})
+    Expect(RunProcess(argv[1],
+                      {"--port",
+                       "0",
+                       "--root",
+                       fixture.root_.string(),
+                       "--threads",
+                       "1",
+                       "--threads",
+                       "2"})
                    .exit_code == 2,
            "duplicate threads exit2");
-    expect_contains(help.output, "defaults to 2", "help default workers");
+    ExpectContains(help.output, "defaults to 2", "help default workers");
     const std::string missing =
-        (fixture.workspace / "private-missing-root").string();
-    expect(run_process(argv[1],
-                       {"--port", "0", "--root", missing, "--threads", "64"})
+        (fixture.workspace_ / "private-missing-root").string();
+    Expect(RunProcess(argv[1],
+                      {"--port", "0", "--root", missing, "--threads", "64"})
                    .exit_code == 1,
            "64 parses before resource failure without starting threads");
     for (const auto option : {"--idle-timeout-ms", "--keep-alive-timeout-ms"}) {
       for (const auto value :
            {"86400001", "-1", "+1", "", "1x", "184467440737095516160"}) {
-        expect(run_process(argv[1], {"--port", "0", "--root",
-                                     fixture.root.string(), option, value})
+        Expect(RunProcess(argv[1],
+                          {"--port",
+                           "0",
+                           "--root",
+                           fixture.root_.string(),
+                           option,
+                           value})
                        .exit_code == 2,
                "invalid timeout exits 2");
       }
-      expect(run_process(argv[1], {"--port", "0", "--root",
-                                   fixture.root.string(), option})
-                     .exit_code == 2,
-             "missing timeout exits 2");
-      expect(
-          run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
-                                option, "0", option, "0"})
+      Expect(
+          RunProcess(argv[1],
+                     {"--port", "0", "--root", fixture.root_.string(), option})
                   .exit_code == 2,
-          "duplicate timeout exits 2");
+          "missing timeout exits 2");
+      Expect(RunProcess(argv[1],
+                        {"--port",
+                         "0",
+                         "--root",
+                         fixture.root_.string(),
+                         option,
+                         "0",
+                         option,
+                         "0"})
+                     .exit_code == 2,
+             "duplicate timeout exits 2");
       for (const auto value : {"0", "1", "86400000"}) {
-        expect(run_process(argv[1],
-                           {"--port", "0", "--root", missing, option, value})
+        Expect(RunProcess(argv[1],
+                          {"--port", "0", "--root", missing, option, value})
                        .exit_code == 1,
                "valid timeout reaches resource validation exit 1");
       }
     }
-    expect_contains(help.output, "defaults to 30000",
-                    "help ordinary timeout default");
-    expect_contains(help.output, "defaults to 15000",
-                    "help keep-alive timeout default");
+    ExpectContains(help.output,
+                   "defaults to 30000",
+                   "help ordinary timeout default");
+    ExpectContains(help.output,
+                   "defaults to 15000",
+                   "help keep-alive timeout default");
     for (const auto value :
          {"60001", "-1", "+1", "", "x", "184467440737095516160"}) {
-      expect(
-          run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
-                                "--shutdown-timeout-ms", value})
-                  .exit_code == 2,
-          "invalid shutdown timeout exits 2");
+      Expect(RunProcess(argv[1],
+                        {"--port",
+                         "0",
+                         "--root",
+                         fixture.root_.string(),
+                         "--shutdown-timeout-ms",
+                         value})
+                     .exit_code == 2,
+             "invalid shutdown timeout exits 2");
     }
-    expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
-                                 "--shutdown-timeout-ms"})
+    Expect(RunProcess(argv[1],
+                      {"--port",
+                       "0",
+                       "--root",
+                       fixture.root_.string(),
+                       "--shutdown-timeout-ms"})
                    .exit_code == 2,
            "missing shutdown timeout exits 2");
-    expect(run_process(argv[1], {"--port", "0", "--root", fixture.root.string(),
-                                 "--shutdown-timeout-ms", "1",
-                                 "--shutdown-timeout-ms", "0"})
+    Expect(RunProcess(argv[1],
+                      {"--port",
+                       "0",
+                       "--root",
+                       fixture.root_.string(),
+                       "--shutdown-timeout-ms",
+                       "1",
+                       "--shutdown-timeout-ms",
+                       "0"})
                    .exit_code == 2,
            "duplicate shutdown timeout exits 2");
     for (const auto value : {"0", "1", "60000"}) {
-      expect(run_process(argv[1], {"--port", "0", "--root", missing,
-                                   "--shutdown-timeout-ms", value})
+      Expect(RunProcess(argv[1],
+                        {"--port",
+                         "0",
+                         "--root",
+                         missing,
+                         "--shutdown-timeout-ms",
+                         value})
                      .exit_code == 1,
              "valid shutdown timeout reaches resource validation");
     }
-    expect_contains(help.output, "defaults to 5000", "help shutdown default");
+    ExpectContains(help.output, "defaults to 5000", "help shutdown default");
     const RunResult missing_root =
-        run_process(argv[1], {"--port", "0", "--root", missing});
-    expect(missing_root.exit_code != 0,
+        RunProcess(argv[1], {"--port", "0", "--root", missing});
+    Expect(missing_root.exit_code != 0,
            "missing root must fail before serving");
-    expect_contains(missing_root.output, "static root is unavailable",
-                    "missing root must have a concise diagnosis");
-    expect(missing_root.output.find(missing) == std::string::npos,
+    ExpectContains(missing_root.output,
+                   "static root is unavailable",
+                   "missing root must have a concise diagnosis");
+    Expect(missing_root.output.find(missing) == std::string::npos,
            "root failure must not echo a private absolute path");
 
     const RunResult file_root =
-        run_process(argv[1], {"--root", fixture.file.string(), "--port", "0"});
-    expect(file_root.exit_code != 0, "non-directory root must fail");
-    expect(file_root.output.find(fixture.file.string()) == std::string::npos,
+        RunProcess(argv[1], {"--root", fixture.file_.string(), "--port", "0"});
+    Expect(file_root.exit_code != 0, "non-directory root must fail");
+    Expect(file_root.output.find(fixture.file_.string()) == std::string::npos,
            "non-directory failure must not echo its absolute path");
 
     std::uint16_t occupied_port = 0;
-    const int reservation = reserve_loopback_port(occupied_port);
-    const RunResult bind_failure =
-        run_process(argv[1], {"--root", fixture.root.string(), "--port",
-                              std::to_string(occupied_port)});
+    const int reservation = ReserveLoopbackPort(occupied_port);
+    const RunResult bind_failure = RunProcess(argv[1],
+                                              {"--root",
+                                               fixture.root_.string(),
+                                               "--port",
+                                               std::to_string(occupied_port)});
     ::close(reservation);
-    expect(bind_failure.exit_code != 0,
+    Expect(bind_failure.exit_code != 0,
            "occupied port startup must exit non-zero");
-    expect_contains(bind_failure.output, "bind",
-                    "occupied port failure must name bind");
+    ExpectContains(bind_failure.output,
+                   "bind",
+                   "occupied port failure must name bind");
   } catch (const std::exception& error) {
     std::cerr << "FAIL: " << error.what() << '\n';
     return 1;
