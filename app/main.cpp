@@ -43,7 +43,7 @@ class ShutdownSignalMask {
   sigset_t previous_{};
 };
 
-void print_usage(std::ostream& output) {
+void PrintUsage(std::ostream& output) {
   output << "Usage: hp_http_server --port <0-65535> --root <directory> "
             "[--threads <0-64>]\n"
          << "       hp_http_server --root <directory> --port <0-65535>\n"
@@ -61,7 +61,7 @@ void print_usage(std::ostream& output) {
             "truncate a response.\n";
 }
 
-[[nodiscard]] std::uint16_t parse_port(std::string_view text) {
+[[nodiscard]] std::uint16_t ParsePort(std::string_view text) {
   unsigned int value = 0;
   const auto [end, error] =
       std::from_chars(text.data(), text.data() + text.size(), value, 10);
@@ -72,7 +72,42 @@ void print_usage(std::ostream& output) {
   return static_cast<std::uint16_t>(value);
 }
 
-struct Options {
+[[nodiscard]] std::size_t ParseWorkerCount(std::string_view value) {
+  unsigned int count = 0;
+  const auto [end, error] =
+      std::from_chars(value.data(), value.data() + value.size(), count, 10);
+  if (value.empty() || error != std::errc{} ||
+      end != value.data() + value.size() || count > 64)
+    throw std::invalid_argument("threads must be decimal in 0-64");
+  return count;
+}
+
+[[nodiscard]] std::chrono::milliseconds ParseShutdownTimeout(
+    std::string_view value) {
+  unsigned int milliseconds = 0;
+  const auto [end, error] = std::from_chars(value.data(),
+                                            value.data() + value.size(),
+                                            milliseconds,
+                                            10);
+  if (value.empty() || error != std::errc{} ||
+      end != value.data() + value.size() || milliseconds > 60000)
+    throw std::invalid_argument(
+        "shutdown timeout must be decimal in 0-60000ms");
+  return std::chrono::milliseconds(milliseconds);
+}
+
+[[nodiscard]] std::chrono::milliseconds ParseConnectionTimeout(
+    std::string_view value) {
+  unsigned int value_ms = 0;
+  const auto [end, error] =
+      std::from_chars(value.data(), value.data() + value.size(), value_ms, 10);
+  if (value.empty() || error != std::errc{} ||
+      end != value.data() + value.size() || value_ms > 86400000)
+    throw std::invalid_argument("timeout must be decimal in 0-86400000ms");
+  return std::chrono::milliseconds(value_ms);
+}
+
+struct ServerOptions {
   std::uint16_t port{0};
   std::string root;
   std::size_t threads{2};
@@ -81,12 +116,13 @@ struct Options {
                                        std::chrono::milliseconds(15000)};
 };
 
-[[nodiscard]] Options parse_options(int argc, char* argv[]) {
+[[nodiscard]] ServerOptions ParseServerOptions(int argc, char* argv[]) {
   bool has_port = false;
   bool has_root = false;
   bool has_threads = false;
-  bool has_idle = false, has_keep = false, has_shutdown = false;
-  Options options;
+  bool has_idle_timeout = false, has_keep_alive_timeout = false,
+       has_shutdown_timeout = false;
+  ServerOptions options;
   for (int index = 1; index < argc; ++index) {
     const std::string_view option = argv[index];
     if (option == "--port" || option == "--root" || option == "--threads" ||
@@ -100,53 +136,28 @@ struct Options {
         if (has_port) {
           throw std::invalid_argument("--port appears more than once");
         }
-        options.port = parse_port(value);
+        options.port = ParsePort(value);
         has_port = true;
       } else if (option == "--threads") {
         if (has_threads)
           throw std::invalid_argument("--threads appears more than once");
-        unsigned int count = 0;
-        const auto [end, error] = std::from_chars(value.data(),
-                                                  value.data() + value.size(),
-                                                  count,
-                                                  10);
-        if (value.empty() || error != std::errc{} ||
-            end != value.data() + value.size() || count > 64)
-          throw std::invalid_argument("threads must be decimal in 0-64");
-        options.threads = count;
+        options.threads = ParseWorkerCount(value);
         has_threads = true;
       } else if (option == "--shutdown-timeout-ms") {
-        if (has_shutdown)
+        if (has_shutdown_timeout)
           throw std::invalid_argument(
               "shutdown timeout appears more than once");
-        unsigned int milliseconds = 0;
-        const auto [end, error] = std::from_chars(value.data(),
-                                                  value.data() + value.size(),
-                                                  milliseconds,
-                                                  10);
-        if (value.empty() || error != std::errc{} ||
-            end != value.data() + value.size() || milliseconds > 60000)
-          throw std::invalid_argument(
-              "shutdown timeout must be decimal in 0-60000ms");
-        options.shutdown_timeout = std::chrono::milliseconds(milliseconds);
-        has_shutdown = true;
+        options.shutdown_timeout = ParseShutdownTimeout(value);
+        has_shutdown_timeout = true;
       } else if (option == "--idle-timeout-ms" ||
                  option == "--keep-alive-timeout-ms") {
-        bool& seen = option == "--idle-timeout-ms" ? has_idle : has_keep;
+        bool& seen = option == "--idle-timeout-ms" ? has_idle_timeout
+                                                   : has_keep_alive_timeout;
         if (seen) throw std::invalid_argument("timeout appears more than once");
-        unsigned int value_ms = 0;
-        const auto [end, error] = std::from_chars(value.data(),
-                                                  value.data() + value.size(),
-                                                  value_ms,
-                                                  10);
-        if (value.empty() || error != std::errc{} ||
-            end != value.data() + value.size() || value_ms > 86400000)
-          throw std::invalid_argument(
-              "timeout must be decimal in 0-86400000ms");
         auto& duration = option == "--idle-timeout-ms"
                              ? options.timeouts.idle
                              : options.timeouts.keep_alive;
-        duration = std::chrono::milliseconds(value_ms);
+        duration = ParseConnectionTimeout(value);
         seen = true;
       } else {
         if (has_root) {
@@ -176,7 +187,7 @@ struct ShutdownSignalHandler {
   bool draining{false};
 
   void HandleShutdownSignal(std::uint32_t) {
-    while (const int signal = signals.next()) {
+    while (const int signal = signals.ReadNextSignal()) {
       if (draining) {
         server.ForceShutdown();
       } else {
@@ -190,18 +201,18 @@ struct ShutdownSignalHandler {
   }
 };
 
-int run(int argc, char* argv[]) {
+int RunServer(int argc, char* argv[]) {
   if (argc == 2 && std::string_view(argv[1]) == "--help") {
-    print_usage(std::cout);
+    PrintUsage(std::cout);
     return 0;
   }
 
-  Options options;
+  ServerOptions options;
   try {
-    options = parse_options(argc, argv);
+    options = ParseServerOptions(argc, argv);
   } catch (const std::invalid_argument& error) {
     std::cerr << "Error: " << error.what() << ".\n";
-    print_usage(std::cerr);
+    PrintUsage(std::cerr);
     return 2;
   }
 
@@ -244,7 +255,7 @@ int run(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
   try {
-    return run(argc, argv);
+    return RunServer(argc, argv);
   } catch (const std::exception& error) {
     hp::base::error(error.what());
   } catch (...) {
