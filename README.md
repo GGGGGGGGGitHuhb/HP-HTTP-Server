@@ -4,7 +4,7 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.5/S4可复现压测基线已完成，Reviewer002唯一PASS、Leader005按五项版本条件关闭V0.5；S1–S4全部完成，本地基线`ecddb98`已包含PR #17合并，未新增版本标签。R1基础接口重构已完成（独立Reviewer001 PASS）：接口和调用者同步迁移、parser具名helper及显式结果、局部格式化与暂存范围hook已交付；独立28/28、五项ASan/UBSan、13项hook回归和双smoke通过。R1已合并并发布`refactor-r1`。R2按Approved R006完成独立验收（Reviewer005 PASS、Leader012）：组件回调注册可定位、持久目标显式具名绑定，通用任务容器保存已绑定任务；历史失败、停工及用户逐次授权的窄范围修复均保留；分支`codex/refactor-r2`尚未提交、推送。R3/R4剩余范围与R5尚未执行，整体重构未完成。运行命令、环境与完整数据见 [压测说明](benchmark/README.md) 和 [独立结果](benchmark/results/V0.5-S4-reviewer-002.md)。1KiB实测A/B中位QPS为21373.88/713.56，B/A=0.033385；A组noisy，不能宣称性能改善、稳定降幅或根因。1MiB双方noisy，同样无稳定收益结论。
+- 当前阶段：V0.5/S4可复现压测基线已完成，Reviewer002唯一PASS、Leader005按五项版本条件关闭V0.5；S1–S4全部完成，本地基线`ecddb98`已包含PR #17合并，未新增版本标签。R1基础接口重构已完成（独立Reviewer001 PASS）：接口和调用者同步迁移、parser具名helper及显式结果、局部格式化与暂存范围hook已交付；独立28/28、五项ASan/UBSan、13项hook回归和双smoke通过。R1已合并并发布`refactor-r1`。R2按Approved R006完成独立验收（Reviewer005 PASS、Leader012）：组件回调注册可定位、持久目标显式具名绑定，通用任务容器保存已绑定任务；历史失败、停工及用户逐次授权的窄范围修复均保留；R2已提交5317298、经PR #19合并至d7693da并发布`refactor-r2`。R3 ConnectionIo命名及显式结果重构已完成（独立Reviewer001 PASS、Leader003，返工0/2），分支`codex/refactor-r3`未提交、未推送。R4 CLI/信号辅助和R5日志/整体一致性尚未执行，整体重构未完成。运行命令、环境与完整数据见 [压测说明](benchmark/README.md) 和 [独立结果](benchmark/results/V0.5-S4-reviewer-002.md)。1KiB实测A/B中位QPS为21373.88/713.56，B/A=0.033385；A组noisy，不能宣称性能改善、稳定降幅或根因。1MiB双方noisy，同样无稳定收益结论。
 
 - S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
@@ -417,7 +417,7 @@ ctest --test-dir build-v0.4-s4 --output-on-failure --timeout 60
 
 ## V0.5/S1 文件传输
 
-生产静态正文通过 Linux `sendfile` 发送，先排完响应头，再按拥有型文件区域推进。每个响应独立打开CLOEXEC文件fd；文件上限仍为8MiB，头与未发送文件的逻辑总量仍受9MiB上限约束。正文不进入用户输出vector，输出缓冲只保存小响应头。一次 `write_available` 最多推进256KiB文件并限制调用次数，回调重入不能继续消耗下一份文件预算。
+生产静态正文通过 Linux `sendfile` 发送，先排完响应头，再按拥有型文件区域推进。每个响应独立打开CLOEXEC文件fd；文件上限仍为8MiB，头与未发送文件的逻辑总量仍受9MiB上限约束。正文不进入用户输出vector，输出缓冲只保存小响应头。一次 `WriteAvailable` 最多推进256KiB文件并限制调用次数，回调重入不能继续消耗下一份文件预算。
 
 文件传输期间禁止再追加输出；文件和头全部排空后才推进pipeline、write-complete与keep-alive等待。实际sendfile正字节刷新idle，EAGAIN不刷新；现有SIGINT/TERM排空、统一截止和强关语义保持。不支持sendfile或传输错误会关闭当前连接，不自动read降级，也不在已开始的响应后追加500。没有新增CLI开关。
 

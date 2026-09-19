@@ -73,17 +73,17 @@ void test_binary_read_echo_and_half_close() {
   }
   expect(::shutdown(fds[1], SHUT_WR) == 0, "peer write half must shut down");
 
-  const hp::net::ReadResult read = connection.read_available();
+  const hp::net::ReadResult read = connection.ReadAvailable();
   expect(read.bytes_read == payload.size(),
          "read loop must consume all binary bytes across chunks");
   expect(read.peer_closed && connection.peer_half_closed(),
          "read EOF must mark peer half closed");
-  connection.queue_output(connection.input_view());
-  connection.consume(connection.input_view().size());
+  connection.QueueOutput(connection.input_view());
+  connection.Consume(connection.input_view().size());
   expect(connection.pending_bytes() == payload.size(),
          "every read byte must enter output state");
 
-  const hp::net::WriteResult written = connection.write_available();
+  const hp::net::WriteResult written = connection.WriteAvailable();
   expect(written.bytes_written == payload.size(),
          "echo write must emit the full binary payload");
   expect(!connection.has_pending_output(),
@@ -134,8 +134,8 @@ void test_short_write_and_eagain_resume() {
 
   hp::net::ConnectionIo connection{hp::net::Socket(fds[0])};
   const auto payload = make_payload(4 * 1024 * 1024 + 19);
-  connection.queue_output(payload);
-  const hp::net::WriteResult first = connection.write_available();
+  connection.QueueOutput(payload);
+  const hp::net::WriteResult first = connection.WriteAvailable();
   expect(first.would_block, "paused peer must trigger write EAGAIN");
   expect(first.bytes_written > 0 && first.bytes_written < payload.size(),
          "first write must make partial positive progress before EAGAIN");
@@ -160,7 +160,7 @@ void test_short_write_and_eagain_resume() {
       break;
     }
     if (connection.has_pending_output()) {
-      (void)connection.write_available();
+      (void)connection.WriteAvailable();
     }
   }
 
@@ -219,7 +219,7 @@ void test_read_retries_eintr() {
 
   ::close(fds[1]);
   hp::net::ConnectionIo connection{hp::net::Socket(fds[0])};
-  const hp::net::ReadResult read = connection.read_available();
+  const hp::net::ReadResult read = connection.ReadAvailable();
   expect(signal_count > 0, "controlled signal must interrupt blocking recv");
   expect(read.bytes_read == sizeof("eintr-read") && read.peer_closed,
          "recv must retry EINTR, retain bytes and reach EOF");
@@ -307,8 +307,8 @@ void test_write_retries_eintr() {
 
   ::close(fds[1]);
   hp::net::ConnectionIo connection{hp::net::Socket(fds[0])};
-  connection.queue_output(payload);
-  const hp::net::WriteResult write = connection.write_available();
+  connection.QueueOutput(payload);
+  const hp::net::WriteResult write = connection.WriteAvailable();
   expect(signal_count > 0, "controlled signal must interrupt blocking send");
   expect(
       write.bytes_written == payload.size() && !connection.has_pending_output(),
@@ -330,8 +330,8 @@ void test_sigpipe_is_suppressed() {
   hp::net::ConnectionIo connection{hp::net::Socket(fds[0])};
   ::close(fds[1]);
   const auto payload = make_payload(64);
-  connection.queue_output(payload);
-  const hp::net::WriteResult write = connection.write_available();
+  connection.QueueOutput(payload);
+  const hp::net::WriteResult write = connection.WriteAvailable();
   expect(write.error_number == EPIPE || write.error_number == ECONNRESET,
          "closed peer write must preserve a connection error");
   expect(true, "MSG_NOSIGNAL must keep the test process alive");

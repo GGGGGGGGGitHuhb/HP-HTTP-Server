@@ -83,7 +83,7 @@ void TcpConnection::Send(std::span<const std::byte> bytes) {
   if (state_ == State::kClosing || draining_)
     throw std::logic_error("send on closed or draining connection");
   try {
-    io_.queue_output(bytes);  // Take independent storage before returning.
+    io_.QueueOutput(bytes);  // Take independent storage before returning.
     if (!handling_event_ && state_ == State::kActive) {
       if (!write_complete_callback_) FlushOutput();
       if (state_ == State::kActive) UpdateInterest();
@@ -99,7 +99,7 @@ void TcpConnection::SendFile(std::span<const std::byte> header,
   if (state_ == State::kClosing || draining_)
     throw std::logic_error("send on closed or draining connection");
   try {
-    io_.queue_file(header, std::move(file));
+    io_.QueueFile(header, std::move(file));
     if (!handling_event_ && state_ == State::kActive) {
       if (!write_complete_callback_) FlushOutput();
       if (state_ == State::kActive) UpdateInterest();
@@ -110,7 +110,7 @@ void TcpConnection::SendFile(std::span<const std::byte> header,
   }
 }
 
-void TcpConnection::Consume(std::size_t count) { io_.consume(count); }
+void TcpConnection::Consume(std::size_t count) { io_.Consume(count); }
 
 void TcpConnection::BeginDrain() {
   if (state_ == State::kClosing || draining_) return;
@@ -173,7 +173,7 @@ void TcpConnection::UpdateInterest() {
 
 void TcpConnection::ReadMessages() {
   while (state_ == State::kActive && !input_stopped_ && !read_paused_) {
-    const auto read = io_.read_once();
+    const auto read = io_.ReadOnce();
     if (read.bytes_read) {
       idle_waiting_ = false;
       if (timeout_activity_callback_) timeout_activity_callback_(*this, true);
@@ -194,7 +194,7 @@ void TcpConnection::ReadMessages() {
 
 void TcpConnection::FlushOutput() {
   while (state_ == State::kActive && io_.has_pending_output()) {
-    const auto written = io_.write_available();
+    const auto written = io_.WriteAvailable();
     if (written.bytes_written && timeout_activity_callback_)
       timeout_activity_callback_(*this, true);
     last_result_.bytes_written += written.bytes_written;

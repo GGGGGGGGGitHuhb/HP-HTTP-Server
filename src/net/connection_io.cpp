@@ -13,15 +13,15 @@
 
 namespace hp::net {
 namespace {
-struct FileWrite {
+struct FileWriteResult {
   ssize_t count;
   int error;
 };
 
-FileWrite send_file(int socket,
-                    int file,
-                    off_t* offset,
-                    std::size_t length) noexcept {
+FileWriteResult SendFileWithoutSigpipe(int socket,
+                                       int file,
+                                       off_t* offset,
+                                       std::size_t length) noexcept {
   sigset_t pipe, previous, pending;
   ::sigemptyset(&pipe);
   ::sigaddset(&pipe, SIGPIPE);
@@ -64,10 +64,10 @@ std::span<const std::byte> ConnectionIo::input_view() const noexcept {
   return input_.readable_view();
 }
 
-void ConnectionIo::consume(std::size_t count) { input_.Consume(count); }
+void ConnectionIo::Consume(std::size_t count) { input_.Consume(count); }
 
-ReadResult ConnectionIo::read_once() {
-  ReadResult result;
+ReadResult ConnectionIo::ReadOnce() {
+  ReadResult result{0, false, false, 0};
   if (peer_half_closed_) {
     result.peer_closed = true;
     return result;
@@ -104,10 +104,10 @@ ReadResult ConnectionIo::read_once() {
   }
 }
 
-ReadResult ConnectionIo::read_available() {
-  ReadResult total;
+ReadResult ConnectionIo::ReadAvailable() {
+  ReadResult total{0, false, false, 0};
   while (true) {
-    auto read = read_once();
+    auto read = ReadOnce();
     total.bytes_read += read.bytes_read;
     if (read.bytes_read) continue;
     total.would_block = read.would_block;
@@ -117,12 +117,11 @@ ReadResult ConnectionIo::read_available() {
   }
 }
 
-WriteResult ConnectionIo::write_available() {
-  WriteResult result;
-  result.file_transfer = file_.has_value();
+WriteResult ConnectionIo::WriteAvailable() {
+  WriteResult result{0, file_.has_value(), false, 0};
   std::size_t calls = 0;
   while (output_.readable_bytes()) {
-    if (result.file_transfer && calls++ == file_call_budget) return result;
+    if (result.file_transfer && calls++ == kFileCallBudget) return result;
     const auto* data = output_.readable_view().data();
     const std::size_t remaining = output_.readable_bytes();
     const ssize_t count = ::send(socket_.fd(), data, remaining, MSG_NOSIGNAL);
@@ -149,12 +148,13 @@ WriteResult ConnectionIo::write_available() {
 
   std::size_t progress = 0;
   while (file_ && file_->remaining()) {
-    if (calls++ >= file_call_budget || progress == file_write_budget)
+    if (calls++ >= kFileCallBudget || progress == kFileWriteBudget)
       return result;
     off_t offset = file_->offset();
     const auto count =
-        std::min(file_->remaining(), file_write_budget - progress);
-    const auto written = send_file(fd(), file_->fd(), &offset, count);
+        std::min(file_->remaining(), kFileWriteBudget - progress);
+    const auto written =
+        SendFileWithoutSigpipe(fd(), file_->fd(), &offset, count);
     if (written.count > 0) {
       const auto bytes = static_cast<std::size_t>(written.count);
       file_->Advance(bytes);
@@ -176,25 +176,25 @@ WriteResult ConnectionIo::write_available() {
   return result;
 }
 
-bool ConnectionIo::output_fits(std::size_t pending,
-                               std::size_t incoming) noexcept {
-  return pending <= output_limit && incoming <= output_limit - pending;
+bool ConnectionIo::OutputFits(std::size_t pending,
+                              std::size_t incoming) noexcept {
+  return pending <= kOutputLimit && incoming <= kOutputLimit - pending;
 }
 
-void ConnectionIo::queue_output(std::span<const std::byte> bytes) {
+void ConnectionIo::QueueOutput(std::span<const std::byte> bytes) {
   if (file_) throw std::logic_error("append while file output is pending");
-  if (!output_fits(pending_bytes(), bytes.size()))
+  if (!OutputFits(pending_bytes(), bytes.size()))
     throw std::length_error("connection output limit exceeded");
   output_.Append(bytes);
 }
 
-void ConnectionIo::queue_file(std::span<const std::byte> header,
-                              base::FileRegion file) {
+void ConnectionIo::QueueFile(std::span<const std::byte> header,
+                             base::FileRegion file) {
   if (file.fd() < 0)
     throw std::invalid_argument("submission of moved file region");
   if (has_pending_output() || file_)
     throw std::logic_error("file submission while output is pending");
-  if (!output_fits(header.size(), file.remaining()))
+  if (!OutputFits(header.size(), file.remaining()))
     throw std::length_error("connection output limit exceeded");
   // Allocate before taking the region; failure destroys the by-value owner.
   output_.Append(header);
@@ -202,9 +202,7 @@ void ConnectionIo::queue_file(std::span<const std::byte> header,
   if (!file_->remaining()) file_.reset();
 }
 
-void ConnectionIo::mark_peer_half_closed() noexcept {
-  peer_half_closed_ = true;
-}
+void ConnectionIo::MarkPeerHalfClosed() noexcept { peer_half_closed_ = true; }
 
 bool ConnectionIo::peer_half_closed() const noexcept {
   return peer_half_closed_;
