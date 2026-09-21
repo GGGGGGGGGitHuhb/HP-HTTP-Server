@@ -6,6 +6,8 @@
 
 ## 当前状态与目标架构
 
+R6 当前实现（2026-09-21，已验收）：生产文件使用 PascalCase，普通函数/变量使用 camelCase。回调按事件统一命名，外部短 lambda 转发到具名处理函数；有运行状态约束的槽通过公开 registerXxxCallback 检查后调用私有内联纯保存 setter，无约束槽直接使用 setter。主从 Reactor、每连接 HTTP 状态及原线程归属保持。EventLoopThread 投递使用共享任务槽，先完成分配再移动任务，入队前释放局部槽所有权；成功执行由 worker 释放任务捕获，失败路径先解锁后释放，新增一次槽分配成本不代表性能改善。下方 R1–R5 的旧符号和绑定形式属于历史记录。
+
 2026-09-17：R1基础接口重构已完成，独立Reviewer001 PASS、Leader005收口。基础/HTTP/Socket/Epoller普通操作与枚举/常量命名统一，当前调用者同步适配；RequestParser将ASCII比较和Header空白裁剪提取为同步具名私有方法，扫描计数、借用及拥有型请求结果保持。PathResult/ResponseResult状态和file/policy显式表达。所有权、线程和协议行为不变。
 
 2026-09-19：R2按R006及Reviewer005 PASS完成：Channel分别通过头文件可定位的setter绑定Acceptor::HandleListenerEvent、TcpConnection::HandleConnectionEvent、EventLoop::HandleWakeupEvent和ShutdownSignalHandler::HandleShutdownSignal；Acceptor通过set_AddConnection_callback绑定服务器。app通过TcpServer::set_CreateMessageCallback_callback显式绑定HttpMessageFactory::CreateMessageCallback；构造仍创建监听socket/worker，Run在外部装配后启用接收。WatchControlFd返回未启用的所属Channel，完成信号绑定后才启用兴趣。HTTP消息显式绑定按值持有的HttpMessageHandler::HandleMessage，Session仍在IO owner首次消息时创建；provider通过可定位setter转交，写完成绑定原共享Session，保留复制与pipeline语义。Registry的关闭/超时/活动目标具名注册；通用队列、定时器及任务转交保存已显式绑定的任务，线程/池载体使用具名方法而非自定义operator()。普通依赖仍可构造注入；无新共享所有权、协议架构或性能承诺。R3已完成下述ConnectionIo迁移；R4应用辅助已完成下述迁移，R5已完成日志和限定一致性检查，批准的渐进范围完成；后续全测试清理已独立验收，见下文。
@@ -527,6 +529,8 @@ HTTP 接口必须限制请求头大小、路径解析范围和连接生命周期
 每连接最多一个活跃timer，100000次续期不累积历史条目；同poll先IO/任务后按最新截止重验，到期回调走request_close与after_dispatch，纯timer也回收。停止或失败取消timer/callback后再销毁registry/loop；持续少量字节可续期，阻塞provider不能被同owner timer抢占。S4已有输出界限及优雅排空；drain取消普通idle/keepalive，只使用全局关闭截止。
 
 ## 测试架构
+
+R6 按用户要求保留旧测试源码及名称，依赖旧生产接口的 23 个目标暂不构建或注册；继续使用 5 个兼容 CTest，并新增 R6 专项测试。历史完整测试结果不能代表迁移后的覆盖，按需恢复记录见 TD-006；当前命令和目标清单以 README / CMake 为准。
 
 测试按层级组织：
 

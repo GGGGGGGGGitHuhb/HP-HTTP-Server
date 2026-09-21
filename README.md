@@ -4,7 +4,9 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-- 当前阶段：V0.5/S4可复现压测基线已完成，Reviewer002唯一PASS、Leader005按五项版本条件关闭V0.5；S1–S4全部完成，本地基线`ecddb98`已包含PR #17合并，未新增版本标签。R1基础接口重构已完成（独立Reviewer001 PASS）：接口和调用者同步迁移、parser具名helper及显式结果、局部格式化与暂存范围hook已交付；独立28/28、五项ASan/UBSan、13项hook回归和双smoke通过。R1已合并并发布`refactor-r1`。R2按Approved R006完成独立验收（Reviewer005 PASS、Leader012）：组件回调注册可定位、持久目标显式具名绑定，通用任务容器保存已绑定任务；历史失败、停工及用户逐次授权的窄范围修复均保留；R2已提交5317298、经PR #19合并至d7693da并发布`refactor-r2`。R3 ConnectionIo命名及显式结果重构已完成（独立Reviewer001 PASS、Leader003，返工0/2），R3已提交ffb20a6、PR #20合并9a49667并发布`refactor-r3`。R4 CLI/信号辅助已完成（Reviewer001 PASS、Leader003），源码返工0、证据纠正2/2；R4已提交fdc1b14、PR #21合并5eeb859并发布`refactor-r4`。R5日志及限定一致性检查已完成（Reviewer001 PASS、Leader003），源码返工0、执行路线纠正1/2；`codex/refactor-r5`未提交推送。R1–R5及随后获批的全测试清理已完成：全部29个测试文件接受规范审查，实际修改28个测试文件及两处应用测试观察接口文件；Reviewer final-test-cleanup002 PASS，75/75格式、独立完整28/28和sanitizer3/3通过。FS-01–04及FTC-01关闭，两轮纠正2/2历史保留。保留规范允许的短同步谓词、直接异常检查、getter/外部ABI/override及标准deleter，不再豁免历史测试fixture；不表示全仓消除lambda。R5和测试清理仍未提交推送。运行命令、环境与完整数据见 [压测说明](benchmark/README.md) 和 [独立结果](benchmark/results/V0.5-S4-reviewer-002.md)。1KiB实测A/B中位QPS为21373.88/713.56，B/A=0.033385；A组noisy，不能宣称性能改善、稳定降幅或根因。1MiB双方noisy，同样无稳定收益结论。
+R6 最新个人规范迁移已完成，独立 Reviewer 结论为 PASS WITH DEBT（仅 TD-006 旧测试按需迁移延期）：生产文件改为 PascalCase，普通函数和变量为 camelCase，回调使用事件类型、短转发及头内纯保存 setter。具有注册时机约束的入口先检查再调用私有 setter。旧测试源码和路径冻结；当前默认验证为 5 项兼容旧测试与 1 项新增专项测试。独立 Debug 6/6、ASan/UBSan/LSan 专项 1/1、HTTP smoke 与 47 文件格式检查通过；31 个旧测试路径和内容不变。以下 R1–R5 测试数字均为历史记录，不代表 R6 当前覆盖。
+
+- 当前阶段：V0.5/S4可复现压测基线已完成，Reviewer002唯一PASS、Leader005按五项版本条件关闭V0.5；S1–S4全部完成，本地基线`ecddb98`已包含PR #17合并，未新增版本标签。R1基础接口重构已完成（独立Reviewer001 PASS）：接口和调用者同步迁移、parser具名helper及显式结果、局部格式化与暂存范围hook已交付；独立28/28、五项ASan/UBSan、13项hook回归和双smoke通过。R1已合并并发布`refactor-r1`。R2按Approved R006完成独立验收（Reviewer005 PASS、Leader012）：组件回调注册可定位、持久目标显式具名绑定，通用任务容器保存已绑定任务；历史失败、停工及用户逐次授权的窄范围修复均保留；R2已提交5317298、经PR #19合并至d7693da并发布`refactor-r2`。R3 ConnectionIo命名及显式结果重构已完成（独立Reviewer001 PASS、Leader003，返工0/2），R3已提交ffb20a6、PR #20合并9a49667并发布`refactor-r3`。R4 CLI/信号辅助已完成（Reviewer001 PASS、Leader003），源码返工0、证据纠正2/2；R4已提交fdc1b14、PR #21合并5eeb859并发布`refactor-r4`。R5日志及限定一致性检查已完成（Reviewer001 PASS、Leader003），源码返工0、执行路线纠正1/2；`codex/refactor-r5`已提交 f7c1bc5，并经 PR #22 合并至 d465995。R1–R5及随后获批的全测试清理已完成：全部29个测试文件接受规范审查，实际修改28个测试文件及两处应用测试观察接口文件；Reviewer final-test-cleanup002 PASS，75/75格式、独立完整28/28和sanitizer3/3通过。FS-01–04及FTC-01关闭，两轮纠正2/2历史保留。保留规范允许的短同步谓词、直接异常检查、getter/外部ABI/override及标准deleter，不再豁免历史测试fixture；不表示全仓消除lambda。R5和测试清理已随 PR #22 合并。运行命令、环境与完整数据见 [压测说明](benchmark/README.md) 和 [独立结果](benchmark/results/V0.5-S4-reviewer-002.md)。1KiB实测A/B中位QPS为21373.88/713.56，B/A=0.033385；A组noisy，不能宣称性能改善、稳定降幅或根因。1MiB双方noisy，同样无稳定收益结论。
 
 - S2交付：V0.3/S2 Keep-Alive 连接复用已完成 / Completed；原Approved revision1及Approved S2-rework-001已实现，独立Reviewer唯一PASS。批准见 `docs/leader/reports/V0.3/S2-report-002.md`，补充见 `docs/leader/reworks/V0.3/S2-rework-001.md`。
 
@@ -131,7 +133,7 @@ curl --http1.1 -i http://127.0.0.1:8080/missing.txt
 curl --http1.1 -i -X POST http://127.0.0.1:8080/
 ```
 
-预期信号包括 `28/28` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
+预期信号包括 `6/6` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
 
 ## 配置说明
 
@@ -184,7 +186,40 @@ CMakeLists.txt
 
 ## 测试与验证
 
-可复现的验证命令：
+R6 当前命令（真实 socket/HTTP 与 sanitizer 测试须使用仓库规定的受控执行路线）：
+
+```bash
+mkdir -p .cache/refactor-r6/builder/{tmp,logs,build}
+export TMPDIR="$PWD/.cache/refactor-r6/builder/tmp" TMP="$PWD/.cache/refactor-r6/builder/tmp" TEMP="$PWD/.cache/refactor-r6/builder/tmp"
+export HP_S3_TEST_TMP_ROOT="$PWD/.cache/refactor-r6/builder/test-tmp" PYTHONDONTWRITEBYTECODE=1
+cmake -S . -B .cache/refactor-r6/builder/build -DCMAKE_BUILD_TYPE=Debug
+cmake --build .cache/refactor-r6/builder/build -j 6
+ctest --test-dir .cache/refactor-r6/builder/build --output-on-failure --timeout 60
+NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost bash tests/http_smoke_test.sh .cache/refactor-r6/builder/build/hp_http_server
+rg --files include src app > .cache/refactor-r6/builder/files.txt
+printf '%s\n' tests/R6Callbacks_test.cpp >> .cache/refactor-r6/builder/files.txt
+python3 scripts/format_cpp.py --files-from .cache/refactor-r6/builder/files.txt
+python3 scripts/format_cpp.py --check --files-from .cache/refactor-r6/builder/files.txt
+```
+
+默认 CTest 为 6 项：保留 `cli_tests`、`http_server_integration_tests`、`server_integration_tests`（同一黑盒的历史别名）、`http_keep_alive_integration_tests`、`benchmark_runner_tests`；新增 `r6_callbacks_tests`，源码为 `tests/R6Callbacks_test.cpp`。
+
+新增专项验证注册拒绝时机、默认/空消息回调 echo、任务成功/停止/队满、共享槽与函数存储及入队分配失败、失败捕获析构重入、即时完成任务的 owner 析构与配额时序、HTTP 连接状态隔离/延迟 Session/阻塞写续传/关闭寿命。`EventLoopThread::post` 每次新增共享任务槽分配与引用计数成本，没有性能收益声明。
+
+以下 23 个旧目标因仍引用旧生产头文件或旧接口，从默认构建和 CTest 一起排除；文件保留且内容不变，以后需要时再单独迁移：
+
+- 基础/网络：`base_tests`、`socket_tests`、`network_primitives_tests`、`acceptor_tcp_connection_tests`、`event_loop_channel_tests`、`connection_io_tests`。
+- HTTP：`http_connection_callback_tests`、`http_parser_state_tests`、`http_parser_tests`、`static_file_tests`、`http_keep_alive_tests`。
+- 线程/资源：`event_loop_thread_tests`、`event_loop_thread_pool_tests`、`multi_reactor_tests`、`timer_queue_tests`、`connection_timeout_tests`、`resource_limits_tests`、`graceful_shutdown_tests`。
+- 传输/日志：`sendfile_tests`、`async_logger_tests`、`async_logger_production_tests`、`buffer_tests`、`buffer_backpressure_tests`。
+
+其中 `buffer_backpressure_tests` 经 sendfile/graceful_shutdown/multi_reactor 旧测试 include 链依赖旧接口；connection_timeout/resource_limits 经 multi_reactor；async_logger_production 经 async_logger_test_support 和 main。此列表仅依据接口不兼容，不用于隐藏生产行为失败。原有 parser 全矩阵、定时器/资源穷举及长期并发回归覆盖未在 R6 全部恢复，历史 28/28 不能充当当前验证。
+
+### 历史版本验证记录
+
+以下旧目标清单与命令只用于对应历史版本复现，在当前 R6 默认构建不可直接执行；当前命令以本节上方为准。
+
+历史验证命令：
 
 ```bash
 mkdir -p .cache/v0.4-s2/builder/tmp .cache/v0.4-s2/builder/cache
@@ -207,7 +242,7 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
   bash tests/http_smoke_test.sh ./build-v0.4-s2/hp_http_server
 ```
 
-当前 CTest 共28项（含V0.5/S4新增的benchmark runner回归）：
+R5 历史 CTest 共28项（含V0.5/S4新增的benchmark runner回归）：
 
 - `benchmark_runner_tests`：预算、测量审计、尾字节、失败退出及子进程回收；临时输出必须位于源码树内，因此导出基线时将构建目录放在导出的源码树内。
 
@@ -378,7 +413,7 @@ Agent 执行真实 socket/HTTP、系统跟踪或受限 sanitizer 时遵守仓库
 
 仓库当前未包含 `LICENSE` 文件，尚未授予明确的开源复用许可。
 
-## V0.4/S3 当前实现验证
+## V0.4/S3 历史实现验证
 
 新增 `timer_queue_tests` 与 `connection_timeout_tests`，保留原18个CTest身份。TimerQueue 使用稳定ID和两个有序索引，一连接最多一个活跃timer；取消/续期不积累旧记录。EventLoop 等待取最近截止向上取整毫秒、调用者限制和1000ms兜底的最小值；同轮先IO与任务，再检查timer，新timer留下一轮。
 
