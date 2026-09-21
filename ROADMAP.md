@@ -6,6 +6,8 @@
 
 ## 当前独立重构进度
 
+- 2026-09-21：R6 已完成。用户已批准生产命名与回调接口迁移、双层注册保护及共享任务槽方案；旧测试源码与文件名冻结，不兼容目标暂退构建/注册，新增有限专项测试。R5 已由 PR #22 合并，R6 从远程 main 的 `d465995` 开始；Builder001、独立 Reviewer001 PASS WITH DEBT 与 Leader002 收口齐备；仅保留用户批准的 TD-006，V0.6 范围不变。
+
 - 当前覆盖状态（2026-09-19）：R2按Approved R006、Builder007/008、Reviewer005 PASS与Leader012完成验收；纠正2/2的停工记录及其后用户单问题恢复、六处绑定修复授权保留，不重置返工额度。R2已提交5317298、PR #19合并d7693da并发布refactor-r2。R3按Approved revision1、Builder001、独立Reviewer001 PASS和Leader003完成ConnectionIo迁移，返工0/2；R3已提交ffb20a6、合并9a49667并发布refactor-r3。R4按Approved revision1、Builder001、Reviewer001 PASS和Leader003完成CLI/信号辅助迁移，源码返工0、证据纠正2/2；R4已提交fdc1b14、合并5eeb859并发布refactor-r4。R5按Approved revision1、Builder001、Reviewer001 PASS及Leader003完成日志/限定一致性检查，源码返工0、路线纠正1/2，未提交推送。R1–R5批准的渐进范围及随后明确授权的全测试清理均已完成：全部29个测试文件与窄范围观察接口经Reviewer final-test-cleanup002 PASS，FS-01–04/FTC-01关闭；全75格式、独立28/28及sanitizer3/3通过，纠正2/2成功。历史fixture不再豁免，合法同步谓词/ABI等规范例外保留。R5及清理未提交推送；不自动新增阶段。下方R005记录仅属历史。
 
 - 2026-09-17：R1基础类型与协议契约已完成。REF-R1-DESIGN/review revision2 Approved及R001为基线，Builder001、独立Reviewer001 PASS、Leader005收口齐备；接口调用闭合、具名parser helper、显式结果、局部formatter/暂存范围hook已交付。独立Debug28/28、五项ASan/UBSan、13项hook、双smoke及反证通过。

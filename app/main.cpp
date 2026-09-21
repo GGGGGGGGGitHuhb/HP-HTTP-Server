@@ -10,14 +10,14 @@
 #include <system_error>
 #include <utility>
 
-#include "base/async_logger.h"
-#include "base/logger.h"
-#include "http/http_request.h"
-#include "http/http_response.h"
-#include "http/static_file_service.h"
-#include "http_connection_handler.h"
-#include "net/tcp_server.h"
-#include "signal_watcher.h"
+#include "HttpConnectionHandler.h"
+#include "SignalWatcher.h"
+#include "base/AsyncLogger.h"
+#include "base/Logger.h"
+#include "http/HttpRequest.h"
+#include "http/HttpResponse.h"
+#include "http/StaticFileService.h"
+#include "net/TcpServer.h"
 
 namespace {
 
@@ -43,7 +43,7 @@ class ShutdownSignalMask {
   sigset_t previous_{};
 };
 
-void PrintUsage(std::ostream& output) {
+void printUsage(std::ostream& output) {
   output << "Usage: hp_http_server --port <0-65535> --root <directory> "
             "[--threads <0-64>]\n"
          << "       hp_http_server --root <directory> --port <0-65535>\n"
@@ -61,7 +61,7 @@ void PrintUsage(std::ostream& output) {
             "truncate a response.\n";
 }
 
-[[nodiscard]] std::uint16_t ParsePort(std::string_view text) {
+[[nodiscard]] std::uint16_t parsePort(std::string_view text) {
   unsigned int value = 0;
   const auto [end, error] =
       std::from_chars(text.data(), text.data() + text.size(), value, 10);
@@ -72,7 +72,7 @@ void PrintUsage(std::ostream& output) {
   return static_cast<std::uint16_t>(value);
 }
 
-[[nodiscard]] std::size_t ParseWorkerCount(std::string_view value) {
+[[nodiscard]] std::size_t parseWorkerCount(std::string_view value) {
   unsigned int count = 0;
   const auto [end, error] =
       std::from_chars(value.data(), value.data() + value.size(), count, 10);
@@ -82,7 +82,7 @@ void PrintUsage(std::ostream& output) {
   return count;
 }
 
-[[nodiscard]] std::chrono::milliseconds ParseShutdownTimeout(
+[[nodiscard]] std::chrono::milliseconds parseShutdownTimeout(
     std::string_view value) {
   unsigned int milliseconds = 0;
   const auto [end, error] = std::from_chars(value.data(),
@@ -96,32 +96,32 @@ void PrintUsage(std::ostream& output) {
   return std::chrono::milliseconds(milliseconds);
 }
 
-[[nodiscard]] std::chrono::milliseconds ParseConnectionTimeout(
+[[nodiscard]] std::chrono::milliseconds parseConnectionTimeout(
     std::string_view value) {
-  unsigned int value_ms = 0;
+  unsigned int valueMs = 0;
   const auto [end, error] =
-      std::from_chars(value.data(), value.data() + value.size(), value_ms, 10);
+      std::from_chars(value.data(), value.data() + value.size(), valueMs, 10);
   if (value.empty() || error != std::errc{} ||
-      end != value.data() + value.size() || value_ms > 86400000)
+      end != value.data() + value.size() || valueMs > 86400000)
     throw std::invalid_argument("timeout must be decimal in 0-86400000ms");
-  return std::chrono::milliseconds(value_ms);
+  return std::chrono::milliseconds(valueMs);
 }
 
 struct ServerOptions {
   std::uint16_t port{0};
   std::string root;
   std::size_t threads{2};
-  std::chrono::milliseconds shutdown_timeout{5000};
+  std::chrono::milliseconds shutdownTimeout{5000};
   hp::net::ConnectionTimeouts timeouts{std::chrono::milliseconds(30000),
                                        std::chrono::milliseconds(15000)};
 };
 
-[[nodiscard]] ServerOptions ParseServerOptions(int argc, char* argv[]) {
-  bool has_port = false;
-  bool has_root = false;
-  bool has_threads = false;
-  bool has_idle_timeout = false, has_keep_alive_timeout = false,
-       has_shutdown_timeout = false;
+[[nodiscard]] ServerOptions parseServerOptions(int argc, char* argv[]) {
+  bool hasPort = false;
+  bool hasRoot = false;
+  bool hasThreads = false;
+  bool hasIdleTimeout = false, hasKeepAliveTimeout = false,
+       hasShutdownTimeout = false;
   ServerOptions options;
   for (int index = 1; index < argc; ++index) {
     const std::string_view option = argv[index];
@@ -133,47 +133,47 @@ struct ServerOptions {
       }
       const std::string_view value = argv[++index];
       if (option == "--port") {
-        if (has_port) {
+        if (hasPort) {
           throw std::invalid_argument("--port appears more than once");
         }
-        options.port = ParsePort(value);
-        has_port = true;
+        options.port = parsePort(value);
+        hasPort = true;
       } else if (option == "--threads") {
-        if (has_threads)
+        if (hasThreads)
           throw std::invalid_argument("--threads appears more than once");
-        options.threads = ParseWorkerCount(value);
-        has_threads = true;
+        options.threads = parseWorkerCount(value);
+        hasThreads = true;
       } else if (option == "--shutdown-timeout-ms") {
-        if (has_shutdown_timeout)
+        if (hasShutdownTimeout)
           throw std::invalid_argument(
               "shutdown timeout appears more than once");
-        options.shutdown_timeout = ParseShutdownTimeout(value);
-        has_shutdown_timeout = true;
+        options.shutdownTimeout = parseShutdownTimeout(value);
+        hasShutdownTimeout = true;
       } else if (option == "--idle-timeout-ms" ||
                  option == "--keep-alive-timeout-ms") {
-        bool& seen = option == "--idle-timeout-ms" ? has_idle_timeout
-                                                   : has_keep_alive_timeout;
+        bool& seen = option == "--idle-timeout-ms" ? hasIdleTimeout
+                                                   : hasKeepAliveTimeout;
         if (seen) throw std::invalid_argument("timeout appears more than once");
         auto& duration = option == "--idle-timeout-ms"
                              ? options.timeouts.idle
-                             : options.timeouts.keep_alive;
-        duration = ParseConnectionTimeout(value);
+                             : options.timeouts.keepAlive;
+        duration = parseConnectionTimeout(value);
         seen = true;
       } else {
-        if (has_root) {
+        if (hasRoot) {
           throw std::invalid_argument("--root appears more than once");
         }
         if (value.empty()) {
           throw std::invalid_argument("root directory is empty");
         }
         options.root = value;
-        has_root = true;
+        hasRoot = true;
       }
       continue;
     }
     throw std::invalid_argument("unknown option");
   }
-  if (!has_port || !has_root) {
+  if (!hasPort || !hasRoot) {
     throw std::invalid_argument(
         "exactly one --port and one --root are required");
   }
@@ -183,36 +183,36 @@ struct ServerOptions {
 struct ShutdownSignalHandler {
   hp::app::SignalWatcher& signals;
   hp::net::TcpServer& server;
-  std::chrono::milliseconds shutdown_timeout;
+  std::chrono::milliseconds shutdownTimeout;
   bool draining{false};
 
-  void HandleShutdownSignal(std::uint32_t) {
-    while (const int signal = signals.ReadNextSignal()) {
+  void handleShutdownSignal(std::uint32_t) {
+    while (const int signal = signals.readNextSignal()) {
       if (draining) {
-        server.ForceShutdown();
+        server.forceShutdown();
       } else {
         draining = true;
-        server.RequestGracefulShutdown(hp::timer::TimerQueue::Clock::now() +
-                                       shutdown_timeout);
+        server.requestGracefulShutdown(hp::timer::TimerQueue::Clock::now() +
+                                       shutdownTimeout);
       }
-      hp::base::Info("Shutdown signal observed: " + std::to_string(signal) +
+      hp::base::info("Shutdown signal observed: " + std::to_string(signal) +
                      ".");
     }
   }
 };
 
-int RunServer(int argc, char* argv[]) {
+int runServer(int argc, char* argv[]) {
   if (argc == 2 && std::string_view(argv[1]) == "--help") {
-    PrintUsage(std::cout);
+    printUsage(std::cout);
     return 0;
   }
 
   ServerOptions options;
   try {
-    options = ParseServerOptions(argc, argv);
+    options = parseServerOptions(argc, argv);
   } catch (const std::invalid_argument& error) {
     std::cerr << "Error: " << error.what() << ".\n";
-    PrintUsage(std::cerr);
+    printUsage(std::cerr);
     return 2;
   }
 
@@ -225,28 +225,30 @@ int RunServer(int argc, char* argv[]) {
                               hp::http::kMaxRequestBytes,
                               options.threads,
                               options.timeouts);
-    server.set_CreateMessageCallback_callback(
-        std::bind_front(&hp::app::HttpMessageFactory::CreateMessageCallback,
-                        hp::app::HttpMessageFactory{service}));
-    ShutdownSignalHandler shutdown_signals{signals,
-                                           server,
-                                           options.shutdown_timeout};
-    auto& signal_channel = server.WatchControlFd(signals.fd());
-    signal_channel.set_HandleShutdownSignal_callback(
-        std::bind_front(&ShutdownSignalHandler::HandleShutdownSignal,
-                        &shutdown_signals));
-    signal_channel.set_interest(EPOLLIN);
-    const std::string port_text = std::to_string(server.bound_port());
-    hp::base::Info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");
-    hp::base::Info("Listening on TCP port " + port_text + ".");
+    server.registerMessageFactoryCallback(
+        [target = hp::app::HttpMessageFactory{service}]() {
+          return target.onMessageFactory();
+        });
+    ShutdownSignalHandler shutdownSignals{signals,
+                                          server,
+                                          options.shutdownTimeout};
+    auto& signalChannel = server.watchControlFd(signals.fd());
+    signalChannel.registerEventCallback(
+        [target = &shutdownSignals](std::uint32_t events) {
+          target->handleShutdownSignal(events);
+        });
+    signalChannel.setInterest(EPOLLIN);
+    const std::string portText = std::to_string(server.boundPort());
+    hp::base::info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");
+    hp::base::info("Listening on TCP port " + portText + ".");
     std::cout << "V0.1 / S3 minimal HTTP static file server listening on port "
-              << port_text << "." << std::endl;
-    server.Run();
+              << portText << "." << std::endl;
+    server.run();
     return 0;
   } catch (const std::exception& error) {
-    hp::base::Error(error.what());
+    hp::base::error(error.what());
   } catch (...) {
-    hp::base::Error("Unknown fatal error.");
+    hp::base::error("Unknown fatal error.");
   }
   return 1;
 }
@@ -255,11 +257,11 @@ int RunServer(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
   try {
-    return RunServer(argc, argv);
+    return runServer(argc, argv);
   } catch (const std::exception& error) {
-    hp::base::Error(error.what());
+    hp::base::error(error.what());
   } catch (...) {
-    hp::base::Error("Unknown fatal error.");
+    hp::base::error("Unknown fatal error.");
   }
   return 1;
 }
