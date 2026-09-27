@@ -119,7 +119,7 @@ void testRegistration() {
     active = true;
   }
   assert(active);
-  channel.remove();
+  channel.removeChannel();
   channel.registerEventCallback({});
 
   RegistrationProbe probe{loop};
@@ -129,15 +129,15 @@ void testRegistration() {
   loop.registerControlCallback([&probe](auto control, auto deadline) {
     probe.probeDispatch(control, deadline);
   });
-  loop.requestDrain(EventLoop::Deadline::max());
+  loop.requestLoopDrain(EventLoop::Deadline::max());
   loop.pollOnce(0);
   assert(probe.dispatchControlRejected && probe.dispatchCleanupRejected);
   loop.registerControlCallback({});
   loop.registerCleanupCallback({});
 
   hp::net::TcpServer server(0);
-  server.requestStop();
-  server.run();
+  server.requestServerStop();
+  server.runTcpServer();
   bool ran = false;
   try {
     server.registerMessageFactoryCallback({});
@@ -193,7 +193,7 @@ void testEcho(bool clearCallback) {
   EventLoop loop;
   SocketFixture fixture(loop, 1);
   if (clearCallback) fixture.connection->setMessageCallback({});
-  fixture.connection->start();
+  fixture.connection->activateConnection();
   fixture.write("echo-r6");
   assert(fixture.readAll() == "echo-r6");
 }
@@ -215,9 +215,9 @@ struct CaptureProbe {
   std::atomic<int>& executed;
 
   ~CaptureProbe() {
-    // Reenters the very mutex held by post. CTest timeout catches lock-held
-    // release.
-    worker.requestStop();
+    // 重入 post 持有的同一个互斥锁。CTest 超时可以检测持锁
+    // 释放。
+    worker.requestWorkerStop();
     ++destroyed;
   }
 
@@ -241,10 +241,10 @@ struct SuccessfulCapture {
   ~SuccessfulCapture() {
     ownerObserved = loop.isInLoopThread();
     destructionStarted = true;
-    // The producer is held just after the queue mutex unlock, while post
-    // still owns its outer mutex. Capture release must begin on the owner.
+    // 生产者刚释放队列互斥锁就被暂停，而 post
+    // 仍持有外层互斥锁。捕获对象必须在所属线程上开始释放。
     quotaObserved = hp::net::EventLoopTestAccess::captureStillCounted(loop);
-    worker.requestStop();
+    worker.requestWorkerStop();
   }
 
   void run(EventLoop&) {}
@@ -257,7 +257,7 @@ void publishLoop(std::promise<EventLoop*>& ready, EventLoop& loop) {
 void testImmediateOwnerDestruction() {
   EventLoopThread worker;
   std::promise<EventLoop*> ready;
-  worker.start([&ready](EventLoop& loop) { publishLoop(ready, loop); });
+  worker.createWorkerThread([&ready](EventLoop& loop) { publishLoop(ready, loop); });
   auto* loop = ready.get_future().get();
   std::atomic<bool> started{false}, owner{false}, counted{false};
   auto capture = std::make_shared<SuccessfulCapture>(worker,
@@ -270,39 +270,39 @@ void testImmediateOwnerDestruction() {
   };
   capture.reset();
   waitForDestruction = &started;
-  assert(worker.post(std::move(task)));
+  assert(worker.postTaskToWorker(std::move(task)));
   waitForDestruction = nullptr;
-  worker.join();
+  worker.joinWorkerThread();
   assert(owner && counted);
 }
 
 void testTaskSuccessAndStopped() {
   EventLoopThread worker;
   std::atomic<int> destroyed{0}, executed{0};
-  worker.start();
-  assert(worker.post(makeProbe(worker, destroyed, executed)));
-  worker.join();
+  worker.createWorkerThread();
+  assert(worker.postTaskToWorker(makeProbe(worker, destroyed, executed)));
+  worker.joinWorkerThread();
   assert(executed == 1 && destroyed == 1);
-  assert(!worker.post(makeProbe(worker, destroyed, executed)));
+  assert(!worker.postTaskToWorker(makeProbe(worker, destroyed, executed)));
   assert(executed == 1 && destroyed == 2);
 }
 
 void testTaskAllocation(int failAt) {
   EventLoopThread worker;
   Gate gate;
-  worker.start();
-  assert(worker.post([&gate](EventLoop& loop) { gate.wait(loop); }));
+  worker.createWorkerThread();
+  assert(worker.postTaskToWorker([&gate](EventLoop& loop) { gate.wait(loop); }));
   gate.entered.get_future().wait();
   std::atomic<int> destroyed{0}, executed{0};
   bool failed = false;
   int attempts = 0;
-  // The deque allocates periodically. failAt=2 reaches its next allocation
-  // after the shared slot and std::function storage have succeeded.
+  // deque 会定期分配。failAt=2 在共享槽和 std::function 存储
+  // 分配成功后，命中 deque 的下一次分配。
   while (!failed && attempts++ < 100) {
     auto task = makeProbe(worker, destroyed, executed);
     allocationCountdown = failAt;
     try {
-      assert(worker.post(std::move(task)));
+      assert(worker.postTaskToWorker(std::move(task)));
     } catch (const std::bad_alloc&) {
       failed = true;
     }
@@ -310,25 +310,25 @@ void testTaskAllocation(int failAt) {
   }
   assert(failed && destroyed == 1 && executed == 0);
   gate.release.set_value();
-  worker.join();
+  worker.joinWorkerThread();
   assert(destroyed == attempts);
-  // Stop may discard or execute the queued tasks; no failed task executes.
+  // Stop 可以丢弃或执行已排队任务；提交失败的任务不得执行。
   assert(executed < attempts);
 }
 
 void testTaskCapacity() {
   EventLoopThread worker;
   Gate gate;
-  worker.start();
-  assert(worker.post([&gate](EventLoop& loop) { gate.wait(loop); }));
+  worker.createWorkerThread();
+  assert(worker.postTaskToWorker([&gate](EventLoop& loop) { gate.wait(loop); }));
   gate.entered.get_future().wait();
   for (std::size_t i = 1; i < EventLoop::kTaskCapacity; ++i)
-    assert(worker.post([](EventLoop& loop) { ignoreTask(loop); }));
+    assert(worker.postTaskToWorker([](EventLoop& loop) { ignoreTask(loop); }));
   std::atomic<int> destroyed{0}, executed{0};
-  assert(!worker.post(makeProbe(worker, destroyed, executed)));
+  assert(!worker.postTaskToWorker(makeProbe(worker, destroyed, executed)));
   assert(destroyed == 1 && executed == 0);
   gate.release.set_value();
-  worker.join();
+  worker.joinWorkerThread();
 }
 
 int sessionsCreated = 0;
@@ -364,21 +364,21 @@ void testHttpIsolationAndLifetime() {
           return respond(request, policy);
         },
         &firstStats);
-    // Copy before first invocation: each closure lazily owns a distinct
-    // handler.
+    // 首次调用前复制：每个闭包延迟拥有独立的
+    // 处理器。
     auto secondCallback = callback;
     first.connection->setMessageCallback(std::move(callback));
     second.connection->setMessageCallback(std::move(secondCallback));
-    first.connection->start();
-    second.connection->start();
+    first.connection->activateConnection();
+    second.connection->activateConnection();
     assert(sessionsCreated == 0);
     first.write("GET /first HTTP/1.1\r\nHost: test\r\n");
     assert(sessionsCreated == 1 && firstStats.responses == 0);
     second.write("GET /second HTTP/1.1\r\nHost: test\r\n\r\n");
     assert(sessionsCreated == 2 && firstStats.responses == 1);
     assert(second.connection->pendingBytes() > 0);
-    // Complete first independently, and queue another request behind blocked
-    // IO.
+    // 独立完成第一个请求，并在受阻的
+    // IO 后排入另一个请求。
     first.write("\r\n");
     assert(firstStats.responses == 2);
     second.write(
@@ -390,7 +390,7 @@ void testHttpIsolationAndLifetime() {
       loop.pollOnce(1);
     }
     assert(firstStats.responses == 3);
-    // Message handler can die while write completion still owns its Session.
+    // 消息处理器可以先销毁，此时写完成回调仍持有其 Session。
     second.connection->setMessageCallback({});
     assert(sessionsDestroyed == 0);
     for (int i = 0; i < 1000 && second.connection->pendingBytes(); ++i) {

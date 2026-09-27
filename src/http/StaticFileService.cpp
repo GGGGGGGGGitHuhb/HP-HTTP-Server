@@ -144,9 +144,9 @@ StaticFileService::~StaticFileService() {
   }
 }
 
-std::vector<std::byte> StaticFileService::handle(
+std::vector<std::byte> StaticFileService::buildResponseBytes(
     const HttpRequest& request,
-    ConnectionPolicy policy) const {
+                                                             ConnectionPolicy policy) const {
   return handleResponse(request, policy).bytes;
 }
 

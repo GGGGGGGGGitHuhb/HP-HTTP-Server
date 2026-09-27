@@ -21,8 +21,8 @@
 
 namespace {
 
-// The logger starts before SignalWatcher, so every background thread must
-// already inherit the shutdown mask. Restore only after logger join.
+// 日志器先于 SignalWatcher 启动，因此每个后台线程都必须
+// 已经继承关闭信号的屏蔽掩码。仅在日志线程 join 后恢复。
 class ShutdownSignalMask {
  public:
   ShutdownSignalMask() {
@@ -32,9 +32,7 @@ class ShutdownSignalMask {
     ::sigaddset(&signals, SIGTERM);
     const int result = ::pthread_sigmask(SIG_BLOCK, &signals, &previous_);
     if (result)
-      throw std::system_error(result,
-                              std::generic_category(),
-                              "block logger shutdown signals");
+      throw std::system_error(result, std::generic_category(), "block logger shutdown signals");
   }
 
   ~ShutdownSignalMask() { ::pthread_sigmask(SIG_SETMASK, &previous_, nullptr); }
@@ -63,10 +61,8 @@ void printUsage(std::ostream& output) {
 
 [[nodiscard]] std::uint16_t parsePort(std::string_view text) {
   unsigned int value = 0;
-  const auto [end, error] =
-      std::from_chars(text.data(), text.data() + text.size(), value, 10);
-  if (text.empty() || error != std::errc{} ||
-      end != text.data() + text.size() || value > 65535U) {
+  const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value, 10);
+  if (text.empty() || error != std::errc{} || end != text.data() + text.size() || value > 65535U) {
     throw std::invalid_argument("port must be a decimal value in 0-65535");
   }
   return static_cast<std::uint16_t>(value);
@@ -74,35 +70,27 @@ void printUsage(std::ostream& output) {
 
 [[nodiscard]] std::size_t parseWorkerCount(std::string_view value) {
   unsigned int count = 0;
-  const auto [end, error] =
-      std::from_chars(value.data(), value.data() + value.size(), count, 10);
-  if (value.empty() || error != std::errc{} ||
-      end != value.data() + value.size() || count > 64)
+  const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), count, 10);
+  if (value.empty() || error != std::errc{} || end != value.data() + value.size() || count > 64)
     throw std::invalid_argument("threads must be decimal in 0-64");
   return count;
 }
 
-[[nodiscard]] std::chrono::milliseconds parseShutdownTimeout(
-    std::string_view value) {
+[[nodiscard]] std::chrono::milliseconds parseShutdownTimeout(std::string_view value) {
   unsigned int milliseconds = 0;
-  const auto [end, error] = std::from_chars(value.data(),
-                                            value.data() + value.size(),
-                                            milliseconds,
-                                            10);
-  if (value.empty() || error != std::errc{} ||
-      end != value.data() + value.size() || milliseconds > 60000)
-    throw std::invalid_argument(
-        "shutdown timeout must be decimal in 0-60000ms");
+  const auto [end, error] =
+      std::from_chars(value.data(), value.data() + value.size(), milliseconds, 10);
+  if (value.empty() || error != std::errc{} || end != value.data() + value.size() ||
+      milliseconds > 60000)
+    throw std::invalid_argument("shutdown timeout must be decimal in 0-60000ms");
   return std::chrono::milliseconds(milliseconds);
 }
 
-[[nodiscard]] std::chrono::milliseconds parseConnectionTimeout(
-    std::string_view value) {
+[[nodiscard]] std::chrono::milliseconds parseConnectionTimeout(std::string_view value) {
   unsigned int valueMs = 0;
-  const auto [end, error] =
-      std::from_chars(value.data(), value.data() + value.size(), valueMs, 10);
-  if (value.empty() || error != std::errc{} ||
-      end != value.data() + value.size() || valueMs > 86400000)
+  const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), valueMs, 10);
+  if (value.empty() || error != std::errc{} || end != value.data() + value.size() ||
+      valueMs > 86400000)
     throw std::invalid_argument("timeout must be decimal in 0-86400000ms");
   return std::chrono::milliseconds(valueMs);
 }
@@ -120,8 +108,7 @@ struct ServerOptions {
   bool hasPort = false;
   bool hasRoot = false;
   bool hasThreads = false;
-  bool hasIdleTimeout = false, hasKeepAliveTimeout = false,
-       hasShutdownTimeout = false;
+  bool hasIdleTimeout = false, hasKeepAliveTimeout = false, hasShutdownTimeout = false;
   ServerOptions options;
   for (int index = 1; index < argc; ++index) {
     const std::string_view option = argv[index];
@@ -139,24 +126,19 @@ struct ServerOptions {
         options.port = parsePort(value);
         hasPort = true;
       } else if (option == "--threads") {
-        if (hasThreads)
-          throw std::invalid_argument("--threads appears more than once");
+        if (hasThreads) throw std::invalid_argument("--threads appears more than once");
         options.threads = parseWorkerCount(value);
         hasThreads = true;
       } else if (option == "--shutdown-timeout-ms") {
         if (hasShutdownTimeout)
-          throw std::invalid_argument(
-              "shutdown timeout appears more than once");
+          throw std::invalid_argument("shutdown timeout appears more than once");
         options.shutdownTimeout = parseShutdownTimeout(value);
         hasShutdownTimeout = true;
-      } else if (option == "--idle-timeout-ms" ||
-                 option == "--keep-alive-timeout-ms") {
-        bool& seen = option == "--idle-timeout-ms" ? hasIdleTimeout
-                                                   : hasKeepAliveTimeout;
+      } else if (option == "--idle-timeout-ms" || option == "--keep-alive-timeout-ms") {
+        bool& seen = option == "--idle-timeout-ms" ? hasIdleTimeout : hasKeepAliveTimeout;
         if (seen) throw std::invalid_argument("timeout appears more than once");
-        auto& duration = option == "--idle-timeout-ms"
-                             ? options.timeouts.idle
-                             : options.timeouts.keepAlive;
+        auto& duration =
+            option == "--idle-timeout-ms" ? options.timeouts.idle : options.timeouts.keepAlive;
         duration = parseConnectionTimeout(value);
         seen = true;
       } else {
@@ -174,8 +156,7 @@ struct ServerOptions {
     throw std::invalid_argument("unknown option");
   }
   if (!hasPort || !hasRoot) {
-    throw std::invalid_argument(
-        "exactly one --port and one --root are required");
+    throw std::invalid_argument("exactly one --port and one --root are required");
   }
   return options;
 }
@@ -189,14 +170,14 @@ struct ShutdownSignalHandler {
   void handleShutdownSignal(std::uint32_t) {
     while (const int signal = signals.readNextSignal()) {
       if (draining) {
-        server.forceShutdown();
+        // 再次请求强制关闭
+        server.requestServerForceClose();
       } else {
+        // 首次请求优雅关闭
         draining = true;
-        server.requestGracefulShutdown(hp::timer::TimerQueue::Clock::now() +
-                                       shutdownTimeout);
+        server.requestServerGracefulShutdown(hp::timer::TimerQueue::Clock::now() + shutdownTimeout);
       }
-      hp::base::info("Shutdown signal observed: " + std::to_string(signal) +
-                     ".");
+      hp::base::info("Shutdown signal observed: " + std::to_string(signal) + ".");
     }
   }
 };
@@ -226,24 +207,19 @@ int runServer(int argc, char* argv[]) {
                               options.threads,
                               options.timeouts);
     server.registerMessageFactoryCallback(
-        [target = hp::app::HttpMessageFactory{service}]() {
-          return target.onMessageFactory();
-        });
-    ShutdownSignalHandler shutdownSignals{signals,
-                                          server,
-                                          options.shutdownTimeout};
+        [target = hp::app::HttpMessageFactory{service}]() { return target.onMessageFactory(); });
+    ShutdownSignalHandler shutdownSignals{signals, server, options.shutdownTimeout};
     auto& signalChannel = server.watchControlFd(signals.fd());
-    signalChannel.registerEventCallback(
-        [target = &shutdownSignals](std::uint32_t events) {
-          target->handleShutdownSignal(events);
-        });
+    signalChannel.registerEventCallback([target = &shutdownSignals](std::uint32_t events) {
+      target->handleShutdownSignal(events);
+    });
     signalChannel.setInterest(EPOLLIN);
     const std::string portText = std::to_string(server.boundPort());
     hp::base::info("HP HTTP Server V0.1 / S3 minimal HTTP static file server");
     hp::base::info("Listening on TCP port " + portText + ".");
-    std::cout << "V0.1 / S3 minimal HTTP static file server listening on port "
-              << portText << "." << std::endl;
-    server.run();
+    std::cout << "V0.1 / S3 minimal HTTP static file server listening on port " << portText << "."
+              << std::endl;
+    server.runTcpServer();
     return 0;
   } catch (const std::exception& error) {
     hp::base::error(error.what());

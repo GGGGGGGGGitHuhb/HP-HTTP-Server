@@ -35,8 +35,8 @@ class AsyncLogger {
   AsyncLogger(const AsyncLogger&) = delete;
   AsyncLogger& operator=(const AsyncLogger&) = delete;
 
-  void submit(LogLevel level, std::string_view message);
-  void stop();
+  void submitLogRecord(LogLevel level, std::string_view message);
+  void stopAsyncLogging();
   LogStats stats() const;
 
  private:
@@ -47,7 +47,7 @@ class AsyncLogger {
     std::array<char, kMessageLimit> message{};
   };
 
-  // Only test access may replace the sink or reduce kCapacity.
+  // 只有测试访问入口可以替换输出目标或缩小 kCapacity。
   AsyncLogger(std::size_t slots, std::ostream& sink);
   bool recordsReady() const noexcept;
   void consumeRecords();
@@ -72,7 +72,7 @@ class LoggerSession {
   LoggerSession(const LoggerSession&) = delete;
   LoggerSession& operator=(const LoggerSession&) = delete;
 
-  void stop();
+  void stopSessionLogging();
   LogStats stats() const;
 
  private:

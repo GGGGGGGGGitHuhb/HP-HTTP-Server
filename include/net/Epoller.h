@@ -21,13 +21,13 @@ class Epoller final : private base::NonCopyable {
 
   [[nodiscard]] int fd() const noexcept;
 
-  void add(int observedFd, std::uint32_t events, std::uint64_t token);
-  void modify(int observedFd, std::uint32_t events, std::uint64_t token);
-  void remove(int observedFd) noexcept;
-  [[nodiscard]] std::span<const epoll_event> wait(int timeoutMs);
+  void addDescriptor(int observedFd, std::uint32_t events, std::uint64_t token);
+  void modifyDescriptor(int observedFd, std::uint32_t events, std::uint64_t token);
+  void removeDescriptor(int observedFd) noexcept;
+  [[nodiscard]] std::span<const epoll_event> waitForEvents(int timeoutMs);
 
  private:
-  void Control(int operation,
+  void controlDescriptor(int operation,
                int observedFd,
                std::uint32_t events,
                std::uint64_t token);

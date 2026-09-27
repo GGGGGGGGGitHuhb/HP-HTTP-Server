@@ -32,10 +32,10 @@ void TimerQueue::requireOwner() const {
 
 TimerQueue::~TimerQueue() noexcept {
   assert(owner_ == std::this_thread::get_id());
-  clear();
+  clearTimers();
 }
 
-TimerQueue::Id TimerQueue::add(TimePoint deadline, TimerCallback expiryTask) {
+TimerQueue::Id TimerQueue::addTimer(TimePoint deadline, TimerCallback expiryTask) {
   requireOwner();
   if (clearing_) throw std::logic_error("TimerQueue is clearing");
   if (!expiryTask) throw std::invalid_argument("empty timer callback");
@@ -53,25 +53,25 @@ TimerQueue::Id TimerQueue::add(TimePoint deadline, TimerCallback expiryTask) {
   return id;
 }
 
-bool TimerQueue::reschedule(Id id, TimePoint deadline) {
+bool TimerQueue::rescheduleTimer(Id id, TimePoint deadline) {
   requireOwner();
   const auto found = records_.find(id);
   if (found == records_.end()) return false;
   if (found->second.deadline == deadline) return true;
   ordered_.emplace(deadline,
-                   id);  // Allocation failure preserves both old indices.
+                   id);  // 分配失败时保留原有的两个索引。
   ordered_.erase({found->second.deadline, id});
   found->second.deadline = deadline;
   return true;
 }
 
-bool TimerQueue::cancel(Id id) {
+bool TimerQueue::cancelTimer(Id id) {
   requireOwner();
   const auto found = records_.find(id);
   if (found == records_.end()) return false;
   ordered_.erase({found->second.deadline, id});
   auto cancelled = records_.extract(
-      found);  // Destroy captures only after both indices agree.
+      found);  // 只有两个索引一致后才销毁捕获对象。
   return true;
 }
 
@@ -91,7 +91,7 @@ TimerQueue::Id TimerQueue::lastId() const {
   return lastId_;
 }
 
-void TimerQueue::runDue(TimePoint now, Id cutoff) {
+void TimerQueue::runDueTimers(TimePoint now, Id cutoff) {
   requireOwner();
   if (running_ || clearing_) throw std::logic_error("recursive timer dispatch");
   std::vector<Id> due;
@@ -115,7 +115,7 @@ void TimerQueue::runDue(TimePoint now, Id cutoff) {
   running_ = false;
 }
 
-void TimerQueue::clear() noexcept {
+void TimerQueue::clearTimers() noexcept {
   assert(owner_ == std::this_thread::get_id());
   if (clearing_) return;
   clearing_ = true;

@@ -58,7 +58,7 @@ class ConnectionIo final : private base::NonCopyable {
   [[nodiscard]] int socketError() const;
 
   [[nodiscard]] std::span<const std::byte> inputView() const noexcept;
-  void consume(std::size_t count);
+  void consumeInputBytes(std::size_t count);
 
   void queueOutput(std::span<const std::byte> bytes);
   void queueFile(std::span<const std::byte> header, base::FileRegion file);

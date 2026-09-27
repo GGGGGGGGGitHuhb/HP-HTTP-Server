@@ -33,10 +33,10 @@ Epoller::~Epoller() noexcept {
 
 int Epoller::fd() const noexcept { return fd_; }
 
-void Epoller::Control(int operation,
-                      int observedFd,
-                      std::uint32_t events,
-                      std::uint64_t token) {
+void Epoller::controlDescriptor(int operation,
+                                int observedFd,
+                                std::uint32_t events,
+                                std::uint64_t token) {
   epoll_event event{};
   event.events = events;
   event.data.u64 = token;
@@ -45,27 +45,27 @@ void Epoller::Control(int operation,
   }
 }
 
-void Epoller::add(int observedFd, std::uint32_t events, std::uint64_t token) {
-  Control(EPOLL_CTL_ADD, observedFd, events, token);
+void Epoller::addDescriptor(int observedFd, std::uint32_t events, std::uint64_t token) {
+  controlDescriptor(EPOLL_CTL_ADD, observedFd, events, token);
 }
 
-void Epoller::modify(int observedFd,
+void Epoller::modifyDescriptor(int observedFd,
                      std::uint32_t events,
                      std::uint64_t token) {
-  Control(EPOLL_CTL_MOD, observedFd, events, token);
+  controlDescriptor(EPOLL_CTL_MOD, observedFd, events, token);
 }
 
-void Epoller::remove(int observedFd) noexcept {
+void Epoller::removeDescriptor(int observedFd) noexcept {
   if (observedFd < 0) {
     return;
   }
   if (::epoll_ctl(fd_, EPOLL_CTL_DEL, observedFd, nullptr) == -1 &&
       errno != ENOENT && errno != EBADF) {
-    // Closing the sole Socket owner still removes the fd from epoll.
+    // 关闭唯一持有所有权的 Socket 仍会将 fd 从 epoll 中移除。
   }
 }
 
-std::span<const epoll_event> Epoller::wait(int timeoutMs) {
+std::span<const epoll_event> Epoller::waitForEvents(int timeoutMs) {
   while (true) {
     const int count = ::epoll_wait(fd_,
                                    events_.data(),

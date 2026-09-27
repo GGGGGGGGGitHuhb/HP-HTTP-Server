@@ -6,34 +6,33 @@
 
 namespace hp::app {
 struct HttpCallbackStats {
-  std::size_t callbacks{}, parses{}, needMore{}, responses{},
-      eofNotifications{};
+  std::size_t callbacks{}, parses{}, needMore{}, responses{}, eofNotifications{};
   std::size_t submittedBytes{}, acceptedBytes{}, consumedBytes{};
 };
 
 using ResponseCallback =
-    std::function<http::ResponseResult(const http::HttpRequest&,
-                                       http::ConnectionPolicy)>;
+    std::function<http::ResponseResult(const http::HttpRequest&, http::ConnectionPolicy)>;
 
-// Test observation hook. Install before session creation; clear after owners
-// stop.
+// 测试观察钩子。在创建会话前安装；在所属执行线程停止后
+// 清除。
 using SessionEventCallback = void (*)(bool, const void*) noexcept;
 inline std::atomic<SessionEventCallback> sessionEventCallback{nullptr};
-inline void setSessionEventCallback(
-    SessionEventCallback newSessionEventCallback) {
+inline void setSessionEventCallback(SessionEventCallback newSessionEventCallback) {
   sessionEventCallback.store(newSessionEventCallback);
 }
 
-// Response strategies are registered explicitly; Session stays lazy and bound
-// to its original IO owner. Copies before first dispatch retain independent
-// state.
+// 显式注册响应策略；Session 保持延迟创建，并绑定
+// 原来的 IO 所属线程。首次分发前创建的副本保持独立
+// 状态。
 struct Session {
   enum class Phase { kReading, kWriting, kClosing };
-  ResponseCallback responseCallback;
+  ResponseCallback responseCallback;  // 绑定 `StaticFileService::onResponse()`
   HttpCallbackStats* stats;
-  http::RequestParser parser;
-  Phase phase{Phase::kReading};
-  bool completed{false}, close{false};
+  http::RequestParser parser;    // 解析器
+  Phase phase{Phase::kReading};  // 当前 HTTP 会话的状态
+  bool completed{false};
+  // 当前响应结束后是否要求关闭
+  bool close{false};
 
   explicit Session(HttpCallbackStats* callbackStats);
   ~Session();
@@ -46,7 +45,7 @@ struct Session {
 };
 
 struct HttpMessageHandler {
-  ResponseCallback responseCallback;
+  ResponseCallback responseCallback;  // 绑定 `StaticFileService::onResponse()`
   HttpCallbackStats* stats{};
   std::shared_ptr<Session> session;
 
@@ -54,22 +53,20 @@ struct HttpMessageHandler {
     this->responseCallback = std::move(responseCallback);
   }
 
-  void onMessage(net::TcpConnection& connection,
-                 std::span<const std::byte>,
-                 bool);
+  // 由 `TcpConnection::messageCallback_` 保存
+  void onMessage(net::TcpConnection& connection, std::span<const std::byte>, bool);
 };
 
 struct HttpMessageFactory {
   const http::StaticFileService& service;
+  // “为新连接创建 HTTP 消息回调”的工厂
   net::TcpConnection::MessageCallback onMessageFactory() const;
 };
 
-// Each callback lazily creates its Session on the connection owner. Shared
-// custom provider/stats require caller synchronization; service outlives all
-// workers.
-net::TcpConnection::MessageCallback makeHttpCallback(
-    ResponseCallback responseCallback,
-    HttpCallbackStats* stats = nullptr);
-net::TcpServer::MessageFactoryCallback makeHttpFactory(
-    const http::StaticFileService& service);
+// 每个回调在连接所属线程上延迟创建自己的 Session。共享的
+// 自定义提供方和统计数据需要调用方同步；service 的生命周期须覆盖所有
+// 工作线程。
+net::TcpConnection::MessageCallback makeHttpCallback(ResponseCallback responseCallback,
+                                                     HttpCallbackStats* stats = nullptr);
+net::TcpServer::MessageFactoryCallback makeHttpFactory(const http::StaticFileService& service);
 }  // namespace hp::app

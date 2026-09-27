@@ -9,25 +9,24 @@
 namespace hp::net {
 struct TcpServerTestAccess;
 
-// One owner loop, one registry. The same recovery algorithm serves all modes.
+// 一个所属事件循环对应一个注册表。所有模式共用同一回收算法。
 class ConnectionRegistry final : private base::NonCopyable {
  public:
   using StopCallback = EventLoop::TaskCallback;
 
-  ConnectionRegistry(EventLoop& loop,
+  ConnectionRegistry(EventLoop& ownerEventLoop,
                      std::size_t maxInputBytes,
                      ConnectionTimeouts timeouts = {});
   ~ConnectionRegistry() noexcept;
 
-  void setStopCallback(StopCallback stopCallback) {
-    stopCallback_ = std::move(stopCallback);
-  }
+  void setStopCallback(StopCallback stopCallback) { stopCallback_ = std::move(stopCallback); }
 
-  void beginDrain(bool force = false);
+  void beginConnectionsDrain(bool force = false);
 
-  void onAccepted(Socket socket,
-                  TcpConnection::MessageCallback messageCallback);
+  void onAccepted(Socket socket, TcpConnection::MessageCallback messageCallback);
+  // 把连接加入待清理链
   void onClose(int fd, TcpConnection::Identity identity) noexcept;
+  // 从 ConnectionRegisry::connections_ 表中移除连接对象
   void onCleanup() noexcept;
 
  private:
@@ -43,7 +42,7 @@ class ConnectionRegistry final : private base::NonCopyable {
   StopCallback stopCallback_;
 
   const ConnectionTimeouts timeouts_;
-  EventLoop& loop_;
+  EventLoop& ownerEventLoop_;
   std::size_t maxInputBytes_;
 
   std::unordered_map<int, std::unique_ptr<TcpConnection>> connections_;

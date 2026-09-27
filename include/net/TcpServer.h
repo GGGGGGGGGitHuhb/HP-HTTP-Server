@@ -10,28 +10,26 @@ struct TcpServerTestAccess;
 
 class TcpServer final : private base::NonCopyable {
  public:
-  using MessageFactoryCallback =
-      std::function<TcpConnection::MessageCallback()>;
+  using MessageFactoryCallback = std::function<TcpConnection::MessageCallback()>;
 
   explicit TcpServer(std::uint16_t requestedPort,
                      std::size_t maxInputBytes = 0,
                      std::size_t workerCount = 0,
                      ConnectionTimeouts timeouts = {});
   ~TcpServer() noexcept;
-  void registerMessageFactoryCallback(
-      MessageFactoryCallback messageFactoryCallback);
+  void registerMessageFactoryCallback(MessageFactoryCallback messageFactoryCallback);
 
   [[nodiscard]] std::uint16_t boundPort() const noexcept;
 
-  void run();
+  void runTcpServer();
 
-  // Thread-safe immediate stop, not signal-safe or graceful HTTP draining.
-  void requestStop();
-  void requestGracefulShutdown(EventLoop::Deadline deadline);
-  void forceShutdown();
+  // 线程安全的立即停止；不保证信号安全，也不执行 HTTP 优雅排空。
+  void requestServerStop();
+  void requestServerGracefulShutdown(EventLoop::Deadline deadline);
+  void requestServerForceClose();
 
-  // Owner-only attachment, initially disabled. Register the named signal target
-  // and enable interest before Run. Server owns/removes the returned Channel.
+  // 仅所属线程可挂接，初始为禁用。注册具名信号处理目标，
+  // 并在 Run 前启用关注事件。服务器拥有并移除返回的 Channel。
   Channel& watchControlFd(int fd);
 
  private:
@@ -40,8 +38,7 @@ class TcpServer final : private base::NonCopyable {
   friend struct ConnectionTimeoutTestAccess;
   friend struct TcpServerTestAccess;
 
-  void setMessageFactoryCallback(
-      MessageFactoryCallback messageFactoryCallback) {
+  void setMessageFactoryCallback(MessageFactoryCallback messageFactoryCallback) {
     messageFactoryCallback_ = std::move(messageFactoryCallback);
   }
 
@@ -51,31 +48,29 @@ class TcpServer final : private base::NonCopyable {
   };
 
   void onAccepted(Socket socket);
-  void initializeWorkerRegistry(std::size_t index, EventLoop& loop);
-  void cleanupWorkerRegistry(std::size_t index, EventLoop& worker);
-  void adoptConnection(std::size_t index,
+  void initializeWorkerRegistry(std::size_t workerIndex, EventLoop& workerEventLoop);
+  void cleanupWorkerRegistry(std::size_t workerIndex, EventLoop& workerEventLoop);
+  void adoptConnection(std::size_t workerIndex,
                        const std::shared_ptr<ConnectionHandoff>& handoff,
-                       EventLoop& loop);
-  void shutdown();
-  void onControl(std::size_t index,
-                 EventLoop::Control kind,
-                 EventLoop::Deadline deadline);
+                       EventLoop& workerEventLoop);
+  void shutdownTcpServer();
+  void onControl(std::size_t workerIndex, EventLoop::Control kind, EventLoop::Deadline deadline);
   void onControl(EventLoop::Control kind, EventLoop::Deadline deadline);
 
-  EventLoop loop_;
-  MessageFactoryCallback messageFactoryCallback_;
+  EventLoop mainEventLoop_;
+  MessageFactoryCallback messageFactoryCallback_;  // 绑定 `onMessageFactory()`
   std::size_t maxInputBytes_;
   const std::size_t workerCount_;
   const ConnectionTimeouts timeouts_;
 
-  std::size_t nextWorker_{0};
+  std::size_t nextWorkerIndex_{0};
   std::atomic<bool> stopping_{false}, workerFailed_{false};
   bool ran_{false}, draining_{false};
   std::atomic<std::size_t> workersFinished_{0};
 
-  std::unique_ptr<ConnectionRegistry> mainRegistry_;
-  std::vector<std::unique_ptr<ConnectionRegistry>> registries_;
-  EventLoopThreadPool pool_;
+  std::unique_ptr<ConnectionRegistry> mainConnectionRegistry_;  // 连接注册表
+  std::vector<std::unique_ptr<ConnectionRegistry>> workerRegistries_;
+  EventLoopThreadPool workerPool_;
 
   Acceptor acceptor_;
   std::unique_ptr<Channel> controlChannel_;

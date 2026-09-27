@@ -34,8 +34,8 @@ FileWriteResult sendFileWithoutSigpipe(int socket,
   }
   const auto count = ::sendfile(socket, file, offset, length);
   int error = count < 0 ? errno : 0;
-  // Preserve an already blocked or pending SIGPIPE. Only consume this call's
-  // newly generated signal when restoring an originally unblocked caller.
+  // 保留已屏蔽或已挂起的 SIGPIPE。仅在恢复原先未屏蔽的调用方时，
+  // 消费本次调用新产生的信号。
   if (error == EPIPE && ::sigismember(&previous, SIGPIPE) == 0 &&
       ::sigismember(&pending, SIGPIPE) == 0) {
     const timespec immediate{};
@@ -53,8 +53,7 @@ FileWriteResult sendFileWithoutSigpipe(int socket,
 ConnectionIo::ConnectionIo(Socket socket, std::size_t maxInputBytes) noexcept
     : socket_(std::move(socket)),
       maxInputBytes_(maxInputBytes),
-      input_(maxInputBytes ? maxInputBytes
-                           : std::numeric_limits<std::size_t>::max()) {}
+      input_(maxInputBytes ? maxInputBytes : std::numeric_limits<std::size_t>::max()) {}
 
 int ConnectionIo::fd() const noexcept { return socket_.fd(); }
 
@@ -64,7 +63,7 @@ std::span<const std::byte> ConnectionIo::inputView() const noexcept {
   return input_.readableView();
 }
 
-void ConnectionIo::consume(std::size_t count) { input_.consume(count); }
+void ConnectionIo::consumeInputBytes(std::size_t count) { input_.consumeReadableBytes(count); }
 
 ReadResult ConnectionIo::readOnce() {
   ReadResult result{0, false, false, 0};
@@ -82,14 +81,15 @@ ReadResult ConnectionIo::readOnce() {
   }
   const auto available = input_.writableBytes();
   const auto size = std::min(budget, available ? available : std::size_t{4096});
-  auto tail = input_.prepare(size);
+  auto tail = input_.prepareWritableBytes(size);
   while (true) {
     const auto count = ::recv(fd(), tail.data(), tail.size(), 0);
     if (count > 0) {
-      input_.commit(static_cast<std::size_t>(count));
+      input_.commitWrittenBytes(static_cast<std::size_t>(count));
       result.bytesRead = static_cast<std::size_t>(count);
       return result;
     }
+    // recv() 得到 0 说明是 EOF
     if (count == 0) {
       peerHalfClosed_ = true;
       result.peerClosed = true;
@@ -127,7 +127,7 @@ WriteResult ConnectionIo::writeAvailable() {
     const ssize_t count = ::send(socket_.fd(), data, remaining, MSG_NOSIGNAL);
     if (count > 0) {
       const auto byteCount = static_cast<std::size_t>(count);
-      output_.consume(byteCount);
+      output_.consumeReadableBytes(byteCount);
       result.bytesWritten += byteCount;
       continue;
     }
@@ -148,16 +148,13 @@ WriteResult ConnectionIo::writeAvailable() {
 
   std::size_t progress = 0;
   while (file_ && file_->remaining()) {
-    if (calls++ >= kFileCallBudget || progress == kFileWriteBudget)
-      return result;
+    if (calls++ >= kFileCallBudget || progress == kFileWriteBudget) return result;
     off_t offset = file_->offset();
-    const auto count =
-        std::min(file_->remaining(), kFileWriteBudget - progress);
-    const auto written =
-        sendFileWithoutSigpipe(fd(), file_->fd(), &offset, count);
+    const auto count = std::min(file_->remaining(), kFileWriteBudget - progress);
+    const auto written = sendFileWithoutSigpipe(fd(), file_->fd(), &offset, count);
     if (written.count > 0) {
       const auto bytes = static_cast<std::size_t>(written.count);
-      file_->advance(bytes);
+      file_->advanceFileOffset(bytes);
       progress += bytes;
       result.bytesWritten += bytes;
     }
@@ -176,8 +173,7 @@ WriteResult ConnectionIo::writeAvailable() {
   return result;
 }
 
-bool ConnectionIo::outputFits(std::size_t pending,
-                              std::size_t incoming) noexcept {
+bool ConnectionIo::outputFits(std::size_t pending, std::size_t incoming) noexcept {
   return pending <= kOutputLimit && incoming <= kOutputLimit - pending;
 }
 
@@ -185,19 +181,17 @@ void ConnectionIo::queueOutput(std::span<const std::byte> bytes) {
   if (file_) throw std::logic_error("append while file output is pending");
   if (!outputFits(pendingBytes(), bytes.size()))
     throw std::length_error("connection output limit exceeded");
-  output_.append(bytes);
+  output_.appendBytes(bytes);
 }
 
-void ConnectionIo::queueFile(std::span<const std::byte> header,
-                             base::FileRegion file) {
-  if (file.fd() < 0)
-    throw std::invalid_argument("submission of moved file region");
+void ConnectionIo::queueFile(std::span<const std::byte> header, base::FileRegion file) {
+  if (file.fd() < 0) throw std::invalid_argument("submission of moved file region");
   if (hasPendingOutput() || file_)
     throw std::logic_error("file submission while output is pending");
   if (!outputFits(header.size(), file.remaining()))
     throw std::length_error("connection output limit exceeded");
-  // Allocate before taking the region; failure destroys the by-value owner.
-  output_.append(header);
+  // 先分配，再接管文件区域；失败时销毁按值传入的所有权对象。
+  output_.appendBytes(header);
   file_.emplace(std::move(file));
   if (!file_->remaining()) file_.reset();
 }
@@ -216,8 +210,6 @@ std::size_t ConnectionIo::pendingBytes() const noexcept {
   return output_.readableBytes() + (file_ ? file_->remaining() : 0);
 }
 
-bool ConnectionIo::readyToClose() const noexcept {
-  return peerHalfClosed_ && !hasPendingOutput();
-}
+bool ConnectionIo::readyToClose() const noexcept { return peerHalfClosed_ && !hasPendingOutput(); }
 
 }  // namespace hp::net

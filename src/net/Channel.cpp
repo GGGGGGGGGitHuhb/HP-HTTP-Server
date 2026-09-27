@@ -7,12 +7,12 @@
 #include "net/EventLoop.h"
 
 namespace hp::net {
-Channel::Channel(EventLoop& loop, int fd) : loop_(loop), fd_(fd) {
+Channel::Channel(EventLoop& ownerEventLoop, int fd) : ownerEventLoop_(ownerEventLoop), fd_(fd) {
   if (fd < 0) throw std::invalid_argument("invalid Channel");
 }
 
 Channel::~Channel() noexcept {
-  assert(loop_.isInLoopThread());
+  assert(ownerEventLoop_.isInLoopThread());
   assert(!registered());
 }
 
@@ -25,8 +25,8 @@ void Channel::registerEventCallback(EventCallback eventCallback) {
 void Channel::setInterest(std::uint32_t events) {
   if (events && !eventCallback_)
     throw std::logic_error("missing Channel target");
-  loop_.updateChannel(*this, events);
+  ownerEventLoop_.updateChannel(*this, events);
 }
 
-void Channel::remove() noexcept { loop_.removeChannel(*this); }
+void Channel::removeChannel() noexcept { ownerEventLoop_.removeChannel(*this); }
 }  // namespace hp::net

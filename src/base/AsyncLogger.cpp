@@ -16,9 +16,9 @@ AsyncLogger::AsyncLogger(std::size_t slots, std::ostream& sink)
   consumer_ = std::thread(&AsyncLogger::consumeRecords, this);
 }
 
-AsyncLogger::~AsyncLogger() { stop(); }
+AsyncLogger::~AsyncLogger() { stopAsyncLogging(); }
 
-void AsyncLogger::submit(LogLevel level, std::string_view message) {
+void AsyncLogger::submitLogRecord(LogLevel level, std::string_view message) {
   const std::lock_guard lock(mutex_);
   ++stats_.submitted;
   if (!accepting_) {
@@ -76,7 +76,7 @@ void AsyncLogger::consumeRecords() {
       sink_.flush();
       written = static_cast<bool>(sink_);
     } catch (...) {
-      // A failed sink remains failed; never retry or recursively log.
+      // 输出目标一旦失败便保持失败；不得重试或递归记录日志。
     }
     {
       const std::lock_guard lock(mutex_);
@@ -89,7 +89,7 @@ void AsyncLogger::consumeRecords() {
   }
 }
 
-void AsyncLogger::stop() {
+void AsyncLogger::stopAsyncLogging() {
   {
     const std::lock_guard lock(mutex_);
     accepting_ = false;

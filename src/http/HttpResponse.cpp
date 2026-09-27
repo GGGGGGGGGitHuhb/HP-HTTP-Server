@@ -7,9 +7,7 @@
 namespace hp::http {
 namespace {
 
-char lowerCharacter(unsigned char character) {
-  return static_cast<char>(std::tolower(character));
-}
+char lowerCharacter(unsigned char character) { return static_cast<char>(std::tolower(character)); }
 
 std::string_view reasonPhrase(Status status) {
   switch (status) {
@@ -58,12 +56,12 @@ std::vector<std::byte> makeResponseHeader(Status status,
                                           std::string_view contentType,
                                           bool includeAllowGet,
                                           ConnectionPolicy policy) {
-  std::string header = "HTTP/1.1 " + std::to_string(static_cast<int>(status)) +
-                       " " + std::string(reasonPhrase(status)) + "\r\n";
+  std::string header = "HTTP/1.1 " + std::to_string(static_cast<int>(status)) + " " +
+                       std::string(reasonPhrase(status)) + "\r\n";
   header += "Content-Length: " + std::to_string(contentLength) + "\r\n";
   header += "Content-Type: " + std::string(contentType) + "\r\n";
-  header += policy == ConnectionPolicy::kClose ? "Connection: close\r\n"
-                                               : "Connection: keep-alive\r\n";
+  header +=
+      policy == ConnectionPolicy::kClose ? "Connection: close\r\n" : "Connection: keep-alive\r\n";
   if (includeAllowGet) {
     header += "Allow: GET\r\n";
   }
@@ -78,18 +76,13 @@ std::vector<std::byte> makeResponse(Status status,
                                     std::string_view contentType,
                                     bool includeAllowGet,
                                     ConnectionPolicy policy) {
-  auto response = makeResponseHeader(status,
-                                     body.size(),
-                                     contentType,
-                                     includeAllowGet,
-                                     policy);
+  auto response = makeResponseHeader(status, body.size(), contentType, includeAllowGet, policy);
   response.reserve(response.size() + body.size());
   response.insert(response.end(), body.begin(), body.end());
   return response;
 }
 
-std::vector<std::byte> makeErrorResponse(Status status,
-                                         ConnectionPolicy policy) {
+std::vector<std::byte> makeErrorResponse(Status status, ConnectionPolicy policy) {
   const std::string_view body = errorBody(status);
   return makeResponse(status,
                       asBytes(body),
@@ -101,15 +94,11 @@ std::vector<std::byte> makeErrorResponse(Status status,
 std::string contentTypeForPath(std::string_view path) {
   const std::size_t slash = path.find_last_of('/');
   const std::size_t dot = path.find_last_of('.');
-  if (dot == std::string_view::npos ||
-      (slash != std::string_view::npos && dot < slash)) {
+  if (dot == std::string_view::npos || (slash != std::string_view::npos && dot < slash)) {
     return "application/octet-stream";
   }
   std::string extension(path.substr(dot));
-  std::transform(extension.begin(),
-                 extension.end(),
-                 extension.begin(),
-                 lowerCharacter);
+  std::transform(extension.begin(), extension.end(), extension.begin(), lowerCharacter);
   if (extension == ".html" || extension == ".htm") {
     return "text/html; charset=utf-8";
   }

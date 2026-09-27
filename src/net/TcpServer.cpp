@@ -13,48 +13,47 @@ TcpServer::TcpServer(std::uint16_t requestedPort,
     : maxInputBytes_(maxInputBytes),
       workerCount_(workerCount),
       timeouts_(timeouts),
-      registries_(workerCount <= 64 ? workerCount : 0),
-      acceptor_(loop_, requestedPort) {
-  acceptor_.setAcceptedCallback(
-      [this](Socket socket) { onAccepted(std::move(socket)); });
+      workerRegistries_(workerCount <= 64 ? workerCount : 0),
+      acceptor_(mainEventLoop_, requestedPort) {
+  acceptor_.setAcceptedCallback([this](Socket socket) { onAccepted(std::move(socket)); });
   if (timeouts.idle.count() < 0 || timeouts.keepAlive.count() < 0 ||
       timeouts.idle.count() > 86400000 || timeouts.keepAlive.count() > 86400000)
     throw std::invalid_argument("timeout outside 0-86400000ms");
   if (workerCount > 64) throw std::invalid_argument("worker count exceeds 64");
-  loop_.registerControlCallback(
+  mainEventLoop_.registerControlCallback(
       [this](EventLoop::Control control, EventLoop::Deadline deadline) {
         onControl(control, deadline);
       });
   if (workerCount == 0) {
-    mainRegistry_ =
-        std::make_unique<ConnectionRegistry>(loop_, maxInputBytes_, timeouts_);
-    mainRegistry_->setStopCallback(
-        [target = &loop_]() { target->requestStop(); });
+    // 连接注册表属于主循环
+    mainConnectionRegistry_ =
+        std::make_unique<ConnectionRegistry>(mainEventLoop_, maxInputBytes_, timeouts_);
+    mainConnectionRegistry_->setStopCallback(
+        [target = &mainEventLoop_]() { target->requestLoopStop(); });
   } else {
-    pool_.start(
+    workerPool_.createWorkerThreads(
         workerCount,
-        [this](std::size_t index, EventLoop& loop) {
-          initializeWorkerRegistry(index, loop);
+        [this](std::size_t workerIndex, EventLoop& workerEventLoop) {
+          initializeWorkerRegistry(workerIndex, workerEventLoop);
         },
-        [this](std::size_t index, EventLoop& loop) {
-          cleanupWorkerRegistry(index, loop);
+        [this](std::size_t workerIndex, EventLoop& workerEventLoop) {
+          cleanupWorkerRegistry(workerIndex, workerEventLoop);
         });
   }
 }
 
-void TcpServer::registerMessageFactoryCallback(
-    MessageFactoryCallback messageFactoryCallback) {
+void TcpServer::registerMessageFactoryCallback(MessageFactoryCallback messageFactoryCallback) {
   if (ran_) throw std::logic_error("cannot replace running server factory");
   setMessageFactoryCallback(std::move(messageFactoryCallback));
 }
 
 TcpServer::~TcpServer() noexcept {
   if (controlChannel_) {
-    controlChannel_->remove();
+    controlChannel_->removeChannel();
     controlChannel_.reset();
   }
   try {
-    shutdown();
+    shutdownTcpServer();
   } catch (const std::exception& error) {
     base::error(error.what());
   } catch (...) {
@@ -62,87 +61,82 @@ TcpServer::~TcpServer() noexcept {
   }
 }
 
-std::uint16_t TcpServer::boundPort() const noexcept {
-  return acceptor_.boundPort();
-}
+std::uint16_t TcpServer::boundPort() const noexcept { return acceptor_.boundPort(); }
 
 Channel& TcpServer::watchControlFd(int fd) {
-  if (!loop_.isInLoopThread())
+  if (!mainEventLoop_.isInLoopThread())
     throw std::logic_error("control fd attachment requires main owner");
   if (controlChannel_) throw std::logic_error("control fd already attached");
-  controlChannel_ = std::make_unique<Channel>(loop_, fd);
+  controlChannel_ = std::make_unique<Channel>(mainEventLoop_, fd);
   return *controlChannel_;
 }
 
-void TcpServer::requestGracefulShutdown(EventLoop::Deadline deadline) {
-  stopping_ = true;  // Linearize handoff rejection before notifying any owner.
-  loop_.requestDrain(deadline);
+void TcpServer::requestServerGracefulShutdown(EventLoop::Deadline deadline) {
+  stopping_ = true;  // 在通知任何所属线程前，先确立拒绝连接移交的线性化点。
+  mainEventLoop_.requestLoopDrain(deadline);
 }
 
-void TcpServer::forceShutdown() {
+void TcpServer::requestServerForceClose() {
   stopping_ = true;
-  loop_.requestForce();
+  mainEventLoop_.requestLoopForceClose();
 }
 
-void TcpServer::onControl(std::size_t index,
-                          EventLoop::Control kind,
-                          EventLoop::Deadline) {
+void TcpServer::onControl(std::size_t workerIndex, EventLoop::Control kind, EventLoop::Deadline) {
   if (kind != EventLoop::Control::kNone)
-    registries_[index]->beginDrain(kind == EventLoop::Control::kForce);
+    workerRegistries_[workerIndex]->beginConnectionsDrain(kind == EventLoop::Control::kForce);
 }
 
-void TcpServer::onControl(EventLoop::Control kind,
-                          EventLoop::Deadline deadline) {
+void TcpServer::onControl(EventLoop::Control kind, EventLoop::Deadline deadline) {
   if (kind == EventLoop::Control::kNone) return;
-  acceptor_.close();
+  acceptor_.closeListener();
   if (kind == EventLoop::Control::kForce) {
     draining_ = true;
     if (workerCount_)
-      pool_.requestForce();
+      workerPool_.requestWorkersForceClose();
     else
-      mainRegistry_->beginDrain(true);
+      mainConnectionRegistry_->beginConnectionsDrain(true);
   } else if (!draining_) {
     draining_ = true;
     if (workerCount_)
-      pool_.requestDrain(deadline);
+      workerPool_.requestWorkersDrain(deadline);
     else
-      mainRegistry_->beginDrain();
+      mainConnectionRegistry_->beginConnectionsDrain();
   }
-  if (workerCount_ && workersFinished_.load() == workerCount_)
-    loop_.requestStop();
+  if (workerCount_ && workersFinished_.load() == workerCount_) mainEventLoop_.requestLoopStop();
 }
 
-void TcpServer::requestStop() {
+void TcpServer::requestServerStop() {
   stopping_ = true;
-  loop_.requestStop();
+  mainEventLoop_.requestLoopStop();
 }
 
-void TcpServer::shutdown() {
+void TcpServer::shutdownTcpServer() {
   stopping_ = true;
-  acceptor_.close();
-  pool_.requestStop();
+  acceptor_.closeListener();
+  workerPool_.requestPoolStop();
   std::exception_ptr error;
   try {
-    pool_.join();
+    workerPool_.joinWorkerThreads();
   } catch (...) {
     error = std::current_exception();
   }
-  mainRegistry_.reset();
+  mainConnectionRegistry_.reset();
   if (error) std::rethrow_exception(error);
 }
 
-void TcpServer::run() {
+void TcpServer::runTcpServer() {
   if (ran_) throw std::logic_error("TcpServer cannot restart");
   ran_ = true;
   std::exception_ptr error;
   try {
-    if (!stopping_) acceptor_.start();
-    loop_.loop();
+    // 启动监听并运行主循环
+    if (!stopping_) acceptor_.enableAcceptEvents();
+    mainEventLoop_.runEventLoop();
   } catch (...) {
     error = std::current_exception();
   }
   try {
-    shutdown();
+    shutdownTcpServer();
   } catch (...) {
     if (!error) error = std::current_exception();
   }
@@ -152,56 +146,56 @@ void TcpServer::run() {
 
 void TcpServer::onAccepted(Socket socket) {
   if (stopping_) {
-    acceptor_.stop();
+    acceptor_.disableAcceptEvents();
     return;
   }
-  auto messageCallback = messageFactoryCallback_
-                             ? messageFactoryCallback_()
-                             : TcpConnection::MessageCallback{};
+  auto messageCallback =
+      messageFactoryCallback_ ? messageFactoryCallback_() : TcpConnection::MessageCallback{};
   if (workerCount_ == 0) {
-    mainRegistry_->onAccepted(std::move(socket), std::move(messageCallback));
+    mainConnectionRegistry_->onAccepted(std::move(socket), std::move(messageCallback));
     return;
   }
-  const auto index = nextWorker_;
-  nextWorker_ = (nextWorker_ + 1) % workerCount_;
+  const auto workerIndex = nextWorkerIndex_;
+  nextWorkerIndex_ = (nextWorkerIndex_ + 1) % workerCount_;
 
+  // 把 socket 和该连接的消息回调放入 `ConnectionHandoff` 并投递
   auto handoff = std::make_shared<ConnectionHandoff>(
       ConnectionHandoff{std::move(socket), std::move(messageCallback)});
-  pool_.post(index, [this, index, handoff](EventLoop& loop) {
-    adoptConnection(index, handoff, loop);
-  });
+  workerPool_.postTaskToWorkerAtIndex(workerIndex,
+                                      [this, workerIndex, handoff](EventLoop& workerEventLoop) {
+                                        adoptConnection(workerIndex, handoff, workerEventLoop);
+                                      });
 }
 
-void TcpServer::initializeWorkerRegistry(std::size_t index, EventLoop& loop) {
-  registries_[index] =
-      std::make_unique<ConnectionRegistry>(loop, maxInputBytes_, timeouts_);
-  registries_[index]->setStopCallback(
-      [target = &loop]() { target->requestStop(); });
-  loop.registerControlCallback(
-      [this, index](EventLoop::Control control, EventLoop::Deadline deadline) {
-        onControl(index, control, deadline);
+void TcpServer::initializeWorkerRegistry(std::size_t workerIndex, EventLoop& workerEventLoop) {
+  workerRegistries_[workerIndex] =
+      std::make_unique<ConnectionRegistry>(workerEventLoop, maxInputBytes_, timeouts_);
+  workerRegistries_[workerIndex]->setStopCallback(
+      [target = &workerEventLoop]() { target->requestLoopStop(); });
+  workerEventLoop.registerControlCallback(
+      [this, workerIndex](EventLoop::Control control, EventLoop::Deadline deadline) {
+        onControl(workerIndex, control, deadline);
       });
 }
 
-void TcpServer::cleanupWorkerRegistry(std::size_t index, EventLoop& worker) {
-  if (worker.failed() || !stopping_.exchange(true)) {
+void TcpServer::cleanupWorkerRegistry(std::size_t workerIndex, EventLoop& workerEventLoop) {
+  if (workerEventLoop.failed() || !stopping_.exchange(true)) {
     workerFailed_ = true;
     stopping_ = true;
-    loop_.requestForce();
+    mainEventLoop_.requestLoopForceClose();
   }
-  registries_[index].reset();
+  workerRegistries_[workerIndex].reset();
   ++workersFinished_;
-  loop_.notifyControl();
+  mainEventLoop_.notifyControl();
 }
 
-void TcpServer::adoptConnection(
-    std::size_t index,
-    const std::shared_ptr<ConnectionHandoff>& handoff,
-    EventLoop&) {
+void TcpServer::adoptConnection(std::size_t workerIndex,
+                                const std::shared_ptr<ConnectionHandoff>& handoff,
+                                EventLoop&) {
   if (stopping_) return;
   try {
-    registries_[index]->onAccepted(std::move(handoff->socket),
-                                   std::move(handoff->messageCallback));
+    workerRegistries_[workerIndex]->onAccepted(std::move(handoff->socket),
+                                               std::move(handoff->messageCallback));
   } catch (const std::bad_alloc&) {
     throw;
   } catch (const std::exception& error) {

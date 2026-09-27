@@ -17,7 +17,7 @@ class StaticFileService final : private base::NonCopyable {
   explicit StaticFileService(const std::string& rootPath);
   ~StaticFileService();
 
-  [[nodiscard]] std::vector<std::byte> handle(
+  [[nodiscard]] std::vector<std::byte> buildResponseBytes(
       const HttpRequest& request,
       ConnectionPolicy policy = ConnectionPolicy::kClose) const;
 

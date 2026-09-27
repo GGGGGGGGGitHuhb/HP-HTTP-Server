@@ -6,6 +6,8 @@
 
 ## 当前状态与目标架构
 
+R7 当前实现（2026-09-26，已验收）：仅更新项目自有语义名称与允许翻译的原有英文注释。`EventLoopThread::createWorkerThread()` 创建线程并等待初始化，`runWorkerEventLoop()` 在线程内初始化、执行通用 `EventLoop::runEventLoop()` 并清理；`TcpServer::runTcpServer()` 组织主循环及退出清理。服务器先选择 workerIndex，`EventLoopThreadPool::postTaskToWorkerAtIndex()` 保留指定目标、配额及转发约束；单线程与线程池分别 `joinWorkerThread()` / `joinWorkerThreads()`。模块边界、线程/任务所有权、协议及异常路径不变。用户受保护注释内的旧名称按明确要求保留；下方 R6 及更早文字为历史记录。
+
 R6 当前实现（2026-09-21，已验收）：生产文件使用 PascalCase，普通函数/变量使用 camelCase。回调按事件统一命名，外部短 lambda 转发到具名处理函数；有运行状态约束的槽通过公开 registerXxxCallback 检查后调用私有内联纯保存 setter，无约束槽直接使用 setter。主从 Reactor、每连接 HTTP 状态及原线程归属保持。EventLoopThread 投递使用共享任务槽，先完成分配再移动任务，入队前释放局部槽所有权；成功执行由 worker 释放任务捕获，失败路径先解锁后释放，新增一次槽分配成本不代表性能改善。下方 R1–R5 的旧符号和绑定形式属于历史记录。
 
 2026-09-17：R1基础接口重构已完成，独立Reviewer001 PASS、Leader005收口。基础/HTTP/Socket/Epoller普通操作与枚举/常量命名统一，当前调用者同步适配；RequestParser将ASCII比较和Header空白裁剪提取为同步具名私有方法，扫描计数、借用及拥有型请求结果保持。PathResult/ResponseResult状态和file/policy显式表达。所有权、线程和协议行为不变。

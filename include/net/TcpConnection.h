@@ -9,20 +9,20 @@ namespace hp::net {
 class TcpServer;
 struct TcpConnectionTestAccess;
 
-// Address-stable, single-threaded owner. Close callbacks must not throw or
-// destroy the connection; destruction is permitted only after the active
-// callback returns.
+// 地址稳定，归属单一线程。关闭回调不得抛出异常，也不得
+// 销毁连接；只有当前活动
+// 回调返回后才允许销毁。
 class TcpConnection final : private base::NonCopyable {
  public:
-  // Borrowed input is invalidated by Consume; never retain it after callback.
-  using MessageCallback =
-      std::function<void(TcpConnection&, std::span<const std::byte>, bool)>;
+  // Consume 会使借用的输入失效；不得在回调返回后保留它。
+  using MessageCallback = std::function<void(TcpConnection&, std::span<const std::byte>, bool)>;
   using Identity = std::uint64_t;
   using TimeoutActivityCallback = std::function<void(TcpConnection&, bool)>;
   using CloseCallback = std::function<void(int, Identity)>;
+  // 一条 TCP 连接的状态
   enum class State { kUnregistered, kActive, kClosing };
 
-  TcpConnection(EventLoop& loop,
+  TcpConnection(EventLoop& ownerEventLoop,
                 Socket socket,
                 Identity identity,
                 std::size_t maxInputBytes);
@@ -30,26 +30,23 @@ class TcpConnection final : private base::NonCopyable {
     messageCallback_ = std::move(messageCallback);
   }
 
-  void setCloseCallback(CloseCallback closeCallback) {
-    closeCallback_ = std::move(closeCallback);
-  }
+  void setCloseCallback(CloseCallback closeCallback) { closeCallback_ = std::move(closeCallback); }
 
-  void setTimeoutActivityCallback(
-      TimeoutActivityCallback timeoutActivityCallback) {
+  void setTimeoutActivityCallback(TimeoutActivityCallback timeoutActivityCallback) {
     timeoutActivityCallback_ = std::move(timeoutActivityCallback);
   }
 
   ~TcpConnection() noexcept;
 
-  void start();
+  void activateConnection();
   void requestClose() noexcept;
 
-  void send(std::span<const std::byte> bytes);
+  void sendBytes(std::span<const std::byte> bytes);
   void sendFile(std::span<const std::byte> header, base::FileRegion file);
-  void consume(std::size_t count);
+  void consumeInputBytes(std::size_t count);
 
   void closeAfterFlush();
-  void beginDrain();
+  void beginConnectionDrain();
 
   void pauseReading();
   void resumeReading();
@@ -62,20 +59,14 @@ class TcpConnection final : private base::NonCopyable {
     writeCompleteCallback_ = std::move(writeCompleteCallback);
   }
 
-  [[nodiscard]] std::span<const std::byte> inputView() const noexcept {
-    return io_.inputView();
-  }
+  [[nodiscard]] std::span<const std::byte> inputView() const noexcept { return io_.inputView(); }
 
-  [[nodiscard]] bool peerClosed() const noexcept {
-    return io_.peerHalfClosed();
-  }
+  [[nodiscard]] bool peerClosed() const noexcept { return io_.peerHalfClosed(); }
 
-  [[nodiscard]] std::size_t pendingBytes() const noexcept {
-    return io_.pendingBytes();
-  }
+  [[nodiscard]] std::size_t pendingBytes() const noexcept { return io_.pendingBytes(); }
 
-  // Owner teardown: unregister without notifying a possibly destructing owner.
-  void stop() noexcept;
+  // 所有者清理：注销，但不通知可能正在析构的所有者。
+  void deactivateConnection() noexcept;
 
   [[nodiscard]] int fd() const noexcept { return io_.fd(); }
   [[nodiscard]] Identity identity() const noexcept { return identity_; }
@@ -93,6 +84,7 @@ class TcpConnection final : private base::NonCopyable {
   static void handleEchoMessage(TcpConnection& connection,
                                 std::span<const std::byte> input,
                                 bool eof);
+  // 由 `Channel::eventCallback_` 保存
   void handleConnectionEvent(std::uint32_t mask) noexcept;
   void updateInterest();
 
@@ -106,23 +98,24 @@ class TcpConnection final : private base::NonCopyable {
   std::uint64_t timeoutId_{0};
 
   ConnectionIo io_;
-  MessageCallback messageCallback_;
+  MessageCallback messageCallback_;  // 绑定 `HttpMessageHandler::onMessage()`
   const Identity identity_;
-  CloseCallback closeCallback_;
+  CloseCallback closeCallback_;  // 绑定 `ConnectionRegistry::onClose()`
   Channel connectionChannel_;
 
   bool inputStopped_{false};
   bool draining_{false};
   bool readPaused_{false};
-  WriteCompleteCallback writeCompleteCallback_;
+  WriteCompleteCallback writeCompleteCallback_;  // 绑定 `Session::onWriteComplete()`
 
+  // 在 handleConnectionEvent() 期间被置 true
   bool handlingEvent_{false};
   bool eofNotified_{false};
   std::size_t messageCount_{0};
   State state_{State::kUnregistered};
 
-  // Intrusive owner recovery record: no allocation when an event requests
-  // close.
+  // 侵入式的所有者回收记录：事件请求关闭时
+  // 无需分配内存。
   TcpConnection* nextClosing_{nullptr};
   bool queuedForRecovery_{false};
 
