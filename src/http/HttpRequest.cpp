@@ -7,13 +7,13 @@ namespace hp::http {
 namespace {
 bool isTokenCharacter(unsigned char c) {
   constexpr std::string_view kTokenPunctuation = "!#$%&'*+-.^_`|~";
-  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-         (c >= '0' && c <= '9') ||
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
          kTokenPunctuation.find(static_cast<char>(c)) != std::string_view::npos;
 }
 }  // namespace
 
 bool RequestParser::validateRequestLine() {
+  // 空格分割 method, target, version
   std::size_t first = lineSize_, second = lineSize_;
   for (std::size_t i = 0; i < lineSize_; ++i) {
     ++scanSteps_;
@@ -28,8 +28,7 @@ bool RequestParser::validateRequestLine() {
   if (first == 0 || second == lineSize_ || second <= first + 1) return false;
   for (std::size_t i = 0; i < first; ++i) {
     ++scanSteps_;
-    if (!isTokenCharacter(static_cast<unsigned char>(storage_[i])))
-      return false;
+    if (!isTokenCharacter(static_cast<unsigned char>(storage_[i]))) return false;
   }
   if (storage_[first + 1] != '/') return false;
   for (std::size_t i = first + 1; i < second; ++i) {
@@ -49,13 +48,11 @@ bool RequestParser::validateRequestLine() {
   return true;
 }
 
-bool RequestParser::equalsAsciiCaseInsensitive(std::string_view value,
-                                               std::string_view expected) {
+bool RequestParser::equalsAsciiCaseInsensitive(std::string_view value, std::string_view expected) {
   if (value.size() != expected.size()) return false;
   for (std::size_t i = 0; i < value.size(); ++i) {
     ++scanSteps_;
-    const char c =
-        value[i] >= 'A' && value[i] <= 'Z' ? value[i] + ('a' - 'A') : value[i];
+    const char c = value[i] >= 'A' && value[i] <= 'Z' ? value[i] + ('a' - 'A') : value[i];
     if (c != expected[i]) return false;
   }
   return true;
@@ -93,15 +90,18 @@ bool RequestParser::validateHeader() {
     if (c == 0x7fU || (c < 0x20U && c != '\t')) return false;
     if (c != ' ' && c != '\t') nonemptyValue = true;
   }
+  // eg. Host: example.com
+  // name = "Host", value = "example.com"
   const auto name = line.substr(0, colon);
   const auto value = trimHeaderWhitespace(line.substr(colon + 1));
   if (equalsAsciiCaseInsensitive(name, "host")) {
+    // 若此前已有 Host 或值为空则校验失败
     if (hostSeen_ || !nonemptyValue) return false;
     hostSeen_ = true;
   } else if (equalsAsciiCaseInsensitive(name, "content-length")) {
     if (contentLengthSeen_ || value.empty()) return false;
     contentLengthSeen_ = true;
-    // Only decimal zero is supported: no arithmetic and therefore no overflow.
+    // 只支持十进制零：不做算术运算，因此不会溢出。
     for (char c : value) {
       ++scanSteps_;
       if (c != '0') return false;
@@ -132,6 +132,7 @@ void RequestParser::finishLine() {
       state_ = ParserState::kError;
       return;
     }
+    // 让下一次检查从上一次处理完毕的位置开始
     lineStart_ = lineSize_;
     state_ = ParserState::kHeaders;
   } else if (lineSize_ == 0) {
@@ -141,15 +142,14 @@ void RequestParser::finishLine() {
     }
     state_ = ParserState::kComplete;
     const std::string_view method(storage_.data(), methodSize_);
-    status_ = method == "GET" ? ParseStatus::kComplete
-                              : ParseStatus::kMethodNotAllowed;
+    status_ = method == "GET" ? ParseStatus::kComplete : ParseStatus::kMethodNotAllowed;
   } else if (!validateHeader()) {
     state_ = ParserState::kError;
   }
   lineSize_ = 0;
 }
 
-FeedResult RequestParser::buildResult(std::size_t accepted) const {
+FeedResult RequestParser::buildFeedResult(std::size_t accepted) const {
   FeedResult result{status_, {}, accepted, requestBytes_};
   if (state_ == ParserState::kComplete) {
     result.request.closeRequested = closeRequested_;
@@ -159,28 +159,31 @@ FeedResult RequestParser::buildResult(std::size_t accepted) const {
   return result;
 }
 
-FeedResult RequestParser::feed(std::string_view bytes) {
+FeedResult RequestParser::feedRequestBytes(std::string_view bytes) {
   std::size_t accepted = 0;
+  // 若 finishLine() 将 state_ 改为 kComplete
+  // 下轮循环便停止，不继续读取
+  // kComplete, kError 是终态
   while (accepted < bytes.size() && state_ != ParserState::kComplete &&
          state_ != ParserState::kError) {
     const char c = bytes[accepted];
-    ++accepted;
-    ++requestBytes_;
+    ++accepted;       // 局部变量，每次调用从 0 开始
+    ++requestBytes_;  // RequestParser 的成员，跨调用保存
     ++scanSteps_;
     if (pendingCr_) {
       pendingCr_ = false;
       if (c != '\n')
         state_ = ParserState::kError;
       else
-        finishLine();
+        finishLine();  // 可能将 state_ 改为 kComplete
     } else if (c == '\r') {
       pendingCr_ = true;
     } else if (c == '\n' || c == '\0') {
       state_ = ParserState::kError;
-    } else if (state_ == ParserState::kRequestLine &&
-               lineSize_ == kMaxRequestLineBytes) {
+    } else if (state_ == ParserState::kRequestLine && lineSize_ == kMaxRequestLineBytes) {
       state_ = ParserState::kError;
     } else {
+      // 复制字符到 RequestParser 自己的数组 storage_
       storage_[lineStart_ + lineSize_++] = c;
       peakBuffered_ = std::max(peakBuffered_, bufferedBytes());
     }
@@ -188,10 +191,10 @@ FeedResult RequestParser::feed(std::string_view bytes) {
       state_ = ParserState::kError;
     if (state_ == ParserState::kError) status_ = ParseStatus::kBadRequest;
   }
-  return buildResult(accepted);
+  return buildFeedResult(accepted);
 }
 
-void RequestParser::reset() noexcept {
+void RequestParser::resetRequestParser() noexcept {
   state_ = ParserState::kRequestLine;
   status_ = ParseStatus::kNeedMore;
   pendingCr_ = hostSeen_ = contentLengthSeen_ = closeRequested_ = false;
@@ -202,11 +205,10 @@ void RequestParser::reset() noexcept {
 
 ParseResult parseRequest(std::string_view bytes) {
   RequestParser parser;
-  const auto parsed = parser.feed(bytes);
+  const auto parsed = parser.feedRequestBytes(bytes);
   return {parsed.status,
           parsed.request,
-          parsed.status == ParseStatus::kComplete ||
-                  parsed.status == ParseStatus::kMethodNotAllowed
+          parsed.status == ParseStatus::kComplete || parsed.status == ParseStatus::kMethodNotAllowed
               ? parsed.requestBytes
               : 0};
 }

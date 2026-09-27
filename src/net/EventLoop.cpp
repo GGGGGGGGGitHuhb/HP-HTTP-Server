@@ -37,9 +37,7 @@ std::uint64_t EventLoop::exchangeNextTokenForTest(std::uint64_t value) {
   return nextToken.exchange(value);
 }
 
-bool EventLoop::isInLoopThread() const noexcept {
-  return owner_ == std::this_thread::get_id();
-}
+bool EventLoop::isInLoopThread() const noexcept { return owner_ == std::this_thread::get_id(); }
 
 void EventLoop::requireOwner() const {
   if (!isInLoopThread()) throw std::logic_error("EventLoop wrong owner thread");
@@ -67,9 +65,9 @@ EventLoop::~EventLoop() noexcept {
     std::lock_guard lock(mutex_);
     state_ = State::kStopped;
   }
-  timers_.clear();
+  timers_.clearTimers();
   releaseTasks(tasks_);
-  wakeChannel_->remove();
+  wakeChannel_->removeChannel();
   wakeChannel_.reset();
   ::close(wakeFd_);
   assert(channels_.empty());
@@ -89,7 +87,7 @@ void EventLoop::wakeLocked() {
       if (!failure_) failure_ = std::current_exception();
       state_ = State::kFailed;
     }
-    return;  // Accepted task remains owned by loop; owner observes failure.
+    return;  // 已接受的任务仍由事件循环持有；由所属线程观察失败。
   }
 }
 
@@ -105,13 +103,13 @@ void EventLoop::drainWakeup() {
   }
 }
 
-bool EventLoop::queueInLoop(TaskCallback task) { return enqueue(task); }
+bool EventLoop::queueTaskInEventLoop(TaskCallback task) { return enqueueLoopTask(task); }
 
-bool EventLoop::enqueue(TaskCallback& task) {
+bool EventLoop::enqueueLoopTask(TaskCallback& task) {
   if (!task) throw std::invalid_argument("empty EventLoop task");
   std::lock_guard lock(mutex_);
-  if (state_ == State::kStopping || state_ == State::kStopped ||
-      state_ == State::kFailed || outstanding_ == kTaskCapacity)
+  if (state_ == State::kStopping || state_ == State::kStopped || state_ == State::kFailed ||
+      outstanding_ == kTaskCapacity)
     return false;
   tasks_.push_back(std::move(task));
   ++outstanding_;
@@ -121,7 +119,8 @@ bool EventLoop::enqueue(TaskCallback& task) {
 
 void EventLoop::releaseTask(TaskCallback& task) {
   if (!task) return;
-  task = {};  // User captures may reenter; count includes their destruction.
+  // 清空保存的可调用对象
+  task = {};  // 用户捕获对象可能重入；计数包含其析构过程。
   std::lock_guard lock(mutex_);
   --outstanding_;
 }
@@ -133,8 +132,7 @@ void EventLoop::releaseTasks(std::deque<TaskCallback>& tasks) {
 
 void EventLoop::registerControlCallback(ControlCallback controlCallback) {
   requireOwner();
-  if (polling_)
-    throw std::logic_error("cannot replace control callback during dispatch");
+  if (polling_) throw std::logic_error("cannot replace control callback during dispatch");
   setControlCallback(std::move(controlCallback));
 }
 
@@ -143,19 +141,16 @@ bool EventLoop::failed() const {
   return state_ == State::kFailed;
 }
 
-void EventLoop::requestDrain(Deadline deadline) {
+void EventLoop::requestLoopDrain(Deadline deadline) {
   std::lock_guard lock(mutex_);
-  if (state_ == State::kStopped || state_ == State::kFailed ||
-      control_ == Control::kForce)
-    return;
-  if (control_ == Control::kNone || deadline < controlDeadline_)
-    controlDeadline_ = deadline;
+  if (state_ == State::kStopped || state_ == State::kFailed || control_ == Control::kForce) return;
+  if (control_ == Control::kNone || deadline < controlDeadline_) controlDeadline_ = deadline;
   control_ = Control::kDrain;
   controlPending_ = true;
   wakeLocked();
 }
 
-void EventLoop::requestForce() {
+void EventLoop::requestLoopForceClose() {
   std::lock_guard lock(mutex_);
   if (state_ == State::kStopped || state_ == State::kFailed) return;
   control_ = Control::kForce;
@@ -175,8 +170,7 @@ void EventLoop::dispatchControl() {
   Deadline deadline;
   {
     std::lock_guard lock(mutex_);
-    if (control_ == Control::kDrain &&
-        timer::TimerQueue::Clock::now() >= controlDeadline_) {
+    if (control_ == Control::kDrain && timer::TimerQueue::Clock::now() >= controlDeadline_) {
       control_ = Control::kForce;
       controlPending_ = true;
     }
@@ -188,16 +182,14 @@ void EventLoop::dispatchControl() {
   if (controlCallback_) controlCallback_(control, deadline);
 }
 
-void EventLoop::requestStop() {
+void EventLoop::requestLoopStop() {
   std::lock_guard lock(mutex_);
-  if (state_ == State::kStopped || state_ == State::kFailed ||
-      state_ == State::kStopping)
-    return;
+  if (state_ == State::kStopped || state_ == State::kFailed || state_ == State::kStopping) return;
   state_ = State::kStopping;
   wakeLocked();
 }
 
-void EventLoop::fail(std::exception_ptr error) {
+void EventLoop::failEventLoop(std::exception_ptr error) {
   std::deque<TaskCallback> cancelled;
   {
     std::lock_guard lock(mutex_);
@@ -206,27 +198,24 @@ void EventLoop::fail(std::exception_ptr error) {
     failureObserved_ = true;
     cancelled.swap(tasks_);
   }
-  timers_.clear();
+  timers_.clearTimers();
   releaseTasks(cancelled);
-  // Captures are destroyed on owner, outside mutex (destructors may post).
+  // 在所属线程上、互斥锁之外销毁捕获对象；析构函数可能调用 post。
 }
 
 void EventLoop::registerCleanupCallback(CleanupCallback cleanupCallback) {
   requireOwner();
-  if (polling_)
-    throw std::logic_error("cannot replace cleanup during dispatch");
+  if (polling_) throw std::logic_error("cannot replace cleanup during dispatch");
   setCleanupCallback(std::move(cleanupCallback));
 }
 
 void EventLoop::updateChannel(Channel& c, std::uint32_t interest) {
-  if (interest && !c.eventCallback_)
-    throw std::logic_error("missing Channel target");
+  if (interest && !c.eventCallback_) throw std::logic_error("missing Channel target");
   requireOwner();
-  if (&c.loop_ != this)
-    throw std::invalid_argument("Channel belongs to another loop");
+  if (&c.ownerEventLoop_ != this) throw std::invalid_argument("Channel belongs to another loop");
   if (c.registered()) {
     if (interest == c.interest_) return;
-    epoller_.modify(c.fd_, interest, c.token_);
+    epoller_.modifyDescriptor(c.fd_, interest, c.token_);
     c.interest_ = interest;
     ++counters_.mods;
     return;
@@ -234,12 +223,12 @@ void EventLoop::updateChannel(Channel& c, std::uint32_t interest) {
   if (interest == 0) return;
   if (fds_.contains(c.fd_)) throw std::logic_error("fd already registered");
   const auto token = allocateToken();
-  // Allocate registry storage before ADD, roll back on failure; no throwing
-  // work remains after the kernel successfully registers the fd.
+  // 在 ADD 前分配注册表存储，失败时回滚；内核成功注册 fd 后
+  // 不再执行可能抛出异常的操作。
   channels_.emplace(token, &c);
   try {
     fds_.emplace(c.fd_, token);
-    epoller_.add(c.fd_, interest, token);
+    epoller_.addDescriptor(c.fd_, interest, token);
   } catch (...) {
     fds_.erase(c.fd_);
     channels_.erase(token);
@@ -252,9 +241,9 @@ void EventLoop::updateChannel(Channel& c, std::uint32_t interest) {
 
 void EventLoop::removeChannel(Channel& c) noexcept {
   assert(isInLoopThread());
-  assert(&c.loop_ == this);
-  if (&c.loop_ != this || !c.registered()) return;
-  epoller_.remove(c.fd_);
+  assert(&c.ownerEventLoop_ == this);
+  if (&c.ownerEventLoop_ != this || !c.registered()) return;
+  epoller_.removeDescriptor(c.fd_);
   channels_.erase(c.token_);
   fds_.erase(c.fd_);
   c.token_ = 0;
@@ -262,7 +251,7 @@ void EventLoop::removeChannel(Channel& c) noexcept {
   if (&c != wakeChannel_.get()) ++counters_.removes;
 }
 
-void EventLoop::dispatch(std::uint64_t token, std::uint32_t mask) {
+void EventLoop::dispatchChannelEvent(std::uint64_t token, std::uint32_t mask) {
   const auto found = channels_.find(token);
   if (found == channels_.end()) {
     ++counters_.stale;
@@ -281,7 +270,7 @@ void EventLoop::dispatch(std::uint64_t token, std::uint32_t mask) {
     if (cleanupCallback_) cleanupCallback_();
     throw;
   }
-  // Never access c after callback: cleanup may now destroy it and its fd owner.
+  // 回调返回后不得访问 c：此时清理可能销毁它及其 fd 所有者。
   if (cleanupCallback_) cleanupCallback_();
 }
 
@@ -290,14 +279,11 @@ bool EventLoop::timersAllowed() {
   return state_ == State::kReady || state_ == State::kRunning;
 }
 
-EventLoop::TimerId EventLoop::addTimer(timer::TimerQueue::TimePoint deadline,
-                                       TaskCallback task) {
+EventLoop::TimerId EventLoop::addTimer(timer::TimerQueue::TimePoint deadline, TaskCallback task) {
   requireOwner();
   if (!timersAllowed()) throw std::logic_error("timer on stopping EventLoop");
   if (!task) throw std::invalid_argument("empty timer task");
-  return timers_.add(deadline, [this, task = std::move(task)]() {
-    dispatchTimerTask(task);
-  });
+  return timers_.addTimer(deadline, [this, task = std::move(task)]() { dispatchTimerTask(task); });
 }
 
 void EventLoop::handleWakeupEvent(std::uint32_t) { drainWakeup(); }
@@ -314,16 +300,15 @@ void EventLoop::dispatchTimerTask(const TaskCallback& task) {
   if (cleanupCallback_) cleanupCallback_();
 }
 
-bool EventLoop::rescheduleTimer(TimerId id,
-                                timer::TimerQueue::TimePoint deadline) {
+bool EventLoop::rescheduleTimer(TimerId id, timer::TimerQueue::TimePoint deadline) {
   requireOwner();
   if (!timersAllowed()) return false;
-  return timers_.reschedule(id, deadline);
+  return timers_.rescheduleTimer(id, deadline);
 }
 
 bool EventLoop::cancelTimer(TimerId id) {
   requireOwner();
-  return timers_.cancel(id);
+  return timers_.cancelTimer(id);
 }
 
 std::size_t EventLoop::timerCount() const {
@@ -336,9 +321,7 @@ void EventLoop::pollOnce(int timeoutMs) {
   if (polling_) throw std::logic_error("recursive EventLoop poll");
   {
     std::lock_guard lock(mutex_);
-    if (state_ == State::kStopped ||
-        (state_ == State::kFailed && failureObserved_))
-      return;
+    if (state_ == State::kStopped || (state_ == State::kFailed && failureObserved_)) return;
   }
   polling_ = true;
   const auto timerCutoff = timers_.lastId();
@@ -348,10 +331,8 @@ void EventLoop::pollOnce(int timeoutMs) {
     {
       std::lock_guard lock(mutex_);
       if (failure_) std::rethrow_exception(failure_);
-      if (state_ == State::kStopped)
-        throw std::logic_error("EventLoop stopped");
-      if (!tasks_.empty() || state_ == State::kStopping || controlPending_)
-        timeoutMs = 0;
+      if (state_ == State::kStopped) throw std::logic_error("EventLoop stopped");
+      if (!tasks_.empty() || state_ == State::kStopping || controlPending_) timeoutMs = 0;
     }
     if (timeoutMs < 0 || timeoutMs > 1000) timeoutMs = 1000;
     if (auto deadline = timers_.nextDeadline()) {
@@ -359,28 +340,26 @@ void EventLoop::pollOnce(int timeoutMs) {
       if (remaining <= timer::TimerQueue::Clock::duration::zero()) {
         timeoutMs = 0;
       } else {
-        const auto millis =
-            std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
+        const auto millis = std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
         if (millis < timeoutMs) timeoutMs = static_cast<int>(millis);
       }
     }
     {
       std::lock_guard lock(mutex_);
       if (control_ == Control::kDrain) {
-        const auto remaining =
-            controlDeadline_ - timer::TimerQueue::Clock::now();
-        const auto millis =
-            std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
-        timeoutMs = static_cast<int>(
-            std::max<std::int64_t>(0,
-                                   std::min<std::int64_t>(timeoutMs, millis)));
+        const auto remaining = controlDeadline_ - timer::TimerQueue::Clock::now();
+        const auto millis = std::chrono::ceil<std::chrono::milliseconds>(remaining).count();
+        timeoutMs =
+            static_cast<int>(std::max<std::int64_t>(0, std::min<std::int64_t>(timeoutMs, millis)));
       }
     }
-    const auto events = epoller_.wait(timeoutMs);
+    // 等待事件
+    const auto events = epoller_.waitForEvents(timeoutMs);
     dispatchControl();
+    // 分发事件
     for (const auto& event : events) {
       dispatchControl();
-      dispatch(event.data.u64, event.events);
+      dispatchChannelEvent(event.data.u64, event.events);
     }
     {
       std::lock_guard lock(mutex_);
@@ -393,20 +372,18 @@ void EventLoop::pollOnce(int timeoutMs) {
         std::lock_guard lock(mutex_);
         if (failure_) std::rethrow_exception(failure_);
       }
-      task();
+      task();  // `Event`
       releaseTask(task);
     }
     dispatchControl();
-    if (timersAllowed())
-      timers_.runDue(timer::TimerQueue::Clock::now(), timerCutoff);
-    if (!timersAllowed()) timers_.clear();
+    if (timersAllowed()) timers_.runDueTimers(timer::TimerQueue::Clock::now(), timerCutoff);
+    if (!timersAllowed()) timers_.clearTimers();
     {
       std::lock_guard lock(mutex_);
-      if (state_ == State::kStopping && tasks_.empty())
-        state_ = State::kStopped;
+      if (state_ == State::kStopping && tasks_.empty()) state_ = State::kStopped;
     }
   } catch (...) {
-    fail(std::current_exception());
+    failEventLoop(std::current_exception());
     releaseTasks(batch);
     polling_ = false;
     std::exception_ptr error;
@@ -419,7 +396,7 @@ void EventLoop::pollOnce(int timeoutMs) {
   polling_ = false;
 }
 
-void EventLoop::loop() {
+void EventLoop::runEventLoop() {
   requireOwner();
   {
     std::lock_guard lock(mutex_);
@@ -437,7 +414,7 @@ void EventLoop::loop() {
       error = failure_;
     }
     if (error) {
-      fail(error);
+      failEventLoop(error);
       std::rethrow_exception(error);
     }
   }

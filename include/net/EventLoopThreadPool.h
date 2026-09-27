@@ -6,8 +6,8 @@
 namespace hp::net {
 struct EventLoopThreadPoolTestAccess;
 
-// Fixed workers; start/join/destruction are serialized by the control thread.
-// Concurrent post/stop callers must finish before destruction.
+// 固定工作线程；控制线程串行执行 start/join/析构。
+// 并发 post/stop 调用方必须在析构前完成调用。
 class EventLoopThreadPool final : private base::NonCopyable {
  public:
   using WorkerInitCallback = std::function<void(std::size_t, EventLoop&)>;
@@ -19,17 +19,17 @@ class EventLoopThreadPool final : private base::NonCopyable {
   EventLoopThreadPool() = default;
   ~EventLoopThreadPool() noexcept;
 
-  void start(std::size_t count,
-             WorkerInitCallback init = {},
-             WorkerCleanupCallback cleanup = {});
+  void createWorkerThreads(std::size_t workerCount,
+                           WorkerInitCallback workerInitCallback = {},
+                           WorkerCleanupCallback workerCleanupCallback = {});
 
-  bool post(std::size_t index, EventLoopThread::TaskCallback task);
+  bool postTaskToWorkerAtIndex(std::size_t workerIndex, EventLoopThread::TaskCallback task);
 
-  void requestStop();
-  void requestDrain(EventLoop::Deadline deadline);
-  void requestForce();
+  void requestPoolStop();
+  void requestWorkersDrain(EventLoop::Deadline deadline);
+  void requestWorkersForceClose();
 
-  void join();
+  void joinWorkerThreads();
 
  private:
   friend struct EventLoopThreadPoolTestAccess;
@@ -37,28 +37,28 @@ class EventLoopThreadPool final : private base::NonCopyable {
   struct Ticket;
 
   struct WorkerInitTask {
-    WorkerInitCallback init;
-    std::size_t index;
-    void initializeWorker(EventLoop& loop) const;
+    WorkerInitCallback workerInitCallback;
+    std::size_t workerIndex;
+    void initializeWorker(EventLoop& workerEventLoop) const;
   };
 
   struct WorkerCleanupTask {
-    EventLoopThreadPool* pool;
-    WorkerCleanupCallback cleanup;
-    std::size_t index;
-    void cleanupWorker(EventLoop& loop) const;
+    EventLoopThreadPool* workerPool;
+    WorkerCleanupCallback workerCleanupCallback;
+    std::size_t workerIndex;
+    void cleanupWorker(EventLoop& workerEventLoop) const;
   };
 
   struct ReservedPoolTask {
-    // Declaration order matters: user captures die before quota is returned.
+    // 声明顺序很重要：用户捕获对象先析构，随后才归还配额。
     std::shared_ptr<Ticket> ticket;
     EventLoopThread::TaskCallback task;
-    void runTask(EventLoop& loop) const;
+    void runTask(EventLoop& workerEventLoop) const;
   };
 
-  bool forwardsFinished() const noexcept;
-  void finishForward() noexcept;
-  void stopWorkers();
+  bool taskForwardsFinished() const noexcept;
+  void finishTaskForward() noexcept;
+  void requestAllWorkersStop();
 
   std::mutex mutex_;
   std::condition_variable forwarded_;

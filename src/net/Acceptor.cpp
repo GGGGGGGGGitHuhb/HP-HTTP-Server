@@ -18,31 +18,31 @@ Socket Acceptor::createListener(std::uint16_t port) {
   return listener;
 }
 
-Acceptor::Acceptor(EventLoop& loop, std::uint16_t port)
+Acceptor::Acceptor(EventLoop& ownerEventLoop, std::uint16_t port)
     : listener_(createListener(port)),
       boundPort_(listener_.localPort()),
-      listenerChannel_(loop, listener_.fd()) {
+      listenerChannel_(ownerEventLoop, listener_.fd()) {
   listenerChannel_.registerEventCallback(
       [this](std::uint32_t events) { handleListenerEvent(events); });
 }
 
-Acceptor::~Acceptor() noexcept { stop(); }
+Acceptor::~Acceptor() noexcept { disableAcceptEvents(); }
 
-void Acceptor::start() {
+void Acceptor::enableAcceptEvents() {
   if (!acceptedCallback_)
     throw std::invalid_argument("missing accepted callback");
   listenerChannel_.setInterest(EPOLLIN);
 }
 
-void Acceptor::close() noexcept {
-  stop();
+void Acceptor::closeListener() noexcept {
+  disableAcceptEvents();
   listener_.reset();
 }
 
-void Acceptor::stop() noexcept { listenerChannel_.remove(); }
+void Acceptor::disableAcceptEvents() noexcept { listenerChannel_.removeChannel(); }
 
 void Acceptor::handleListenerEvent(std::uint32_t mask) {
-  if (mask & EPOLLIN) acceptReady();
+  if (mask & EPOLLIN) acceptPendingConnections();
   if (mask & (EPOLLERR | EPOLLHUP)) {
     const int error = listener_.socketError();
     throw std::system_error(error == 0 ? EIO : error,
@@ -51,7 +51,7 @@ void Acceptor::handleListenerEvent(std::uint32_t mask) {
   }
 }
 
-void Acceptor::acceptReady() {
+void Acceptor::acceptPendingConnections() {
   while (listenerChannel_.registered()) {
     Socket accepted;
     try {
@@ -67,7 +67,7 @@ void Acceptor::acceptReady() {
     try {
       acceptedCallback_(std::move(accepted));
     } catch (...) {
-      // Delivery owns a by-value Socket, so unwinding closes only that fd.
+      // 交付过程按值拥有 Socket，因此栈展开只关闭该 fd。
       try {
         base::warn("accepted connection delivery failed");
       } catch (...) {

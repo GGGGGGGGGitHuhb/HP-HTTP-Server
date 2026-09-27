@@ -4,8 +4,8 @@
 #include "base/NonCopyable.h"
 
 namespace hp::app {
-// Construct before workers; destroy after their join so they inherit a blocked
-// mask.
+// 在工作线程创建前构造，让它们继承屏蔽的信号掩码；在它们 join 后
+// 销毁。
 class SignalWatcher final : private base::NonCopyable {
  public:
   SignalWatcher();

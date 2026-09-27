@@ -6,7 +6,7 @@
 #include <span>
 
 namespace hp::base {
-// Single-owner contiguous storage. Views expire at the next mutation.
+// 单一所有者的连续存储；视图在下一次修改时失效。
 class Buffer {
  public:
   explicit Buffer(
@@ -21,12 +21,12 @@ class Buffer {
   std::size_t capacity() const noexcept { return capacity_; }
   std::size_t writableBytes() const noexcept { return capacity_ - write_; }
 
-  std::span<std::byte> prepare(std::size_t count);
-  void commit(std::size_t count);
-  void consume(std::size_t count);
-  // Source must not alias this Buffer's storage.
-  void append(std::span<const std::byte> bytes);
-  void reset() noexcept;
+  std::span<std::byte> prepareWritableBytes(std::size_t count);
+  void commitWrittenBytes(std::size_t count);
+  void consumeReadableBytes(std::size_t count);
+  // 源数据不得与此 Buffer 的存储重叠。
+  void appendBytes(std::span<const std::byte> bytes);
+  void resetBuffer() noexcept;
   void releaseEmpty(std::size_t retainLimit) noexcept;
 
  private:

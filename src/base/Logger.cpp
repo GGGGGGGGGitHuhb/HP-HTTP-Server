@@ -26,8 +26,8 @@ void writeLog(LogLevel level, std::string_view message) {
       return;
     }
   }
-  // Shared ownership spans the complete submission, including concurrent Stop.
-  logger->submit(level, message);
+  // 共享所有权覆盖完整提交过程，包括并发 Stop。
+  logger->submitLogRecord(level, message);
 }
 
 }  // namespace
@@ -41,13 +41,13 @@ LoggerSession::LoggerSession() {
 }
 
 LoggerSession::~LoggerSession() {
-  stop();
+  stopSessionLogging();
   const std::lock_guard lock(outputMutex);
   sessionActive = false;
-  // Retain the stopped instance for late submissions: never fall back to IO.
+  // 保留已停止实例以接收迟到的提交：不得回退到 IO。
 }
 
-void LoggerSession::stop() { logger_->stop(); }
+void LoggerSession::stopSessionLogging() { logger_->stopAsyncLogging(); }
 
 LogStats LoggerSession::stats() const { return logger_->stats(); }
 

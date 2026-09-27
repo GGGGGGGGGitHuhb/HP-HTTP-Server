@@ -1,3 +1,6 @@
 {
-  "C_Cpp.intelliSenseEngine": "disabled"
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "workbench.editor.revealIfOpen": true,
+  "workbench.editor.enablePreview": true,
+  "workbench.editor.openSideBySideDirection": "right"
 }

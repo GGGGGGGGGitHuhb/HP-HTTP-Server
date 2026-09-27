@@ -22,16 +22,16 @@ class TimerQueue final : private base::NonCopyable {
   TimerQueue() = default;
   ~TimerQueue() noexcept;
 
-  Id add(TimePoint deadline, TimerCallback expiryTask);
-  bool reschedule(Id id, TimePoint deadline);
-  bool cancel(Id id);
+  Id addTimer(TimePoint deadline, TimerCallback expiryTask);
+  bool rescheduleTimer(Id id, TimePoint deadline);
+  bool cancelTimer(Id id);
 
   std::optional<TimePoint> nextDeadline() const;
   std::size_t size() const;
   Id lastId() const;
 
-  void runDue(TimePoint now, Id cutoff = UINT64_MAX);
-  void clear() noexcept;
+  void runDueTimers(TimePoint now, Id cutoff = UINT64_MAX);
+  void clearTimers() noexcept;
 
  private:
   friend struct TimerQueueTestAccess;

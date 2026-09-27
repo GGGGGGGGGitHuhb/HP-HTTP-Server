@@ -12,27 +12,25 @@ namespace hp::net {
 namespace {
 std::string errorMessage(int fd, const char* operation, int error) {
   return "connection fd " + std::to_string(fd) + " " + operation +
-         " failed: " + std::generic_category().message(error) + " (" +
-         std::to_string(error) + ")";
+         " failed: " + std::generic_category().message(error) + " (" + std::to_string(error) + ")";
 }
 }  // namespace
 
-TcpConnection::TcpConnection(EventLoop& loop,
+TcpConnection::TcpConnection(EventLoop& ownerEventLoop,
                              Socket socket,
                              Identity identity,
                              std::size_t maxInputBytes)
     : io_(std::move(socket), maxInputBytes),
       identity_(identity),
-      connectionChannel_(loop, io_.fd()) {
+      connectionChannel_(ownerEventLoop, io_.fd()) {
   if (identity == 0) throw std::invalid_argument("invalid connection identity");
   connectionChannel_.registerEventCallback(
       [this](std::uint32_t events) { handleConnectionEvent(events); });
 }
 
-TcpConnection::~TcpConnection() noexcept { stop(); }
+TcpConnection::~TcpConnection() noexcept { deactivateConnection(); }
 
-void TcpConnection::dispatchMessage(std::span<const std::byte> input,
-                                    bool eof) {
+void TcpConnection::dispatchMessage(std::span<const std::byte> input, bool eof) {
   if (messageCallback_)
     messageCallback_(*this, input, eof);
   else
@@ -42,38 +40,37 @@ void TcpConnection::dispatchMessage(std::span<const std::byte> input,
 void TcpConnection::handleEchoMessage(TcpConnection& connection,
                                       std::span<const std::byte> input,
                                       bool eof) {
-  connection.send(input);
-  connection.consume(input.size());
+  connection.sendBytes(input);
+  connection.consumeInputBytes(input.size());
   if (eof) connection.closeAfterFlush();
 }
 
-void TcpConnection::start() {
-  if (!closeCallback_)
-    throw std::invalid_argument("missing connection close target");
-  if (state_ == State::kClosing)
-    throw std::logic_error("cannot restart closed connection");
+void TcpConnection::activateConnection() {
+  if (!closeCallback_) throw std::invalid_argument("missing connection close target");
+  if (state_ == State::kClosing) throw std::logic_error("cannot restart closed connection");
   if (state_ == State::kActive) return;
   connectionChannel_.setInterest(EPOLLIN | EPOLLRDHUP);
   state_ = State::kActive;
 }
 
-void TcpConnection::stop() noexcept {
+void TcpConnection::deactivateConnection() noexcept {
   state_ = State::kClosing;
-  connectionChannel_.remove();
+  connectionChannel_.removeChannel();
   if (timeoutActivityCallback_) timeoutActivityCallback_(*this, false);
 }
 
 void TcpConnection::requestClose() noexcept {
   if (state_ == State::kClosing) return;
-  stop();
+  deactivateConnection();
   closeCallback_(fd(), identity_);
 }
 
-void TcpConnection::send(std::span<const std::byte> bytes) {
+void TcpConnection::sendBytes(std::span<const std::byte> bytes) {
   if (state_ == State::kClosing || draining_)
     throw std::logic_error("send on closed or draining connection");
   try {
-    io_.queueOutput(bytes);  // Take independent storage before returning.
+    io_.queueOutput(bytes);  // 在返回前取得独立存储。
+    // handlingEvent 在 TcpConnection::handleConnectionEvent() 中被置 true
     if (!handlingEvent_ && state_ == State::kActive) {
       if (!writeCompleteCallback_) flushOutput();
       if (state_ == State::kActive) updateInterest();
@@ -84,8 +81,7 @@ void TcpConnection::send(std::span<const std::byte> bytes) {
   }
 }
 
-void TcpConnection::sendFile(std::span<const std::byte> header,
-                             base::FileRegion file) {
+void TcpConnection::sendFile(std::span<const std::byte> header, base::FileRegion file) {
   if (state_ == State::kClosing || draining_)
     throw std::logic_error("send on closed or draining connection");
   try {
@@ -100,16 +96,17 @@ void TcpConnection::sendFile(std::span<const std::byte> header,
   }
 }
 
-void TcpConnection::consume(std::size_t count) { io_.consume(count); }
+// 从连接的输入缓冲区中移除这次已经接受的字节
+void TcpConnection::consumeInputBytes(std::size_t count) { io_.consumeInputBytes(count); }
 
-void TcpConnection::beginDrain() {
+void TcpConnection::beginConnectionDrain() {
   if (state_ == State::kClosing || draining_) return;
   draining_ = true;
   inputStopped_ = true;
   readPaused_ = true;
   idleWaiting_ = false;
-  // Suppress Session::HandleWriteComplete before any future write can finish a
-  // response.
+  // 在后续写操作可能完成响应之前，禁止调用
+  // Session::HandleWriteComplete。
   writeCompleteCallback_ = {};
   if (timeoutActivityCallback_) timeoutActivityCallback_(*this, false);
   if (!io_.hasPendingOutput())
@@ -119,7 +116,8 @@ void TcpConnection::beginDrain() {
 }
 
 void TcpConnection::closeAfterFlush() {
-  inputStopped_ = true;
+  inputStopped_ = true;  // 停止后续输入
+  // 输出排空才关闭
   if (!io_.hasPendingOutput())
     requestClose();
   else if (!handlingEvent_ && state_ == State::kActive) {
@@ -133,12 +131,15 @@ void TcpConnection::closeAfterFlush() {
 }
 
 void TcpConnection::pauseReading() {
+  // 暂停读取
   readPaused_ = true;
   if (!handlingEvent_ && state_ == State::kActive) updateInterest();
 }
 
 void TcpConnection::resumeReading() {
+  // 解除暂停
   readPaused_ = false;
+  // 在 handleConnectionEvent() 执行时，不会从此处更新 interest
   if (!handlingEvent_ && state_ == State::kActive) updateInterest();
 }
 
@@ -149,9 +150,8 @@ void TcpConnection::setIdleWait(bool waiting) {
 }
 
 void TcpConnection::updateInterest() {
-  std::uint32_t events = !inputStopped_ && !readPaused_ && io_.acceptsInput()
-                             ? EPOLLIN | EPOLLRDHUP
-                             : 0U;
+  std::uint32_t events =
+      !inputStopped_ && !readPaused_ && io_.acceptsInput() ? EPOLLIN | EPOLLRDHUP : 0U;
   if (io_.hasPendingOutput()) events |= EPOLLOUT;
   connectionChannel_.setInterest(events);
 }
@@ -165,11 +165,12 @@ void TcpConnection::readMessages() {
     }
     lastResult_.bytesRead += read.bytesRead;
     lastResult_.readError = read.errorNumber;
+    // 收到数据或首次观察到对端发送结束(EOF)
     if (read.bytesRead || (read.peerClosed && !eofNotified_)) {
       if (read.peerClosed) eofNotified_ = true;
       ++messageCount_;
       dispatchMessage(io_.inputView(), read.peerClosed);
-      // The callback may have consumed or invalidated the borrowed view.
+      // 回调可能已经消费输入或使借用的视图失效。
     }
     if (read.peerClosed && !writeCompleteCallback_) inputStopped_ = true;
     if (read.errorNumber) lastResult_.closeRequested = true;
@@ -180,33 +181,32 @@ void TcpConnection::readMessages() {
 void TcpConnection::flushOutput() {
   while (state_ == State::kActive && io_.hasPendingOutput()) {
     const auto written = io_.writeAvailable();
-    if (written.bytesWritten && timeoutActivityCallback_)
-      timeoutActivityCallback_(*this, true);
+    if (written.bytesWritten && timeoutActivityCallback_) timeoutActivityCallback_(*this, true);
     lastResult_.bytesWritten += written.bytesWritten;
     lastResult_.writeWouldBlock = written.wouldBlock;
     lastResult_.writeError = written.errorNumber;
+    // 写入报错
     if (written.errorNumber) {
       lastResult_.closeRequested = true;
       break;
     }
     if (written.wouldBlock) {
       base::info("S3 evidence: connection write reached EAGAIN with " +
-                 std::to_string(io_.pendingBytes()) +
-                 " response bytes pending.");
+                 std::to_string(io_.pendingBytes()) + " response bytes pending.");
       break;
     }
-    if (!io_.hasPendingOutput() && written.bytesWritten &&
-        writeCompleteCallback_ && !inputStopped_) {
-      // Callback Send only queues: the outer loop drives the next response.
+    // 必须响应排空
+    if (!io_.hasPendingOutput() && written.bytesWritten && writeCompleteCallback_ &&
+        !inputStopped_) {
+      // 回调中的 Send 只排队：由外层循环推进下一个响应。
       writeCompleteCallback_(*this);
     } else
       break;
     if (written.fileTransfer)
-      break;  // Do not spend another file budget through a reentrant HTTP
-              // callback.
+      break;  // 不得通过重入的 HTTP
+              // 回调再次消耗文件发送预算。
   }
-  if (inputStopped_ && !io_.hasPendingOutput())
-    lastResult_.closeRequested = true;
+  if (inputStopped_ && !io_.hasPendingOutput()) lastResult_.closeRequested = true;
   if (!handlingEvent_ && lastResult_.closeRequested) requestClose();
 }
 
@@ -233,17 +233,14 @@ void TcpConnection::handleConnectionEvent(std::uint32_t mask) noexcept {
     if (result.socketErrorObserved && result.socketError)
       base::warn(errorMessage(fd(), "SO_ERROR", result.socketError));
     if (result.socketErrorQueryError)
-      base::warn(errorMessage(fd(),
-                              "getsockopt(SO_ERROR)",
-                              result.socketErrorQueryError));
-    if (result.readError)
-      base::warn(errorMessage(fd(), "recv", result.readError));
-    if (result.writeError)
-      base::warn(errorMessage(fd(), "send", result.writeError));
+      base::warn(errorMessage(fd(), "getsockopt(SO_ERROR)", result.socketErrorQueryError));
+    if (result.readError) base::warn(errorMessage(fd(), "recv", result.readError));
+    if (result.writeError) base::warn(errorMessage(fd(), "send", result.writeError));
     if (state_ == State::kActive) {
       if (result.closeRequested)
         requestClose();
       else
+        // 统一更新事件掩码
         updateInterest();
     }
   } catch (const std::exception& error) {

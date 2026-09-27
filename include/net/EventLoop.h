@@ -15,8 +15,8 @@ namespace hp::net {
 class Channel;
 struct EventLoopTestAccess;
 
-// Owner-thread registry; task/stop/control requests are synchronized
-// cross-thread entry points.
+// 由所属线程管理的注册表；任务、停止和控制请求是已同步的
+// 跨线程入口。
 class EventLoop final : private base::NonCopyable {
  public:
   static constexpr std::size_t kTaskCapacity = 1024;
@@ -30,19 +30,19 @@ class EventLoop final : private base::NonCopyable {
   EventLoop();
   ~EventLoop() noexcept;
 
-  void loop();
+  void runEventLoop();
   void pollOnce(int timeoutMs);
 
-  bool queueInLoop(TaskCallback task);
-  void requestStop();
+  bool queueTaskInEventLoop(TaskCallback task);
+  void requestLoopStop();
 
   enum class Control { kNone, kDrain, kForce };
   using Deadline = timer::TimerQueue::TimePoint;
   using ControlCallback = std::function<void(Control, Deadline)>;
 
   void registerControlCallback(ControlCallback controlCallback);
-  void requestDrain(Deadline deadline);
-  void requestForce();
+  void requestLoopDrain(Deadline deadline);
+  void requestLoopForceClose();
   void notifyControl();
 
   bool failed() const;
@@ -83,7 +83,7 @@ class EventLoop final : private base::NonCopyable {
     cleanupCallback_ = std::move(cleanupCallback);
   }
 
-  bool enqueue(TaskCallback& task);
+  bool enqueueLoopTask(TaskCallback& task);
   void releaseTask(TaskCallback& task);
   void releaseTasks(std::deque<TaskCallback>& tasks);
 
@@ -95,12 +95,12 @@ class EventLoop final : private base::NonCopyable {
 
   void dispatchControl();
   bool timersAllowed();
-  void dispatch(std::uint64_t token, std::uint32_t mask);
+  void dispatchChannelEvent(std::uint64_t token, std::uint32_t mask);
 
   void wakeLocked();
   void drainWakeup();
 
-  void fail(std::exception_ptr error);
+  void failEventLoop(std::exception_ptr error);
 
   Epoller epoller_;
   timer::TimerQueue timers_;
@@ -108,7 +108,7 @@ class EventLoop final : private base::NonCopyable {
 
   std::unordered_map<std::uint64_t, Channel*> channels_;
   std::unordered_map<int, std::uint64_t> fds_;
-  CleanupCallback cleanupCallback_;
+  CleanupCallback cleanupCallback_;  // 绑定 `ConnectionRegistry::onCleanup()`
   Counters counters_;
   bool polling_{false};
   bool failureObserved_{false};
@@ -118,7 +118,7 @@ class EventLoop final : private base::NonCopyable {
 
   mutable std::mutex mutex_;
 
-  ControlCallback controlCallback_;
+  ControlCallback controlCallback_;  // 绑定 `TcpServer::onControl()`
   Control control_{Control::kNone};
   Deadline controlDeadline_{};
   bool controlPending_{false};

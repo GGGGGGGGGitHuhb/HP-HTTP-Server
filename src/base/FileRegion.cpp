@@ -38,7 +38,7 @@ FileRegion &FileRegion::operator=(FileRegion &&other) noexcept {
   return *this;
 }
 
-void FileRegion::advance(std::size_t bytes) {
+void FileRegion::advanceFileOffset(std::size_t bytes) {
   if (bytes > remaining_)
     throw std::out_of_range("file progress exceeds region");
   offset_ += static_cast<off_t>(bytes);

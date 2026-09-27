@@ -7,43 +7,41 @@
 
 namespace hp::net {
 struct EventLoopThreadPool::Ticket {
-  EventLoopThreadPool& pool;
-  std::size_t index;
+  EventLoopThreadPool& workerPool;
+  std::size_t workerIndex;
   bool armed{false};
 
   ~Ticket() {
     if (armed) {
-      std::lock_guard lock(pool.mutex_);
-      --pool.outstanding_[index];
+      std::lock_guard lock(workerPool.mutex_);
+      --workerPool.outstanding_[workerIndex];
     }
   }
 };
 
-void EventLoopThreadPool::WorkerInitTask::initializeWorker(
-    EventLoop& loop) const {
-  if (init) init(index, loop);
+void EventLoopThreadPool::WorkerInitTask::initializeWorker(EventLoop& workerEventLoop) const {
+  if (workerInitCallback) workerInitCallback(workerIndex, workerEventLoop);
 }
 
-void EventLoopThreadPool::WorkerCleanupTask::cleanupWorker(
-    EventLoop& loop) const {
-  // A planned drain may finish one owner before its peers; fatal stops all.
+void EventLoopThreadPool::WorkerCleanupTask::cleanupWorker(EventLoop& workerEventLoop) const {
+  // 计划内的排空允许某个所属线程先于其他线程结束；致命错误则停止全部线程。
   bool planned;
   {
-    std::lock_guard lock(pool->mutex_);
-    planned = pool->draining_;
+    std::lock_guard lock(workerPool->mutex_);
+    planned = workerPool->draining_;
   }
-  if (!planned || loop.failed()) pool->requestStop();
-  if (cleanup) cleanup(index, loop);
+  if (!planned || workerEventLoop.failed()) workerPool->requestPoolStop();
+  if (workerCleanupCallback) workerCleanupCallback(workerIndex, workerEventLoop);
 }
 
-void EventLoopThreadPool::ReservedPoolTask::runTask(EventLoop& loop) const {
-  task(loop);
+void EventLoopThreadPool::ReservedPoolTask::runTask(EventLoop& workerEventLoop) const {
+  task(workerEventLoop);
 }
 
 EventLoopThreadPool::~EventLoopThreadPool() noexcept {
   try {
-    requestStop();
-    join();
+    requestPoolStop();
+    joinWorkerThreads();
   } catch (const std::exception& error) {
     base::error(error.what());
   } catch (...) {
@@ -51,131 +49,134 @@ EventLoopThreadPool::~EventLoopThreadPool() noexcept {
   }
 }
 
-void EventLoopThreadPool::start(std::size_t count,
-                                WorkerInitCallback init,
-                                WorkerCleanupCallback cleanup) {
+void EventLoopThreadPool::createWorkerThreads(std::size_t workerCount,
+                                              WorkerInitCallback workerInitCallback,
+                                              WorkerCleanupCallback workerCleanupCallback) {
   {
     std::lock_guard lock(mutex_);
     if (started_) throw std::logic_error("pool already started");
-    if (count > 64) throw std::invalid_argument("worker count exceeds 64");
+    if (workerCount > 64) throw std::invalid_argument("worker count exceeds 64");
     started_ = true;
-    workers_.reserve(count);
-    outstanding_.resize(count);
-    for (std::size_t i = 0; i < count; ++i)
+    workers_.reserve(workerCount);
+    outstanding_.resize(workerCount);
+    for (std::size_t i = 0; i < workerCount; ++i)
       workers_.push_back(std::make_unique<EventLoopThread>());
   }
   try {
-    for (std::size_t i = 0; i < count; ++i) {
-      workers_[i]->start(
-          [target = WorkerInitTask{init, i}](EventLoop& loop) {
-            target.initializeWorker(loop);
+    for (std::size_t i = 0; i < workerCount; ++i) {
+      workers_[i]->createWorkerThread(
+          [target = WorkerInitTask{workerInitCallback, i}](EventLoop& workerEventLoop) {
+            target.initializeWorker(workerEventLoop);
           },
-          [target = WorkerCleanupTask{this, cleanup, i}](EventLoop& loop) {
-            target.cleanupWorker(loop);
+          [target = WorkerCleanupTask{this, workerCleanupCallback, i}](EventLoop& workerEventLoop) {
+            target.cleanupWorker(workerEventLoop);
           });
     }
-    bool stop;
+    bool shouldRequestWorkerStop;
     {
       std::lock_guard lock(mutex_);
       ready_ = true;
-      stop = stopping_;
+      shouldRequestWorkerStop = stopping_;
     }
-    if (stop) stopWorkers();
+    if (shouldRequestWorkerStop) requestAllWorkersStop();
   } catch (...) {
     auto error = std::current_exception();
-    requestStop();
+    requestPoolStop();
     try {
-      join();
+      joinWorkerThreads();
     } catch (...) {
     }
     std::rethrow_exception(error);
   }
 }
 
-bool EventLoopThreadPool::post(std::size_t index,
-                               EventLoopThread::TaskCallback task) {
+bool EventLoopThreadPool::postTaskToWorkerAtIndex(std::size_t workerIndex,
+                                                  EventLoopThread::TaskCallback task) {
   if (!task) throw std::invalid_argument("empty pool task");
-  auto ticket = std::make_shared<Ticket>(Ticket{*this, index});
+  auto ticket = std::make_shared<Ticket>(Ticket{*this, workerIndex});
   auto* reservation = ticket.get();
-  EventLoopThread::TaskCallback queued =
-      [target = ReservedPoolTask{std::move(ticket), std::move(task)}](
-          EventLoop& loop) { target.runTask(loop); };
+  // 把 task 也就是 TcpServer::adoptConnection() 包装为新 lambda
+  // 交给 queue，之后交给 EventLoopThread::post()
+  EventLoopThread::TaskCallback queuedTask =
+      [target = ReservedPoolTask{std::move(ticket), std::move(task)}](EventLoop& workerEventLoop) {
+        // 保存原始 lambda，TcpServer::adoptConnection()
+        target.runTask(workerEventLoop);
+      };
   {
     std::lock_guard lock(mutex_);
-    if (!ready_ || stopping_ || index >= workers_.size() ||
-        outstanding_[index] == kTaskCapacity)
+    if (!ready_ || stopping_ || workerIndex >= workers_.size() ||
+        outstanding_[workerIndex] == kTaskCapacity)
       return false;
-    ++outstanding_[index];
+    ++outstanding_[workerIndex];
     reservation->armed = true;
     ++forwarding_;
   }
-  // Stop records its cutoff now, but signals workers only after all accepted
-  // forwards finish. No user capture is released under the pool mutex.
+  // Stop 此时记录停止接收的界限，但必须等所有已接受的
+  // 转发完成才通知工作线程。不得在持有线程池互斥锁时释放用户捕获对象。
   try {
-    const bool accepted = workers_[index]->post(std::move(queued));
-    finishForward();
+    // 用 index 让任务进入选中的 worker
+    const bool accepted = workers_[workerIndex]->postTaskToWorker(std::move(queuedTask));
+    finishTaskForward();
     return accepted;
   } catch (...) {
-    finishForward();
+    finishTaskForward();
     throw;
   }
 }
 
-void EventLoopThreadPool::finishForward() noexcept {
-  bool stop;
+void EventLoopThreadPool::finishTaskForward() noexcept {
+  bool shouldRequestWorkerStop;
   {
     std::lock_guard lock(mutex_);
     --forwarding_;
-    stop = stopping_ && forwarding_ == 0;
+    shouldRequestWorkerStop = stopping_ && forwarding_ == 0;
     forwarded_.notify_all();
   }
-  if (stop) stopWorkers();
+  if (shouldRequestWorkerStop) requestAllWorkersStop();
 }
 
-void EventLoopThreadPool::stopWorkers() {
-  for (auto& worker : workers_) worker->requestStop();
+void EventLoopThreadPool::requestAllWorkersStop() {
+  for (auto& worker : workers_) worker->requestWorkerStop();
 }
 
-void EventLoopThreadPool::requestDrain(EventLoop::Deadline deadline) {
+void EventLoopThreadPool::requestWorkersDrain(EventLoop::Deadline deadline) {
   {
     std::lock_guard lock(mutex_);
     draining_ = true;
   }
-  for (auto& worker : workers_) worker->requestDrain(deadline);
+  for (auto& worker : workers_) worker->requestWorkerDrain(deadline);
 }
 
-void EventLoopThreadPool::requestForce() {
+void EventLoopThreadPool::requestWorkersForceClose() {
   {
     std::lock_guard lock(mutex_);
     draining_ = true;
   }
-  for (auto& worker : workers_) worker->requestForce();
+  for (auto& worker : workers_) worker->requestWorkerForceClose();
 }
 
-void EventLoopThreadPool::requestStop() {
-  bool stop;
+void EventLoopThreadPool::requestPoolStop() {
+  bool shouldRequestWorkerStop;
   {
     std::lock_guard lock(mutex_);
     if (!started_) return;
     stopping_ = true;
-    stop = forwarding_ == 0;
+    shouldRequestWorkerStop = forwarding_ == 0;
   }
-  if (stop) stopWorkers();
+  if (shouldRequestWorkerStop) requestAllWorkersStop();
 }
 
-bool EventLoopThreadPool::forwardsFinished() const noexcept {
-  return forwarding_ == 0;
-}
+bool EventLoopThreadPool::taskForwardsFinished() const noexcept { return forwarding_ == 0; }
 
-void EventLoopThreadPool::join() {
+void EventLoopThreadPool::joinWorkerThreads() {
   {
     std::unique_lock lock(mutex_);
-    forwarded_.wait(lock, [this] { return forwardsFinished(); });
+    forwarded_.wait(lock, [this] { return taskForwardsFinished(); });
   }
   std::exception_ptr error;
   for (auto& worker : workers_) {
     try {
-      worker->join();
+      worker->joinWorkerThread();
     } catch (...) {
       if (!error) error = std::current_exception();
     }

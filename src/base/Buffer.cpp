@@ -33,7 +33,7 @@ std::span<const std::byte> Buffer::readableView() const noexcept {
   return {storage_.get() + read_, readableBytes()};
 }
 
-std::span<std::byte> Buffer::prepare(std::size_t count) {
+std::span<std::byte> Buffer::prepareWritableBytes(std::size_t count) {
   const auto readable = readableBytes();
   if (count > limit_ - readable)
     throw std::length_error("buffer limit exceeded");
@@ -46,7 +46,7 @@ std::span<std::byte> Buffer::prepare(std::size_t count) {
       const auto doubled =
           capacity_ > limit_ - capacity_ ? limit_ : capacity_ * 2;
       const auto grown = std::max(required, doubled);
-      // Allocate first: failure preserves the old bytes and all cursors.
+      // 先分配：分配失败时保留原有字节及全部游标。
       auto replacement =
           Storage(static_cast<std::byte*>(::operator new(grown)));
       if (readable)
@@ -62,14 +62,14 @@ std::span<std::byte> Buffer::prepare(std::size_t count) {
   return {storage_.get() + write_, count};
 }
 
-void Buffer::commit(std::size_t count) {
+void Buffer::commitWrittenBytes(std::size_t count) {
   if (count > prepared_)
     throw std::out_of_range("buffer commit exceeds prepared bytes");
   write_ += count;
   prepared_ = 0;
 }
 
-void Buffer::consume(std::size_t count) {
+void Buffer::consumeReadableBytes(std::size_t count) {
   if (count > readableBytes())
     throw std::out_of_range("buffer consumption exceeds readable bytes");
   read_ += count;
@@ -77,19 +77,19 @@ void Buffer::consume(std::size_t count) {
   if (read_ == write_) read_ = write_ = 0;
 }
 
-void Buffer::append(std::span<const std::byte> bytes) {
-  auto tail = prepare(bytes.size());
+void Buffer::appendBytes(std::span<const std::byte> bytes) {
+  auto tail = prepareWritableBytes(bytes.size());
   if (!bytes.empty()) std::memcpy(tail.data(), bytes.data(), bytes.size());
-  commit(bytes.size());
+  commitWrittenBytes(bytes.size());
 }
 
-void Buffer::reset() noexcept { read_ = write_ = prepared_ = 0; }
+void Buffer::resetBuffer() noexcept { read_ = write_ = prepared_ = 0; }
 
 void Buffer::releaseEmpty(std::size_t retainLimit) noexcept {
   if (readableBytes() == 0 && capacity_ > retainLimit) {
     storage_.reset();
     capacity_ = 0;
-    reset();
+    resetBuffer();
   }
 }
 }  // namespace hp::base
