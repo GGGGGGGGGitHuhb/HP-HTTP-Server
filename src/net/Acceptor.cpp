@@ -29,8 +29,7 @@ Acceptor::Acceptor(EventLoop& ownerEventLoop, std::uint16_t port)
 Acceptor::~Acceptor() noexcept { disableAcceptEvents(); }
 
 void Acceptor::enableAcceptEvents() {
-  if (!acceptedCallback_)
-    throw std::invalid_argument("missing accepted callback");
+  if (!acceptedCallback_) throw std::invalid_argument("missing accepted callback");
   listenerChannel_.setInterest(EPOLLIN);
 }
 
@@ -65,6 +64,7 @@ void Acceptor::acceptPendingConnections() {
     }
     if (!accepted.valid()) return;
     try {
+      accepted.setTcpNoDelay(true);
       acceptedCallback_(std::move(accepted));
     } catch (...) {
       // 交付过程按值拥有 Socket，因此栈展开只关闭该 fd。

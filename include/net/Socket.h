@@ -25,6 +25,7 @@ class Socket final : private base::NonCopyable {
 
   void setNonBlocking();
   void setReuseAddress(bool enabled);
+  void setTcpNoDelay(bool enabled);
 
   void bindAny(std::uint16_t port);
   void listen(int backlog);

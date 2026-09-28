@@ -2,6 +2,7 @@
 
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -16,9 +17,7 @@ namespace {
 
 [[noreturn]] void throwSystemError(std::string operation) {
   const int errorNumber = errno;
-  throw std::system_error(errorNumber,
-                          std::generic_category(),
-                          std::move(operation));
+  throw std::system_error(errorNumber, std::generic_category(), std::move(operation));
 }
 
 }  // namespace
@@ -37,8 +36,7 @@ Socket& Socket::operator=(Socket&& other) noexcept {
 }
 
 Socket Socket::createTcp() {
-  const int fd =
-      ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+  const int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
   if (fd == -1) {
     throwSystemError("socket(AF_INET, SOCK_STREAM)");
   }
@@ -74,9 +72,15 @@ void Socket::setNonBlocking() {
 
 void Socket::setReuseAddress(bool enabled) {
   const int option = enabled ? 1 : 0;
-  if (::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) ==
-      -1) {
+  if (::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1) {
     throwSystemError("setsockopt(SO_REUSEADDR)");
+  }
+}
+
+void Socket::setTcpNoDelay(bool enabled) {
+  const int option = enabled ? 1 : 0;
+  if (::setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, &option, sizeof(option)) == -1) {
+    throwSystemError("setsockopt(TCP_NODELAY)");
   }
 }
 
@@ -86,9 +90,7 @@ void Socket::bindAny(std::uint16_t port) {
   address.sin_addr.s_addr = htonl(INADDR_ANY);
   address.sin_port = htons(port);
 
-  if (::bind(fd_,
-             reinterpret_cast<const sockaddr*>(&address),
-             sizeof(address)) == -1) {
+  if (::bind(fd_, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == -1) {
     throwSystemError("bind");
   }
 }
@@ -101,8 +103,7 @@ void Socket::listen(int backlog) {
 
 Socket Socket::acceptNonBlocking() {
   while (true) {
-    const int acceptedFd =
-        ::accept4(fd_, nullptr, nullptr, SOCK_NONBLOCK | SOCK_CLOEXEC);
+    const int acceptedFd = ::accept4(fd_, nullptr, nullptr, SOCK_NONBLOCK | SOCK_CLOEXEC);
     if (acceptedFd >= 0) {
       return Socket(acceptedFd);
     }
@@ -119,15 +120,11 @@ Socket Socket::acceptNonBlocking() {
 std::uint16_t Socket::localPort() const {
   sockaddr_in address{};
   socklen_t addressLength = sizeof(address);
-  if (::getsockname(fd_,
-                    reinterpret_cast<sockaddr*>(&address),
-                    &addressLength) == -1) {
+  if (::getsockname(fd_, reinterpret_cast<sockaddr*>(&address), &addressLength) == -1) {
     throwSystemError("getsockname");
   }
   if (address.sin_family != AF_INET || addressLength < sizeof(address)) {
-    throw std::system_error(EAFNOSUPPORT,
-                            std::generic_category(),
-                            "getsockname(AF_INET)");
+    throw std::system_error(EAFNOSUPPORT, std::generic_category(), "getsockname(AF_INET)");
   }
   return ntohs(address.sin_port);
 }
@@ -135,8 +132,7 @@ std::uint16_t Socket::localPort() const {
 int Socket::socketError() const {
   int errorNumber = 0;
   socklen_t errorLength = sizeof(errorNumber);
-  if (::getsockopt(fd_, SOL_SOCKET, SO_ERROR, &errorNumber, &errorLength) ==
-      -1) {
+  if (::getsockopt(fd_, SOL_SOCKET, SO_ERROR, &errorNumber, &errorLength) == -1) {
     throwSystemError("getsockopt(SO_ERROR)");
   }
   return errorNumber;

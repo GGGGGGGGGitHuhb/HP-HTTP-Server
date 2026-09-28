@@ -6,6 +6,9 @@
 
 ## 当前状态与目标架构
 
+2026-09-28：V0.5.1/S2连接级TCP_NODELAY策略已交付并独立验收。Acceptor取得有效局部Socket后，在交付AcceptedCallback前调用Socket::setTcpNoDelay(true)；不设置监听socket或依赖继承。选项失败保留局部所有权，RAII关闭该连接并继续接收；无新持久回调、跨线程状态或逐响应选项开关。ConnectionIo的头部send/正文sendfile、offset、背压和关闭契约保持。默认客户端的约42ms正文等待已在局部负载消除，S3扩展验收尚未执行。
+
+
 R7 当前实现（2026-09-26，已验收）：仅更新项目自有语义名称与允许翻译的原有英文注释。`EventLoopThread::createWorkerThread()` 创建线程并等待初始化，`runWorkerEventLoop()` 在线程内初始化、执行通用 `EventLoop::runEventLoop()` 并清理；`TcpServer::runTcpServer()` 组织主循环及退出清理。服务器先选择 workerIndex，`EventLoopThreadPool::postTaskToWorkerAtIndex()` 保留指定目标、配额及转发约束；单线程与线程池分别 `joinWorkerThread()` / `joinWorkerThreads()`。模块边界、线程/任务所有权、协议及异常路径不变。用户受保护注释内的旧名称按明确要求保留；下方 R6 及更早文字为历史记录。
 
 R6 当前实现（2026-09-21，已验收）：生产文件使用 PascalCase，普通函数/变量使用 camelCase。回调按事件统一命名，外部短 lambda 转发到具名处理函数；有运行状态约束的槽通过公开 registerXxxCallback 检查后调用私有内联纯保存 setter，无约束槽直接使用 setter。主从 Reactor、每连接 HTTP 状态及原线程归属保持。EventLoopThread 投递使用共享任务槽，先完成分配再移动任务，入队前释放局部槽所有权；成功执行由 worker 释放任务捕获，失败路径先解锁后释放，新增一次槽分配成本不代表性能改善。下方 R1–R5 的旧符号和绑定形式属于历史记录。
@@ -130,7 +133,7 @@ HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1
 
 ### 测试与验证层
 
-2026-09-28 规划边界：V0.5.1 诊断工具属于独立验证层，不成为生产依赖。历史固定 A/B 基准与当前版本测量必须分开标识；跟踪、插桩和单因素实验的结果不能混入无插桩性能基线。当前生产模块、线程归属和 HTTP 契约保持，生产修复由后续批准设计决定。S1 已交付独立诊断入口并获 Reviewer002 PASS。当前文件响应路径先发送头部再 sendfile；时间线与客户端ACK单因素对照支持该拆分发送与ACK等待交互造成小正文等待，未直接观测内核Nagle状态。生产发送策略尚未修复，后续由S2批准设计决定。
+2026-09-28 规划边界：V0.5.1 诊断工具属于独立验证层，不成为生产依赖。历史固定 A/B 基准与当前版本测量必须分开标识；跟踪、插桩和单因素实验的结果不能混入无插桩性能基线。当前生产模块、线程归属和 HTTP 契约保持，生产修复由后续批准设计决定。S1 已交付独立诊断入口并获 Reviewer002 PASS。当前文件响应路径先发送头部再 sendfile；时间线与客户端ACK单因素对照支持该拆分发送与ACK等待交互造成小正文等待，未直接观测内核Nagle状态。该S1诊断时点尚未修复；当前S2已完成连接级TCP_NODELAY最小修复，见本文最新状态。
 
 
 V0.5/S4已交付独立于生产依赖的Python构建/协调脚本及wrk Lua summary，固定两版本Release、两文件、三轮对比。每套累计日志2GiB、启动磁盘4GiB；完整长度/SHA/keep-alive/无尾字节前后审计与错误整套invalid、有限超时及owned进程回收均经Reviewer002验证。基准不承担逐请求计时body审计或生产性能保证；WSL同机与noise限制、1KiB明显下降及未知根因均保留。
