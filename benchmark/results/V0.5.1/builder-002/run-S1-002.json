@@ -1,0 +1,1451 @@
+{
+  "kind": "intermediate",
+  "status": "valid",
+  "samples": [
+    {
+      "status": "valid",
+      "label": "S1",
+      "commit": "70b866bddbe7b4219037a93d23bde19702399d73",
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "started_utc": "2026-09-28T02:17:30.607081+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/build/hp_http_server",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/run-S1-002/root"
+      ],
+      "config_sha256": "cbe6b78017534a7ef4fd1ef36daea6252949dfdead44fcc1ff64b6a726346535",
+      "server_identity": {
+        "pid": 12262,
+        "starttime": 15057404,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 35380,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5004265,
+        "requests": 3591,
+        "bytes": 4057599,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44343.841827,
+          "p50": 44033.0,
+          "p95": 48090.0,
+          "p99": 48296.0,
+          "max": 49428.0
+        },
+        "elapsed_seconds": 5.004265,
+        "qps": 717.5878975234125,
+        "received_mib_s": 0.7732659946217244,
+        "latency_ms": {
+          "mean": 44.343841827,
+          "p50": 44.033,
+          "p95": 48.09,
+          "p99": 48.296,
+          "max": 49.428
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-28T02:17:30.857273+00:00",
+          "envelope_end_utc": "2026-09-28T02:17:35.896251+00:00",
+          "envelope_seconds": 5.038790569000412,
+          "server_cpu_seconds": 0.25,
+          "server_cpu_percent_one_core": 4.9615080558824385,
+          "wrk_cpu_seconds": 0.12920199999999998,
+          "wrk_cpu_percent_one_core": 2.564147055344491,
+          "rss_sampled_max_kib": 4160,
+          "VmHWM_kib_including_warmup": 4160,
+          "rss_samples": [
+            {
+              "elapsed": 0.0007219639956019819,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.0,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 1.0547904379782267,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.05,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 2.0187376059766393,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.1,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 3.0412991599878296,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.14,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 4.017946869978914,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.19,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.0132809929782525,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.25,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.038790569000412,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.25,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20009216,
+        "requests": 14254,
+        "bytes": 16096126,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44860.783429,
+          "p50": 44057.0,
+          "p95": 48145.0,
+          "p99": 48370.0,
+          "max": 49458.0
+        },
+        "elapsed_seconds": 20.009216,
+        "qps": 712.3717391026215,
+        "received_mib_s": 0.767169586246601,
+        "latency_ms": {
+          "mean": 44.860783429,
+          "p50": 44.057,
+          "p95": 48.145,
+          "p99": 48.37,
+          "max": 49.458
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-28T02:17:35.896536+00:00",
+          "envelope_end_utc": "2026-09-28T02:17:55.970460+00:00",
+          "envelope_seconds": 20.073756208992563,
+          "server_cpu_seconds": 0.95,
+          "server_cpu_percent_one_core": 4.732547262751067,
+          "wrk_cpu_seconds": 0.5428740000000001,
+          "wrk_cpu_percent_one_core": 2.704396697598656,
+          "rss_sampled_max_kib": 4160,
+          "VmHWM_kib_including_warmup": 4160,
+          "rss_samples": [
+            {
+              "elapsed": 0.0005857959913555533,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.25,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 1.0061852910148446,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.3,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 2.058232028997736,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.35,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 3.054251146997558,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.4,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 4.0309837280074134,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.44,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 5.036877267993987,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.49,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 6.042967571993358,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.55,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 7.004548805998638,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.59,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 8.041233964002458,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.64,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 9.005630146013573,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.68,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 10.037242332007736,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.73,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 11.002809583995258,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.77,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 12.053520218003541,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.82,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 13.058142555993982,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.87,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 14.028594759001862,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.91,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 15.017138479015557,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 0.96,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 16.015527389012277,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 1.01,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 17.078395695018116,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 1.06,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 18.03813560900744,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 1.11,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 19.00326534701162,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 1.15,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 20.050161665014457,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 1.2,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            },
+            {
+              "elapsed": 20.073756208992563,
+              "pid": 12262,
+              "starttime": 15057404,
+              "cpu_seconds": 1.2,
+              "rss_kib": 4160,
+              "hwm_kib": 4160
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "cleanup": {
+        "pid": 12262,
+        "starttime": 15057404,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-28T02:17:56.194860+00:00"
+    },
+    {
+      "status": "valid",
+      "label": "S1",
+      "commit": "70b866bddbe7b4219037a93d23bde19702399d73",
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "started_utc": "2026-09-28T02:17:56.196035+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/build/hp_http_server",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/run-S1-002/root"
+      ],
+      "config_sha256": "cbe6b78017534a7ef4fd1ef36daea6252949dfdead44fcc1ff64b6a726346535",
+      "server_identity": {
+        "pid": 12433,
+        "starttime": 15059963,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 36158,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5003789,
+        "requests": 3573,
+        "bytes": 4037277,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44582.299188,
+          "p50": 44068.0,
+          "p95": 48155.0,
+          "p99": 48461.0,
+          "max": 50517.0
+        },
+        "elapsed_seconds": 5.003789,
+        "qps": 714.0588861760557,
+        "received_mib_s": 0.7694663750045566,
+        "latency_ms": {
+          "mean": 44.582299188,
+          "p50": 44.068,
+          "p95": 48.155,
+          "p99": 48.461,
+          "max": 50.517
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-28T02:17:56.445073+00:00",
+          "envelope_end_utc": "2026-09-28T02:18:01.455493+00:00",
+          "envelope_seconds": 5.010160946985707,
+          "server_cpu_seconds": 0.23,
+          "server_cpu_percent_one_core": 4.59067088729707,
+          "wrk_cpu_seconds": 0.13596799999999987,
+          "wrk_cpu_percent_one_core": 2.7138449530609012,
+          "rss_sampled_max_kib": 3840,
+          "VmHWM_kib_including_warmup": 3840,
+          "rss_samples": [
+            {
+              "elapsed": 0.0006440779834520072,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.0,
+              "rss_kib": 3840,
+              "hwm_kib": 3840
+            },
+            {
+              "elapsed": 1.0539856099931058,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.05,
+              "rss_kib": 3840,
+              "hwm_kib": 3840
+            },
+            {
+              "elapsed": 2.021729822998168,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.09,
+              "rss_kib": 3840,
+              "hwm_kib": 3840
+            },
+            {
+              "elapsed": 3.0507098349917214,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.14,
+              "rss_kib": 3840,
+              "hwm_kib": 3840
+            },
+            {
+              "elapsed": 4.018360357003985,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.18,
+              "rss_kib": 3840,
+              "hwm_kib": 3840
+            },
+            {
+              "elapsed": 5.010160946985707,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.23,
+              "rss_kib": 3840,
+              "hwm_kib": 3840
+            }
+          ],
+          "rss_sample_count": 6
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20015001,
+        "requests": 14319,
+        "bytes": 16169511,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44673.589077,
+          "p50": 44053.0,
+          "p95": 48110.0,
+          "p99": 48382.0,
+          "max": 51379.0
+        },
+        "elapsed_seconds": 20.015001,
+        "qps": 715.4134041761976,
+        "received_mib_s": 0.7704444955835045,
+        "latency_ms": {
+          "mean": 44.673589076999995,
+          "p50": 44.053,
+          "p95": 48.11,
+          "p99": 48.382,
+          "max": 51.379
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-28T02:18:01.455842+00:00",
+          "envelope_end_utc": "2026-09-28T02:18:21.544108+00:00",
+          "envelope_seconds": 20.08815762400627,
+          "server_cpu_seconds": 1.04,
+          "server_cpu_percent_one_core": 5.177179607338168,
+          "wrk_cpu_seconds": 0.6033680000000001,
+          "wrk_cpu_percent_one_core": 3.0036004858850154,
+          "rss_sampled_max_kib": 4000,
+          "VmHWM_kib_including_warmup": 4000,
+          "rss_samples": [
+            {
+              "elapsed": 0.0008326050010509789,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.24,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 1.0127577940002084,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.31,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 2.060294052003883,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.36,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 3.0269331869785674,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.42,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 4.055687544983812,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.47,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 5.02273418099503,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.52,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 6.055408357002307,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.57,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 7.006735962990206,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.61,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 8.048818923998624,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.66,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 9.010819768998772,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.7,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 10.062404652999248,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.75,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 11.023864627990406,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.8,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 12.066375572991092,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.86,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 13.040319007006474,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.92,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 14.023119810997741,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 0.98,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 15.01321445798385,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 1.03,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 16.058492568001384,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 1.09,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 17.019038136000745,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 1.13,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 18.060054158995626,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 1.18,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 19.018412720004562,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 1.22,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 20.06616144499276,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 1.27,
+              "rss_kib": 3736,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 20.08815762400627,
+              "pid": 12433,
+              "starttime": 15059963,
+              "cpu_seconds": 1.27,
+              "rss_kib": 3736,
+              "hwm_kib": 4000
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "cleanup": {
+        "pid": 12433,
+        "starttime": 15059963,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-28T02:18:21.770657+00:00"
+    },
+    {
+      "status": "valid",
+      "label": "S1",
+      "commit": "70b866bddbe7b4219037a93d23bde19702399d73",
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "started_utc": "2026-09-28T02:18:21.772036+00:00",
+      "warmup_seconds": 5,
+      "measurement_seconds": 20,
+      "server_command": [
+        "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/build/hp_http_server",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--port",
+        "0",
+        "--root",
+        "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/run-S1-002/root"
+      ],
+      "config_sha256": "cbe6b78017534a7ef4fd1ef36daea6252949dfdead44fcc1ff64b6a726346535",
+      "server_identity": {
+        "pid": 12603,
+        "starttime": 15062521,
+        "cpu_seconds": 0.0,
+        "rss_kib": 160,
+        "hwm_kib": 160
+      },
+      "port": 35462,
+      "pre_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "warmup": {
+        "schema": 1,
+        "duration_us": 5005351,
+        "requests": 3592,
+        "bytes": 4058518,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44424.430679,
+          "p50": 44063.0,
+          "p95": 48144.0,
+          "p99": 48451.0,
+          "max": 48933.0
+        },
+        "elapsed_seconds": 5.005351,
+        "qps": 717.6319902440408,
+        "received_mib_s": 0.7732733187487673,
+        "latency_ms": {
+          "mean": 44.424430679,
+          "p50": 44.063,
+          "p95": 48.144,
+          "p99": 48.451,
+          "max": 48.933
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-28T02:18:22.029091+00:00",
+          "envelope_end_utc": "2026-09-28T02:18:27.076027+00:00",
+          "envelope_seconds": 5.046769105014391,
+          "server_cpu_seconds": 0.27,
+          "server_cpu_percent_one_core": 5.349957455587422,
+          "wrk_cpu_seconds": 0.16001599999999971,
+          "wrk_cpu_percent_one_core": 3.1706621933825008,
+          "rss_sampled_max_kib": 4000,
+          "VmHWM_kib_including_warmup": 4000,
+          "rss_samples": [
+            {
+              "elapsed": 0.0008278040040750057,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.0,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 1.0584539730043616,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.06,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 2.0370691400021315,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.11,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 3.068900812009815,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.15,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 4.040995737013873,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.21,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 5.022081138013164,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.27,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 5.046769105014391,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.27,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            }
+          ],
+          "rss_sample_count": 7
+        }
+      },
+      "measurement": {
+        "schema": 1,
+        "duration_us": 20022893,
+        "requests": 14340,
+        "bytes": 16192695,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 44624.017713,
+          "p50": 44058.0,
+          "p95": 48100.0,
+          "p99": 48435.0,
+          "max": 52179.0
+        },
+        "elapsed_seconds": 20.022893,
+        "qps": 716.1802243062479,
+        "received_mib_s": 0.7712450610858232,
+        "latency_ms": {
+          "mean": 44.624017713,
+          "p50": 44.058,
+          "p95": 48.1,
+          "p99": 48.435,
+          "max": 52.179
+        },
+        "resources": {
+          "envelope_start_utc": "2026-09-28T02:18:27.076558+00:00",
+          "envelope_end_utc": "2026-09-28T02:18:47.134242+00:00",
+          "envelope_seconds": 20.057575072016334,
+          "server_cpu_seconds": 1.09,
+          "server_cpu_percent_one_core": 5.434355828590327,
+          "wrk_cpu_seconds": 0.623812,
+          "wrk_cpu_percent_one_core": 3.11010676893999,
+          "rss_sampled_max_kib": 4000,
+          "VmHWM_kib_including_warmup": 4000,
+          "rss_samples": [
+            {
+              "elapsed": 0.0007211080228444189,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.27,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 1.0552338950219564,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.34,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 2.036751514999196,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.4,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 3.053010065021226,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.46,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 4.054399487999035,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.52,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 5.072591767006088,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.58,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 6.036374498013174,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.63,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 7.065523180004675,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.68,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 8.032679862022633,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.74,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 9.005850023007952,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.79,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 10.058975593012292,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.84,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 11.051129754021531,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.88,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 12.019816300016828,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.93,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 13.06071558300755,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 0.97,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 14.027894485014258,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 1.02,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 15.005120804999024,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 1.08,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 16.05553872900782,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 1.13,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 17.039228700014064,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 1.19,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 18.00481965500512,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 1.24,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 19.0518506320077,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 1.3,
+              "rss_kib": 4000,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 20.03466744502657,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 1.36,
+              "rss_kib": 3736,
+              "hwm_kib": 4000
+            },
+            {
+              "elapsed": 20.057575072016334,
+              "pid": 12603,
+              "starttime": 15062521,
+              "cpu_seconds": 1.36,
+              "rss_kib": 3736,
+              "hwm_kib": 4000
+            }
+          ],
+          "rss_sample_count": 22
+        }
+      },
+      "post_audit": [
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        },
+        {
+          "status": 200,
+          "bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+        }
+      ],
+      "cleanup": {
+        "pid": 12603,
+        "starttime": 15062521,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true
+      },
+      "ended_utc": "2026-09-28T02:18:47.371691+00:00"
+    }
+  ],
+  "tools": {
+    "benchmark/diagnosis/diagnose.py": "b3375cffe5eb23d8ad1449a1a79c4bd4958516b4b4a65c644581c4e882294db7",
+    "benchmark/build.py": "32340a0c73946ad18938b0c48247a18f44eb8c297d495961a710fac8bea8e22b",
+    "benchmark/run.py": "9fb01e7b2da9b7d4c0f46546d1f92b3fd2506301fdb85c9febb00be436b081ba",
+    "benchmark/summary.lua": "0ded2fdca3ab1f53274ae70806117c3c6288fec1bb05b0a0b601d55bf36b73ea"
+  },
+  "intermediate_sha256": "4c6b7d198e7289b32106535b09c56ec8e7c48eaaa62166d47a7e7b0aa8e1d762",
+  "started_utc": "2026-09-28T02:17:30.569775+00:00",
+  "prior_dynamic_seconds": 856.8595372299897,
+  "environment": {
+    "utc": "2026-09-28T02:17:30.570076+00:00",
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "os": "Ubuntu 24.04.3 LTS",
+    "WSL": true,
+    "cpu_model": "13th Gen Intel(R) Core(TM) i5-13500HX",
+    "online_cpus": 20,
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "memory": "MemTotal:        7974052 kB",
+    "preflight": {
+      "MemAvailable_kib": 4464404,
+      "disk_free_bytes": 1002588487680,
+      "nofile": 10240
+    },
+    "working_directory_category": "repository-local native Linux filesystem",
+    "clock": "monotonic intervals / UTC wall timestamps",
+    "limitations": "same-host loopback, WSL, closed-loop wrk, warmed page cache; timed responses not individually body-audited"
+  },
+  "build": {
+    "schema": 1,
+    "label": "S1",
+    "commit": "70b866bddbe7b4219037a93d23bde19702399d73",
+    "tree": "71c5a2bdbc0e91457e97bd5ae48d9f7858c7634b",
+    "archive": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/source.tar",
+    "archive_sha256": "d5ad4efd57055530d3a8dbb4dab2dedbdd3054c1b3a821161bd071d1ae0b24a2",
+    "source": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/source",
+    "source_hashes": {
+      ".clang-format": "51977317b1771c3789febc994d1072092996de145e0f588a9ed6fe8deac2cbea",
+      ".githooks/pre-commit": "d84a414d6784023afd9ffcf3d8505c226c136a07c56d7222cb231b460cd056d3",
+      ".gitignore": "4e3ace11a8e14bc82580c8fcb7a4b44486768fc77fb8348d377754c2cd5d892a",
+      ".vscode/settings.json": "e544e197da65ba4194e38d71ead48b395e9300c4169ad7809287e6c39d94f278",
+      "ARCHITECTURE.md": "b99c8a7d984f76a9f00764085152f1cccb4f98379ba3778e9c5a99e865654740",
+      "CHANGELOG.md": "93c696e00335fc34574ba6c063cd2e42007573d8e07a48cfef5a6735fc9dcab3",
+      "CMakeLists.txt": "74be0bb3e3aa1d633c77f41361405a492bc59314a2beaf8869e252b9d58285dc",
+      "README.md": "812556ad4f51e74c4b4042bb8a0f5115f7fc877fff1a07dd573ca212a13335e2",
+      "ROADMAP.md": "42b74c3f41f3298a998c176263766ae862743b892bcd94035fcb903076b132d2",
+      "TECH-DEBT-TRACKER.md": "dd79a86bd32208b5a155a24835f4ba22298f8dfd2e20cb5ceb5fbb71280d53c4",
+      "app/http_connection_handler.cpp": "620bb8aa38390e74c299c835096ac6bf3950973bd546559bea28140b29f49518",
+      "app/http_connection_handler.h": "65bd5cfea07e968feae6cfa9d8e6a262aa73d37d3f12a60af9e28752525336f0",
+      "app/main.cpp": "186b5f2be8afb0dbb1bafb686dd6d1e4b5fb95bf6e7d7853df11e38cd4cbae20",
+      "app/signal_watcher.cpp": "b54ab7aedb9f2fbc0043be1dc80202f6f1e76fa9d45949cb29353056b0713a18",
+      "app/signal_watcher.h": "0577b035bf27a24907d919a8f0bfa45ac4ae10b3b825afddf4cf9bd35ce0f62b",
+      "include/base/file_region.h": "85069ae23a8e6fc31245296d509115c162e177b59499556822cf86d7689d1717",
+      "include/base/logger.h": "9ba22b54d0413e30de21cad7c646c8383b02303ee134b9a45eee2d2f6530604b",
+      "include/base/non_copyable.h": "91e9186077f47d39aa89e76cb2ac0d8ca352a3189981f8d8b137cfebe279af47",
+      "include/base/unique_fd.h": "fdfcb2f6d6fc8d4ccaff2d8c70e433612342b9c564dc9d7c8fec271f3379f7dc",
+      "include/http/http_request.h": "c32c7d0054acd67000ba2ba6e923cf8ae8b31e5216fb3277bd993b182d53abfa",
+      "include/http/http_response.h": "0e7587095b4564cd8f9c9b02f3bfd579217cf205a42a58f849c6e1a41175704d",
+      "include/http/static_file_service.h": "04c45b422fb75be15dbbbbd0b960d775947cbe30083e48e55744d0bb10d5f400",
+      "include/net/acceptor.h": "fa942e1384c2762102a9c232bb33d4b427a6cf1a859a630fa6a9c0a37b8b2a64",
+      "include/net/channel.h": "5138aa2971195b0891415ef404e3e79a482a6e477be7880f17cd75c3b08b141d",
+      "include/net/connection_io.h": "064aa62fa9de3a7cd56528da42415441dec90c2575ec49b5879e86bbce08170e",
+      "include/net/connection_registry.h": "0d25c30a85943e94f4a577b661eb0bd224b791fce0c890496b84fd1c66616f04",
+      "include/net/connection_timeouts.h": "7d5dd819b8ad7f981539f485e790392e7c6eb8eed017ce403325b40a6de73ceb",
+      "include/net/epoller.h": "73830a9d82d4076045f90f09aff858a1844becbb761c30343689db0bf1182930",
+      "include/net/event_loop.h": "e5f7287b61434d76e42c45baccfb1f3d5a9fe449084e61e7a53699b66ed45196",
+      "include/net/event_loop_thread.h": "6d3547dc1863e754a2887f638b79a3c7932db0dea7fa6b7d186f62d796078e7b",
+      "include/net/event_loop_thread_pool.h": "dbca067d8ea365631448283f43951e14c2753f04f95776aa8d37a27d59a9eeb4",
+      "include/net/socket.h": "6f10a283c37ecb94ede2f466f41aeeb76542ce0bb579378dac36f3f9aef320d8",
+      "include/net/tcp_connection.h": "315e5f0480035f4f74f4e1c444bbd91c408742d930c3da6e094e35855f783df0",
+      "include/net/tcp_server.h": "228f4bfba8bdb919374175e87ce9789f76960fa919eba66710ebf26266e18ff3",
+      "include/timer/timer_queue.h": "cc0764ee09ddc9e08721322f700e40518bddf6f387eb1048fd9ecaf06a156535",
+      "scripts/format_cpp.py": "1fe7168acb56a2ad82189f4ee78a8c033f509ae4be3592bd6871c08bc5c6f294",
+      "scripts/test_format_hook.py": "2005eb306a339e876b54f3de621f91fbea859a74a9d4b2940eafcdbe56ba7715",
+      "src/base/file_region.cpp": "aa77f971b043bedcdd55b2feff617a61875764d2db09005bbcab5590d8726a63",
+      "src/base/logger.cpp": "44cb52d3c1775a5058236f00e685e377af2b65224ec25622063f178c1953916b",
+      "src/http/http_request.cpp": "fd8959131ca1db33c53db5fcff4558dfbe0c6f96bc8bf9a1f8e7495e28bfcae9",
+      "src/http/http_response.cpp": "1ce11d9d0cf6385cad7cdedbedb5d103accf28f2be5a166a4829b337bc62ecb2",
+      "src/http/static_file_service.cpp": "a81c1e1490cfef183e78b505aecb6d9f35bd6cda8b93d922e86bf29aac5b74ec",
+      "src/net/acceptor.cpp": "6714fc03755f87f54b6ff527f752e74f5786656b32cd993848b279aa9bb6d9dd",
+      "src/net/channel.cpp": "0239f62be626ecbbac7757b318da0c4b6dc46c085685120ce5d49be1d6be03d4",
+      "src/net/connection_io.cpp": "c47b8e08664c466bc06e8205324d16e7e493c3730289a2d847b770b082da8a6e",
+      "src/net/connection_registry.cpp": "d1033c77cce9d96c85bd59101d9a4d002f979a038aebdec556d446362fa5d33a",
+      "src/net/epoller.cpp": "646b5264640c50b7b3cb9e7d23260f857fe04f402ede063adb81636539d1b31c",
+      "src/net/event_loop.cpp": "b448cbe3e172a9a64387eb6bf5a603465d6e25afb1986d3217db755f63583431",
+      "src/net/event_loop_thread.cpp": "a8ed0662c1d8828a374842160fdf2b77790e461eaf58f51e642477703755fbca",
+      "src/net/event_loop_thread_pool.cpp": "8124bc9fd7e40999d224a1877777df25affa8867dbf1dbd6df5b7cb54a42d1ae",
+      "src/net/socket.cpp": "958802a8280eb64b9767273e99ac0a5daf1a7daacce157805496d1ece8e228e4",
+      "src/net/tcp_connection.cpp": "00a12ece14f13f82febf2acca8945073ab6b5ba14ed4c643a47c7cd851041691",
+      "src/net/tcp_server.cpp": "e7e38796c56145024d96f4d70110a63f49b40a7d3af4e30a2196f8f92879237d",
+      "src/timer/timer_queue.cpp": "46befbbb800776a687b9b82ccde510a8e3a4e6d999a3d0288d6a958f2e791c9b",
+      "tests/acceptor_tcp_connection_tests.cpp": "840cc5c6b1a57dcc30be6973304fb473b712e6d830404449d68a60e768515e2d",
+      "tests/base_tests.cpp": "089fc1b0602dda4169ab8e841454749c7daa8b14571995f010dc2ea86ec61c19",
+      "tests/cli_tests.cpp": "832f9a5f2e419dc21404cba25ce03651b8c1158e54ce0137a7632041855d6801",
+      "tests/connection_io_tests.cpp": "4cf8c7bd6edcbab4e1b0d0d69c1b0c9cda198c568d02234bc4f4c75dd30b478c",
+      "tests/connection_timeout_tests.cpp": "62ff29f9569e26e7d6563e226c278789a0170f3b9af806478340764542346511",
+      "tests/event_loop_channel_tests.cpp": "3e17c6eef23608989a3d4fe189781e1421cb794ee8290b6bcee2a9f4948a088c",
+      "tests/event_loop_thread_pool_tests.cpp": "380e829829c63acc914512aeead5adb4df59e06ef39d4aa7a6e2cb865a5c5285",
+      "tests/event_loop_thread_tests.cpp": "eabcfc6a144f7ae6faa5f31072a0a1008d78af7438150a2aa3a188071dd6e8e5",
+      "tests/graceful_shutdown_tests.cpp": "d8b427d6011ecc7d4a13a4bf264eece70c3b8dd3cc458330477c8099b5651256",
+      "tests/http_connection_callback_tests.cpp": "2ff483c06711c3627b45bd4f81e6bf82dedaef5ad8f7605620bc4633f2d207f6",
+      "tests/http_keep_alive_integration_tests.cpp": "3e2e56bd3b59966c5f09017f0287a898d1ee9a521d5c944be47feed467c6f3f7",
+      "tests/http_keep_alive_tests.cpp": "171019eb991813125bbaba01cbcab2c43f1e221c808a5c60706650dd30abc901",
+      "tests/http_parser_state_tests.cpp": "5ab3ac1f7866244da39e6432cc41dc9d0f11158ca384ebdaf9c89d8f26725fc9",
+      "tests/http_parser_tests.cpp": "40a259c423c2ef9cd56b9347c7835d71edb6d993df7dbd8b0821b81ff74729ba",
+      "tests/http_protocol_boundary_cases.h": "5375817c9f41e1fc7edbfdfcd9deda910d625e8b40304aab8b2237723cde20e1",
+      "tests/http_server_integration_tests.cpp": "db1f28fb0e311cff05b336a09e66b7564baa2d0aa98de5f11279579825da77eb",
+      "tests/http_smoke_test.sh": "91c1da871b7d92e16857e8c9c50d4d7a065841094040d70a6fb652b3d48c4183",
+      "tests/multi_reactor_tests.cpp": "b4dbaddba5d90acfd388d232a6ee2c41154f0ab82ff23c480a74f850e3008aff",
+      "tests/network_primitives_tests.cpp": "c6fb39eb5d39be9617838c879d5e5f546fc9a53b00c852657a351b2da2e9b62d",
+      "tests/resource_limits_tests.cpp": "ca81fb1efb59f50a5d30c3771bf8736a3b5107c678d1b258e6e413fcc5da0ea5",
+      "tests/sendfile_tests.cpp": "ef79a2ed7dff3049b4cf9a08941a71824994b2480916212aa42cdd68387266c4",
+      "tests/socket_tests.cpp": "4afd9e50950884b051cc0d2e7c2c4de71763849b0bd10354aa357917673befe2",
+      "tests/static_file_tests.cpp": "c4b637280f19f24fece0c4c13446c32d1ffbf142fb58f5f8d5741b0a4deac245",
+      "tests/timer_queue_tests.cpp": "d32187bbaf0edb984f8802645e9e56f570860dda0c7906e8aaccb796e44db81c",
+      "www/index.html": "54454a0d9d12b94fc007439c99b29c26f47d8aba6e67fbe49bee4fbb14ea3821"
+    },
+    "binary": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/build/hp_http_server",
+    "binary_sha256": "c3c246eb7babbbea0d8a86fa382b2c19df30ec946c022671b2b0f3ce85e17294",
+    "cmake_cache": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/build/CMakeCache.txt",
+    "cmake_cache_sha256": "41f71d433f24131002be9c466d1fb44ac56ff99a36f47f85297886326be60b5e",
+    "compile_commands": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/build/compile_commands.json",
+    "compile_commands_sha256": "d7eebc4150bf4ed67fe16fceb538382d4aeb4dea56f6d3182fc1e13ab6ce232a",
+    "configure_command": [
+      "cmake",
+      "-S",
+      "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/source",
+      "-B",
+      "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/build",
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DBUILD_TESTING=OFF",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+      "-DCMAKE_CXX_STANDARD=20",
+      "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG",
+      "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "build_command": [
+      "cmake",
+      "--build",
+      "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/builder/S1/build",
+      "--target",
+      "hp_http_server",
+      "-j4"
+    ],
+    "flags": [
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DBUILD_TESTING=OFF",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+      "-DCMAKE_CXX_STANDARD=20",
+      "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG",
+      "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "cmake": "cmake version 3.28.3"
+  },
+  "wrk": {
+    "binary": "/home/power/projects/HP-HTTP-Server/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+    "sha256": "b10e53769443c2bf3be2cdedec8ef6571aa5bfd1494796b247f3f9296e3af71d",
+    "version": "wrk debian/4.1.0-4build2 [epoll] Copyright (C) 2012 Will Glozer",
+    "version_exit": 1,
+    "libraries": {
+      "/home/power/projects/HP-HTTP-Server/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu/libluajit-5.1.so.2": "04c8976ae97b5e89ba27c008bb9d43c002bfc5b1f923c0598953df278ae14bfe",
+      "/lib/x86_64-linux-gnu/libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+      "/lib/x86_64-linux-gnu/libssl.so.3": "0ca2c28b026f0084661fbb0e69079436680f3b6dd1f4aa3436395442456a6d4c",
+      "/lib/x86_64-linux-gnu/libcrypto.so.3": "e6391daf670544d3a8f2b8a0cb8e27b4246fea109352abed50a29ec57f03153d",
+      "/lib/x86_64-linux-gnu/libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+      "/lib/x86_64-linux-gnu/libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+      "/lib64/ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+    },
+    "ldd": "\tlinux-vdso.so.1 (0x00007ffc27b94000)\n\tlibluajit-5.1.so.2 => /home/power/projects/HP-HTTP-Server/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu/libluajit-5.1.so.2 (0x000071445048a000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x0000714450398000)\n\tlibssl.so.3 => /lib/x86_64-linux-gnu/libssl.so.3 (0x00007144502ee000)\n\tlibcrypto.so.3 => /lib/x86_64-linux-gnu/libcrypto.so.3 (0x000071444fc00000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000071444f800000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007144502be000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000714450532000)\n"
+  },
+  "qps_median": 715.4134041761976,
+  "wall_seconds": 76.87275612799567,
+  "ended_utc": "2026-09-28T02:18:47.437965+00:00"
+}

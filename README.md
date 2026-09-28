@@ -4,6 +4,13 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
+S1 独立结果：当前版本1KiB中位吞吐 **715.070 QPS**，每轮P99中位数 **48.392ms**。时间线及重复单因素对照支持头部/正文拆分发送与ACK等待交互；v0.5-s1已出现异常。诊断完成不等于修复完成，S2尚未开始，RO-002继续跟踪。[独立公开结果](benchmark/results/V0.5.1/S1-reviewer-002.md)。
+
+- 2026-09-28 最新状态：用户批准 V0.5.1/S1 design/review revision 1，S1 已完成并获独立 Reviewer002 PASS；S2/S3 未开始，生产问题尚未修复。
+
+2026-09-28：当前优先推进 **V0.5.1 性能回退诊断与修复**，三阶段为复现与根因定位、针对性修复与回归、独立性能验收与收口。S1 诊断已完成，独立 Reviewer002 PASS；V0.6 后移。历史 1KiB 吞吐下降及尾延迟升高仍未关闭，不能把旧测试或重构验收当成当前性能结论。详见 [路线图](ROADMAP.md)、[S1 设计](docs/leader/designs/V0.5.1/S1-design.md)、[S1 审查计划](docs/reviewer/reviews/V0.5.1/S1-review.md) 与 [S1 决策摘要](docs/leader/reports/V0.5.1/S1-report-001.md)。现有固定 A/B 压测入口保持历史用途；新增 [V0.5.1 诊断入口](benchmark/diagnosis/README.md)，正式压测、阶段定位和机制实验分开记录。独立18正式样本、38工具测试、中间三轮和六组机制实验通过；保留首次无效运行及首轮审查FAIL。
+
+
 R7 语义命名与原有英文注释中文化已完成（2026-09-26），独立 Reviewer 为 PASS WITH DEBT，仅延续 TD-006。工作线程入口现为 `createWorkerThread()` / `runWorkerEventLoop()`，通用循环为 `runEventLoop()`，线程池按指定索引投递使用 `postTaskToWorkerAtIndex()`。本轮 38 个 C++ 文件同步名称，160 条保护注释保持原文、93 条原有英文注释翻译中文；独立 Debug、6/6 CTest、HTTP smoke 通过。12 个文件既有格式差异按批准例外保留，不代表全文件格式通过。31 个历史测试继续冻结，未恢复 23 个停用目标；本轮未提交或推送。下方 R6 及更早验证数据属于历史记录。
 
 R6 最新个人规范迁移已完成，独立 Reviewer 结论为 PASS WITH DEBT（仅 TD-006 旧测试按需迁移延期）：生产文件改为 PascalCase，普通函数和变量为 camelCase，回调使用事件类型、短转发及头内纯保存 setter。具有注册时机约束的入口先检查再调用私有 setter。旧测试源码和路径冻结；当前默认验证为 5 项兼容旧测试与 1 项新增专项测试。独立 Debug 6/6、ASan/UBSan/LSan 专项 1/1、HTTP smoke 与 47 文件格式检查通过；31 个旧测试路径和内容不变。以下 R1–R5 测试数字均为历史记录，不代表 R6 当前覆盖。
