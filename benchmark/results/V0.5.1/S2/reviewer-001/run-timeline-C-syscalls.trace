@@ -1,0 +1,463 @@
+2792  1790565946.380680 epoll_wait(8,  <unfinished ...>
+2793  1790565946.380746 epoll_wait(10,  <unfinished ...>
+2790  1790565946.380775 epoll_wait(5, [{events=EPOLLIN, data={u32=5, u64=5}}], 64, 1000) = 1 <0.146334>
+2793  1790565946.527678 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=3, u64=3}}], 64, 1000) = 1 <0.146916>
+2793  1790565946.527960 read(11, "\1\0\0\0\0\0\0\0", 8) = 8 <0.000148>
+2790  1790565946.528309 epoll_wait(5,  <unfinished ...>
+2793  1790565946.528411 read(11, 0x7f9e8c9fca00, 8) = -1 EAGAIN (Resource temporarily unavailable) <0.000048>
+2793  1790565946.528545 epoll_ctl(10, EPOLL_CTL_ADD, 12, {events=EPOLLIN|EPOLLRDHUP, data={u32=7, u64=7}}) = 0 <0.000059>
+2793  1790565946.528708 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.000052>
+2793  1790565946.528873 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000064>
+2793  1790565946.529551 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000090>
+2793  1790565946.529985 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000051>
+2793  1790565946.530431 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.000029>
+2793  1790565946.530540 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000045>
+2793  1790565946.530979 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000053>
+2793  1790565946.531247 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000051>
+2793  1790565946.531516 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.044866>
+2793  1790565946.576617 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000109>
+2793  1790565946.577946 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000171>
+2793  1790565946.578624 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000123>
+2793  1790565946.579285 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.044830>
+2793  1790565946.624453 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000099>
+2793  1790565946.625814 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000188>
+2793  1790565946.626639 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000157>
+2793  1790565946.627490 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.039828>
+2793  1790565946.667574 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000071>
+2793  1790565946.668158 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000098>
+2793  1790565946.668613 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000067>
+2793  1790565946.669054 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042593>
+2793  1790565946.712000 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000164>
+2793  1790565946.713659 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000317>
+2793  1790565946.714688 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000121>
+2793  1790565946.715431 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.039934>
+2793  1790565946.755596 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000079>
+2793  1790565946.756567 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000074>
+2793  1790565946.756982 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000063>
+2793  1790565946.757337 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042406>
+2793  1790565946.800039 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000112>
+2793  1790565946.801553 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000178>
+2793  1790565946.802586 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000152>
+2793  1790565946.803563 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.041400>
+2793  1790565946.845398 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000269>
+2793  1790565946.848109 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000190>
+2793  1790565946.849564 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000218>
+2793  1790565946.851044 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.041334>
+2793  1790565946.892774 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000121>
+2793  1790565946.894681 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000182>
+2793  1790565946.895591 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000174>
+2793  1790565946.896545 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.044482>
+2793  1790565946.941451 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000226>
+2793  1790565946.944020 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000221>
+2793  1790565946.945462 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000241>
+2793  1790565946.946640 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.041640>
+2793  1790565946.988833 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000131>
+2793  1790565946.990877 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000187>
+2793  1790565946.992098 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000223>
+2793  1790565946.992933 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042579>
+2793  1790565947.035699 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000059>
+2793  1790565947.036521 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000219>
+2793  1790565947.037268 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000080>
+2793  1790565947.037699 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042567>
+2793  1790565947.080726 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000258>
+2793  1790565947.082198 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000138>
+2793  1790565947.083047 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000111>
+2793  1790565947.083756 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.045098>
+2793  1790565947.129186 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000155>
+2793  1790565947.130534 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000132>
+2793  1790565947.131363 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000163>
+2793  1790565947.132360 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042666>
+2793  1790565947.175154 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000040>
+2793  1790565947.175568 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000048>
+2793  1790565947.175829 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000041>
+2793  1790565947.176078 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.043103>
+2793  1790565947.219319 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000056>
+2793  1790565947.219821 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000054>
+2793  1790565947.220291 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000046>
+2793  1790565947.220541 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042547>
+2793  1790565947.263273 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000042>
+2793  1790565947.263797 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000059>
+2793  1790565947.264186 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000064>
+2793  1790565947.264563 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.046559>
+2793  1790565947.311304 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000035>
+2793  1790565947.311813 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000052>
+2793  1790565947.312093 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000046>
+2793  1790565947.312332 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042622>
+2793  1790565947.355113 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000064>
+2793  1790565947.355639 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000042>
+2793  1790565947.355972 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000054>
+2793  1790565947.356329 epoll_wait(10,  <unfinished ...>
+2792  1790565947.381882 <... epoll_wait resumed>[], 64, 1000) = 0 <1.001137>
+2792  1790565947.382022 epoll_wait(8,  <unfinished ...>
+2793  1790565947.399543 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.043190>
+2793  1790565947.399689 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000069>
+2793  1790565947.400324 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000109>
+2793  1790565947.400822 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000080>
+2793  1790565947.401279 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.041905>
+2793  1790565947.443352 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000055>
+2793  1790565947.443843 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000047>
+2793  1790565947.444178 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000044>
+2793  1790565947.444464 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042665>
+2793  1790565947.487261 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000033>
+2793  1790565947.487749 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000054>
+2793  1790565947.488033 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000049>
+2793  1790565947.488273 epoll_wait(10,  <unfinished ...>
+2790  1790565947.529632 <... epoll_wait resumed>[], 64, 1000) = 0 <1.001287>
+2790  1790565947.529808 epoll_wait(5,  <unfinished ...>
+2793  1790565947.535195 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.046904>
+2793  1790565947.535422 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000070>
+2793  1790565947.536176 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000084>
+2793  1790565947.536541 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000127>
+2793  1790565947.537068 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.041907>
+2793  1790565947.579164 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000037>
+2793  1790565947.579639 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000050>
+2793  1790565947.579992 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000053>
+2793  1790565947.580282 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.043201>
+2793  1790565947.623602 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000041>
+2793  1790565947.624080 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000049>
+2793  1790565947.624379 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000051>
+2793  1790565947.624684 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042468>
+2793  1790565947.667306 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000048>
+2793  1790565947.667815 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000056>
+2793  1790565947.668110 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000075>
+2793  1790565947.668414 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042784>
+2793  1790565947.711317 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000033>
+2793  1790565947.711744 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000048>
+2793  1790565947.712065 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000047>
+2793  1790565947.712314 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.042720>
+2793  1790565947.755202 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000076>
+2793  1790565947.755776 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000056>
+2793  1790565947.756081 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000049>
+2793  1790565947.756348 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.046568>
+2793  1790565947.803023 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000045>
+2793  1790565947.803450 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000044>
+2793  1790565947.803726 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000040>
+2793  1790565947.804005 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.047974>
+2793  1790565947.852249 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000094>
+2793  1790565947.853862 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000109>
+2793  1790565947.854698 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000093>
+2793  1790565947.855199 epoll_wait(10, [{events=EPOLLIN, data={u32=7, u64=7}}], 64, 1000) = 1 <0.044982>
+2793  1790565947.900615 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000258>
+2793  1790565947.902247 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000213>
+2793  1790565947.903153 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000146>
+2793  1790565947.904054 epoll_wait(10, [{events=EPOLLIN|EPOLLRDHUP, data={u32=7, u64=7}}], 64, 1000) = 1 <0.044070>
+2793  1790565947.948469 recvfrom(12, "", 4096, 0, NULL, NULL) = 0 <0.000145>
+2793  1790565947.948933 epoll_ctl(10, EPOLL_CTL_DEL, 12, NULL) = 0 <0.000117>
+2793  1790565947.949636 epoll_wait(10,  <unfinished ...>
+2790  1790565947.982550 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=5, u64=5}}], 64, 1000) = 1 <0.452698>
+2792  1790565947.982871 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=2, u64=2}}], 64, 1000) = 1 <0.600831>
+2792  1790565947.982952 read(9, "\1\0\0\0\0\0\0\0", 8) = 8 <0.000045>
+2790  1790565947.983051 epoll_wait(5,  <unfinished ...>
+2792  1790565947.983070 read(9, 0x7f9e8d1fda00, 8) = -1 EAGAIN (Resource temporarily unavailable) <0.000037>
+2792  1790565947.983173 epoll_ctl(8, EPOLL_CTL_ADD, 12, {events=EPOLLIN|EPOLLRDHUP, data={u32=8, u64=8}}) = 0 <0.000031>
+2792  1790565947.983286 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.000034>
+2792  1790565947.983396 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000046>
+2792  1790565947.983947 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000061>
+2792  1790565947.984263 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000058>
+2792  1790565947.984625 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.000037>
+2792  1790565947.984746 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000064>
+2792  1790565947.985219 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000056>
+2792  1790565947.985521 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000047>
+2792  1790565947.985882 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041437>
+2792  1790565948.027432 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000062>
+2792  1790565948.027927 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000052>
+2792  1790565948.028340 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000071>
+2792  1790565948.028668 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.043288>
+2792  1790565948.072413 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000190>
+2792  1790565948.074899 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000232>
+2792  1790565948.075852 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000108>
+2792  1790565948.076508 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.043803>
+2792  1790565948.120570 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000084>
+2792  1790565948.121715 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000127>
+2792  1790565948.122590 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000112>
+2792  1790565948.123275 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.044125>
+2792  1790565948.167633 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000118>
+2792  1790565948.168395 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000068>
+2792  1790565948.168797 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000055>
+2792  1790565948.169190 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.043714>
+2792  1790565948.213166 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000112>
+2792  1790565948.214596 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000180>
+2792  1790565948.215533 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000131>
+2792  1790565948.216252 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.043000>
+2792  1790565948.259415 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000049>
+2792  1790565948.260147 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000138>
+2792  1790565948.260949 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000181>
+2792  1790565948.261584 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041968>
+2792  1790565948.303812 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000093>
+2792  1790565948.305039 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000255>
+2792  1790565948.305881 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000124>
+2792  1790565948.306526 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.042006>
+2792  1790565948.348895 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000196>
+2792  1790565948.351219 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000509>
+2792  1790565948.352622 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000140>
+2792  1790565948.353398 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.043460>
+2792  1790565948.397254 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000233>
+2792  1790565948.398995 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000212>
+2792  1790565948.400133 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000149>
+2792  1790565948.400945 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.044092>
+2792  1790565948.445498 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000204>
+2792  1790565948.448017 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000172>
+2792  1790565948.449236 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000155>
+2792  1790565948.450188 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041700>
+2792  1790565948.492185 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000103>
+2792  1790565948.493920 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000148>
+2792  1790565948.494484 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000097>
+2792  1790565948.495082 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.044127>
+2792  1790565948.539422 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000081>
+2792  1790565948.540052 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000061>
+2792  1790565948.540379 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000054>
+2792  1790565948.540741 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.042886>
+2792  1790565948.583791 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000058>
+2792  1790565948.585097 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000199>
+2792  1790565948.585829 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000110>
+2792  1790565948.586393 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041075>
+2792  1790565948.627728 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000078>
+2792  1790565948.628634 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000080>
+2792  1790565948.629199 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000118>
+2792  1790565948.629754 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041859>
+2792  1790565948.671801 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000065>
+2792  1790565948.672556 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000068>
+2792  1790565948.673066 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000076>
+2792  1790565948.673433 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041633>
+2792  1790565948.715206 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000036>
+2792  1790565948.715755 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000055>
+2792  1790565948.716146 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000047>
+2792  1790565948.716450 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.043143>
+2792  1790565948.759935 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000155>
+2792  1790565948.760982 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000092>
+2792  1790565948.761539 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000071>
+2792  1790565948.761977 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041968>
+2792  1790565948.804399 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000206>
+2792  1790565948.806337 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000266>
+2792  1790565948.807205 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000122>
+2792  1790565948.807923 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.043750>
+2792  1790565948.851965 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000154>
+2792  1790565948.853566 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000083>
+2792  1790565948.854113 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000097>
+2792  1790565948.854757 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.040914>
+2792  1790565948.895943 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000111>
+2792  1790565948.897218 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000212>
+2792  1790565948.897960 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000170>
+2792  1790565948.898514 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041582>
+2792  1790565948.940410 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000123>
+2792  1790565948.942025 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000198>
+2792  1790565948.942843 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000072>
+2792  1790565948.943483 epoll_wait(8,  <unfinished ...>
+2793  1790565948.951154 <... epoll_wait resumed>[], 64, 1000) = 0 <1.001438>
+2793  1790565948.951439 epoll_wait(10,  <unfinished ...>
+2790  1790565948.984470 <... epoll_wait resumed>[], 64, 1000) = 0 <1.001398>
+2790  1790565948.984764 epoll_wait(5,  <unfinished ...>
+2792  1790565948.987507 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.043977>
+2792  1790565948.987705 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000074>
+2792  1790565948.988645 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000166>
+2792  1790565948.989361 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000090>
+2792  1790565948.989825 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.042143>
+2792  1790565949.032228 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000086>
+2792  1790565949.033313 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000176>
+2792  1790565949.034353 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000068>
+2792  1790565949.034913 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041674>
+2792  1790565949.076824 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000088>
+2792  1790565949.077743 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000092>
+2792  1790565949.078132 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000183>
+2792  1790565949.078766 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041411>
+2792  1790565949.120435 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000108>
+2792  1790565949.121314 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000111>
+2792  1790565949.121799 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000088>
+2792  1790565949.122309 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041627>
+2792  1790565949.164383 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000064>
+2792  1790565949.165387 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000105>
+2792  1790565949.165978 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000067>
+2792  1790565949.166563 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041197>
+2792  1790565949.208047 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000143>
+2792  1790565949.209391 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000268>
+2792  1790565949.210402 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000110>
+2792  1790565949.211780 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.040680>
+2792  1790565949.252683 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000086>
+2792  1790565949.253588 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000089>
+2792  1790565949.254290 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000205>
+2792  1790565949.254808 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041005>
+2792  1790565949.296131 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000128>
+2792  1790565949.297423 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000181>
+2792  1790565949.298131 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000124>
+2792  1790565949.298824 epoll_wait(8, [{events=EPOLLIN, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041282>
+2792  1790565949.340340 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000096>
+2792  1790565949.341704 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000118>
+2792  1790565949.342301 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000084>
+2792  1790565949.342897 epoll_wait(8, [{events=EPOLLIN|EPOLLRDHUP, data={u32=8, u64=8}}], 64, 1000) = 1 <0.041372>
+2792  1790565949.384560 recvfrom(12, "", 4096, 0, NULL, NULL) = 0 <0.000197>
+2792  1790565949.385033 epoll_ctl(8, EPOLL_CTL_DEL, 12, NULL) = 0 <0.000135>
+2792  1790565949.385582 epoll_wait(8,  <unfinished ...>
+2790  1790565949.416950 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=5, u64=5}}], 64, 1000) = 1 <0.432105>
+2793  1790565949.417291 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=3, u64=3}}], 64, 1000) = 1 <0.465806>
+2793  1790565949.417380 read(11,  <unfinished ...>
+2790  1790565949.417461 epoll_wait(5,  <unfinished ...>
+2793  1790565949.417498 <... read resumed>"\1\0\0\0\0\0\0\0", 8) = 8 <0.000102>
+2793  1790565949.417596 read(11, 0x7f9e8c9fca00, 8) = -1 EAGAIN (Resource temporarily unavailable) <0.000041>
+2793  1790565949.417735 epoll_ctl(10, EPOLL_CTL_ADD, 12, {events=EPOLLIN|EPOLLRDHUP, data={u32=9, u64=9}}) = 0 <0.000083>
+2793  1790565949.417945 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.000043>
+2793  1790565949.418056 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000035>
+2793  1790565949.418506 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000121>
+2793  1790565949.418949 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000071>
+2793  1790565949.419527 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.000041>
+2793  1790565949.419657 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000033>
+2793  1790565949.420107 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000079>
+2793  1790565949.420782 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000107>
+2793  1790565949.421191 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042300>
+2793  1790565949.463712 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000074>
+2793  1790565949.464426 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000086>
+2793  1790565949.464948 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000054>
+2793  1790565949.465205 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042788>
+2793  1790565949.508287 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000081>
+2793  1790565949.509392 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000213>
+2793  1790565949.510083 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000126>
+2793  1790565949.510630 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.041091>
+2793  1790565949.551903 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000070>
+2793  1790565949.552937 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000121>
+2793  1790565949.553408 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000080>
+2793  1790565949.553992 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042207>
+2793  1790565949.596613 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000065>
+2793  1790565949.597838 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000124>
+2793  1790565949.598506 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000088>
+2793  1790565949.599083 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.040311>
+2793  1790565949.639582 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000091>
+2793  1790565949.640898 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000111>
+2793  1790565949.641318 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000083>
+2793  1790565949.641631 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042258>
+2793  1790565949.684183 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000110>
+2793  1790565949.685475 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000126>
+2793  1790565949.686106 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000090>
+2793  1790565949.686599 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.041444>
+2793  1790565949.728324 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000077>
+2793  1790565949.729756 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000154>
+2793  1790565949.730546 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000118>
+2793  1790565949.731076 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.040658>
+2793  1790565949.771977 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000071>
+2793  1790565949.773025 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000091>
+2793  1790565949.773628 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000109>
+2793  1790565949.774061 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042433>
+2793  1790565949.816838 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000199>
+2793  1790565949.818561 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000234>
+2793  1790565949.819544 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000134>
+2793  1790565949.820333 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.045815>
+2793  1790565949.866550 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000110>
+2793  1790565949.868010 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000151>
+2793  1790565949.868738 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000103>
+2793  1790565949.869319 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042846>
+2793  1790565949.912456 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000105>
+2793  1790565949.914025 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000153>
+2793  1790565949.914969 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000129>
+2793  1790565949.915641 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.045346>
+2793  1790565949.961357 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000207>
+2793  1790565949.964019 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000159>
+2793  1790565949.964989 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000157>
+2793  1790565949.965805 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.045931>
+2793  1790565950.011965 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000079>
+2793  1790565950.013305 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000126>
+2793  1790565950.014092 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000108>
+2793  1790565950.014603 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.044369>
+2793  1790565950.059112 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000037>
+2793  1790565950.059480 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000054>
+2793  1790565950.059731 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000046>
+2793  1790565950.059990 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.044013>
+2793  1790565950.104291 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000108>
+2793  1790565950.105843 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000164>
+2793  1790565950.106648 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000139>
+2793  1790565950.107397 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.041925>
+2793  1790565950.149717 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000293>
+2793  1790565950.151816 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000176>
+2793  1790565950.152948 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000157>
+2793  1790565950.153788 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.041496>
+2793  1790565950.195438 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000035>
+2793  1790565950.196267 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000049>
+2793  1790565950.196567 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000069>
+2793  1790565950.196978 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042917>
+2793  1790565950.240098 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000056>
+2793  1790565950.241083 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000107>
+2793  1790565950.241541 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000063>
+2793  1790565950.241927 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042871>
+2793  1790565950.285137 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000138>
+2793  1790565950.287605 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000149>
+2793  1790565950.288557 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000173>
+2793  1790565950.289510 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.043867>
+2793  1790565950.333817 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000310>
+2793  1790565950.335689 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000174>
+2793  1790565950.336809 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000177>
+2793  1790565950.337666 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042199>
+2793  1790565950.380162 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000108>
+2793  1790565950.381479 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000206>
+2793  1790565950.382228 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000099>
+2793  1790565950.382917 epoll_wait(10,  <unfinished ...>
+2792  1790565950.387029 <... epoll_wait resumed>[], 64, 1000) = 0 <1.001381>
+2792  1790565950.387182 epoll_wait(8,  <unfinished ...>
+2790  1790565950.418769 <... epoll_wait resumed>[], 64, 1000) = 0 <1.001266>
+2790  1790565950.418996 epoll_wait(5,  <unfinished ...>
+2793  1790565950.424007 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.041061>
+2793  1790565950.424126 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000035>
+2793  1790565950.424531 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000050>
+2793  1790565950.424768 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000048>
+2793  1790565950.425117 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042106>
+2793  1790565950.467357 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000085>
+2793  1790565950.468352 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000048>
+2793  1790565950.468776 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000045>
+2793  1790565950.469089 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.043406>
+2793  1790565950.512815 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000200>
+2793  1790565950.515059 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000307>
+2793  1790565950.516413 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000198>
+2793  1790565950.517198 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042306>
+2793  1790565950.559736 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000067>
+2793  1790565950.560573 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000088>
+2793  1790565950.561088 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000087>
+2793  1790565950.561614 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.042499>
+2793  1790565950.604481 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000161>
+2793  1790565950.606286 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000097>
+2793  1790565950.607055 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000148>
+2793  1790565950.607982 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.045038>
+2793  1790565950.653515 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000152>
+2793  1790565950.655798 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000141>
+2793  1790565950.656644 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000116>
+2793  1790565950.657289 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.043739>
+2793  1790565950.701491 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000265>
+2793  1790565950.704228 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000214>
+2793  1790565950.705497 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000185>
+2793  1790565950.706569 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.040909>
+2793  1790565950.747706 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000090>
+2793  1790565950.748662 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000069>
+2793  1790565950.749095 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000063>
+2793  1790565950.749451 epoll_wait(10, [{events=EPOLLIN, data={u32=9, u64=9}}], 64, 1000) = 1 <0.041654>
+2793  1790565950.791217 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 75 <0.000040>
+2793  1790565950.791614 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000084>
+2793  1790565950.791910 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000042>
+2793  1790565950.792161 epoll_wait(10, [{events=EPOLLIN|EPOLLRDHUP, data={u32=9, u64=9}}], 64, 1000) = 1 <0.045176>
+2793  1790565950.837643 recvfrom(12, "", 4096, 0, NULL, NULL) = 0 <0.000116>
+2793  1790565950.837978 epoll_ctl(10, EPOLL_CTL_DEL, 12, NULL) = 0 <0.000162>
+2793  1790565950.838858 epoll_wait(10,  <unfinished ...>
+2790  1790565950.870485 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=5, u64=5}}], 64, 1000) = 1 <0.451465>
+2792  1790565950.870937 <... epoll_wait resumed>[{events=EPOLLIN, data={u32=2, u64=2}}], 64, 1000) = 1 <0.483708>
+2790  1790565950.870980 epoll_wait(5,  <unfinished ...>
+2792  1790565950.871051 read(9, "\1\0\0\0\0\0\0\0", 8) = 8 <0.000037>
+2792  1790565950.871179 read(9, 0x7f9e8d1fda00, 8) = -1 EAGAIN (Resource temporarily unavailable) <0.000039>
+2792  1790565950.871310 epoll_ctl(8, EPOLL_CTL_ADD, 12, {events=EPOLLIN|EPOLLRDHUP, data={u32=10, u64=10}}) = 0 <0.000113>
+2792  1790565950.871605 epoll_wait(8, [{events=EPOLLIN, data={u32=10, u64=10}}], 64, 1000) = 1 <0.000096>
+2792  1790565950.871919 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 81 <0.000057>
+2792  1790565950.872476 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000065>
+2792  1790565950.872808 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000051>
+2792  1790565950.873206 epoll_wait(8, [{events=EPOLLIN, data={u32=10, u64=10}}], 64, 1000) = 1 <0.010937>
+2792  1790565950.884355 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 81 <0.000125>
+2792  1790565950.884999 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000074>
+2792  1790565950.885341 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000059>
+2792  1790565950.885689 epoll_wait(8, [{events=EPOLLIN, data={u32=10, u64=10}}], 64, 1000) = 1 <0.052266>
+2792  1790565950.938227 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 81 <0.000142>
+2792  1790565950.939368 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000138>
+2792  1790565950.939941 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000086>
+2792  1790565950.940362 epoll_wait(8, [{events=EPOLLIN, data={u32=10, u64=10}}], 64, 1000) = 1 <0.054268>
+2792  1790565950.994846 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 81 <0.000079>
+2792  1790565950.995639 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000066>
+2792  1790565950.996032 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000061>
+2792  1790565950.996489 epoll_wait(8, [{events=EPOLLIN, data={u32=10, u64=10}}], 64, 1000) = 1 <0.054101>
+2792  1790565951.050838 recvfrom(12, "GET /payload-1024.bin HTTP/1.1\r\n"..., 4096, 0, NULL, NULL) = 81 <0.000207>
+2792  1790565951.052332 sendto(12, "HTTP/1.1 200 OK\r\nContent-Length:"..., 105, MSG_NOSIGNAL, NULL, 0) = 105 <0.000092>
+2792  1790565951.052870 sendfile(12, 13, [0] => [1024], 1024) = 1024 <0.000079>
+2792  1790565951.053330 epoll_wait(8, [{events=EPOLLIN|EPOLLRDHUP, data={u32=10, u64=10}}], 64, 1000) = 1 <0.053394>
+2792  1790565951.107097 recvfrom(12, "", 4096, 0, NULL, NULL) = 0 <0.000172>
+2792  1790565951.107690 epoll_ctl(8, EPOLL_CTL_DEL, 12, NULL) = 0 <0.000207>
+2792  1790565951.108731 epoll_wait(8,  <detached ...>

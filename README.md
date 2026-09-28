@@ -4,12 +4,15 @@ HP HTTP Server 是一个面向高性能网络岗学习与简历展示的 Linux C
 
 ## 当前状态
 
-S1 独立结果：当前版本1KiB中位吞吐 **715.070 QPS**，每轮P99中位数 **48.392ms**。时间线及重复单因素对照支持头部/正文拆分发送与ACK等待交互；v0.5-s1已出现异常。诊断完成不等于修复完成，S2尚未开始，RO-002继续跟踪。[独立公开结果](benchmark/results/V0.5.1/S1-reviewer-002.md)。
+2026-09-28：**V0.5.1/S2 已完成，独立 Reviewer001 PASS**。新接收TCP连接在交付前启用TCP_NODELAY，设置失败只关闭该连接，保留sendfile和原背压/关闭流程。S1已发布标签v0.5.1-s1；S3尚未开始，V0.5.1整体未完成。
 
-- 2026-09-28 最新状态：用户批准 V0.5.1/S1 design/review revision 1，S1 已完成并获独立 Reviewer002 PASS；S2/S3 未开始，生产问题尚未修复。
+独立固定负载下1KiB吞吐 **716.522→37200.425 QPS（51.918倍）**，每轮P99中位 **48.399→2.024ms**；默认客户端正文等待降至0.27–0.28ms。1MiB吞吐比1.003842、P99比1.064837，通过保护门槛。小文件server CPU中位由6.823%升至188.920%（单核100%），不能只报收益；结果限定于本机WSL2/loopback/热缓存。[独立结果](benchmark/results/V0.5.1/S2/S2-reviewer-001.md)。
 
-2026-09-28：当前优先推进 **V0.5.1 性能回退诊断与修复**，三阶段为复现与根因定位、针对性修复与回归、独立性能验收与收口。S1 诊断已完成，独立 Reviewer002 PASS；V0.6 后移。历史 1KiB 吞吐下降及尾延迟升高仍未关闭，不能把旧测试或重构验收当成当前性能结论。详见 [路线图](ROADMAP.md)、[S1 设计](docs/leader/designs/V0.5.1/S1-design.md)、[S1 审查计划](docs/reviewer/reviews/V0.5.1/S1-review.md) 与 [S1 决策摘要](docs/leader/reports/V0.5.1/S1-report-001.md)。现有固定 A/B 压测入口保持历史用途；新增 [V0.5.1 诊断入口](benchmark/diagnosis/README.md)，正式压测、阶段定位和机制实验分开记录。独立18正式样本、38工具测试、中间三轮和六组机制实验通过；保留首次无效运行及首轮审查FAIL。
+当前CTest为 **8项（原6+新2）**；独立专项ASan/UBSan/LSan、40项工具测试、12正式样本及两组机制验证通过。31个旧测试继续冻结，23个停用目标未恢复。历史失败和一次Reviewer构建路径纠正保留，不冒称所有首轮通过。
 
+验证入口：[S2修复验证](benchmark/repair/README.md)、[S1诊断](benchmark/diagnosis/README.md)。历史基准保持不变；S2当前接口专项补足本轮故障隔离、慢读EAGAIN和关闭覆盖。RO-002继续等待S3最终验收。[路线图](ROADMAP.md)及[问题跟踪](TECH-DEBT-TRACKER.md)。
+
+下方R7及更早状态均为历史时点记录。
 
 R7 语义命名与原有英文注释中文化已完成（2026-09-26），独立 Reviewer 为 PASS WITH DEBT，仅延续 TD-006。工作线程入口现为 `createWorkerThread()` / `runWorkerEventLoop()`，通用循环为 `runEventLoop()`，线程池按指定索引投递使用 `postTaskToWorkerAtIndex()`。本轮 38 个 C++ 文件同步名称，160 条保护注释保持原文、93 条原有英文注释翻译中文；独立 Debug、6/6 CTest、HTTP smoke 通过。12 个文件既有格式差异按批准例外保留，不代表全文件格式通过。31 个历史测试继续冻结，未恢复 23 个停用目标；本轮未提交或推送。下方 R6 及更早验证数据属于历史记录。
 

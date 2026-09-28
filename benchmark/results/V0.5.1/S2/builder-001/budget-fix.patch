@@ -1,0 +1,74 @@
+--- a/benchmark/repair/repair.py
++++ b/benchmark/repair/repair.py
+@@ -82,7 +82,13 @@
+ 
+ 
+ def budget_seconds(root):
+-    return sum(json.loads(p.read_text()).get('wall_seconds',0) for p in root.glob('run-*/run.json'))
++    return sum(json.loads(p.read_text()).get('wall_seconds',0) for p in root.rglob('run.json'))
++
++
++def require_mechanism_budget(root):
++    records=[json.loads(path.read_text()) for path in root.rglob('run.json')]
++    count=sum(record.get('kind') in ('trace','experiment') for record in records)
++    bench.demand(count<=2,'two mechanism group limit')
+ 
+ 
+ def log_bytes(root):
+@@ -96,7 +102,7 @@
+ 
+ def new_output(role,path):
+     output=pathlib.Path(path).resolve()
+-    bench.demand(output.is_relative_to(role_root(role)) and output.name.startswith('run-'),'role run- output required')
++    bench.demand(output.parent==role_root(role).resolve() and output.name.startswith('run-'),'role run- output required')
+     bench.demand(not output.exists(),'new output required')
+     output.mkdir(parents=True)
+     return output
+--- a/benchmark/repair/mechanism.py
++++ b/benchmark/repair/mechanism.py
+@@ -78,7 +78,7 @@
+     try:
+         result['environment']=diag.bench.environment(output)
+         diag.bench.demand(prior<1790,'role dynamic budget')
+-        diag.bench.demand(len(list(role.glob('run-timeline-*/run.json')))<=2,'two timeline group limit')
++        diag.require_mechanism_budget(role)
+         manifest=diag.validate_manifest(role/a.label/'manifest.json',a.label)
+         result['manifest']=manifest
+         fixture=output/'root';fixture.mkdir()
+--- a/benchmark/repair/test_repair.py
++++ b/benchmark/repair/test_repair.py
+@@ -58,6 +58,34 @@
+             self.assertEqual(result['status'],'invalid' if fault else 'valid')
+             if fault:self.assertNotIn('summary',result)
+ 
++    def test_direct_output_only(self):
++        with tempfile.TemporaryDirectory(dir=os.environ['TMPDIR']) as directory:
++            root=pathlib.Path(directory)
++            with mock.patch.object(repair,'role_root',return_value=root):
++                self.assertEqual(repair.new_output('builder',root/'run-direct'),root/'run-direct')
++                with self.assertRaisesRegex(repair.bench.Invalid,'role run- output required'):
++                    repair.new_output('builder',root/'tmp/run-nested')
++            self.assertFalse((root/'tmp').exists())
++
++    def test_historical_nested_budget(self):
++        with tempfile.TemporaryDirectory(dir=os.environ['TMPDIR']) as directory:
++            root=pathlib.Path(directory)
++            nested=root/'tmp/run-old';nested.mkdir(parents=True)
++            (nested/'run.json').write_text(json.dumps({'kind':'formal','wall_seconds':42}))
++            self.assertEqual(repair.budget_seconds(root),42)
++
++    def test_group_budget_uses_records_not_names(self):
++        with tempfile.TemporaryDirectory(dir=os.environ['TMPDIR']) as directory:
++            root=pathlib.Path(directory)
++            for index,kind in enumerate(('trace','experiment'),1):
++                path=root/f'run-other-{index}';path.mkdir()
++                (path/'run.json').write_text(json.dumps({'kind':kind,'wall_seconds':1}))
++            repair.require_mechanism_budget(root)
++            third=root/'tmp/run-other-3';third.mkdir(parents=True)
++            (third/'run.json').write_text(json.dumps({'kind':'trace','wall_seconds':1,'status':'invalid'}))
++            with self.assertRaisesRegex(repair.bench.Invalid,'two mechanism group limit'):
++                repair.require_mechanism_budget(root)
++
+     def test_stable_aslr(self):self.probe()
+     def test_library_drift(self):self.probe('library')
+     def test_binary_drift(self):self.probe('binary')

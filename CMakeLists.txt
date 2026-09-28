@@ -81,3 +81,16 @@ if(BUILD_TESTING)
     add_test(NAME r6_callbacks_tests COMMAND r6_callbacks_tests)
     set_tests_properties(r6_callbacks_tests PROPERTIES TIMEOUT 60)
 endif()
+
+if(BUILD_TESTING)
+    add_executable(tcp_nodelay_tests tests/TcpNoDelay_test.cpp)
+    target_link_libraries(tcp_nodelay_tests PRIVATE hp_http_core)
+    target_link_options(tcp_nodelay_tests PRIVATE -Wl,--wrap=accept4 -Wl,--wrap=setsockopt -Wl,--wrap=close)
+    enable_debug_warnings(tcp_nodelay_tests)
+    add_test(NAME tcp_nodelay_tests COMMAND tcp_nodelay_tests)
+    set_tests_properties(tcp_nodelay_tests PROPERTIES TIMEOUT 30)
+    add_test(NAME tcp_nodelay_http_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/TcpNoDelayHttp_test.py $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(tcp_nodelay_http_tests PROPERTIES TIMEOUT 60
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
