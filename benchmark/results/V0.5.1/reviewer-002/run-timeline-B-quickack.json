@@ -1,0 +1,1004 @@
+{
+  "kind": "experiment",
+  "status": "valid",
+  "hypothesis": "split header/body plus delayed ACK creates body wait; QUICKACK alone should remove wait while server syscall pattern remains",
+  "changed_factor": "client TCP_QUICKACK=1 after headers",
+  "falsifier": "body wait persists with QUICKACK, or server sendfile itself is delayed/blocked",
+  "label": "B",
+  "quickack": true,
+  "started_utc": "2026-09-28T02:24:45.862698+00:00",
+  "prior_dynamic_seconds": 540.7718263889838,
+  "tools": {
+    "benchmark/diagnosis/diagnose.py": "b3375cffe5eb23d8ad1449a1a79c4bd4958516b4b4a65c644581c4e882294db7",
+    "benchmark/build.py": "32340a0c73946ad18938b0c48247a18f44eb8c297d495961a710fac8bea8e22b",
+    "benchmark/run.py": "9fb01e7b2da9b7d4c0f46546d1f92b3fd2506301fdb85c9febb00be436b081ba",
+    "benchmark/summary.lua": "0ded2fdca3ab1f53274ae70806117c3c6288fec1bb05b0a0b601d55bf36b73ea"
+  },
+  "timeline_sha256": "6fa07eef4608adaa6b83ac672d0a5a7c7bb271f9be445fcec6032fb9d59ede8a",
+  "series": [
+    [
+      {
+        "request": 0,
+        "send_ns": 1790562286300429175,
+        "header_ns": 1790562286303061841,
+        "body_ns": 1790562286303590708,
+        "header_ms": 2.632666,
+        "body_wait_ms": 0.528867
+      },
+      {
+        "request": 1,
+        "send_ns": 1790562286303630014,
+        "header_ns": 1790562286304566364,
+        "body_ns": 1790562286304819630,
+        "header_ms": 0.93635,
+        "body_wait_ms": 0.253266
+      },
+      {
+        "request": 2,
+        "send_ns": 1790562286304832832,
+        "header_ns": 1790562286305835209,
+        "body_ns": 1790562286306338963,
+        "header_ms": 1.002377,
+        "body_wait_ms": 0.503754
+      },
+      {
+        "request": 3,
+        "send_ns": 1790562286306352830,
+        "header_ns": 1790562286307293498,
+        "body_ns": 1790562286307529399,
+        "header_ms": 0.940668,
+        "body_wait_ms": 0.235901
+      },
+      {
+        "request": 4,
+        "send_ns": 1790562286307538582,
+        "header_ns": 1790562286308256807,
+        "body_ns": 1790562286308546730,
+        "header_ms": 0.718225,
+        "body_wait_ms": 0.289923
+      },
+      {
+        "request": 5,
+        "send_ns": 1790562286308553657,
+        "header_ns": 1790562286309289110,
+        "body_ns": 1790562286309503347,
+        "header_ms": 0.735453,
+        "body_wait_ms": 0.214237
+      },
+      {
+        "request": 6,
+        "send_ns": 1790562286309510325,
+        "header_ns": 1790562286310257080,
+        "body_ns": 1790562286310463876,
+        "header_ms": 0.746755,
+        "body_wait_ms": 0.206796
+      },
+      {
+        "request": 7,
+        "send_ns": 1790562286310470795,
+        "header_ns": 1790562286311525588,
+        "body_ns": 1790562286311815820,
+        "header_ms": 1.054793,
+        "body_wait_ms": 0.290232
+      },
+      {
+        "request": 8,
+        "send_ns": 1790562286311824502,
+        "header_ns": 1790562286313228360,
+        "body_ns": 1790562286313439839,
+        "header_ms": 1.403858,
+        "body_wait_ms": 0.211479
+      },
+      {
+        "request": 9,
+        "send_ns": 1790562286313447747,
+        "header_ns": 1790562286314113498,
+        "body_ns": 1790562286314329851,
+        "header_ms": 0.665751,
+        "body_wait_ms": 0.216353
+      },
+      {
+        "request": 10,
+        "send_ns": 1790562286314337494,
+        "header_ns": 1790562286315454568,
+        "body_ns": 1790562286315976540,
+        "header_ms": 1.117074,
+        "body_wait_ms": 0.521972
+      },
+      {
+        "request": 11,
+        "send_ns": 1790562286315985434,
+        "header_ns": 1790562286316740062,
+        "body_ns": 1790562286317010810,
+        "header_ms": 0.754628,
+        "body_wait_ms": 0.270748
+      },
+      {
+        "request": 12,
+        "send_ns": 1790562286317018285,
+        "header_ns": 1790562286317721800,
+        "body_ns": 1790562286317973378,
+        "header_ms": 0.703515,
+        "body_wait_ms": 0.251578
+      },
+      {
+        "request": 13,
+        "send_ns": 1790562286317980344,
+        "header_ns": 1790562286318750752,
+        "body_ns": 1790562286319467403,
+        "header_ms": 0.770408,
+        "body_wait_ms": 0.716651
+      },
+      {
+        "request": 14,
+        "send_ns": 1790562286319475294,
+        "header_ns": 1790562286320408100,
+        "body_ns": 1790562286321027809,
+        "header_ms": 0.932806,
+        "body_wait_ms": 0.619709
+      },
+      {
+        "request": 15,
+        "send_ns": 1790562286321036207,
+        "header_ns": 1790562286321930523,
+        "body_ns": 1790562286322239297,
+        "header_ms": 0.894316,
+        "body_wait_ms": 0.308774
+      },
+      {
+        "request": 16,
+        "send_ns": 1790562286322246174,
+        "header_ns": 1790562286323035203,
+        "body_ns": 1790562286323803135,
+        "header_ms": 0.789029,
+        "body_wait_ms": 0.767932
+      },
+      {
+        "request": 17,
+        "send_ns": 1790562286323811294,
+        "header_ns": 1790562286324703016,
+        "body_ns": 1790562286324979098,
+        "header_ms": 0.891722,
+        "body_wait_ms": 0.276082
+      },
+      {
+        "request": 18,
+        "send_ns": 1790562286324986656,
+        "header_ns": 1790562286325878943,
+        "body_ns": 1790562286326539810,
+        "header_ms": 0.892287,
+        "body_wait_ms": 0.660867
+      },
+      {
+        "request": 19,
+        "send_ns": 1790562286326548111,
+        "header_ns": 1790562286327678001,
+        "body_ns": 1790562286328338387,
+        "header_ms": 1.12989,
+        "body_wait_ms": 0.660386
+      },
+      {
+        "request": 20,
+        "send_ns": 1790562286328346335,
+        "header_ns": 1790562286329462261,
+        "body_ns": 1790562286329712677,
+        "header_ms": 1.115926,
+        "body_wait_ms": 0.250416
+      },
+      {
+        "request": 21,
+        "send_ns": 1790562286329720918,
+        "header_ns": 1790562286330501283,
+        "body_ns": 1790562286330727553,
+        "header_ms": 0.780365,
+        "body_wait_ms": 0.22627
+      },
+      {
+        "request": 22,
+        "send_ns": 1790562286330735121,
+        "header_ns": 1790562286331538462,
+        "body_ns": 1790562286331784015,
+        "header_ms": 0.803341,
+        "body_wait_ms": 0.245553
+      },
+      {
+        "request": 23,
+        "send_ns": 1790562286331792172,
+        "header_ns": 1790562286332533990,
+        "body_ns": 1790562286332773867,
+        "header_ms": 0.741818,
+        "body_wait_ms": 0.239877
+      },
+      {
+        "request": 24,
+        "send_ns": 1790562286332781960,
+        "header_ns": 1790562286333397899,
+        "body_ns": 1790562286333651194,
+        "header_ms": 0.615939,
+        "body_wait_ms": 0.253295
+      },
+      {
+        "request": 25,
+        "send_ns": 1790562286333659335,
+        "header_ns": 1790562286334411020,
+        "body_ns": 1790562286334605216,
+        "header_ms": 0.751685,
+        "body_wait_ms": 0.194196
+      },
+      {
+        "request": 26,
+        "send_ns": 1790562286334613450,
+        "header_ns": 1790562286335339679,
+        "body_ns": 1790562286335527747,
+        "header_ms": 0.726229,
+        "body_wait_ms": 0.188068
+      },
+      {
+        "request": 27,
+        "send_ns": 1790562286335535428,
+        "header_ns": 1790562286336700784,
+        "body_ns": 1790562286336938412,
+        "header_ms": 1.165356,
+        "body_wait_ms": 0.237628
+      },
+      {
+        "request": 28,
+        "send_ns": 1790562286336946561,
+        "header_ns": 1790562286337649217,
+        "body_ns": 1790562286337915431,
+        "header_ms": 0.702656,
+        "body_wait_ms": 0.266214
+      },
+      {
+        "request": 29,
+        "send_ns": 1790562286337923799,
+        "header_ns": 1790562286338615855,
+        "body_ns": 1790562286338865099,
+        "header_ms": 0.692056,
+        "body_wait_ms": 0.249244
+      },
+      {
+        "request": 30,
+        "send_ns": 1790562286338872432,
+        "header_ns": 1790562286339538541,
+        "body_ns": 1790562286340211637,
+        "header_ms": 0.666109,
+        "body_wait_ms": 0.673096
+      },
+      {
+        "request": 31,
+        "send_ns": 1790562286340219090,
+        "header_ns": 1790562286340990640,
+        "body_ns": 1790562286341214855,
+        "header_ms": 0.77155,
+        "body_wait_ms": 0.224215
+      }
+    ],
+    [
+      {
+        "request": 0,
+        "send_ns": 1790562286358540878,
+        "header_ns": 1790562286360165979,
+        "body_ns": 1790562286360502343,
+        "header_ms": 1.625101,
+        "body_wait_ms": 0.336364
+      },
+      {
+        "request": 1,
+        "send_ns": 1790562286360520082,
+        "header_ns": 1790562286361545089,
+        "body_ns": 1790562286361949480,
+        "header_ms": 1.025007,
+        "body_wait_ms": 0.404391
+      },
+      {
+        "request": 2,
+        "send_ns": 1790562286361959734,
+        "header_ns": 1790562286362906234,
+        "body_ns": 1790562286363153049,
+        "header_ms": 0.9465,
+        "body_wait_ms": 0.246815
+      },
+      {
+        "request": 3,
+        "send_ns": 1790562286363161026,
+        "header_ns": 1790562286363879442,
+        "body_ns": 1790562286364106153,
+        "header_ms": 0.718416,
+        "body_wait_ms": 0.226711
+      },
+      {
+        "request": 4,
+        "send_ns": 1790562286364113600,
+        "header_ns": 1790562286365207840,
+        "body_ns": 1790562286365388175,
+        "header_ms": 1.09424,
+        "body_wait_ms": 0.180335
+      },
+      {
+        "request": 5,
+        "send_ns": 1790562286365396426,
+        "header_ns": 1790562286366175348,
+        "body_ns": 1790562286366441338,
+        "header_ms": 0.778922,
+        "body_wait_ms": 0.26599
+      },
+      {
+        "request": 6,
+        "send_ns": 1790562286366449823,
+        "header_ns": 1790562286367216681,
+        "body_ns": 1790562286367420857,
+        "header_ms": 0.766858,
+        "body_wait_ms": 0.204176
+      },
+      {
+        "request": 7,
+        "send_ns": 1790562286367429103,
+        "header_ns": 1790562286368122031,
+        "body_ns": 1790562286368388786,
+        "header_ms": 0.692928,
+        "body_wait_ms": 0.266755
+      },
+      {
+        "request": 8,
+        "send_ns": 1790562286368396543,
+        "header_ns": 1790562286369415249,
+        "body_ns": 1790562286369694661,
+        "header_ms": 1.018706,
+        "body_wait_ms": 0.279412
+      },
+      {
+        "request": 9,
+        "send_ns": 1790562286369702969,
+        "header_ns": 1790562286370460457,
+        "body_ns": 1790562286370743911,
+        "header_ms": 0.757488,
+        "body_wait_ms": 0.283454
+      },
+      {
+        "request": 10,
+        "send_ns": 1790562286370750663,
+        "header_ns": 1790562286371618419,
+        "body_ns": 1790562286371862965,
+        "header_ms": 0.867756,
+        "body_wait_ms": 0.244546
+      },
+      {
+        "request": 11,
+        "send_ns": 1790562286371875204,
+        "header_ns": 1790562286372668361,
+        "body_ns": 1790562286372950413,
+        "header_ms": 0.793157,
+        "body_wait_ms": 0.282052
+      },
+      {
+        "request": 12,
+        "send_ns": 1790562286372958570,
+        "header_ns": 1790562286373705422,
+        "body_ns": 1790562286374187719,
+        "header_ms": 0.746852,
+        "body_wait_ms": 0.482297
+      },
+      {
+        "request": 13,
+        "send_ns": 1790562286374196316,
+        "header_ns": 1790562286374894050,
+        "body_ns": 1790562286375179760,
+        "header_ms": 0.697734,
+        "body_wait_ms": 0.28571
+      },
+      {
+        "request": 14,
+        "send_ns": 1790562286375188051,
+        "header_ns": 1790562286376071716,
+        "body_ns": 1790562286376585589,
+        "header_ms": 0.883665,
+        "body_wait_ms": 0.513873
+      },
+      {
+        "request": 15,
+        "send_ns": 1790562286376594173,
+        "header_ns": 1790562286377342477,
+        "body_ns": 1790562286377732136,
+        "header_ms": 0.748304,
+        "body_wait_ms": 0.389659
+      },
+      {
+        "request": 16,
+        "send_ns": 1790562286377740944,
+        "header_ns": 1790562286378509260,
+        "body_ns": 1790562286378723215,
+        "header_ms": 0.768316,
+        "body_wait_ms": 0.213955
+      },
+      {
+        "request": 17,
+        "send_ns": 1790562286378731841,
+        "header_ns": 1790562286379398612,
+        "body_ns": 1790562286379618508,
+        "header_ms": 0.666771,
+        "body_wait_ms": 0.219896
+      },
+      {
+        "request": 18,
+        "send_ns": 1790562286379626194,
+        "header_ns": 1790562286380324915,
+        "body_ns": 1790562286380623836,
+        "header_ms": 0.698721,
+        "body_wait_ms": 0.298921
+      },
+      {
+        "request": 19,
+        "send_ns": 1790562286380631756,
+        "header_ns": 1790562286381478958,
+        "body_ns": 1790562286381919083,
+        "header_ms": 0.847202,
+        "body_wait_ms": 0.440125
+      },
+      {
+        "request": 20,
+        "send_ns": 1790562286381926037,
+        "header_ns": 1790562286382632827,
+        "body_ns": 1790562286382860194,
+        "header_ms": 0.70679,
+        "body_wait_ms": 0.227367
+      },
+      {
+        "request": 21,
+        "send_ns": 1790562286382866605,
+        "header_ns": 1790562286383618171,
+        "body_ns": 1790562286383836773,
+        "header_ms": 0.751566,
+        "body_wait_ms": 0.218602
+      },
+      {
+        "request": 22,
+        "send_ns": 1790562286383843496,
+        "header_ns": 1790562286384589998,
+        "body_ns": 1790562286384777248,
+        "header_ms": 0.746502,
+        "body_wait_ms": 0.18725
+      },
+      {
+        "request": 23,
+        "send_ns": 1790562286384785446,
+        "header_ns": 1790562286385551494,
+        "body_ns": 1790562286385988845,
+        "header_ms": 0.766048,
+        "body_wait_ms": 0.437351
+      },
+      {
+        "request": 24,
+        "send_ns": 1790562286385997171,
+        "header_ns": 1790562286386907112,
+        "body_ns": 1790562286387164082,
+        "header_ms": 0.909941,
+        "body_wait_ms": 0.25697
+      },
+      {
+        "request": 25,
+        "send_ns": 1790562286387174003,
+        "header_ns": 1790562286388190540,
+        "body_ns": 1790562286388529673,
+        "header_ms": 1.016537,
+        "body_wait_ms": 0.339133
+      },
+      {
+        "request": 26,
+        "send_ns": 1790562286388537942,
+        "header_ns": 1790562286389410977,
+        "body_ns": 1790562286389783674,
+        "header_ms": 0.873035,
+        "body_wait_ms": 0.372697
+      },
+      {
+        "request": 27,
+        "send_ns": 1790562286389792630,
+        "header_ns": 1790562286390648478,
+        "body_ns": 1790562286390908456,
+        "header_ms": 0.855848,
+        "body_wait_ms": 0.259978
+      },
+      {
+        "request": 28,
+        "send_ns": 1790562286390917342,
+        "header_ns": 1790562286391915159,
+        "body_ns": 1790562286392197166,
+        "header_ms": 0.997817,
+        "body_wait_ms": 0.282007
+      },
+      {
+        "request": 29,
+        "send_ns": 1790562286392206757,
+        "header_ns": 1790562286393089043,
+        "body_ns": 1790562286393322468,
+        "header_ms": 0.882286,
+        "body_wait_ms": 0.233425
+      },
+      {
+        "request": 30,
+        "send_ns": 1790562286393336566,
+        "header_ns": 1790562286394461853,
+        "body_ns": 1790562286394794722,
+        "header_ms": 1.125287,
+        "body_wait_ms": 0.332869
+      },
+      {
+        "request": 31,
+        "send_ns": 1790562286394804054,
+        "header_ns": 1790562286395868210,
+        "body_ns": 1790562286396126441,
+        "header_ms": 1.064156,
+        "body_wait_ms": 0.258231
+      }
+    ],
+    [
+      {
+        "request": 0,
+        "send_ns": 1790562286414157110,
+        "header_ns": 1790562286416216322,
+        "body_ns": 1790562286416543064,
+        "header_ms": 2.059212,
+        "body_wait_ms": 0.326742
+      },
+      {
+        "request": 1,
+        "send_ns": 1790562286416566416,
+        "header_ns": 1790562286417538149,
+        "body_ns": 1790562286417876645,
+        "header_ms": 0.971733,
+        "body_wait_ms": 0.338496
+      },
+      {
+        "request": 2,
+        "send_ns": 1790562286417885832,
+        "header_ns": 1790562286419200653,
+        "body_ns": 1790562286419601449,
+        "header_ms": 1.314821,
+        "body_wait_ms": 0.400796
+      },
+      {
+        "request": 3,
+        "send_ns": 1790562286419617070,
+        "header_ns": 1790562286420711109,
+        "body_ns": 1790562286421158693,
+        "header_ms": 1.094039,
+        "body_wait_ms": 0.447584
+      },
+      {
+        "request": 4,
+        "send_ns": 1790562286421169512,
+        "header_ns": 1790562286422062775,
+        "body_ns": 1790562286422887370,
+        "header_ms": 0.893263,
+        "body_wait_ms": 0.824595
+      },
+      {
+        "request": 5,
+        "send_ns": 1790562286422897349,
+        "header_ns": 1790562286423818712,
+        "body_ns": 1790562286424098352,
+        "header_ms": 0.921363,
+        "body_wait_ms": 0.27964
+      },
+      {
+        "request": 6,
+        "send_ns": 1790562286424107810,
+        "header_ns": 1790562286425053470,
+        "body_ns": 1790562286425323202,
+        "header_ms": 0.94566,
+        "body_wait_ms": 0.269732
+      },
+      {
+        "request": 7,
+        "send_ns": 1790562286425333799,
+        "header_ns": 1790562286426342925,
+        "body_ns": 1790562286426688800,
+        "header_ms": 1.009126,
+        "body_wait_ms": 0.345875
+      },
+      {
+        "request": 8,
+        "send_ns": 1790562286426697938,
+        "header_ns": 1790562286427544121,
+        "body_ns": 1790562286427985409,
+        "header_ms": 0.846183,
+        "body_wait_ms": 0.441288
+      },
+      {
+        "request": 9,
+        "send_ns": 1790562286427996259,
+        "header_ns": 1790562286428926801,
+        "body_ns": 1790562286429282697,
+        "header_ms": 0.930542,
+        "body_wait_ms": 0.355896
+      },
+      {
+        "request": 10,
+        "send_ns": 1790562286429292348,
+        "header_ns": 1790562286429963527,
+        "body_ns": 1790562286430211305,
+        "header_ms": 0.671179,
+        "body_wait_ms": 0.247778
+      },
+      {
+        "request": 11,
+        "send_ns": 1790562286430219496,
+        "header_ns": 1790562286431203625,
+        "body_ns": 1790562286431411002,
+        "header_ms": 0.984129,
+        "body_wait_ms": 0.207377
+      },
+      {
+        "request": 12,
+        "send_ns": 1790562286431420338,
+        "header_ns": 1790562286432438455,
+        "body_ns": 1790562286432658341,
+        "header_ms": 1.018117,
+        "body_wait_ms": 0.219886
+      },
+      {
+        "request": 13,
+        "send_ns": 1790562286432667706,
+        "header_ns": 1790562286433777950,
+        "body_ns": 1790562286434184976,
+        "header_ms": 1.110244,
+        "body_wait_ms": 0.407026
+      },
+      {
+        "request": 14,
+        "send_ns": 1790562286434194363,
+        "header_ns": 1790562286435200420,
+        "body_ns": 1790562286435646521,
+        "header_ms": 1.006057,
+        "body_wait_ms": 0.446101
+      },
+      {
+        "request": 15,
+        "send_ns": 1790562286435656138,
+        "header_ns": 1790562286436686044,
+        "body_ns": 1790562286437095307,
+        "header_ms": 1.029906,
+        "body_wait_ms": 0.409263
+      },
+      {
+        "request": 16,
+        "send_ns": 1790562286437105716,
+        "header_ns": 1790562286438609224,
+        "body_ns": 1790562286438870710,
+        "header_ms": 1.503508,
+        "body_wait_ms": 0.261486
+      },
+      {
+        "request": 17,
+        "send_ns": 1790562286438881054,
+        "header_ns": 1790562286439702842,
+        "body_ns": 1790562286440212919,
+        "header_ms": 0.821788,
+        "body_wait_ms": 0.510077
+      },
+      {
+        "request": 18,
+        "send_ns": 1790562286440223122,
+        "header_ns": 1790562286441186114,
+        "body_ns": 1790562286441485091,
+        "header_ms": 0.962992,
+        "body_wait_ms": 0.298977
+      },
+      {
+        "request": 19,
+        "send_ns": 1790562286441495246,
+        "header_ns": 1790562286442371675,
+        "body_ns": 1790562286442660142,
+        "header_ms": 0.876429,
+        "body_wait_ms": 0.288467
+      },
+      {
+        "request": 20,
+        "send_ns": 1790562286442670166,
+        "header_ns": 1790562286443458508,
+        "body_ns": 1790562286443754616,
+        "header_ms": 0.788342,
+        "body_wait_ms": 0.296108
+      },
+      {
+        "request": 21,
+        "send_ns": 1790562286443763501,
+        "header_ns": 1790562286444627128,
+        "body_ns": 1790562286444922133,
+        "header_ms": 0.863627,
+        "body_wait_ms": 0.295005
+      },
+      {
+        "request": 22,
+        "send_ns": 1790562286444932217,
+        "header_ns": 1790562286445830119,
+        "body_ns": 1790562286446156204,
+        "header_ms": 0.897902,
+        "body_wait_ms": 0.326085
+      },
+      {
+        "request": 23,
+        "send_ns": 1790562286446168964,
+        "header_ns": 1790562286447127146,
+        "body_ns": 1790562286447503705,
+        "header_ms": 0.958182,
+        "body_wait_ms": 0.376559
+      },
+      {
+        "request": 24,
+        "send_ns": 1790562286447513892,
+        "header_ns": 1790562286448488055,
+        "body_ns": 1790562286448808512,
+        "header_ms": 0.974163,
+        "body_wait_ms": 0.320457
+      },
+      {
+        "request": 25,
+        "send_ns": 1790562286448816924,
+        "header_ns": 1790562286449582568,
+        "body_ns": 1790562286449909327,
+        "header_ms": 0.765644,
+        "body_wait_ms": 0.326759
+      },
+      {
+        "request": 26,
+        "send_ns": 1790562286449919630,
+        "header_ns": 1790562286450850039,
+        "body_ns": 1790562286451115470,
+        "header_ms": 0.930409,
+        "body_wait_ms": 0.265431
+      },
+      {
+        "request": 27,
+        "send_ns": 1790562286451122634,
+        "header_ns": 1790562286451982382,
+        "body_ns": 1790562286452340212,
+        "header_ms": 0.859748,
+        "body_wait_ms": 0.35783
+      },
+      {
+        "request": 28,
+        "send_ns": 1790562286452356887,
+        "header_ns": 1790562286453407646,
+        "body_ns": 1790562286453791298,
+        "header_ms": 1.050759,
+        "body_wait_ms": 0.383652
+      },
+      {
+        "request": 29,
+        "send_ns": 1790562286453803167,
+        "header_ns": 1790562286454846335,
+        "body_ns": 1790562286455135517,
+        "header_ms": 1.043168,
+        "body_wait_ms": 0.289182
+      },
+      {
+        "request": 30,
+        "send_ns": 1790562286455146348,
+        "header_ns": 1790562286456028280,
+        "body_ns": 1790562286456543356,
+        "header_ms": 0.881932,
+        "body_wait_ms": 0.515076
+      },
+      {
+        "request": 31,
+        "send_ns": 1790562286456555872,
+        "header_ns": 1790562286457665881,
+        "body_ns": 1790562286458042789,
+        "header_ms": 1.110009,
+        "body_wait_ms": 0.376908
+      }
+    ]
+  ],
+  "manifest": {
+    "schema": 1,
+    "label": "B",
+    "commit": "89514bd99a4410a6eb35d02444fe9e73f56232a2",
+    "tree": "f6912c28d25355873fbca48ede3b4d63c281a97c",
+    "archive": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/reviewer/B/source.tar",
+    "archive_sha256": "1e09adab31db96639aff92dbccde49337c7b6732b990458b79d3a99e9429b47e",
+    "source": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/reviewer/B/source",
+    "source_hashes": {
+      ".clang-format": "51977317b1771c3789febc994d1072092996de145e0f588a9ed6fe8deac2cbea",
+      ".githooks/pre-commit": "d84a414d6784023afd9ffcf3d8505c226c136a07c56d7222cb231b460cd056d3",
+      ".gitignore": "4e3ace11a8e14bc82580c8fcb7a4b44486768fc77fb8348d377754c2cd5d892a",
+      ".vscode/settings.json": "e544e197da65ba4194e38d71ead48b395e9300c4169ad7809287e6c39d94f278",
+      "ARCHITECTURE.md": "89e29aaba7552276dd1f8fa0339e9076d47ec2c726e262066c7e57fca9187fde",
+      "CHANGELOG.md": "bd77ac765a96f72b99c65ffb6e83fdb9dc621abdf173c4b7a9a4a440e6d64c07",
+      "CMakeLists.txt": "94395404d07b6271b5666161c46fdbcbe985dea7c45515ab1f5de3b0b1ac7d4b",
+      "README.md": "87b2dd7151a6dbff5b6fb6d99453c61b843f05c61d7f7cb9257d94eb4e304f8e",
+      "ROADMAP.md": "4aac99b5148d044dbc81cfd87e9b44b797908b2ede3f272f0bd8742e2cb2187c",
+      "TECH-DEBT-TRACKER.md": "bf73bed7441dd7ad203d5c6323bab2d36be2805e20de3e7e6c075468b490ed16",
+      "app/http_connection_handler.cpp": "620bb8aa38390e74c299c835096ac6bf3950973bd546559bea28140b29f49518",
+      "app/http_connection_handler.h": "65bd5cfea07e968feae6cfa9d8e6a262aa73d37d3f12a60af9e28752525336f0",
+      "app/main.cpp": "93bce1039bd682b675a043f5dbc46e9488559f1e23cf9a8409614d31fa6b0a69",
+      "app/signal_watcher.cpp": "b54ab7aedb9f2fbc0043be1dc80202f6f1e76fa9d45949cb29353056b0713a18",
+      "app/signal_watcher.h": "0577b035bf27a24907d919a8f0bfa45ac4ae10b3b825afddf4cf9bd35ce0f62b",
+      "include/base/async_logger.h": "589ffc2994b45bd0d310891c433dfc814d2e451cf68df1681ae079b5e40076f0",
+      "include/base/buffer.h": "b04ef65cae9e7fa9feecfa26f4ce5528f520e803fad2743670abc7dbb8b13a8d",
+      "include/base/file_region.h": "85069ae23a8e6fc31245296d509115c162e177b59499556822cf86d7689d1717",
+      "include/base/logger.h": "9ba22b54d0413e30de21cad7c646c8383b02303ee134b9a45eee2d2f6530604b",
+      "include/base/non_copyable.h": "91e9186077f47d39aa89e76cb2ac0d8ca352a3189981f8d8b137cfebe279af47",
+      "include/base/unique_fd.h": "fdfcb2f6d6fc8d4ccaff2d8c70e433612342b9c564dc9d7c8fec271f3379f7dc",
+      "include/http/http_request.h": "c32c7d0054acd67000ba2ba6e923cf8ae8b31e5216fb3277bd993b182d53abfa",
+      "include/http/http_response.h": "0e7587095b4564cd8f9c9b02f3bfd579217cf205a42a58f849c6e1a41175704d",
+      "include/http/static_file_service.h": "04c45b422fb75be15dbbbbd0b960d775947cbe30083e48e55744d0bb10d5f400",
+      "include/net/acceptor.h": "fa942e1384c2762102a9c232bb33d4b427a6cf1a859a630fa6a9c0a37b8b2a64",
+      "include/net/channel.h": "5138aa2971195b0891415ef404e3e79a482a6e477be7880f17cd75c3b08b141d",
+      "include/net/connection_io.h": "372497fdd0ff50e994645a1246aa1865dc5864b6eaac9fa148dca8bce4ba76f8",
+      "include/net/connection_registry.h": "0d25c30a85943e94f4a577b661eb0bd224b791fce0c890496b84fd1c66616f04",
+      "include/net/connection_timeouts.h": "7d5dd819b8ad7f981539f485e790392e7c6eb8eed017ce403325b40a6de73ceb",
+      "include/net/epoller.h": "73830a9d82d4076045f90f09aff858a1844becbb761c30343689db0bf1182930",
+      "include/net/event_loop.h": "e5f7287b61434d76e42c45baccfb1f3d5a9fe449084e61e7a53699b66ed45196",
+      "include/net/event_loop_thread.h": "6d3547dc1863e754a2887f638b79a3c7932db0dea7fa6b7d186f62d796078e7b",
+      "include/net/event_loop_thread_pool.h": "dbca067d8ea365631448283f43951e14c2753f04f95776aa8d37a27d59a9eeb4",
+      "include/net/socket.h": "6f10a283c37ecb94ede2f466f41aeeb76542ce0bb579378dac36f3f9aef320d8",
+      "include/net/tcp_connection.h": "315e5f0480035f4f74f4e1c444bbd91c408742d930c3da6e094e35855f783df0",
+      "include/net/tcp_server.h": "228f4bfba8bdb919374175e87ce9789f76960fa919eba66710ebf26266e18ff3",
+      "include/timer/timer_queue.h": "cc0764ee09ddc9e08721322f700e40518bddf6f387eb1048fd9ecaf06a156535",
+      "scripts/format_cpp.py": "1fe7168acb56a2ad82189f4ee78a8c033f509ae4be3592bd6871c08bc5c6f294",
+      "scripts/test_format_hook.py": "2005eb306a339e876b54f3de621f91fbea859a74a9d4b2940eafcdbe56ba7715",
+      "src/base/async_logger.cpp": "ee1202a290b624614d90f81cc0cfb881e89ff3d9aae066ad9ce19d82b250177a",
+      "src/base/buffer.cpp": "da189d69dff226ec00ce13be9d6805e9f31fcbfb6323a6d75aefc3bbf656f251",
+      "src/base/file_region.cpp": "aa77f971b043bedcdd55b2feff617a61875764d2db09005bbcab5590d8726a63",
+      "src/base/logger.cpp": "cb626702b9e2e1eb7d1496354302672ec498715e790eee6eb4234cd80039c41d",
+      "src/http/http_request.cpp": "fd8959131ca1db33c53db5fcff4558dfbe0c6f96bc8bf9a1f8e7495e28bfcae9",
+      "src/http/http_response.cpp": "1ce11d9d0cf6385cad7cdedbedb5d103accf28f2be5a166a4829b337bc62ecb2",
+      "src/http/static_file_service.cpp": "a81c1e1490cfef183e78b505aecb6d9f35bd6cda8b93d922e86bf29aac5b74ec",
+      "src/net/acceptor.cpp": "6714fc03755f87f54b6ff527f752e74f5786656b32cd993848b279aa9bb6d9dd",
+      "src/net/channel.cpp": "0239f62be626ecbbac7757b318da0c4b6dc46c085685120ce5d49be1d6be03d4",
+      "src/net/connection_io.cpp": "084c28e83457d70c9994ccb3375e786b9c89cf1220953d0745237c08c17ba391",
+      "src/net/connection_registry.cpp": "d1033c77cce9d96c85bd59101d9a4d002f979a038aebdec556d446362fa5d33a",
+      "src/net/epoller.cpp": "646b5264640c50b7b3cb9e7d23260f857fe04f402ede063adb81636539d1b31c",
+      "src/net/event_loop.cpp": "b448cbe3e172a9a64387eb6bf5a603465d6e25afb1986d3217db755f63583431",
+      "src/net/event_loop_thread.cpp": "a8ed0662c1d8828a374842160fdf2b77790e461eaf58f51e642477703755fbca",
+      "src/net/event_loop_thread_pool.cpp": "8124bc9fd7e40999d224a1877777df25affa8867dbf1dbd6df5b7cb54a42d1ae",
+      "src/net/socket.cpp": "958802a8280eb64b9767273e99ac0a5daf1a7daacce157805496d1ece8e228e4",
+      "src/net/tcp_connection.cpp": "00a12ece14f13f82febf2acca8945073ab6b5ba14ed4c643a47c7cd851041691",
+      "src/net/tcp_server.cpp": "e7e38796c56145024d96f4d70110a63f49b40a7d3af4e30a2196f8f92879237d",
+      "src/timer/timer_queue.cpp": "46befbbb800776a687b9b82ccde510a8e3a4e6d999a3d0288d6a958f2e791c9b",
+      "tests/acceptor_tcp_connection_tests.cpp": "840cc5c6b1a57dcc30be6973304fb473b712e6d830404449d68a60e768515e2d",
+      "tests/async_logger_faults.h": "e178bd4cb4c0ad9b7ea0f5b5837ddbceda85b675e7c60b9137c1896e782f544f",
+      "tests/async_logger_production_tests.cpp": "f11a228b71dc43c931fca63ef0a1a644fb726fbc088ab545f893969ffbacf982",
+      "tests/async_logger_test_support.h": "0ae60853fd29026bded6a4e7d76b74c05535133eb72db041da5f41c0044aedf1",
+      "tests/async_logger_tests.cpp": "dc7ff653ecd33c45d576bef70c3d48f9df9ec9486712ef4c4fbc4a5f69b7d5f6",
+      "tests/base_tests.cpp": "089fc1b0602dda4169ab8e841454749c7daa8b14571995f010dc2ea86ec61c19",
+      "tests/buffer_backpressure_tests.cpp": "9706a07a4de072f83d7d1c044dfdacfcb26d276e66d3221931ee663663dd2157",
+      "tests/buffer_tests.cpp": "f632b5a1b0d825df31d45d5717e07430adb0c92ea71382dfe5960356153cadea",
+      "tests/cli_tests.cpp": "832f9a5f2e419dc21404cba25ce03651b8c1158e54ce0137a7632041855d6801",
+      "tests/connection_io_tests.cpp": "4cf8c7bd6edcbab4e1b0d0d69c1b0c9cda198c568d02234bc4f4c75dd30b478c",
+      "tests/connection_timeout_tests.cpp": "62ff29f9569e26e7d6563e226c278789a0170f3b9af806478340764542346511",
+      "tests/event_loop_channel_tests.cpp": "3e17c6eef23608989a3d4fe189781e1421cb794ee8290b6bcee2a9f4948a088c",
+      "tests/event_loop_thread_pool_tests.cpp": "380e829829c63acc914512aeead5adb4df59e06ef39d4aa7a6e2cb865a5c5285",
+      "tests/event_loop_thread_tests.cpp": "eabcfc6a144f7ae6faa5f31072a0a1008d78af7438150a2aa3a188071dd6e8e5",
+      "tests/graceful_shutdown_tests.cpp": "d8b427d6011ecc7d4a13a4bf264eece70c3b8dd3cc458330477c8099b5651256",
+      "tests/http_connection_callback_tests.cpp": "2ff483c06711c3627b45bd4f81e6bf82dedaef5ad8f7605620bc4633f2d207f6",
+      "tests/http_keep_alive_integration_tests.cpp": "3e2e56bd3b59966c5f09017f0287a898d1ee9a521d5c944be47feed467c6f3f7",
+      "tests/http_keep_alive_tests.cpp": "28182f9b61a6eaf6cf16581aa95f7f92625dc96842a214adce2ac4a274e45f08",
+      "tests/http_parser_state_tests.cpp": "5ab3ac1f7866244da39e6432cc41dc9d0f11158ca384ebdaf9c89d8f26725fc9",
+      "tests/http_parser_tests.cpp": "40a259c423c2ef9cd56b9347c7835d71edb6d993df7dbd8b0821b81ff74729ba",
+      "tests/http_protocol_boundary_cases.h": "5375817c9f41e1fc7edbfdfcd9deda910d625e8b40304aab8b2237723cde20e1",
+      "tests/http_server_integration_tests.cpp": "db1f28fb0e311cff05b336a09e66b7564baa2d0aa98de5f11279579825da77eb",
+      "tests/http_smoke_test.sh": "91c1da871b7d92e16857e8c9c50d4d7a065841094040d70a6fb652b3d48c4183",
+      "tests/multi_reactor_tests.cpp": "5cbb66ecab5f77d1d03afe424e4ddc98ffc2c4d05c22882508dfb4fd43d37dc2",
+      "tests/network_primitives_tests.cpp": "c6fb39eb5d39be9617838c879d5e5f546fc9a53b00c852657a351b2da2e9b62d",
+      "tests/resource_limits_tests.cpp": "83bb8ad822fd68d67f2b5dd3b69a734b52e8bbfdf43811cac81dd23a67e0ccb9",
+      "tests/sendfile_tests.cpp": "380612a863f91bb12af0ed3e46e171f16563b604c18bbe445d5d72d89d07bbe5",
+      "tests/socket_tests.cpp": "4afd9e50950884b051cc0d2e7c2c4de71763849b0bd10354aa357917673befe2",
+      "tests/static_file_tests.cpp": "c4b637280f19f24fece0c4c13446c32d1ffbf142fb58f5f8d5741b0a4deac245",
+      "tests/timer_queue_tests.cpp": "d32187bbaf0edb984f8802645e9e56f570860dda0c7906e8aaccb796e44db81c",
+      "www/index.html": "54454a0d9d12b94fc007439c99b29c26f47d8aba6e67fbe49bee4fbb14ea3821"
+    },
+    "binary": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/reviewer/B/build/hp_http_server",
+    "binary_sha256": "1b46e9b2f0def6d8940e9ae4fd0ff413d5556ec314da93dd1d4313714f91755d",
+    "cmake_cache": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/reviewer/B/build/CMakeCache.txt",
+    "cmake_cache_sha256": "a305fb5f549b36a84e28686d6868678867a765fb347766b7efc4edd1c136384e",
+    "compile_commands": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/reviewer/B/build/compile_commands.json",
+    "compile_commands_sha256": "1cce5379219986798e114e93890b83734e3fc555854010ea489b60a305372d49",
+    "configure_command": [
+      "cmake",
+      "-S",
+      "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/reviewer/B/source",
+      "-B",
+      "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/reviewer/B/build",
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DBUILD_TESTING=OFF",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+      "-DCMAKE_CXX_STANDARD=20",
+      "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG",
+      "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "build_command": [
+      "cmake",
+      "--build",
+      "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s1/reviewer/B/build",
+      "--target",
+      "hp_http_server",
+      "-j4"
+    ],
+    "flags": [
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DBUILD_TESTING=OFF",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+      "-DCMAKE_CXX_STANDARD=20",
+      "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG",
+      "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "cmake": "cmake version 3.28.3"
+  },
+  "port": 37112,
+  "pre_audit": [
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    },
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    },
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    },
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    },
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    }
+  ],
+  "post_audit": [
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    },
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    },
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    },
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    },
+    {
+      "status": 200,
+      "bytes": 1024,
+      "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+    }
+  ],
+  "tracer_cleanup": {
+    "pid": 18617,
+    "starttime": 15100958,
+    "returncode": -15,
+    "forced": false,
+    "reaped": true
+  },
+  "server_cleanup": {
+    "pid": 18613,
+    "starttime": 15100932,
+    "returncode": 0,
+    "forced": false,
+    "reaped": true
+  },
+  "wall_seconds": 0.882444574002875,
+  "ended_utc": "2026-09-28T02:24:46.743265+00:00"
+}
