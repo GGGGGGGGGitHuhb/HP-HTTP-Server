@@ -31,6 +31,8 @@ V0.5/S3已完成：Approved revision1、Builder001/002、Reviewer002最终PASS�
 
 既有HTTP单响应Writing暂停读取、完整排空后处理pipeline后缀、真实IO进展续期、idle/drain/RST回收均保持；Buffer整理/释放不是网络进展。独立真实0/1/2慢读及同owner健康控制、300轮回收和八sanitizer通过；机制减少复制和容量保留，不宣称QPS/RSS比例改善，无新通用高低水位或全局配额。
 
+2026-10-05：Approved R005修复候选将AsyncLogger消费者改为每批最多64条已有记录，队列锁内拷贝移出、锁外完整拼接/一次写入和flush，再锁内整批记账；不等待凑批。批内全部在途直至flush完成，失败整批计failed，停止仍排空并join。1024槽/1024字节正文保持，pending最多1088；当前ABI固定队列及批次输出/Record临时存储合计1,197,632字节，另有对象/线程/sink资源。该候选日志正确性经Reviewer009独立验证，整体性能仍因P3延迟FAIL；以下逐条flush是已发布历史行为。
+
 V0.5/S2已完成：Approved revision1、Builder001、独立Reviewer001 PASS和Leader003齐备。生产日志使用1024槽×最多1024字节正文的有界队列，单消费者在状态锁外写stderr并逐条flush；所有等级满队列丢新，无同步回退，计数包含在途记录。消息在提交返回前复制；固定槽和一个在途Record的当前ABI记录存储为1,066,000字节，另有固定对象及线程资源。flush不等于fsync或掉电持久化；没有QPS提升承诺。
 
 LoggerSession先于服务资源创建，服务/worker/callback销毁及fatal记录后才停止接收、排空并join；共享引用覆盖每次提交，stop后的调用仅拒绝计数。无会话旧库调用保留同步兼容。入口先以当前线程RAII屏蔽SIGINT/SIGTERM，让消费者继承，再创建服务信号消费器；日志join后恢复原mask。健康sink排空，可返回的写/flush失败计failed并继续消费。**阻塞stderr可能拖延最终join；HTTP shutdown_timeout不保证整个进程限时退出**，不detach、不改共享stderr标志。

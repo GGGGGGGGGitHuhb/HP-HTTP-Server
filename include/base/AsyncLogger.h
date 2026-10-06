@@ -41,6 +41,9 @@ class AsyncLogger {
 
  private:
   friend struct AsyncLoggerTestAccess;
+  static constexpr std::size_t kBatchRecords = 64;
+  static constexpr std::size_t kOutputRecordLimit = kMessageLimit + 9;
+
   struct Record {
     LogLevel level = LogLevel::kInfo;
     std::size_t length = 0;
@@ -51,6 +54,7 @@ class AsyncLogger {
   AsyncLogger(std::size_t slots, std::ostream& sink);
   bool recordsReady() const noexcept;
   void consumeRecords();
+  bool writeRecordBatch(const Record* records, std::size_t count);
 
   std::vector<Record> slots_;
   std::ostream& sink_;

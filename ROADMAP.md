@@ -1,15 +1,17 @@
 # HP HTTP Server 路线图
 
+2026-10-06：按用户明确指令关闭 V0.5.1/S3，保存并推送当前阶段交付；这是终止本阶段工作，不是验收通过。最终 Reviewer019 **FAIL**，正式 R005 P3 E/C P99=3.2446，未达到≤0.25；慢发送根因未确定，RO-002保持Open，移交用户后续新阶段。R019仅为未批准方案，本阶段不再执行。历史“返工中/不关闭”均为该决定前的检查点，未改写历史结论。
+
 本文档记录 HP HTTP Server 的总体目标、版本路线、阶段边界和长期演进方向。它是 Leader 制定阶段设计、Builder 判断实现范围、Reviewer 判断是否越界的主要依据。
 
 本文档不记录函数级、类级或文件级实现步骤。长期架构写入 `ARCHITECTURE.md`，阶段详细设计写入 `docs/leader/designs/Vx/Sx-design.md`，实现过程写入 Builder 报告，审查结果写入 Reviewer 报告，跨版本技术债写入 `TECH-DEBT-TRACKER.md`。
 
 ## 当前推进方向
 
-- 2026-09-28：V0.5.1/S2 已完成，Approved revision1、Builder001及独立Reviewer001 PASS齐备；S3未开始，版本整体未完成。
+- 2026-09-28：V0.5.1/S2 已完成，Approved revision1、Builder001及独立Reviewer001 PASS齐备；S3返工中（历史R002完整30样本验收失败；Reviewer006 FAIL；R005批准日志批量修复，尚待独立验收），版本整体未完成。
 - 新接收连接在交付前启用TCP_NODELAY，设置失败只关闭本连接；独立12样本1KiB QPS 716.522→37200.425（51.918倍），每轮P99中位48.399→2.024ms。1MiB吞吐比1.003842/P99比1.064837，均满足局部保护门槛。
 - 默认客户端正文等待从约42ms降至0.27–0.28ms；CPU代价、WSL2/热缓存限制及历史失败完整保留。RO-002等待S3扩展独立验收后最终关闭。
-- S1已合入PR #25并发布v0.5.1-s1；S2验收、本地提交、推送及后续合并分别记录，不把验收当已发布。
+- S1已合入PR #25并发布v0.5.1-s1；S2已合入PR #26（69424e6）并发布v0.5.1-s2，远程标签已核验。
 
 ## 当前独立重构进度
 
@@ -367,7 +369,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 ### V0.5.1 性能回退诊断与修复
 
-状态：`实现中`。S1/S2已完成，各自Approved/Builder/独立Reviewer PASS齐备；S3未开始。
+状态：`实现中`。S1/S2已完成，各自Approved/Builder/独立Reviewer PASS齐备；S3阻塞（R002完整30样本验收失败；Reviewer006 FAIL）。
 
 背景与目标：
 
@@ -379,7 +381,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 - `S1 复现与根因定位`（`已完成`，Reviewer002 PASS）：历史 A/B 与当前 C 分开测量；有限阶段隔离和机制反证，输出原因证据、剩余不确定性及 S2 决策依据。设计：[S1-design.md](docs/leader/designs/V0.5.1/S1-design.md)。
 - `S2 针对性修复与回归`（`已完成`，Approved revision1、Reviewer001 PASS）：根据 S1 证据制定并批准修复设计，修复已确认问题，补足受影响行为的回归覆盖。
-- `S3 独立性能验收与收口`（`未开始`）：独立比较修复前后，小文件为主、大文件为保护场景，固定必要线程/连接配置和后续检查入口。
+- `S3 独立性能验收与收口`（`返工中`）：[Approved设计](docs/leader/designs/V0.5.1/S3-design.md)工具已实现；R002完整30样本执行结束，P1/D吞吐跨度53.91%、P3/D P99中位比13.593未达门槛，Reviewer006 FAIL。历史计时异常本轮未复现，原因仍未知；停止后续完整套；R003/R004有界定位支持日志sink成本参与长尾；R005已批准有界批量写入/flush修复及每角色1800秒/2GiB新增额度，9项自测及ASan/UBSan/LSan通过；唯一30样本C/E矩阵有效，但P3 P99 E/C=3.2446仍超过0.25，所有组跨度合规、其余场景达门槛。动态停止，Reviewer009独立复核FAIL；R005本轮执行结束，P3仍需新返工设计，全部根因尚未确定。 R006诊断/R007工具纠正完成12个有效样本：日志锁有实际长获取，但去除单条逐响应info后长尾保留；server/client运输调用及epoll事件推进区间均观察到长停顿，底层触发仍未确定。没有新生产修复，独立Reviewer010仍FAIL，详[定位结果](benchmark/results/V0.5.1/S3/S3-builder-011.md)。 R008观测能力核验已结束：基本ptrace可用，host调度时间线接口仍缺，未满足准入故未启动ABBA；独立Reviewer011复核，正式S3仍FAIL。见[Builder012](benchmark/results/V0.5.1/S3/S3-builder-012.md)与[Reviewer011](benchmark/results/V0.5.1/S3/S3-reviewer-011.md)。
 
 范围与约束：
 
@@ -393,6 +395,15 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 诊断与独立验证有可追溯源码/工具身份、命令、完整样本和失败记录；无法复现不等于问题解决。
 - 经批准的修复满足性能门槛及正确性、连接复用、背压、关闭和资源保护要求；各阶段独立 Reviewer PASS 或获准关闭的 PASS WITH DEBT。
 - 更新 RO-002、公开结果和运行入口；没有证据时不得关闭异常观察或发布性能改善声明。
+
+- 2026-10-05：R009–R011隔离观测已结束。私有tracefs与实际线程PID映射可用，但两个真实负载观测样本均大量丢事件；修正采集器递归容量检查后，最后高频微型仍丢48185事件，未满足完整观测准入。三次HTTP尝试仅A1有效，原ABBA未成立，A4未执行。服务器具体根因仍未知，正式S3仍返工中/FAIL，无新生产修复或门槛调整。见[Builder013](benchmark/results/V0.5.1/S3/S3-builder-013.md)与[Reviewer012](benchmark/results/V0.5.1/S3/S3-reviewer-012.md)。
+
+- 2026-10-06：获批R012精简采集已预审，唯一微型在约60.672ms突发、实际258KiB/CPU缓冲下丢21284事件，按停止条件两个HTTP样本均未启动。小缓冲突发不代表约4MiB的计划真实观测，不能据此判断P3必败或服务器根因。独立Reviewer013维持FAIL；原R005有效30样本及P3未达标保留。见[Builder014](benchmark/results/V0.5.1/S3/S3-builder-014.md)与[Reviewer013](benchmark/results/V0.5.1/S3/S3-reviewer-013.md)。
+
+- 2026-10-06：R017盘点超时、R018自动解析缺陷保留invalid；独立离线核验确认Hyper-V-Hypervisor注册与自有资源正常回收，尚未取得目标WSL宿主调度事件。正式FAIL保持，R019同步观测范围及新增额度Draft待批准。见[Builder020](benchmark/results/V0.5.1/S3/S3-builder-020.md)与[Reviewer019](benchmark/results/V0.5.1/S3/S3-reviewer-019.md)。
+- 2026-10-06：R016零丢失同期观察及独立核验完成，67021对sendto与221条内核样本完整。R014的240.784ms未复现，本轮最长7.058ms近返回采到TCP发送路径；70.166ms间隙一次快照确认epoll_wait，均不足以闭合根因。正式P3仍FAIL，S3返工中，未做生产修复或性能改善声明。见[Builder018](benchmark/results/V0.5.1/S3/S3-builder-018.md)与[Reviewer017](benchmark/results/V0.5.1/S3/S3-reviewer-017.md)。
+- 2026-10-06：R014单serverworker观察零丢失/完整排空，独立确认sendto240.784ms（105B成功）、futex7.868ms及等待地址。根因与锁对象未知，无完整调度切出不等于纯CPU；Reviewer015维持正式FAIL。见[Builder016](benchmark/results/V0.5.1/S3/S3-builder-016.md)与[Reviewer015](benchmark/results/V0.5.1/S3/S3-reviewer-015.md)。
+- 2026-10-06：R013校正准入通过各90000对独立核验，两个短样本已完成，选定两worker时间线零丢失/无残留。server相邻发送间隙137.954ms主要阻塞至唤醒，另123.350ms仅0.057ms offCPU，具体调用/锁地址及运行残差原因仍未知。控制/观测P99差72.44%超扰动阈值，不能外推收益；独立Reviewer014保持正式FAIL。见[Builder015](benchmark/results/V0.5.1/S3/S3-builder-015.md)与[Reviewer014](benchmark/results/V0.5.1/S3/S3-reviewer-014.md)。
 
 ### V0.6 可观测性与性能分析
 
@@ -583,7 +594,7 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 
 - `S1 复现与根因定位`（`已完成`，Reviewer002 PASS）：可复现基线、有限定位、S2 决策依据。
 - `S2 针对性修复与回归`（`已完成`，Approved revision1、Reviewer001 PASS）：按已证实原因修复并补齐必要验证。
-- `S3 独立性能验收与收口`（`未开始`）：独立比较、性能门槛和防退化入口。
+- `S3 独立性能验收与收口`（`阻塞`）：R002完整30样本已执行但P1稳定性及P3尾延迟失败，Reviewer006 FAIL；Reviewer完整矩阵按失败即停未执行，版本未完成。
 
 ### V0.6 阶段摘要
 
@@ -622,6 +633,16 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 用户明确希望继续扩展，而不是优先准备简历材料或面试讲解。
 
 ## 变更记录
+
+- 2026-10-05：用户批准R002，恢复每角色一次完整验收，历史失败保留，原门槛和预算保持。
+
+- 2026-10-05：执行Approved R001限定诊断，Reviewer005确认本次未复现；历史根因未知，阶段BLOCKED；R002完整验收恢复Draft未执行。
+
+- 2026-09-28：S3两次正式套超时并出现计时差异，完整性能验收阻塞；原门槛不变，R001有限诊断为Draft，未关闭RO-002。
+
+- 2026-09-28：用户批准S3设计/审查revision1，进入实施，门槛与预算不变；暂无S3验收结论。
+
+- 2026-09-28：S2经PR #26合并69424e6，v0.5.1-s2标签已推送核验；S3 Draft设计/审查就绪，未实施、未关闭RO-002。
 
 - 2026-09-28：S2 TCP_NODELAY最小修复及独立局部性能/正确性验收完成；S3未开始，RO-002仍待最终验收。
 
@@ -721,3 +742,9 @@ HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1
 - 2026-09-10：PM批准日志预算R001/审查补充，见Leader S4-report-004；每套累计2GiB日志/启动前4GiB可用磁盘，待Builder002完成正式12测量。原formal-001 invalid0/12保留；原产品/负载及五项版本条件不变。
 
 - 2026-09-10：S4 Reviewer002 PASS与Leader005核对VC01–05后关闭S4及V0.5；P2-01尾字节审计缺陷关闭。固定基准有效，不代表吞吐提升；1KiB明显下降及未知根因记录RO-002，TD-001/TD-005持续Open，无新增债务豁免。V0.6未开始，未合并或标签发布。
+
+- 2026-10-05：R002执行结束，Builder007及Reviewer006静态独立复算确认FAIL；Leader011记录P1波动/P3长尾，S3阻塞，RO-002保持开放，未发布。
+
+- 2026-10-05：用户授权R003有限定位，原预算内六样本观察P3客户端线程数影响和P1首尾波动；诊断返工中，正式验收仍FAIL，不恢复完整矩阵。
+
+- 2026-10-05：R003/R004有限定位结束：客户端线程增加未稳定改善；file/null/null/file日志sink对照P99约121/32/57/133ms，支持输出成本参与。原累计1670.759s，停止动态；S3仍阻塞，生产未改，原因尚未完全闭环。见Leader013。
