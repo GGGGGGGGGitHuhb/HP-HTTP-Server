@@ -1,0 +1,6077 @@
+{
+  "role": "builder",
+  "product": {
+    "commit": "1340f5bb8a303769a8be32b2d8cc29482fd2a8fe",
+    "tree": "f2fdabf35fb754b7f4e981708efd34e40e53ceac",
+    "binary_sha256": "9f95b5f3b31062737032e0ce130dfd725a4e9f923ec96524b3006ccbb2ac7530",
+    "archive_sha256": "619e6a7e56e21866a8f9076699bd7eed0abe9e2e39c469a86e3058b2d22a48f2",
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "compiler_sha256": "52f1ddb33fe78b9441e0f42e9cd22c571f1101938e046c8a26582494e041cc73",
+    "cmake": "cmake version 3.28.3",
+    "flags": [
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DBUILD_TESTING=OFF",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+      "-DCMAKE_CXX_STANDARD=20",
+      "-DCMAKE_CXX_FLAGS=",
+      "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG",
+      "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "server_libraries": {
+      "libstdc++.so.6": "a68762c86d371e6041f03f03a33a78fa235809ae7d81c90185940c93c3535aed",
+      "libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+      "libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+      "libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+      "ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+    }
+  },
+  "wrk": {
+    "sha256": "b10e53769443c2bf3be2cdedec8ef6571aa5bfd1494796b247f3f9296e3af71d",
+    "version": "wrk debian/4.1.0-4build2 [epoll] Copyright (C) 2012 Will Glozer",
+    "libraries": {
+      "libluajit-5.1.so.2": "04c8976ae97b5e89ba27c008bb9d43c002bfc5b1f923c0598953df278ae14bfe",
+      "libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+      "libssl.so.3": "0ca2c28b026f0084661fbb0e69079436680f3b6dd1f4aa3436395442456a6d4c",
+      "libcrypto.so.3": "e6391daf670544d3a8f2b8a0cb8e27b4246fea109352abed50a29ec57f03153d",
+      "libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+      "libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+      "ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+    }
+  },
+  "argv_template": {
+    "server": [
+      "hp_http_server",
+      "--port",
+      "0",
+      "--root",
+      "<sample-fixture>",
+      "--threads",
+      "<workers>",
+      "--idle-timeout-ms",
+      "30000",
+      "--keep-alive-timeout-ms",
+      "15000",
+      "--shutdown-timeout-ms",
+      "5000",
+      "--metrics-on-exit"
+    ],
+    "wrk": [
+      "wrk",
+      "-t",
+      "<T>",
+      "-c",
+      "<C>",
+      "--timeout",
+      "2s",
+      "--latency",
+      "-d",
+      "<2s-warmup-or-10s-measurement>",
+      "-s",
+      "Summary.lua",
+      "http://127.0.0.1:<owned-port>/<payload>"
+    ]
+  },
+  "schema": 2,
+  "status": "valid; independent Reviewer pending",
+  "expected_samples": 18,
+  "counts": {
+    "valid": 18,
+    "invalid": 0,
+    "not_run": 0
+  },
+  "sequence": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M6",
+    "M5",
+    "M4",
+    "M3",
+    "M2",
+    "M1",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M1",
+    "M2"
+  ],
+  "environment": {
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "machine": "x86_64",
+    "os": "Linux",
+    "cpu_count": 20,
+    "transport": "same-host WSL2 loopback",
+    "cache": "hot",
+    "load": "closed-loop"
+  },
+  "tool_hashes": {
+    "Summary.lua": "0706c8defa1a759eda90185ca5c9f02d755bb3c5a7248367d5f0c3618111340e",
+    "Run.py": "de8964e701bbd11cd70833965a4452b7c1400696e1f6584a28eabcc8ac8fe765",
+    "Build.py": "bfc76939ca01568b1f29070ce31b229767aeb257240c6e1d1c562d372285fd50",
+    "Common.py": "55466b5fb16a69d4836eac47ed5134b664e5b7ddf19574090657335d0a70956a",
+    "Recompute.py": "ea2a37d44192c7c365e2c59bbc845039507748026ffb40e3d1fc0ab5390d7bd0"
+  },
+  "groups": {
+    "M1": {
+      "qps": {
+        "values": [
+          1974.574091378109,
+          3143.3513569174625,
+          2891.6645585944248
+        ],
+        "median": 2891.6645585944248,
+        "min": 1974.574091378109,
+        "max": 3143.3513569174625,
+        "span_over_median": 0.40418839801649425
+      },
+      "received_mib_s": {
+        "values": [
+          2.126020573774228,
+          3.3844410724256657,
+          3.1134503237277085
+        ],
+        "median": 3.1134503237277085,
+        "min": 2.126020573774228,
+        "max": 3.3844410724256657,
+        "span_over_median": 0.40418839801649414
+      },
+      "server_cpu_pct": {
+        "values": [
+          7.520433818459545,
+          10.945885799497148,
+          9.166279101287207
+        ],
+        "median": 9.166279101287207,
+        "min": 7.520433818459545,
+        "max": 10.945885799497148,
+        "span_over_median": 0.37370147070435283
+      },
+      "client_cpu_pct": {
+        "values": [
+          5.325476464850256,
+          6.7937563140462744,
+          6.174602726908811
+        ],
+        "median": 6.174602726908811,
+        "min": 5.325476464850256,
+        "max": 6.7937563140462744,
+        "span_over_median": 0.23779341184126396
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          4640,
+          4800,
+          4800
+        ],
+        "median": 4800,
+        "min": 4640,
+        "max": 4800,
+        "span_over_median": 0.03333333333333333
+      },
+      "latency_mean_us": {
+        "values": [
+          506.509975,
+          318.18274,
+          346.180409
+        ],
+        "median": 346.180409,
+        "min": 318.18274,
+        "max": 506.509975,
+        "span_over_median": 0.5440147105493771
+      },
+      "latency_p50_us": {
+        "values": [
+          499.0,
+          288.0,
+          328.0
+        ],
+        "median": 328.0,
+        "min": 288.0,
+        "max": 499.0,
+        "span_over_median": 0.6432926829268293
+      },
+      "latency_p95_us": {
+        "values": [
+          732.0,
+          533.0,
+          580.0
+        ],
+        "median": 580.0,
+        "min": 533.0,
+        "max": 732.0,
+        "span_over_median": 0.3431034482758621
+      },
+      "latency_p99_us": {
+        "values": [
+          873.0,
+          680.0,
+          719.0
+        ],
+        "median": 719.0,
+        "min": 680.0,
+        "max": 873.0,
+        "span_over_median": 0.26842837273991654
+      },
+      "latency_max_us": {
+        "values": [
+          4644.0,
+          1844.0,
+          4454.0
+        ],
+        "median": 4454.0,
+        "min": 1844.0,
+        "max": 4644.0,
+        "span_over_median": 0.6286484059272563
+      }
+    },
+    "M2": {
+      "qps": {
+        "values": [
+          43234.00003386126,
+          41326.482451214266,
+          45047.66393264078
+        ],
+        "median": 43234.00003386126,
+        "min": 41326.482451214266,
+        "max": 45047.66393264078,
+        "span_over_median": 0.08607071930684307
+      },
+      "received_mib_s": {
+        "values": [
+          46.54997447798668,
+          44.496163546499,
+          48.502763149526295
+        ],
+        "median": 46.54997447798668,
+        "min": 44.496163546499,
+        "max": 48.502763149526295,
+        "span_over_median": 0.08607093017681468
+      },
+      "server_cpu_pct": {
+        "values": [
+          134.65717042528703,
+          142.5643384050286,
+          136.73492762013885
+        ],
+        "median": 136.73492762013885,
+        "min": 134.65717042528703,
+        "max": 142.5643384050286,
+        "span_over_median": 0.05782844308594171
+      },
+      "client_cpu_pct": {
+        "values": [
+          100.46282092630662,
+          100.01073513462917,
+          94.73558695715514
+        ],
+        "median": 100.01073513462917,
+        "min": 94.73558695715514,
+        "max": 100.46282092630662,
+        "span_over_median": 0.05726619208869712
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          5280,
+          5280,
+          5440
+        ],
+        "median": 5280,
+        "min": 5280,
+        "max": 5440,
+        "span_over_median": 0.030303030303030304
+      },
+      "latency_mean_us": {
+        "values": [
+          731.111525,
+          779.351772,
+          712.450605
+        ],
+        "median": 731.111525,
+        "min": 712.450605,
+        "max": 779.351772,
+        "span_over_median": 0.0915061036686571
+      },
+      "latency_p50_us": {
+        "values": [
+          708.0,
+          683.0,
+          636.0
+        ],
+        "median": 683.0,
+        "min": 636.0,
+        "max": 708.0,
+        "span_over_median": 0.1054172767203514
+      },
+      "latency_p95_us": {
+        "values": [
+          1199.0,
+          1388.0,
+          1273.0
+        ],
+        "median": 1273.0,
+        "min": 1199.0,
+        "max": 1388.0,
+        "span_over_median": 0.14846818538884524
+      },
+      "latency_p99_us": {
+        "values": [
+          1588.0,
+          2137.0,
+          1810.0
+        ],
+        "median": 1810.0,
+        "min": 1588.0,
+        "max": 2137.0,
+        "span_over_median": 0.3033149171270718
+      },
+      "latency_max_us": {
+        "values": [
+          10741.0,
+          12080.0,
+          12264.0
+        ],
+        "median": 12080.0,
+        "min": 10741.0,
+        "max": 12264.0,
+        "span_over_median": 0.12607615894039736
+      }
+    },
+    "M3": {
+      "qps": {
+        "values": [
+          58093.989130598005,
+          57550.015636565266,
+          50950.175715697515
+        ],
+        "median": 57550.015636565266,
+        "min": 50950.175715697515,
+        "max": 58093.989130598005,
+        "span_over_median": 0.12413225845175205
+      },
+      "received_mib_s": {
+        "values": [
+          62.54972939908633,
+          61.96401414042775,
+          54.85799748661201
+        ],
+        "median": 61.96401414042775,
+        "min": 54.85799748661201,
+        "max": 62.54972939908633,
+        "span_over_median": 0.12413224061053749
+      },
+      "server_cpu_pct": {
+        "values": [
+          277.8290311021201,
+          285.49350951586285,
+          265.55793121907857
+        ],
+        "median": 277.8290311021201,
+        "min": 265.55793121907857,
+        "max": 285.49350951586285,
+        "span_over_median": 0.07175484224129434
+      },
+      "client_cpu_pct": {
+        "values": [
+          221.63808974509496,
+          196.88900506316844,
+          175.18289701893713
+        ],
+        "median": 196.88900506316844,
+        "min": 175.18289701893713,
+        "max": 221.63808974509496,
+        "span_over_median": 0.23594609923115556
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          7200,
+          7200,
+          7360
+        ],
+        "median": 7200,
+        "min": 7200,
+        "max": 7360,
+        "span_over_median": 0.022222222222222223
+      },
+      "latency_mean_us": {
+        "values": [
+          12505.953867,
+          16046.684625,
+          133571.367822
+        ],
+        "median": 16046.684625,
+        "min": 12505.953867,
+        "max": 133571.367822,
+        "span_over_median": 7.54457489408034
+      },
+      "latency_p50_us": {
+        "values": [
+          1841.0,
+          1729.0,
+          1781.0
+        ],
+        "median": 1781.0,
+        "min": 1729.0,
+        "max": 1841.0,
+        "span_over_median": 0.06288601909039865
+      },
+      "latency_p95_us": {
+        "values": [
+          66745.0,
+          117671.0,
+          1009666.0
+        ],
+        "median": 117671.0,
+        "min": 66745.0,
+        "max": 1009666.0,
+        "span_over_median": 8.013197814244801
+      },
+      "latency_p99_us": {
+        "values": [
+          272549.0,
+          253841.0,
+          1478748.0
+        ],
+        "median": 272549.0,
+        "min": 253841.0,
+        "max": 1478748.0,
+        "span_over_median": 4.494263416853483
+      },
+      "latency_max_us": {
+        "values": [
+          544445.0,
+          457696.0,
+          1784400.0
+        ],
+        "median": 544445.0,
+        "min": 457696.0,
+        "max": 1784400.0,
+        "span_over_median": 2.4368007787747157
+      }
+    },
+    "M4": {
+      "qps": {
+        "values": [
+          8648.20977935142,
+          8847.243682262355,
+          8982.736973949395
+        ],
+        "median": 8847.243682262355,
+        "min": 8648.20977935142,
+        "max": 8982.736973949395,
+        "span_over_median": 0.037811459321354636
+      },
+      "received_mib_s": {
+        "values": [
+          9.270284436846442,
+          9.483625315535438,
+          9.62886463043129
+        ],
+        "median": 9.483625315535438,
+        "min": 9.270284436846442,
+        "max": 9.62886463043129,
+        "span_over_median": 0.03781045556465054
+      },
+      "server_cpu_pct": {
+        "values": [
+          86.57395674085328,
+          88.50810553629414,
+          91.8797149942603
+        ],
+        "median": 88.50810553629414,
+        "min": 86.57395674085328,
+        "max": 91.8797149942603,
+        "span_over_median": 0.05994658027372771
+      },
+      "client_cpu_pct": {
+        "values": [
+          114.03173490765762,
+          112.07205952036179,
+          119.33631755356937
+        ],
+        "median": 114.03173490765762,
+        "min": 112.07205952036179,
+        "max": 119.33631755356937,
+        "span_over_median": 0.063703828053569
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          4800,
+          4640,
+          4640
+        ],
+        "median": 4640,
+        "min": 4640,
+        "max": 4800,
+        "span_over_median": 0.034482758620689655
+      },
+      "latency_mean_us": {
+        "values": [
+          1908.985401,
+          1863.767943,
+          1823.152151
+        ],
+        "median": 1863.767943,
+        "min": 1823.152151,
+        "max": 1908.985401,
+        "span_over_median": 0.04605361430449279
+      },
+      "latency_p50_us": {
+        "values": [
+          1586.0,
+          1562.0,
+          1555.0
+        ],
+        "median": 1562.0,
+        "min": 1555.0,
+        "max": 1586.0,
+        "span_over_median": 0.019846350832266324
+      },
+      "latency_p95_us": {
+        "values": [
+          4146.0,
+          4035.0,
+          3892.0
+        ],
+        "median": 4035.0,
+        "min": 3892.0,
+        "max": 4146.0,
+        "span_over_median": 0.06294919454770756
+      },
+      "latency_p99_us": {
+        "values": [
+          6884.0,
+          6042.0,
+          5089.0
+        ],
+        "median": 6042.0,
+        "min": 5089.0,
+        "max": 6884.0,
+        "span_over_median": 0.29708705726580603
+      },
+      "latency_max_us": {
+        "values": [
+          19526.0,
+          19919.0,
+          17206.0
+        ],
+        "median": 19526.0,
+        "min": 17206.0,
+        "max": 19919.0,
+        "span_over_median": 0.13894294786438594
+      }
+    },
+    "M5": {
+      "qps": {
+        "values": [
+          5574.739842474911,
+          5735.1367056547715,
+          5096.417672526299
+        ],
+        "median": 5574.739842474911,
+        "min": 5096.417672526299,
+        "max": 5735.1367056547715,
+        "span_over_median": 0.11457378302426986
+      },
+      "received_mib_s": {
+        "values": [
+          349.01429360012855,
+          359.07107508852334,
+          319.09582041560367
+        ],
+        "median": 349.01429360012855,
+        "min": 319.09582041560367,
+        "max": 359.07107508852334,
+        "span_over_median": 0.11453758601279518
+      },
+      "server_cpu_pct": {
+        "values": [
+          56.80316679265845,
+          59.55906193878172,
+          56.57740110926684
+        ],
+        "median": 56.80316679265845,
+        "min": 56.57740110926684,
+        "max": 59.55906193878172,
+        "span_over_median": 0.0524911021316552
+      },
+      "client_cpu_pct": {
+        "values": [
+          107.47303403391379,
+          103.97378822177183,
+          102.85337230346337
+        ],
+        "median": 103.97378822177183,
+        "min": 102.85337230346337,
+        "max": 107.47303403391379,
+        "span_over_median": 0.04443102256307973
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          5280,
+          5440,
+          5440
+        ],
+        "median": 5440,
+        "min": 5280,
+        "max": 5440,
+        "span_over_median": 0.029411764705882353
+      },
+      "latency_mean_us": {
+        "values": [
+          5932.687595,
+          5546.411595,
+          6535.09767
+        ],
+        "median": 5932.687595,
+        "min": 5546.411595,
+        "max": 6535.09767,
+        "span_over_median": 0.16665062152156024
+      },
+      "latency_p50_us": {
+        "values": [
+          4882.0,
+          5443.0,
+          5543.0
+        ],
+        "median": 5443.0,
+        "min": 4882.0,
+        "max": 5543.0,
+        "span_over_median": 0.12144038214220099
+      },
+      "latency_p95_us": {
+        "values": [
+          13267.0,
+          8991.0,
+          14601.0
+        ],
+        "median": 13267.0,
+        "min": 8991.0,
+        "max": 14601.0,
+        "span_over_median": 0.42285369714328785
+      },
+      "latency_p99_us": {
+        "values": [
+          16339.0,
+          10744.0,
+          19469.0
+        ],
+        "median": 16339.0,
+        "min": 10744.0,
+        "max": 19469.0,
+        "span_over_median": 0.5339984087153437
+      },
+      "latency_max_us": {
+        "values": [
+          28080.0,
+          17184.0,
+          35319.0
+        ],
+        "median": 28080.0,
+        "min": 17184.0,
+        "max": 35319.0,
+        "span_over_median": 0.6458333333333334
+      }
+    },
+    "M6": {
+      "qps": {
+        "values": [
+          372.2700405288514,
+          419.1819330489448,
+          424.72786814865475
+        ],
+        "median": 419.1819330489448,
+        "min": 372.2700405288514,
+        "max": 424.72786814865475,
+        "span_over_median": 0.12514334107447864
+      },
+      "received_mib_s": {
+        "values": [
+          373.92434696738286,
+          420.5086076208258,
+          426.092850550576
+        ],
+        "median": 420.5086076208258,
+        "min": 373.92434696738286,
+        "max": 426.092850550576,
+        "span_over_median": 0.1240604892212662
+      },
+      "server_cpu_pct": {
+        "values": [
+          12.400828254999585,
+          16.761943013702904,
+          16.84176059395774
+        ],
+        "median": 16.761943013702904,
+        "min": 12.400828254999585,
+        "max": 16.84176059395774,
+        "span_over_median": 0.26494138151690944
+      },
+      "client_cpu_pct": {
+        "values": [
+          101.90677246357768,
+          99.69390753024899,
+          99.00626282826555
+        ],
+        "median": 99.69390753024899,
+        "min": 99.00626282826555,
+        "max": 101.90677246357768,
+        "span_over_median": 0.029094151359570938
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          5280,
+          5280,
+          5280
+        ],
+        "median": 5280,
+        "min": 5280,
+        "max": 5280,
+        "span_over_median": 0.0
+      },
+      "latency_mean_us": {
+        "values": [
+          86418.304814,
+          84404.573465,
+          75873.080627
+        ],
+        "median": 84404.573465,
+        "min": 75873.080627,
+        "max": 86418.304814,
+        "span_over_median": 0.12493664447428057
+      },
+      "latency_p50_us": {
+        "values": [
+          74385.0,
+          54890.0,
+          71213.0
+        ],
+        "median": 71213.0,
+        "min": 54890.0,
+        "max": 74385.0,
+        "span_over_median": 0.273756196200132
+      },
+      "latency_p95_us": {
+        "values": [
+          178567.0,
+          219655.0,
+          150535.0
+        ],
+        "median": 178567.0,
+        "min": 150535.0,
+        "max": 219655.0,
+        "span_over_median": 0.38708159962367067
+      },
+      "latency_p99_us": {
+        "values": [
+          197746.0,
+          247466.0,
+          179813.0
+        ],
+        "median": 197746.0,
+        "min": 179813.0,
+        "max": 247466.0,
+        "span_over_median": 0.34212070029229413
+      },
+      "latency_max_us": {
+        "values": [
+          241031.0,
+          499224.0,
+          298528.0
+        ],
+        "median": 298528.0,
+        "min": 241031.0,
+        "max": 499224.0,
+        "span_over_median": 0.864887045771251
+      }
+    }
+  },
+  "samples": [
+    {
+      "index": 1,
+      "id": "M1",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 0,
+        "threads": 1,
+        "connections": 1
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 25009,
+        "responses_completed_total": 25009,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 25009,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 25009,
+        "latency_sum_us": 602222,
+        "latency_max_us": 272,
+        "connections_total": 6,
+        "connections_active": 0,
+        "logger_submitted": 3,
+        "logger_accepted": 3,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 3,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29537,
+        "starttime": 16718913,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01060282500111498,
+        "wait4": {
+          "pid": 29537,
+          "ru_utime_s": 0.311865,
+          "ru_stime_s": 0.6154109999999999,
+          "read_monotonic": 167201.407310674
+        }
+      },
+      "complete_wall_s": 12.274351428000955,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10100406,
+          "requests": 19944,
+          "bytes": 22516776,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 506.509975,
+            "p50": 499.0,
+            "p95": 732.0,
+            "p99": 873.0,
+            "max": 4644.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 506.438327,
+          "qps": 1974.574091378109,
+          "received_mib_s": 2.126020573774228
+        },
+        "started_monotonic": 167191.206774106,
+        "ended_monotonic": 167201.312574095,
+        "started_wall_s": 1791461215.6094933,
+        "ended_wall_s": 1791461225.7154362,
+        "wall_s": 10.105799989018124,
+        "server_cpu_pct": 7.520433818459545,
+        "client_cpu_pct": 5.325476464850256,
+        "server_rss_sampled_max_kib": 4640,
+        "client_rss_sampled_max_kib": 4640,
+        "server_vmhwm_kib": 4640,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0009817390237003565,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0405157290224452,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 2.0781819410040043,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 3.115337946015643,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 4.1585132620239165,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 5.2009215370053425,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 6.246589472022606,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 7.282011560018873,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 8.316368477011565,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 9.349737220007228,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          }
+        ],
+        "cleanup": {
+          "pid": 29541,
+          "starttime": 16719120,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.3448006939142942e-05,
+          "wait4": {
+            "pid": 29541,
+            "ru_utime_s": 0.136906,
+            "ru_stime_s": 0.40127599999999997,
+            "read_monotonic": 167201.311988729
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29537,
+            "starttime": 16718913,
+            "utime_ticks": 5,
+            "stime_ticks": 11,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167191.206883176,
+            "cpu_seconds": 0.16,
+            "rss_kib": 4640,
+            "hwm_kib": 4640
+          },
+          "server_after": {
+            "pid": 29537,
+            "starttime": 16718913,
+            "utime_ticks": 31,
+            "stime_ticks": 61,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167201.312264359,
+            "cpu_seconds": 0.92,
+            "rss_kib": 4640,
+            "hwm_kib": 4640
+          },
+          "client": {
+            "pid": 29541,
+            "starttime": 16719120,
+            "wait4_pid": 29541,
+            "ru_utime_s": 0.136906,
+            "ru_stime_s": 0.40127599999999997,
+            "wait4_read_monotonic": 167201.311988729
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2000489,
+        "requests": 5059,
+        "bytes": 5711611,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 394.090032,
+          "p50": 389.0,
+          "p95": 559.0,
+          "p99": 688.0,
+          "max": 1155.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 395.431706,
+        "qps": 2528.8816884271796,
+        "received_mib_s": 2.7228426229803904
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35365/payload-1024.bin\n  1 threads and 1 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   506.51us  159.74us   4.64ms   73.33%\n    Req/Sec     1.98k   237.52     2.77k    72.28%\n  Latency Distribution\n     50%  499.00us\n     75%  609.00us\n     90%  684.00us\n     99%    0.87ms\n  19944 requests in 10.10s, 21.47MB read\nRequests/sec:   1974.57\nTransfer/sec:      2.13MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10100406,\"requests\":19944,\"bytes\":22516776,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":506.509975,\"p50\":499.000000,\"p95\":732.000000,\"p99\":873.000000,\"max\":4644.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":506.438327}\n"
+    },
+    {
+      "index": 2,
+      "id": "M2",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 530452,
+        "responses_completed_total": 530452,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 530452,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 530452,
+        "latency_sum_us": 11803561,
+        "latency_max_us": 916,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 63,
+        "logger_accepted": 63,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 63,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29577,
+        "starttime": 16720141,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01042467899969779,
+        "wait4": {
+          "pid": 29577,
+          "ru_utime_s": 3.7967,
+          "ru_stime_s": 12.917532,
+          "read_monotonic": 167213.743050049
+        }
+      },
+      "complete_wall_s": 12.331324780010618,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10100037,
+          "requests": 436665,
+          "bytes": 492994785,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 731.111525,
+            "p50": 708.0,
+            "p95": 1199.0,
+            "p99": 1588.0,
+            "max": 10741.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 740.158208,
+          "qps": 43234.00003386126,
+          "received_mib_s": 46.54997447798668
+        },
+        "started_monotonic": 167203.584129136,
+        "ended_monotonic": 167213.698703768,
+        "started_wall_s": 1791461227.9868488,
+        "ended_wall_s": 1791461238.1015165,
+        "wall_s": 10.11457463199622,
+        "server_cpu_pct": 134.65717042528703,
+        "client_cpu_pct": 100.46282092630662,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0011164169991388917,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0162544100021478,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.0246760080044623,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.050684321002336,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.058948941994458,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.0893919770023786,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.1138866519904695,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.127080884005409,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.141697977000149,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.15112622801098,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 29586,
+          "starttime": 16720358,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.0889983968809247e-05,
+          "wait4": {
+            "pid": 29586,
+            "ru_utime_s": 1.581356,
+            "ru_stime_s": 8.580031,
+            "read_monotonic": 167213.698279964
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29577,
+            "starttime": 16720141,
+            "utime_ticks": 61,
+            "stime_ticks": 247,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167203.584244136,
+            "cpu_seconds": 3.08,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 29577,
+            "starttime": 16720141,
+            "utime_ticks": 379,
+            "stime_ticks": 1291,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167213.698482854,
+            "cpu_seconds": 16.7,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "client": {
+            "pid": 29586,
+            "starttime": 16720358,
+            "wait4_pid": 29586,
+            "ru_utime_s": 1.581356,
+            "ru_stime_s": 8.580031,
+            "wait4_read_monotonic": 167213.698279964
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2099656,
+        "requests": 93721,
+        "bytes": 105811009,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 707.870718,
+          "p50": 652.0,
+          "p95": 1237.0,
+          "p99": 1626.0,
+          "max": 4984.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 716.904344,
+        "qps": 44636.359479838604,
+        "received_mib_s": 48.05989251397875
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34171/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   731.11us  303.84us  10.74ms   77.73%\n    Req/Sec    21.73k     0.87k   23.94k    71.29%\n  Latency Distribution\n     50%  708.00us\n     75%    0.86ms\n     90%    1.04ms\n     99%    1.59ms\n  436665 requests in 10.10s, 470.16MB read\nRequests/sec:  43234.00\nTransfer/sec:     46.55MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10100037,\"requests\":436665,\"bytes\":492994785,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":731.111525,\"p50\":708.000000,\"p95\":1199.000000,\"p99\":1588.000000,\"max\":10741.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":740.158208}\n"
+    },
+    {
+      "index": 3,
+      "id": "M3",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 4,
+        "threads": 4,
+        "connections": 128
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 706231,
+        "responses_completed_total": 706231,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 706231,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 706231,
+        "latency_sum_us": 24741441,
+        "latency_max_us": 404422,
+        "connections_total": 260,
+        "connections_active": 0,
+        "logger_submitted": 245,
+        "logger_accepted": 245,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 245,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29592,
+        "starttime": 16721374,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010492670990061015,
+        "wait4": {
+          "pid": 29592,
+          "ru_utime_s": 7.742257,
+          "ru_stime_s": 26.258324,
+          "read_monotonic": 167226.010957203
+        }
+      },
+      "complete_wall_s": 12.265389673004393,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10055567,
+          "requests": 584168,
+          "bytes": 659525987,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 12505.953867,
+            "p50": 1841.0,
+            "p95": 66745.0,
+            "p99": 272549.0,
+            "max": 544445.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 2203.326057,
+          "qps": 58093.989130598005,
+          "received_mib_s": 62.54972939908633
+        },
+        "started_monotonic": 167215.873694717,
+        "ended_monotonic": 167225.966232523,
+        "started_wall_s": 1791461240.276414,
+        "ended_wall_s": 1791461250.3690503,
+        "wall_s": 10.092537805991014,
+        "server_cpu_pct": 277.8290311021201,
+        "client_cpu_pct": 221.63808974509496,
+        "server_rss_sampled_max_kib": 7200,
+        "client_rss_sampled_max_kib": 5760,
+        "server_vmhwm_kib": 7200,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0009994959982577711,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.021286486997269,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 2.0466858290019445,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 3.0719347539998125,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 4.112578221975127,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 5.127270996978041,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 6.141294539993396,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 7.162524422979914,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 8.190499877993716,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 9.225149581994629,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5760
+          }
+        ],
+        "cleanup": {
+          "pid": 29603,
+          "starttime": 16721587,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.1163007002323866e-05,
+          "wait4": {
+            "pid": 29603,
+            "ru_utime_s": 3.3358119999999998,
+            "ru_stime_s": 19.033096,
+            "read_monotonic": 167225.965817312
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29592,
+            "starttime": 16721374,
+            "utime_ticks": 136,
+            "stime_ticks": 459,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167215.873819691,
+            "cpu_seconds": 5.95,
+            "rss_kib": 7200,
+            "hwm_kib": 7200
+          },
+          "server_after": {
+            "pid": 29592,
+            "starttime": 16721374,
+            "utime_ticks": 774,
+            "stime_ticks": 2625,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167225.966023435,
+            "cpu_seconds": 33.99,
+            "rss_kib": 7200,
+            "hwm_kib": 7200
+          },
+          "client": {
+            "pid": 29603,
+            "starttime": 16721587,
+            "wait4_pid": 29603,
+            "ru_utime_s": 3.3358119999999998,
+            "ru_stime_s": 19.033096,
+            "wait4_read_monotonic": 167225.965817312
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2039876,
+        "requests": 121815,
+        "bytes": 137529345,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 19371.078744,
+          "p50": 1637.0,
+          "p95": 151947.0,
+          "p99": 340746.0,
+          "max": 407099.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 2143.448081,
+        "qps": 59716.86514278319,
+        "received_mib_s": 64.29714555133465
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34887/payload-1024.bin\n  4 threads and 128 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    12.51ms   48.82ms 544.45ms   94.78%\n    Req/Sec    15.10k     2.84k   24.81k    88.89%\n  Latency Distribution\n     50%    1.84ms\n     75%    2.66ms\n     90%    5.47ms\n     99%  272.55ms\n  584168 requests in 10.06s, 628.97MB read\nRequests/sec:  58093.99\nTransfer/sec:     62.55MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10055567,\"requests\":584168,\"bytes\":659525987,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":12505.953867,\"p50\":1841.000000,\"p95\":66745.000000,\"p99\":272549.000000,\"max\":544445.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":2203.326057}\n"
+    },
+    {
+      "index": 4,
+      "id": "M4",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "short",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 105371,
+        "responses_completed_total": 105371,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 105371,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 105371,
+        "latency_sum_us": 3075847,
+        "latency_max_us": 2821,
+        "connections_total": 105384,
+        "connections_active": 0,
+        "logger_submitted": 3,
+        "logger_accepted": 3,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 3,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29611,
+        "starttime": 16722601,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010359287000028417,
+        "wait4": {
+          "pid": 29611,
+          "ru_utime_s": 2.729636,
+          "ru_stime_s": 7.846078,
+          "read_monotonic": 167238.12419077
+        }
+      },
+      "complete_wall_s": 12.125510901998496,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10018374,
+          "requests": 86641,
+          "bytes": 97384584,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 1908.985401,
+            "p50": 1586.0,
+            "p95": 4146.0,
+            "p99": 6884.0,
+            "max": 19526.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 3700.187763,
+          "qps": 8648.20977935142,
+          "received_mib_s": 9.270284436846442
+        },
+        "started_monotonic": 167228.083895288,
+        "ended_monotonic": 167238.110005133,
+        "started_wall_s": 1791461252.4866145,
+        "ended_wall_s": 1791461262.5128493,
+        "wall_s": 10.026109844999155,
+        "server_cpu_pct": 86.57395674085328,
+        "client_cpu_pct": 114.03173490765762,
+        "server_rss_sampled_max_kib": 4800,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 4800,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0010252050124108791,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0089014180121012,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.026389975013444,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.031990533985663,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.05843230499886,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.083175553998444,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.091154872003244,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.117026143008843,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.128102432005107,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.149041319993557,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 29618,
+          "starttime": 16722808,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.4076998922973871e-05,
+          "wait4": {
+            "pid": 29618,
+            "ru_utime_s": 0.796406,
+            "ru_stime_s": 10.636541,
+            "read_monotonic": 167238.109363242
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29611,
+            "starttime": 16722601,
+            "utime_ticks": 45,
+            "stime_ticks": 141,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167228.08403779,
+            "cpu_seconds": 1.86,
+            "rss_kib": 4640,
+            "hwm_kib": 4640
+          },
+          "server_after": {
+            "pid": 29611,
+            "starttime": 16722601,
+            "utime_ticks": 272,
+            "stime_ticks": 782,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167238.109713336,
+            "cpu_seconds": 10.54,
+            "rss_kib": 4800,
+            "hwm_kib": 4800
+          },
+          "client": {
+            "pid": 29618,
+            "starttime": 16722808,
+            "wait4_pid": 29618,
+            "ru_utime_s": 0.796406,
+            "ru_stime_s": 10.636541,
+            "wait4_read_monotonic": 167238.109363242
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2003770,
+        "requests": 18691,
+        "bytes": 21008684,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1753.410527,
+          "p50": 1481.0,
+          "p95": 3849.0,
+          "p99": 5330.0,
+          "max": 9078.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 3430.562303,
+        "qps": 9327.916876687445,
+        "received_mib_s": 9.998873299977005
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34887/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.91ms    1.32ms  19.53ms   80.45%\n    Req/Sec     4.35k     0.92k    6.16k    62.50%\n  Latency Distribution\n     50%    1.59ms\n     75%    2.50ms\n     90%    3.48ms\n     99%    6.88ms\n  86641 requests in 10.02s, 92.87MB read\nRequests/sec:   8648.21\nTransfer/sec:      9.27MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10018374,\"requests\":86641,\"bytes\":97384584,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":1908.985401,\"p50\":1586.000000,\"p95\":4146.000000,\"p99\":6884.000000,\"max\":19526.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":3700.187763}\n"
+    },
+    {
+      "index": 5,
+      "id": "M5",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 65536,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-65536.bin",
+        "size": 65536,
+        "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 67228,
+        "responses_completed_total": 67228,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 67228,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 67228,
+        "latency_sum_us": 4495458,
+        "latency_max_us": 3587,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 49,
+        "logger_accepted": 49,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 49,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29642,
+        "starttime": 16723814,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010460063989739865,
+        "wait4": {
+          "pid": 29642,
+          "ru_utime_s": 1.249912,
+          "ru_stime_s": 5.673711,
+          "read_monotonic": 167250.411990606
+        }
+      },
+      "complete_wall_s": 12.269649732013931,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10002978,
+          "requests": 55764,
+          "bytes": 3660769972,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 5932.687595,
+            "p50": 4882.0,
+            "p95": 13267.0,
+            "p99": 16339.0,
+            "max": 28080.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 5740.178179,
+          "qps": 5574.739842474911,
+          "received_mib_s": 349.01429360012855
+        },
+        "started_monotonic": 167240.312890674,
+        "ended_monotonic": 167250.365147128,
+        "started_wall_s": 1791461264.7156098,
+        "ended_wall_s": 1791461274.7679532,
+        "wall_s": 10.05225645401515,
+        "server_cpu_pct": 56.80316679265845,
+        "client_cpu_pct": 107.47303403391379,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 5120,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0008670120150782168,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 800
+          },
+          {
+            "elapsed_s": 1.0114296820247546,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 2.0154885930242017,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 3.031743108003866,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 4.079861695005093,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 5.111885371006792,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 6.124778725003125,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 7.14456740100286,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 8.159071874018991,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 9.163819525012514,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          }
+        ],
+        "cleanup": {
+          "pid": 29656,
+          "starttime": 16724031,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.0465009836480021e-05,
+          "wait4": {
+            "pid": 29656,
+            "ru_utime_s": 1.198818,
+            "ru_stime_s": 9.604647,
+            "read_monotonic": 167250.364714164
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29642,
+            "starttime": 16723814,
+            "utime_ticks": 19,
+            "stime_ticks": 101,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167240.312989697,
+            "cpu_seconds": 1.2,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 29642,
+            "starttime": 16723814,
+            "utime_ticks": 124,
+            "stime_ticks": 567,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167250.364917199,
+            "cpu_seconds": 6.91,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "client": {
+            "pid": 29656,
+            "starttime": 16724031,
+            "wait4_pid": 29656,
+            "ru_utime_s": 1.198818,
+            "ru_stime_s": 9.604647,
+            "wait4_read_monotonic": 167250.364714164
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2099720,
+        "requests": 11398,
+        "bytes": 748866770,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 5724.1506,
+          "p50": 5445.0,
+          "p95": 10279.0,
+          "p99": 12260.0,
+          "max": 18096.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 5894.985085,
+        "qps": 5428.342826662602,
+        "received_mib_s": 340.1286861863041
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35297/payload-65536.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     5.93ms    3.50ms  28.08ms   74.96%\n    Req/Sec     2.80k   248.49     3.26k    60.00%\n  Latency Distribution\n     50%    4.88ms\n     75%    7.30ms\n     90%   11.65ms\n     99%   16.34ms\n  55764 requests in 10.00s, 3.41GB read\nRequests/sec:   5574.74\nTransfer/sec:    349.01MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10002978,\"requests\":55764,\"bytes\":3660769972,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":5932.687595,\"p50\":4882.000000,\"p95\":13267.000000,\"p99\":16339.000000,\"max\":28080.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":5740.178179}\n"
+    },
+    {
+      "index": 6,
+      "id": "M6",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1048576,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 4584,
+        "responses_completed_total": 4583,
+        "requests_aborted_total": 1,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 4584,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 1,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 4584,
+        "latency_sum_us": 13067164,
+        "latency_max_us": 164921,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 295,
+        "logger_accepted": 295,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 295,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29665,
+        "starttime": 16725041,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01051948600797914,
+        "wait4": {
+          "pid": 29665,
+          "ru_utime_s": 0.261024,
+          "ru_stime_s": 1.323925,
+          "read_monotonic": 167262.710164272
+        }
+      },
+      "complete_wall_s": 12.295558216021163,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10003491,
+          "requests": 3724,
+          "bytes": 3922249740,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 86418.304814,
+            "p50": 74385.0,
+            "p95": 178567.0,
+            "p99": 197746.0,
+            "max": 241031.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 85959.106337,
+          "qps": 372.2700405288514,
+          "received_mib_s": 373.92434696738286
+        },
+        "started_monotonic": 167252.55395293,
+        "ended_monotonic": 167262.633924802,
+        "started_wall_s": 1791461276.956672,
+        "ended_wall_s": 1791461287.0367248,
+        "wall_s": 10.079971872008173,
+        "server_cpu_pct": 12.400828254999585,
+        "client_cpu_pct": 101.90677246357768,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 5600,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0010605879942886531,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0509614649927244,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 2.05338774601114,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 3.0696404459886253,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 4.075751113996375,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 5.105075191997457,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 6.125552488985704,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 7.163187021011254,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 8.187629212014144,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 9.20594216301106,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5600
+          }
+        ],
+        "cleanup": {
+          "pid": 29672,
+          "starttime": 16725255,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.4093006029725075e-05,
+          "wait4": {
+            "pid": 29672,
+            "ru_utime_s": 0.915245,
+            "ru_stime_s": 9.356929,
+            "read_monotonic": 167262.633482591
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29665,
+            "starttime": 16725041,
+            "utime_ticks": 5,
+            "stime_ticks": 28,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167252.554122497,
+            "cpu_seconds": 0.33,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 29665,
+            "starttime": 16725041,
+            "utime_ticks": 26,
+            "stime_ticks": 132,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167262.633692615,
+            "cpu_seconds": 1.58,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "client": {
+            "pid": 29672,
+            "starttime": 16725255,
+            "wait4_pid": 29672,
+            "ru_utime_s": 0.915245,
+            "ru_stime_s": 9.356929,
+            "wait4_read_monotonic": 167262.633482591
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2003871,
+        "requests": 790,
+        "bytes": 841739880,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 80352.245215,
+          "p50": 67949.0,
+          "p95": 169458.0,
+          "p99": 195959.0,
+          "max": 207660.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 81169.458228,
+        "qps": 394.2369543748075,
+        "received_mib_s": 400.5974958721788
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34581/payload-1048576.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    86.42ms   44.79ms 241.03ms   72.66%\n    Req/Sec   186.78     36.01   262.00     71.00%\n  Latency Distribution\n     50%   74.39ms\n     75%  108.56ms\n     90%  163.48ms\n     99%  197.75ms\n  3724 requests in 10.00s, 3.65GB read\nRequests/sec:    372.27\nTransfer/sec:    373.92MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10003491,\"requests\":3724,\"bytes\":3922249740,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":86418.304814,\"p50\":74385.000000,\"p95\":178567.000000,\"p99\":197746.000000,\"max\":241031.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":85959.106337}\n"
+    },
+    {
+      "index": 7,
+      "id": "M6",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1048576,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 5156,
+        "responses_completed_total": 5156,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 5156,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 5156,
+        "latency_sum_us": 16831147,
+        "latency_max_us": 405221,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 309,
+        "logger_accepted": 309,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 309,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29715,
+        "starttime": 16726271,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01110443301149644,
+        "wait4": {
+          "pid": 29715,
+          "ru_utime_s": 0.27102499999999996,
+          "ru_stime_s": 1.791895,
+          "read_monotonic": 167275.078143405
+        }
+      },
+      "complete_wall_s": 12.364416766999057,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10012359,
+          "requests": 4197,
+          "bytes": 4414801856,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 84404.573465,
+            "p50": 54890.0,
+            "p95": 219655.0,
+            "p99": 247466.0,
+            "max": 499224.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 76339.167977,
+          "qps": 419.1819330489448,
+          "received_mib_s": 420.5086076208258
+        },
+        "started_monotonic": 167264.909386662,
+        "ended_monotonic": 167274.991750017,
+        "started_wall_s": 1791461289.312106,
+        "ended_wall_s": 1791461299.3945522,
+        "wall_s": 10.082363355002599,
+        "server_cpu_pct": 16.761943013702904,
+        "client_cpu_pct": 99.69390753024899,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 6080,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0017543970025144517,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 640
+          },
+          {
+            "elapsed_s": 1.018742715998087,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 2.064617971976986,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 3.0986089399957564,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 4.141074679995654,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 5.190995921002468,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 6080
+          },
+          {
+            "elapsed_s": 6.218539216002682,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 6080
+          },
+          {
+            "elapsed_s": 7.256137877004221,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 6080
+          },
+          {
+            "elapsed_s": 8.288217979978072,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 6080
+          },
+          {
+            "elapsed_s": 9.30827709598816,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 6080
+          }
+        ],
+        "cleanup": {
+          "pid": 29725,
+          "starttime": 16726491,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 8.881004760041833e-06,
+          "wait4": {
+            "pid": 29725,
+            "ru_utime_s": 1.18279,
+            "ru_stime_s": 8.868712,
+            "read_monotonic": 167274.991329195
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29715,
+            "starttime": 16726271,
+            "utime_ticks": 7,
+            "stime_ticks": 30,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167264.909637562,
+            "cpu_seconds": 0.37,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 29715,
+            "starttime": 16726271,
+            "utime_ticks": 27,
+            "stime_ticks": 179,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167274.991540252,
+            "cpu_seconds": 2.06,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "client": {
+            "pid": 29725,
+            "starttime": 16726491,
+            "wait4_pid": 29725,
+            "ru_utime_s": 1.18279,
+            "ru_stime_s": 8.868712,
+            "wait4_read_monotonic": 167274.991329195
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2102494,
+        "requests": 889,
+        "bytes": 943767080,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 73108.353659,
+          "p50": 68489.0,
+          "p95": 137742.0,
+          "p99": 163734.0,
+          "max": 199669.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 75680.32396,
+        "qps": 422.8311709807495,
+        "received_mib_s": 428.0851335916881
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34827/payload-1048576.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    84.40ms   62.96ms 499.22ms   79.05%\n    Req/Sec   210.45     30.54   272.00     68.50%\n  Latency Distribution\n     50%   54.89ms\n     75%  119.38ms\n     90%  197.35ms\n     99%  247.47ms\n  4197 requests in 10.01s, 4.11GB read\nRequests/sec:    419.18\nTransfer/sec:    420.51MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10012359,\"requests\":4197,\"bytes\":4414801856,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":84404.573465,\"p50\":54890.000000,\"p95\":219655.000000,\"p99\":247466.000000,\"max\":499224.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":76339.167977}\n"
+    },
+    {
+      "index": 8,
+      "id": "M5",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 65536,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-65536.bin",
+        "size": 65536,
+        "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 69359,
+        "responses_completed_total": 69359,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 69359,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 69359,
+        "latency_sum_us": 4612940,
+        "latency_max_us": 2944,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 45,
+        "logger_accepted": 45,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 45,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29737,
+        "starttime": 16727508,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010454875009600073,
+        "wait4": {
+          "pid": 29737,
+          "ru_utime_s": 1.265909,
+          "ru_stime_s": 5.918359,
+          "read_monotonic": 167287.343956083
+        }
+      },
+      "complete_wall_s": 12.26177808799548,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10001854,
+          "requests": 57362,
+          "bytes": 3765831172,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 5546.411595,
+            "p50": 5443.0,
+            "p95": 8991.0,
+            "p99": 10744.0,
+            "max": 17184.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 5579.640319,
+          "qps": 5735.1367056547715,
+          "received_mib_s": 359.07107508852334
+        },
+        "started_monotonic": 167277.257953736,
+        "ended_monotonic": 167287.298407372,
+        "started_wall_s": 1791461301.6606727,
+        "ended_wall_s": 1791461311.701213,
+        "wall_s": 10.040453636000166,
+        "server_cpu_pct": 59.55906193878172,
+        "client_cpu_pct": 103.97378822177183,
+        "server_rss_sampled_max_kib": 5440,
+        "client_rss_sampled_max_kib": 4960,
+        "server_vmhwm_kib": 5440,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0008681420003995299,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 960
+          },
+          {
+            "elapsed_s": 1.048415439989185,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 2.0920906469982583,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 3.11624031199608,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 4.135888827004237,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 5.171376765007153,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 6.209827095008222,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 7.222369497001637,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 8.246043763007037,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 9.26660123700276,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          }
+        ],
+        "cleanup": {
+          "pid": 29745,
+          "starttime": 16727725,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 8.781003998592496e-06,
+          "wait4": {
+            "pid": 29745,
+            "ru_utime_s": 1.418475,
+            "ru_stime_s": 9.020965,
+            "read_monotonic": 167287.298005827
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29737,
+            "starttime": 16727508,
+            "utime_ticks": 29,
+            "stime_ticks": 90,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167277.258057071,
+            "cpu_seconds": 1.19,
+            "rss_kib": 5440,
+            "hwm_kib": 5440
+          },
+          "server_after": {
+            "pid": 29737,
+            "starttime": 16727508,
+            "utime_ticks": 126,
+            "stime_ticks": 591,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167287.298197841,
+            "cpu_seconds": 7.17,
+            "rss_kib": 5440,
+            "hwm_kib": 5440
+          },
+          "client": {
+            "pid": 29745,
+            "starttime": 16727725,
+            "wait4_pid": 29745,
+            "ru_utime_s": 1.418475,
+            "ru_stime_s": 9.020965,
+            "wait4_read_monotonic": 167287.298005827
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2100190,
+        "requests": 11929,
+        "bytes": 783619652,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 5670.964735,
+          "p50": 4897.0,
+          "p95": 11809.0,
+          "p99": 13691.0,
+          "max": 18263.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 5633.840221,
+        "qps": 5679.962289126222,
+        "received_mib_s": 355.8334893241104
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35065/payload-65536.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     5.55ms    1.99ms  17.18ms   68.02%\n    Req/Sec     2.88k   223.18     3.33k    61.00%\n  Latency Distribution\n     50%    5.44ms\n     75%    6.82ms\n     90%    8.15ms\n     99%   10.74ms\n  57362 requests in 10.00s, 3.51GB read\nRequests/sec:   5735.14\nTransfer/sec:    359.07MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10001854,\"requests\":57362,\"bytes\":3765831172,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":5546.411595,\"p50\":5443.000000,\"p95\":8991.000000,\"p99\":10744.000000,\"max\":17184.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":5579.640319}\n"
+    },
+    {
+      "index": 9,
+      "id": "M4",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "short",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 106591,
+        "responses_completed_total": 106591,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 106591,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 106591,
+        "latency_sum_us": 3212054,
+        "latency_max_us": 3030,
+        "connections_total": 106621,
+        "connections_active": 0,
+        "logger_submitted": 3,
+        "logger_accepted": 3,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 3,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29764,
+        "starttime": 16728734,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010460917983436957,
+        "wait4": {
+          "pid": 29764,
+          "ru_utime_s": 3.005639,
+          "ru_stime_s": 7.839721,
+          "read_monotonic": 167299.478050727
+        }
+      },
+      "complete_wall_s": 12.139809595013503,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10016679,
+          "requests": 88620,
+          "bytes": 99608880,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 1863.767943,
+            "p50": 1562.0,
+            "p95": 4035.0,
+            "p99": 6042.0,
+            "max": 19919.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 3616.945701,
+          "qps": 8847.243682262355,
+          "received_mib_s": 9.483625315535438
+        },
+        "started_monotonic": 167289.389946956,
+        "ended_monotonic": 167299.434224761,
+        "started_wall_s": 1791461313.7926662,
+        "ended_wall_s": 1791461323.8370345,
+        "wall_s": 10.044277804990998,
+        "server_cpu_pct": 88.50810553629414,
+        "client_cpu_pct": 112.07205952036179,
+        "server_rss_sampled_max_kib": 4640,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 4640,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0007963789976201952,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 800
+          },
+          {
+            "elapsed_s": 1.0063958419777919,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.013630014989758,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.0303632199938875,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.069942214991897,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.075937518995488,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.089167122991057,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.116053998994175,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.140443530981429,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.183550232992275,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 29784,
+          "starttime": 16728939,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 9.583018254488707e-06,
+          "wait4": {
+            "pid": 29784,
+            "ru_utime_s": 0.711445,
+            "ru_stime_s": 10.545384,
+            "read_monotonic": 167299.433776118
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29764,
+            "starttime": 16728734,
+            "utime_ticks": 45,
+            "stime_ticks": 149,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167289.390040524,
+            "cpu_seconds": 1.94,
+            "rss_kib": 4640,
+            "hwm_kib": 4640
+          },
+          "server_after": {
+            "pid": 29764,
+            "starttime": 16728734,
+            "utime_ticks": 300,
+            "stime_ticks": 783,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167299.433993171,
+            "cpu_seconds": 10.83,
+            "rss_kib": 4640,
+            "hwm_kib": 4640
+          },
+          "client": {
+            "pid": 29784,
+            "starttime": 16728939,
+            "wait4_pid": 29784,
+            "ru_utime_s": 0.711445,
+            "ru_stime_s": 10.545384,
+            "wait4_read_monotonic": 167299.433776118
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2005742,
+        "requests": 17939,
+        "bytes": 20163536,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1849.974968,
+          "p50": 1496.0,
+          "p95": 4236.0,
+          "p99": 5829.0,
+          "max": 9682.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 3577.888623,
+        "qps": 8943.822286216273,
+        "received_mib_s": 9.587198359077494
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:33833/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.86ms    1.25ms  19.92ms   78.21%\n    Req/Sec     4.45k   847.87     6.31k    65.50%\n  Latency Distribution\n     50%    1.56ms\n     75%    2.46ms\n     90%    3.41ms\n     99%    6.04ms\n  88620 requests in 10.02s, 94.99MB read\nRequests/sec:   8847.24\nTransfer/sec:      9.48MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10016679,\"requests\":88620,\"bytes\":99608880,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":1863.767943,\"p50\":1562.000000,\"p95\":4035.000000,\"p99\":6042.000000,\"max\":19919.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":3616.945701}\n"
+    },
+    {
+      "index": 10,
+      "id": "M3",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 4,
+        "threads": 4,
+        "connections": 128
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 697221,
+        "responses_completed_total": 697221,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 697221,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 697221,
+        "latency_sum_us": 25432586,
+        "latency_max_us": 325139,
+        "connections_total": 260,
+        "connections_active": 0,
+        "logger_submitted": 225,
+        "logger_accepted": 225,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 225,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29787,
+        "starttime": 16729949,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010524634999455884,
+        "wait4": {
+          "pid": 29787,
+          "ru_utime_s": 7.581674,
+          "ru_stime_s": 27.099914,
+          "read_monotonic": 167311.816832105
+        }
+      },
+      "complete_wall_s": 12.324732812005095,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10059754,
+          "requests": 578939,
+          "bytes": 653622236,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 16046.684625,
+            "p50": 1729.0,
+            "p95": 117671.0,
+            "p99": 253841.0,
+            "max": 457696.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 2224.152306,
+          "qps": 57550.015636565266,
+          "received_mib_s": 61.96401414042775
+        },
+        "started_monotonic": 167301.614275756,
+        "ended_monotonic": 167311.71608159,
+        "started_wall_s": 1791461326.016995,
+        "ended_wall_s": 1791461336.1189191,
+        "wall_s": 10.101805834012339,
+        "server_cpu_pct": 285.49350951586285,
+        "client_cpu_pct": 196.88900506316844,
+        "server_rss_sampled_max_kib": 7200,
+        "client_rss_sampled_max_kib": 5600,
+        "server_vmhwm_kib": 7200,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0015727999852970243,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 1600
+          },
+          {
+            "elapsed_s": 1.0032868259877432,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 2.027995465003187,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 3.047027132997755,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 4.063272673985921,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 5.083542873006081,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 6.110153563990025,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 7.1527552909974474,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 8.170052854984533,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 9.17877486499492,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5600
+          }
+        ],
+        "cleanup": {
+          "pid": 29798,
+          "starttime": 16730161,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.2447009794414043e-05,
+          "wait4": {
+            "pid": 29798,
+            "ru_utime_s": 2.958836,
+            "ru_stime_s": 16.930509,
+            "read_monotonic": 167311.715555991
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29787,
+            "starttime": 16729949,
+            "utime_ticks": 123,
+            "stime_ticks": 460,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167301.614423655,
+            "cpu_seconds": 5.83,
+            "rss_kib": 7200,
+            "hwm_kib": 7200
+          },
+          "server_after": {
+            "pid": 29787,
+            "starttime": 16729949,
+            "utime_ticks": 758,
+            "stime_ticks": 2709,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167311.715789858,
+            "cpu_seconds": 34.67,
+            "rss_kib": 7200,
+            "hwm_kib": 7200
+          },
+          "client": {
+            "pid": 29798,
+            "starttime": 16730161,
+            "wait4_pid": 29798,
+            "ru_utime_s": 2.958836,
+            "ru_stime_s": 16.930509,
+            "wait4_read_monotonic": 167311.715555991
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2051782,
+        "requests": 118054,
+        "bytes": 133282966,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 12536.673192,
+          "p50": 1738.0,
+          "p95": 77727.0,
+          "p99": 241335.0,
+          "max": 337010.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 2224.643773,
+        "qps": 57537.30172113801,
+        "received_mib_s": 61.950315135159315
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35663/payload-1024.bin\n  4 threads and 128 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    16.05ms   48.57ms 457.70ms   92.27%\n    Req/Sec    15.09k     3.49k   26.42k    81.94%\n  Latency Distribution\n     50%    1.73ms\n     75%    2.81ms\n     90%   33.61ms\n     99%  253.84ms\n  578939 requests in 10.06s, 623.34MB read\nRequests/sec:  57550.02\nTransfer/sec:     61.96MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10059754,\"requests\":578939,\"bytes\":653622236,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":16046.684625,\"p50\":1729.000000,\"p95\":117671.000000,\"p99\":253841.000000,\"max\":457696.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":2224.152306}\n"
+    },
+    {
+      "index": 11,
+      "id": "M2",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 503970,
+        "responses_completed_total": 503970,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 503970,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 503970,
+        "latency_sum_us": 12563194,
+        "latency_max_us": 4818,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 58,
+        "logger_accepted": 58,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 58,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 29854,
+        "starttime": 16731182,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010982569016050547,
+        "wait4": {
+          "pid": 29854,
+          "ru_utime_s": 3.553168,
+          "ru_stime_s": 13.795656,
+          "read_monotonic": 167324.104912971
+        }
+      },
+      "complete_wall_s": 12.280272018979304,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10000464,
+          "requests": 413284,
+          "bytes": 466597741,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 779.351772,
+            "p50": 683.0,
+            "p95": 1388.0,
+            "p99": 2137.0,
+            "max": 12080.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 774.32189,
+          "qps": 41326.482451214266,
+          "received_mib_s": 44.496163546499
+        },
+        "started_monotonic": 167314.014521339,
+        "ended_monotonic": 167324.059109039,
+        "started_wall_s": 1791461338.4172406,
+        "ended_wall_s": 1791461348.461953,
+        "wall_s": 10.04458769998746,
+        "server_cpu_pct": 142.5643384050286,
+        "client_cpu_pct": 100.01073513462917,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0012275539920665324,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 1440
+          },
+          {
+            "elapsed_s": 1.0157732009829488,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.0378497790079564,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.0627853629994206,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.093428803986171,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.113816658005817,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.122126693982864,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.130240402999334,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.158284462988377,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.178904120984953,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 29896,
+          "starttime": 16731401,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.2167991371825337e-05,
+          "wait4": {
+            "pid": 29896,
+            "ru_utime_s": 1.681785,
+            "ru_stime_s": 8.363881,
+            "read_monotonic": 167324.058531868
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 29854,
+            "starttime": 16731182,
+            "utime_ticks": 59,
+            "stime_ticks": 243,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167314.014636828,
+            "cpu_seconds": 3.02,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 29854,
+            "starttime": 16731182,
+            "utime_ticks": 355,
+            "stime_ticks": 1379,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167324.058778188,
+            "cpu_seconds": 17.34,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "client": {
+            "pid": 29896,
+            "starttime": 16731401,
+            "wait4_pid": 29896,
+            "ru_utime_s": 1.681785,
+            "ru_stime_s": 8.363881,
+            "wait4_read_monotonic": 167324.058531868
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2099329,
+        "requests": 90625,
+        "bytes": 102315730,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 724.751871,
+          "p50": 665.0,
+          "p95": 1213.0,
+          "p99": 1790.0,
+          "max": 13807.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 741.280309,
+        "qps": 43168.555285998526,
+        "received_mib_s": 46.47955792796481
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34037/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   779.35us  431.87us  12.08ms   88.81%\n    Req/Sec    20.77k     3.06k   27.14k    77.50%\n  Latency Distribution\n     50%  683.00us\n     75%    0.91ms\n     90%    1.18ms\n     99%    2.14ms\n  413284 requests in 10.00s, 444.98MB read\nRequests/sec:  41326.48\nTransfer/sec:     44.50MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10000464,\"requests\":413284,\"bytes\":466597741,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":779.351772,\"p50\":683.000000,\"p95\":1388.000000,\"p99\":2137.000000,\"max\":12080.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":774.321890}\n"
+    },
+    {
+      "index": 12,
+      "id": "M1",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 0,
+        "threads": 1,
+        "connections": 1
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 36014,
+        "responses_completed_total": 36014,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 36014,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 36014,
+        "latency_sum_us": 834369,
+        "latency_max_us": 317,
+        "connections_total": 6,
+        "connections_active": 0,
+        "logger_submitted": 3,
+        "logger_accepted": 3,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 3,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 30037,
+        "starttime": 16732411,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01056384900584817,
+        "wait4": {
+          "pid": 30037,
+          "ru_utime_s": 0.436895,
+          "ru_stime_s": 0.856722,
+          "read_monotonic": 167336.390482496
+        }
+      },
+      "complete_wall_s": 12.278965903999051,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10099730,
+          "requests": 31747,
+          "bytes": 35842363,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 318.18274,
+            "p50": 288.0,
+            "p95": 533.0,
+            "p99": 680.0,
+            "max": 1844.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 318.131792,
+          "qps": 3143.3513569174625,
+          "received_mib_s": 3.3844410724256657
+        },
+        "started_monotonic": 167326.205372048,
+        "ended_monotonic": 167336.346168511,
+        "started_wall_s": 1791461350.608091,
+        "ended_wall_s": 1791461360.7489867,
+        "wall_s": 10.140796463005245,
+        "server_cpu_pct": 10.945885799497148,
+        "client_cpu_pct": 6.7937563140462744,
+        "server_rss_sampled_max_kib": 4800,
+        "client_rss_sampled_max_kib": 4640,
+        "server_vmhwm_kib": 4800,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0008950490155257285,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0444202680082526,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 2.0890648619970307,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 3.1277586159994826,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 4.169120642007329,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 5.212004567001713,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 6.255228163005086,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 7.296671030024299,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 8.344240862003062,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 9.384260992024792,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          }
+        ],
+        "cleanup": {
+          "pid": 30047,
+          "starttime": 16732620,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.4574005035683513e-05,
+          "wait4": {
+            "pid": 30047,
+            "ru_utime_s": 0.135847,
+            "ru_stime_s": 0.553094,
+            "read_monotonic": 167336.345685259
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 30037,
+            "starttime": 16732411,
+            "utime_ticks": 5,
+            "stime_ticks": 12,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167326.205473107,
+            "cpu_seconds": 0.17,
+            "rss_kib": 4800,
+            "hwm_kib": 4800
+          },
+          "server_after": {
+            "pid": 30037,
+            "starttime": 16732411,
+            "utime_ticks": 43,
+            "stime_ticks": 85,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167336.345889401,
+            "cpu_seconds": 1.28,
+            "rss_kib": 4800,
+            "hwm_kib": 4800
+          },
+          "client": {
+            "pid": 30047,
+            "starttime": 16732620,
+            "wait4_pid": 30047,
+            "ru_utime_s": 0.135847,
+            "ru_stime_s": 0.553094,
+            "wait4_read_monotonic": 167336.345685259
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2000254,
+        "requests": 4261,
+        "bytes": 4810669,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 468.188943,
+          "p50": 444.0,
+          "p95": 746.0,
+          "p99": 894.0,
+          "max": 2030.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 469.432997,
+        "qps": 2130.229460858471,
+        "received_mib_s": 2.2936144459812295
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34405/payload-1024.bin\n  1 threads and 1 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   318.18us  120.75us   1.84ms   70.83%\n    Req/Sec     3.16k   636.63     4.49k    57.43%\n  Latency Distribution\n     50%  288.00us\n     75%  396.00us\n     90%  478.00us\n     99%  680.00us\n  31747 requests in 10.10s, 34.18MB read\nRequests/sec:   3143.35\nTransfer/sec:      3.38MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10099730,\"requests\":31747,\"bytes\":35842363,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":318.182740,\"p50\":288.000000,\"p95\":533.000000,\"p99\":680.000000,\"max\":1844.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":318.131792}\n"
+    },
+    {
+      "index": 13,
+      "id": "M3",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 4,
+        "threads": 4,
+        "connections": 128
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 634240,
+        "responses_completed_total": 634240,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 634240,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 634240,
+        "latency_sum_us": 24286026,
+        "latency_max_us": 1768794,
+        "connections_total": 260,
+        "connections_active": 0,
+        "logger_submitted": 203,
+        "logger_accepted": 203,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 203,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 30055,
+        "starttime": 16733640,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010425802000099793,
+        "wait4": {
+          "pid": 30055,
+          "ru_utime_s": 7.799066,
+          "ru_stime_s": 24.835016,
+          "read_monotonic": 167348.809228123
+        }
+      },
+      "complete_wall_s": 12.41044008100289,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10099553,
+          "requests": 514574,
+          "bytes": 580954361,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 133571.367822,
+            "p50": 1781.0,
+            "p95": 1009666.0,
+            "p99": 1478748.0,
+            "max": 1784400.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 2512.258264,
+          "qps": 50950.175715697515,
+          "received_mib_s": 54.85799748661201
+        },
+        "started_monotonic": 167338.571991956,
+        "ended_monotonic": 167348.765624613,
+        "started_wall_s": 1791461362.974711,
+        "ended_wall_s": 1791461373.168455,
+        "wall_s": 10.193632656999398,
+        "server_cpu_pct": 265.55793121907857,
+        "client_cpu_pct": 175.18289701893713,
+        "server_rss_sampled_max_kib": 7360,
+        "client_rss_sampled_max_kib": 5600,
+        "server_vmhwm_kib": 7360,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0015078579890541732,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 2080
+          },
+          {
+            "elapsed_s": 1.0023789370025042,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 2.085008705005748,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 3.103990976989735,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 4.135969851980917,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 5.178841968998313,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 6.1888249079929665,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 7.19892013198114,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 8.223455117986305,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 9.247242932004156,
+            "server_rss_kib": 7360,
+            "client_rss_kib": 5600
+          }
+        ],
+        "cleanup": {
+          "pid": 30069,
+          "starttime": 16733857,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.1105003068223596e-05,
+          "wait4": {
+            "pid": 30069,
+            "ru_utime_s": 2.640936,
+            "ru_stime_s": 15.216565,
+            "read_monotonic": 167348.765148208
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 30055,
+            "starttime": 16733640,
+            "utime_ticks": 123,
+            "stime_ticks": 432,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167338.572230295,
+            "cpu_seconds": 5.55,
+            "rss_kib": 7360,
+            "hwm_kib": 7360
+          },
+          "server_after": {
+            "pid": 30055,
+            "starttime": 16733640,
+            "utime_ticks": 779,
+            "stime_ticks": 2483,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167348.76536178,
+            "cpu_seconds": 32.62,
+            "rss_kib": 7360,
+            "hwm_kib": 7360
+          },
+          "client": {
+            "pid": 30069,
+            "starttime": 16733857,
+            "wait4_pid": 30069,
+            "ru_utime_s": 2.640936,
+            "ru_stime_s": 15.216565,
+            "wait4_read_monotonic": 167348.765148208
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2054356,
+        "requests": 119460,
+        "bytes": 134870550,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 7252.158589,
+          "p50": 1609.0,
+          "p95": 36658.0,
+          "p99": 128824.0,
+          "max": 176947.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 2201.21855,
+        "qps": 58149.60990208124,
+        "received_mib_s": 62.60968380095026
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35579/payload-1024.bin\n  4 threads and 128 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   133.57ms  333.61ms   1.78s    88.50%\n    Req/Sec    13.30k     2.88k   24.62k    67.27%\n  Latency Distribution\n     50%    1.78ms\n     75%    3.74ms\n     90%  583.62ms\n     99%    1.48s \n  514574 requests in 10.10s, 554.04MB read\nRequests/sec:  50950.18\nTransfer/sec:     54.86MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10099553,\"requests\":514574,\"bytes\":580954361,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":133571.367822,\"p50\":1781.000000,\"p95\":1009666.000000,\"p99\":1478748.000000,\"max\":1784400.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":2512.258264}\n"
+    },
+    {
+      "index": 14,
+      "id": "M4",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "short",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 108718,
+        "responses_completed_total": 108718,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 108718,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 108718,
+        "latency_sum_us": 3237081,
+        "latency_max_us": 2384,
+        "connections_total": 108781,
+        "connections_active": 0,
+        "logger_submitted": 3,
+        "logger_accepted": 3,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 3,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 30074,
+        "starttime": 16734881,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01049373098067008,
+        "wait4": {
+          "pid": 30074,
+          "ru_utime_s": 3.005598,
+          "ru_stime_s": 8.208602,
+          "read_monotonic": 167360.965591438
+        }
+      },
+      "complete_wall_s": 12.160133127006702,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10027790,
+          "requests": 90077,
+          "bytes": 101246548,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 1823.152151,
+            "p50": 1555.0,
+            "p95": 3892.0,
+            "p99": 5089.0,
+            "max": 17206.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 3562.388623,
+          "qps": 8982.736973949395,
+          "received_mib_s": 9.62886463043129
+        },
+        "started_monotonic": 167350.860708683,
+        "ended_monotonic": 167360.949986823,
+        "started_wall_s": 1791461375.2634277,
+        "ended_wall_s": 1791461385.3527892,
+        "wall_s": 10.089278139988892,
+        "server_cpu_pct": 91.8797149942603,
+        "client_cpu_pct": 119.33631755356937,
+        "server_rss_sampled_max_kib": 4640,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 4640,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0010749739885795861,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 1440
+          },
+          {
+            "elapsed_s": 1.017477688001236,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.032145743985893,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.0460575410106685,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.0609364499978255,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.076114756986499,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.08970476698596,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.105175467004301,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.12141861100099,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.134274626994738,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 30082,
+          "starttime": 16735086,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 9.615003364160657e-06,
+          "wait4": {
+            "pid": 30082,
+            "ru_utime_s": 0.819228,
+            "ru_stime_s": 11.220945,
+            "read_monotonic": 167360.949538076
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 30074,
+            "starttime": 16734881,
+            "utime_ticks": 55,
+            "stime_ticks": 138,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167350.860802411,
+            "cpu_seconds": 1.93,
+            "rss_kib": 4640,
+            "hwm_kib": 4640
+          },
+          "server_after": {
+            "pid": 30074,
+            "starttime": 16734881,
+            "utime_ticks": 300,
+            "stime_ticks": 820,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167360.949767883,
+            "cpu_seconds": 11.2,
+            "rss_kib": 4640,
+            "hwm_kib": 4640
+          },
+          "client": {
+            "pid": 30082,
+            "starttime": 16735086,
+            "wait4_pid": 30082,
+            "ru_utime_s": 0.819228,
+            "ru_stime_s": 11.220945,
+            "wait4_read_monotonic": 167360.949538076
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2002109,
+        "requests": 18632,
+        "bytes": 20942368,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1769.759243,
+          "p50": 1509.0,
+          "p95": 3771.0,
+          "p99": 5091.0,
+          "max": 9872.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 3438.572778,
+        "qps": 9306.186626202669,
+        "received_mib_s": 9.975579994060327
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35147/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.82ms    1.12ms  17.21ms   72.07%\n    Req/Sec     4.52k     0.87k    6.28k    58.50%\n  Latency Distribution\n     50%    1.55ms\n     75%    2.44ms\n     90%    3.38ms\n     99%    5.09ms\n  90077 requests in 10.03s, 96.56MB read\nRequests/sec:   8982.74\nTransfer/sec:      9.63MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10027790,\"requests\":90077,\"bytes\":101246548,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":1823.152151,\"p50\":1555.000000,\"p95\":3892.000000,\"p99\":5089.000000,\"max\":17206.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":3562.388623}\n"
+    },
+    {
+      "index": 15,
+      "id": "M5",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 65536,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-65536.bin",
+        "size": 65536,
+        "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 62737,
+        "responses_completed_total": 62737,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 62737,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 62737,
+        "latency_sum_us": 4480594,
+        "latency_max_us": 13716,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 57,
+        "logger_accepted": 57,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 57,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 30225,
+        "starttime": 16736098,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010416845994768664,
+        "wait4": {
+          "pid": 30225,
+          "ru_utime_s": 1.1657899999999999,
+          "ru_stime_s": 5.859527,
+          "read_monotonic": 167373.281702601
+        }
+      },
+      "complete_wall_s": 12.298963326000376,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10003301,
+          "requests": 50981,
+          "bytes": 3347066692,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 6535.09767,
+            "p50": 5543.0,
+            "p95": 14601.0,
+            "p99": 19469.0,
+            "max": 35319.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 6278.920225,
+          "qps": 5096.417672526299,
+          "received_mib_s": 319.09582041560367
+        },
+        "started_monotonic": 167363.165258883,
+        "ended_monotonic": 167373.204603018,
+        "started_wall_s": 1791461387.567978,
+        "ended_wall_s": 1791461397.6074166,
+        "wall_s": 10.039344135002466,
+        "server_cpu_pct": 56.57740110926684,
+        "client_cpu_pct": 102.85337230346337,
+        "server_rss_sampled_max_kib": 5440,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 5440,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0011675370042212307,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 960
+          },
+          {
+            "elapsed_s": 1.0493203009827994,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.0763073049893137,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.1093845489958767,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.127670269983355,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.165812925988575,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.1991779140080325,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.242362913006218,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.257165540999267,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.279191754001658,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 30245,
+          "starttime": 16736316,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.0485004168003798e-05,
+          "wait4": {
+            "pid": 30245,
+            "ru_utime_s": 1.093654,
+            "ru_stime_s": 9.23215,
+            "read_monotonic": 167373.204149288
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 30225,
+            "starttime": 16736098,
+            "utime_ticks": 24,
+            "stime_ticks": 109,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167363.165389254,
+            "cpu_seconds": 1.33,
+            "rss_kib": 5440,
+            "hwm_kib": 5440
+          },
+          "server_after": {
+            "pid": 30225,
+            "starttime": 16736098,
+            "utime_ticks": 116,
+            "stime_ticks": 585,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167373.20437448,
+            "cpu_seconds": 7.01,
+            "rss_kib": 5440,
+            "hwm_kib": 5440
+          },
+          "client": {
+            "pid": 30245,
+            "starttime": 16736316,
+            "wait4_pid": 30245,
+            "ru_utime_s": 1.093654,
+            "ru_stime_s": 9.23215,
+            "wait4_read_monotonic": 167373.204149288
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2100210,
+        "requests": 11688,
+        "bytes": 767711284,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 5598.876407,
+          "p50": 5373.0,
+          "p95": 9118.0,
+          "p99": 11580.0,
+          "max": 24657.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 5750.061602,
+        "qps": 5565.157769937292,
+        "received_mib_s": 348.6063460159053
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35551/payload-65536.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     6.54ms    4.10ms  35.32ms   71.45%\n    Req/Sec     2.56k   308.93     3.04k    62.00%\n  Latency Distribution\n     50%    5.54ms\n     75%    8.38ms\n     90%   12.59ms\n     99%   19.47ms\n  50981 requests in 10.00s, 3.12GB read\nRequests/sec:   5096.42\nTransfer/sec:    319.10MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10003301,\"requests\":50981,\"bytes\":3347066692,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":6535.097670,\"p50\":5543.000000,\"p95\":14601.000000,\"p99\":19469.000000,\"max\":35319.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":6278.920225}\n"
+    },
+    {
+      "index": 16,
+      "id": "M6",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1048576,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 5188,
+        "responses_completed_total": 5188,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 5188,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 5188,
+        "latency_sum_us": 11133979,
+        "latency_max_us": 198438,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 343,
+        "logger_accepted": 343,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 343,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 30249,
+        "starttime": 16737328,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01085396102280356,
+        "wait4": {
+          "pid": 30249,
+          "ru_utime_s": 0.214285,
+          "ru_stime_s": 1.846549,
+          "read_monotonic": 167385.645363407
+        }
+      },
+      "complete_wall_s": 12.35778772298363,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10015825,
+          "requests": 4254,
+          "bytes": 4474977832,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 75873.080627,
+            "p50": 71213.0,
+            "p95": 150535.0,
+            "p99": 179813.0,
+            "max": 298528.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 75342.360132,
+          "qps": 424.72786814865475,
+          "received_mib_s": 426.092850550576
+        },
+        "started_monotonic": 167375.502701859,
+        "ended_monotonic": 167385.537282214,
+        "started_wall_s": 1791461399.905421,
+        "ended_wall_s": 1791461409.9400887,
+        "wall_s": 10.03458035501535,
+        "server_cpu_pct": 16.84176059395774,
+        "client_cpu_pct": 99.00626282826555,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 5440,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0010904530063271523,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 960
+          },
+          {
+            "elapsed_s": 1.0378874960006215,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 2.041545120999217,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 3.062153433013009,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 4.072574618010549,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 5.096342750010081,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 6.134708270023111,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 7.157762226008344,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 8.159366630017757,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 9.172669139021309,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5440
+          }
+        ],
+        "cleanup": {
+          "pid": 30257,
+          "starttime": 16737550,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.0370975360274315e-05,
+          "wait4": {
+            "pid": 30257,
+            "ru_utime_s": 0.924068,
+            "ru_stime_s": 9.010795,
+            "read_monotonic": 167385.536868243
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 30249,
+            "starttime": 16737328,
+            "utime_ticks": 0,
+            "stime_ticks": 36,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167375.502845769,
+            "cpu_seconds": 0.36,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 30249,
+            "starttime": 16737328,
+            "utime_ticks": 21,
+            "stime_ticks": 184,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167385.537074112,
+            "cpu_seconds": 2.05,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "client": {
+            "pid": 30257,
+            "starttime": 16737550,
+            "wait4_pid": 30257,
+            "ru_utime_s": 0.924068,
+            "ru_stime_s": 9.010795,
+            "wait4_read_monotonic": 167385.536868243
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2099605,
+        "requests": 864,
+        "bytes": 921818684,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 76595.446953,
+          "p50": 68654.0,
+          "p95": 137724.0,
+          "p99": 173838.0,
+          "max": 237707.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 77763.148148,
+        "qps": 411.50597374268017,
+        "received_mib_s": 418.7048532053453
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34651/payload-1048576.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    75.87ms   35.58ms 298.53ms   70.28%\n    Req/Sec   213.40     23.01   262.00     73.00%\n  Latency Distribution\n     50%   71.21ms\n     75%   89.10ms\n     90%  124.73ms\n     99%  179.81ms\n  4254 requests in 10.02s, 4.17GB read\nRequests/sec:    424.73\nTransfer/sec:    426.09MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10015825,\"requests\":4254,\"bytes\":4474977832,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":75873.080627,\"p50\":71213.000000,\"p95\":150535.000000,\"p99\":179813.000000,\"max\":298528.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":75342.360132}\n"
+    },
+    {
+      "index": 17,
+      "id": "M1",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 0,
+        "threads": 1,
+        "connections": 1
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 35019,
+        "responses_completed_total": 35019,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 35019,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 35019,
+        "latency_sum_us": 713486,
+        "latency_max_us": 197,
+        "connections_total": 6,
+        "connections_active": 0,
+        "logger_submitted": 4,
+        "logger_accepted": 4,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 4,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 30282,
+        "starttime": 16738565,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010423477011499926,
+        "wait4": {
+          "pid": 30282,
+          "ru_utime_s": 0.34128,
+          "ru_stime_s": 0.7613179999999999,
+          "read_monotonic": 167398.06310408
+        }
+      },
+      "complete_wall_s": 12.406938160973368,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10100065,
+          "requests": 29206,
+          "bytes": 32973574,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 346.180409,
+            "p50": 328.0,
+            "p95": 580.0,
+            "p99": 719.0,
+            "max": 4454.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 345.821578,
+          "qps": 2891.6645585944248,
+          "received_mib_s": 3.1134503237277085
+        },
+        "started_monotonic": 167387.846844712,
+        "ended_monotonic": 167397.992728224,
+        "started_wall_s": 1791461412.249564,
+        "ended_wall_s": 1791461422.3955302,
+        "wall_s": 10.14588351198472,
+        "server_cpu_pct": 9.166279101287207,
+        "client_cpu_pct": 6.174602726908811,
+        "server_rss_sampled_max_kib": 4800,
+        "client_rss_sampled_max_kib": 4640,
+        "server_vmhwm_kib": 4800,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.001113858976168558,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 1440
+          },
+          {
+            "elapsed_s": 1.051295796991326,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 2.095887919975212,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 3.1413071519928053,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 4.179342363990145,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 5.218308482988505,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 6.261605465988396,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 7.304103131988086,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 8.349021906993585,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 9.389763569983188,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          }
+        ],
+        "cleanup": {
+          "pid": 30286,
+          "starttime": 16738784,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 8.283008355647326e-06,
+          "wait4": {
+            "pid": 30286,
+            "ru_utime_s": 0.196742,
+            "ru_stime_s": 0.429726,
+            "read_monotonic": 167397.992329881
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 30282,
+            "starttime": 16738565,
+            "utime_ticks": 4,
+            "stime_ticks": 13,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167387.846987859,
+            "cpu_seconds": 0.17,
+            "rss_kib": 4800,
+            "hwm_kib": 4800
+          },
+          "server_after": {
+            "pid": 30282,
+            "starttime": 16738565,
+            "utime_ticks": 34,
+            "stime_ticks": 76,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167397.992529908,
+            "cpu_seconds": 1.1,
+            "rss_kib": 4800,
+            "hwm_kib": 4800
+          },
+          "client": {
+            "pid": 30286,
+            "starttime": 16738784,
+            "wait4_pid": 30286,
+            "ru_utime_s": 0.196742,
+            "ru_stime_s": 0.429726,
+            "wait4_read_monotonic": 167397.992329881
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2099963,
+        "requests": 5806,
+        "bytes": 6555079,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 363.063717,
+          "p50": 328.0,
+          "p95": 690.0,
+          "p99": 827.0,
+          "max": 1586.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 361.688426,
+        "qps": 2764.810618091843,
+        "received_mib_s": 2.9769145857874473
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34151/payload-1024.bin\n  1 threads and 1 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   346.18us  141.69us   4.45ms   69.98%\n    Req/Sec     2.91k   659.47     5.18k    79.21%\n  Latency Distribution\n     50%  328.00us\n     75%  434.00us\n     90%  520.00us\n     99%  719.00us\n  29206 requests in 10.10s, 31.45MB read\nRequests/sec:   2891.66\nTransfer/sec:      3.11MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10100065,\"requests\":29206,\"bytes\":32973574,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":346.180409,\"p50\":328.000000,\"p95\":580.000000,\"p99\":719.000000,\"max\":4454.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":345.821578}\n"
+    },
+    {
+      "index": 18,
+      "id": "M2",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 543409,
+        "responses_completed_total": 543409,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 543409,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 543409,
+        "latency_sum_us": 11766371,
+        "latency_max_us": 3190,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 60,
+        "logger_accepted": 60,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 60,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 30302,
+        "starttime": 16739807,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01042548698023893,
+        "wait4": {
+          "pid": 30302,
+          "ru_utime_s": 3.428212,
+          "ru_stime_s": 13.253876,
+          "read_monotonic": 167410.44956068
+        }
+      },
+      "complete_wall_s": 12.379962164995959,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10099880,
+          "requests": 454976,
+          "bytes": 513668114,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 712.450605,
+            "p50": 636.0,
+            "p95": 1273.0,
+            "p99": 1810.0,
+            "max": 12264.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 710.3587,
+          "qps": 45047.66393264078,
+          "received_mib_s": 48.502763149526295
+        },
+        "started_monotonic": 167400.261653447,
+        "ended_monotonic": 167410.40536745,
+        "started_wall_s": 1791461424.6643724,
+        "ended_wall_s": 1791461434.8082106,
+        "wall_s": 10.14371400300297,
+        "server_cpu_pct": 136.73492762013885,
+        "client_cpu_pct": 94.73558695715514,
+        "server_rss_sampled_max_kib": 5440,
+        "client_rss_sampled_max_kib": 4640,
+        "server_vmhwm_kib": 5440,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0008853060135152191,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0129270699981134,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 2.027576886001043,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 3.0420375549874734,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 4.05209113098681,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 5.0659637300122995,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 6.080910090007819,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 7.0968993680144195,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 8.10121390101267,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 9.13352199899964,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4640
+          }
+        ],
+        "cleanup": {
+          "pid": 30311,
+          "starttime": 16740026,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.8234975868836045e-05,
+          "wait4": {
+            "pid": 30311,
+            "ru_utime_s": 1.7409949999999998,
+            "ru_stime_s": 7.868712,
+            "read_monotonic": 167410.404861963
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 30302,
+            "starttime": 16739807,
+            "utime_ticks": 57,
+            "stime_ticks": 223,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167400.261745094,
+            "cpu_seconds": 2.8,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 30302,
+            "starttime": 16739807,
+            "utime_ticks": 342,
+            "stime_ticks": 1325,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 167410.405085291,
+            "cpu_seconds": 16.67,
+            "rss_kib": 5440,
+            "hwm_kib": 5440
+          },
+          "client": {
+            "pid": 30311,
+            "starttime": 16740026,
+            "wait4_pid": 30311,
+            "ru_utime_s": 1.7409949999999998,
+            "ru_stime_s": 7.868712,
+            "wait4_read_monotonic": 167410.404861963
+          }
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2099988,
+        "requests": 88370,
+        "bytes": 99769835,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 748.860367,
+          "p50": 690.0,
+          "p95": 1314.0,
+          "p99": 1637.0,
+          "max": 5031.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 760.434718,
+        "qps": 42081.19284491149,
+        "received_mib_s": 45.308796617689886
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35545/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   712.45us  364.63us  12.26ms   87.18%\n    Req/Sec    22.63k     1.29k   25.99k    69.80%\n  Latency Distribution\n     50%  636.00us\n     75%  816.00us\n     90%    1.08ms\n     99%    1.81ms\n  454976 requests in 10.10s, 489.87MB read\nRequests/sec:  45047.66\nTransfer/sec:     48.50MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10099880,\"requests\":454976,\"bytes\":513668114,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":712.450605,\"p50\":636.000000,\"p95\":1273.000000,\"p99\":1810.000000,\"max\":12264.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":710.358700}\n"
+    }
+  ],
+  "recovery": {
+    "total_s": 600,
+    "elapsed_at_formal_end_s": 266.7998073720082,
+    "remaining_at_formal_end_s": 333.2001904399949,
+    "phases": {
+      "fastchecks": {
+        "status": "passed",
+        "start_monotonic": 167144.017674048,
+        "deadline_monotonic": 167204.017674048,
+        "end_monotonic": 167145.987340448,
+        "elapsed_s": 1.9696663999930024,
+        "error": null
+      },
+      "smoke": {
+        "status": "passed",
+        "start_monotonic": 167167.785282004,
+        "deadline_monotonic": 167227.785282004,
+        "end_monotonic": 167170.469706054,
+        "elapsed_s": 2.684424049977679,
+        "error": null
+      },
+      "formal": {
+        "status": "passed",
+        "start_monotonic": 167188.887505622,
+        "deadline_monotonic": 167733.910042257,
+        "end_monotonic": 167410.673360881,
+        "elapsed_s": 221.7858552589896,
+        "error": null
+      }
+    },
+    "usage": {
+      "logical_bytes": 55834317,
+      "allocated_bytes": 62525440,
+      "charged_bytes": 62525440,
+      "raw_bytes": 478131
+    },
+    "old_budget_sha256": "313f0377c241df71a59931805753e80d6b5ec2fb22795e00576e3eed1dd3bcab",
+    "old_settlement_sha256": "2c047339e376e53e639921748a4459a7c1ef466e8ec533cafe07c1cd6849cb76",
+    "rework_sha256": "7c90b0f62295b30c4ec91454e34d40e19c8a64b2c4851d16ce32d84dde5b6f29",
+    "r001_ledgers": {
+      "budget.json": "36a9154e1a4ac566ca72a57cf080bc5aee9f01df73ea02a4e33245809f509072",
+      "budget-settlement.json": "6b5f657f4170815f6e378c34a4b0c3f4b7f3198138d16a8b0d8fda2f9946ad84"
+    }
+  }
+}

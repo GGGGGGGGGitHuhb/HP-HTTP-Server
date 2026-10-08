@@ -121,3 +121,10 @@ if(BUILD_TESTING)
     set_tests_properties(observability_http_tests PROPERTIES TIMEOUT 60
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()
+
+if(BUILD_TESTING)
+    add_test(NAME matrix_benchmark_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/MatrixBenchmark_test.py)
+    set_tests_properties(matrix_benchmark_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_MATRIX_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()

@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-2026-10-08：V0.5.1 **已搁置（未完成）**。这是用户决定的管理停工，不是验收通过。S1/S2已完成，TCP_NODELAY局部修复已验证；S3已终止且高并发P3验收FAIL，S4停工，长尾尝试修复/定位未果，RO-002仍开放；S5/S6未开始。V0.6/S1已按用户提前批准启动，设计与审查计划Approved，S1已完成，Reviewer002独立PASS；V0.6整体未完成，S2/S3未开始；不再以V0.5.1验收完成为前置条件。
+2026-10-08：V0.5.1 **已搁置（未完成）**。这是用户决定的管理停工，不是验收通过。S1/S2已完成，TCP_NODELAY局部修复已验证；S3已终止且高并发P3验收FAIL，S4停工，长尾尝试修复/定位未果，RO-002仍开放；S5/S6未开始。V0.6/S1已按用户提前批准启动，设计与审查计划Approved，S1已完成，Reviewer002独立PASS；V0.6整体未完成，S2已完成、S3未开始；不再以V0.5.1验收完成为前置条件。
 
 [停工结论与有限验证](benchmark/results/V0.5.1/SHELVED.md)；[历史检查点](history/V0.5.1/README-checkpoints.md)；[诊断资料边界](benchmark/README.md)。现有诊断候选归档保留，不是生产功能或可恢复执行入口。
 
@@ -462,3 +462,7 @@ ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 timeout 60s ./build-v0
 ## 固定版本压测入口
 
 `benchmark/` 提供仓库内工具准备、两个固定提交的独立 Release 构建和受控 localhost wrk 对比。完整命令、失败处理、统计口径与 WSL 限制见 [benchmark/README.md](benchmark/README.md)，实测记录见 [V0.5/S4 基线](benchmark/results/V0.5-S4-baseline.md)。快速 runner 测试已登记 CTest；正式 12 样本约五分钟，需显式运行，不属于默认测试。本阶段已由Reviewer002独立PASS，完整验收与版本收口见本地Leader S4-report-005；数值有效性不代表性能改善。
+
+## V0.6/S2 场景矩阵
+
+新增独立 [矩阵工具与命令](benchmark/matrix/README.md)，固定已验收S1源码，覆盖正文大小、连接模式和worker/连接组合；[本轮结果](benchmark/results/V0.6/S2-matrix.md)保留首次工具超时的2有效/1无效/15未执行；R002新增 [CPU原始证据齐备的Builder18结果](benchmark/results/V0.6/S2-builder-r002.md)（Reviewer002独立PASS）。[Reviewer独立18结果](benchmark/results/V0.6/S2-reviewer-001.md)与逐CPU原始证据复算已通过，S2已完成。新专项 `matrix_benchmark_tests` 是功能/合成反例，新增注册1项且保留S1原12项；本轮只运行工具专项，不复跑整套，不能替代正式18样本；V0.6整体与S3尚未完成，不据此宣称修复长尾。

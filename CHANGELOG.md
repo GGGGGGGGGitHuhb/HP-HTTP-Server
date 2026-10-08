@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### 2026-10-08 — V0.6/S2 固定场景矩阵
+
+- 新增独立Release构建/身份校验与6场景×3轮矩阵，覆盖大小、连接模式和worker/连接组合；两个角色各自18有效样本，五measurement errors均零，HTTP审计及自有进程回收通过。
+- 保存单样本CPU原始ticks/wait4/身份/包围clock供独立复算；延迟为wrk校正分布，精确人口明确未采，三轮分位数中位不等于合并P99。首工具超时、CPU证据缺口及两轮返工保留，Reviewer002 PASS。
+- [独立结果](benchmark/results/V0.6/S2-reviewer-001.md)限定WSL2同机loopback、热缓存、closed-loop；不宣称性能恢复/多核线性扩展/物理机容量。M3长尾风险保留。S2已完成，V0.6整体未完成，S3未开始；旧风险/延期不关闭。
+
 ### 2026-10-08 — V0.6/S1 指标与访问记录
 
 - 增加请求、状态码、错误、连接和服务端响应延迟的固定容量原子统计；ResponseResult显式传递状态/计划正文长度。completed表示kernel接收排空，非客户端已接收。

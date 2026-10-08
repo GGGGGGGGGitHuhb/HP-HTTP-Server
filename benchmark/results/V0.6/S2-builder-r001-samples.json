@@ -1,0 +1,5172 @@
+{
+  "role": "builder",
+  "product": {
+    "commit": "1340f5bb8a303769a8be32b2d8cc29482fd2a8fe",
+    "tree": "f2fdabf35fb754b7f4e981708efd34e40e53ceac",
+    "binary_sha256": "9f95b5f3b31062737032e0ce130dfd725a4e9f923ec96524b3006ccbb2ac7530",
+    "archive_sha256": "619e6a7e56e21866a8f9076699bd7eed0abe9e2e39c469a86e3058b2d22a48f2",
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "compiler_sha256": "52f1ddb33fe78b9441e0f42e9cd22c571f1101938e046c8a26582494e041cc73",
+    "cmake": "cmake version 3.28.3",
+    "flags": [
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DBUILD_TESTING=OFF",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+      "-DCMAKE_CXX_STANDARD=20",
+      "-DCMAKE_CXX_FLAGS=",
+      "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG",
+      "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "server_libraries": {
+      "libstdc++.so.6": "a68762c86d371e6041f03f03a33a78fa235809ae7d81c90185940c93c3535aed",
+      "libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+      "libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+      "libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+      "ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+    }
+  },
+  "wrk": {
+    "sha256": "b10e53769443c2bf3be2cdedec8ef6571aa5bfd1494796b247f3f9296e3af71d",
+    "version": "wrk debian/4.1.0-4build2 [epoll] Copyright (C) 2012 Will Glozer",
+    "libraries": {
+      "libluajit-5.1.so.2": "04c8976ae97b5e89ba27c008bb9d43c002bfc5b1f923c0598953df278ae14bfe",
+      "libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+      "libssl.so.3": "0ca2c28b026f0084661fbb0e69079436680f3b6dd1f4aa3436395442456a6d4c",
+      "libcrypto.so.3": "e6391daf670544d3a8f2b8a0cb8e27b4246fea109352abed50a29ec57f03153d",
+      "libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+      "libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+      "ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+    }
+  },
+  "argv_template": {
+    "server": [
+      "hp_http_server",
+      "--port",
+      "0",
+      "--root",
+      "<sample-fixture>",
+      "--threads",
+      "<workers>",
+      "--idle-timeout-ms",
+      "30000",
+      "--keep-alive-timeout-ms",
+      "15000",
+      "--shutdown-timeout-ms",
+      "5000",
+      "--metrics-on-exit"
+    ],
+    "wrk": [
+      "wrk",
+      "-t",
+      "<T>",
+      "-c",
+      "<C>",
+      "--timeout",
+      "2s",
+      "--latency",
+      "-d",
+      "<2s-warmup-or-10s-measurement>",
+      "-s",
+      "Summary.lua",
+      "http://127.0.0.1:<owned-port>/<payload>"
+    ]
+  },
+  "schema": 2,
+  "status": "valid; independent Reviewer pending",
+  "expected_samples": 18,
+  "counts": {
+    "valid": 18,
+    "invalid": 0,
+    "not_run": 0
+  },
+  "sequence": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M6",
+    "M5",
+    "M4",
+    "M3",
+    "M2",
+    "M1",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M1",
+    "M2"
+  ],
+  "environment": {
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "machine": "x86_64",
+    "os": "Linux",
+    "cpu_count": 20,
+    "transport": "same-host WSL2 loopback",
+    "cache": "hot",
+    "load": "closed-loop"
+  },
+  "tool_hashes": {
+    "Summary.lua": "0706c8defa1a759eda90185ca5c9f02d755bb3c5a7248367d5f0c3618111340e",
+    "Run.py": "6e8983a6403b6c9c1b8cc1df1fbc81f03293d9545f544a4c82c32cff0d5ab40c",
+    "Build.py": "bfc76939ca01568b1f29070ce31b229767aeb257240c6e1d1c562d372285fd50",
+    "Common.py": "b337a03c0d0f4a3b3bda95e51df0944db767efcba3ceee81999c2bb8f3966088"
+  },
+  "groups": {
+    "M1": {
+      "qps": {
+        "values": [
+          1904.255440422694,
+          2174.8155664317787,
+          1974.6828659317312
+        ],
+        "median": 1974.6828659317312,
+        "min": 1904.255440422694,
+        "max": 2174.8155664317787,
+        "span_over_median": 0.1370144698558592
+      },
+      "received_mib_s": {
+        "values": [
+          2.0503186149516366,
+          2.341620230199316,
+          2.126137691151547
+        ],
+        "median": 2.126137691151547,
+        "min": 2.0503186149516366,
+        "max": 2.341620230199316,
+        "span_over_median": 0.13700976021449773
+      },
+      "server_cpu_pct": {
+        "values": [
+          7.785610602546752,
+          10.86673200588213,
+          12.449088212588443
+        ],
+        "median": 10.86673200588213,
+        "min": 7.785610602546752,
+        "max": 12.449088212588443,
+        "span_over_median": 0.42915180088340854
+      },
+      "client_cpu_pct": {
+        "values": [
+          4.885610394826851,
+          7.003589020096475,
+          7.890202231326844
+        ],
+        "median": 7.003589020096475,
+        "min": 4.885610394826851,
+        "max": 7.890202231326844,
+        "span_over_median": 0.4290074457365296
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          4800,
+          4960,
+          4640
+        ],
+        "median": 4800,
+        "min": 4640,
+        "max": 4960,
+        "span_over_median": 0.06666666666666667
+      },
+      "latency_mean_us": {
+        "values": [
+          523.421381,
+          458.176588,
+          526.309322
+        ],
+        "median": 523.421381,
+        "min": 458.176588,
+        "max": 526.309322,
+        "span_over_median": 0.13016803759493342
+      },
+      "latency_p50_us": {
+        "values": [
+          521.0,
+          443.0,
+          475.0
+        ],
+        "median": 475.0,
+        "min": 443.0,
+        "max": 521.0,
+        "span_over_median": 0.16421052631578947
+      },
+      "latency_p95_us": {
+        "values": [
+          733.0,
+          663.0,
+          872.0
+        ],
+        "median": 733.0,
+        "min": 663.0,
+        "max": 872.0,
+        "span_over_median": 0.28512960436562074
+      },
+      "latency_p99_us": {
+        "values": [
+          832.0,
+          811.0,
+          1660.0
+        ],
+        "median": 832.0,
+        "min": 811.0,
+        "max": 1660.0,
+        "span_over_median": 1.0204326923076923
+      },
+      "latency_max_us": {
+        "values": [
+          1266.0,
+          2227.0,
+          11250.0
+        ],
+        "median": 2227.0,
+        "min": 1266.0,
+        "max": 11250.0,
+        "span_over_median": 4.483161203412663
+      }
+    },
+    "M2": {
+      "qps": {
+        "values": [
+          45372.35967326646,
+          41592.79741777034,
+          27788.46923984803
+        ],
+        "median": 41592.79741777034,
+        "min": 27788.46923984803,
+        "max": 45372.35967326646,
+        "span_over_median": 0.4227628706191757
+      },
+      "received_mib_s": {
+        "values": [
+          48.852342673414064,
+          44.782904320934605,
+          29.91979767969935
+        ],
+        "median": 44.782904320934605,
+        "min": 29.91979767969935,
+        "max": 48.852342673414064,
+        "span_over_median": 0.42276277701945164
+      },
+      "server_cpu_pct": {
+        "values": [
+          140.20976286002016,
+          137.0742234235159,
+          119.57803169843643
+        ],
+        "median": 137.0742234235159,
+        "min": 119.57803169843643,
+        "max": 140.20976286002016,
+        "span_over_median": 0.15051503226714058
+      },
+      "client_cpu_pct": {
+        "values": [
+          101.64342216496821,
+          99.24815694055818,
+          86.04621168850083
+        ],
+        "median": 99.24815694055818,
+        "min": 86.04621168850083,
+        "max": 101.64342216496821,
+        "span_over_median": 0.15715365360193925
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          5280,
+          5600,
+          5120
+        ],
+        "median": 5280,
+        "min": 5120,
+        "max": 5600,
+        "span_over_median": 0.09090909090909091
+      },
+      "latency_mean_us": {
+        "values": [
+          693.4538,
+          761.330203,
+          1387.678142
+        ],
+        "median": 761.330203,
+        "min": 693.4538,
+        "max": 1387.678142,
+        "span_over_median": 0.9118570881129222
+      },
+      "latency_p50_us": {
+        "values": [
+          633.0,
+          691.0,
+          961.0
+        ],
+        "median": 691.0,
+        "min": 633.0,
+        "max": 961.0,
+        "span_over_median": 0.47467438494934877
+      },
+      "latency_p95_us": {
+        "values": [
+          1204.0,
+          1339.0,
+          3550.0
+        ],
+        "median": 1339.0,
+        "min": 1204.0,
+        "max": 3550.0,
+        "span_over_median": 1.7520537714712472
+      },
+      "latency_p99_us": {
+        "values": [
+          1539.0,
+          1806.0,
+          8979.0
+        ],
+        "median": 1806.0,
+        "min": 1539.0,
+        "max": 8979.0,
+        "span_over_median": 4.119601328903655
+      },
+      "latency_max_us": {
+        "values": [
+          5232.0,
+          14207.0,
+          37210.0
+        ],
+        "median": 14207.0,
+        "min": 5232.0,
+        "max": 37210.0,
+        "span_over_median": 2.2508622510030265
+      }
+    },
+    "M3": {
+      "qps": {
+        "values": [
+          56962.50330777404,
+          48687.787612233056,
+          48903.48739353691
+        ],
+        "median": 48903.48739353691,
+        "min": 48687.787612233056,
+        "max": 56962.50330777404,
+        "span_over_median": 0.1692050227206203
+      },
+      "received_mib_s": {
+        "values": [
+          61.33145020018813,
+          52.42211784778709,
+          52.654311859297884
+        ],
+        "median": 52.654311859297884,
+        "min": 52.42211784778709,
+        "max": 61.33145020018813,
+        "span_over_median": 0.1692042311028284
+      },
+      "server_cpu_pct": {
+        "values": [
+          277.82973716223097,
+          261.78736461916185,
+          284.8120282489543
+        ],
+        "median": 277.82973716223097,
+        "min": 261.78736461916185,
+        "max": 284.8120282489543,
+        "span_over_median": 0.08287328730526716
+      },
+      "client_cpu_pct": {
+        "values": [
+          209.1184437308001,
+          204.7862466973317,
+          206.02740046792994
+        ],
+        "median": 206.02740046792994,
+        "min": 204.7862466973317,
+        "max": 209.1184437308001,
+        "span_over_median": 0.0210272858058156
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          7200,
+          6880,
+          7040
+        ],
+        "median": 7040,
+        "min": 6880,
+        "max": 7200,
+        "span_over_median": 0.045454545454545456
+      },
+      "latency_mean_us": {
+        "values": [
+          55263.027032,
+          31934.5105,
+          5397.743332
+        ],
+        "median": 31934.5105,
+        "min": 5397.743332,
+        "max": 55263.027032,
+        "span_over_median": 1.5614857694468183
+      },
+      "latency_p50_us": {
+        "values": [
+          1716.0,
+          1912.0,
+          1896.0
+        ],
+        "median": 1896.0,
+        "min": 1716.0,
+        "max": 1912.0,
+        "span_over_median": 0.10337552742616034
+      },
+      "latency_p95_us": {
+        "values": [
+          366393.0,
+          236288.0,
+          19576.0
+        ],
+        "median": 236288.0,
+        "min": 19576.0,
+        "max": 366393.0,
+        "span_over_median": 1.4677723794691224
+      },
+      "latency_p99_us": {
+        "values": [
+          1056915.0,
+          490635.0,
+          75670.0
+        ],
+        "median": 490635.0,
+        "min": 75670.0,
+        "max": 1056915.0,
+        "span_over_median": 1.9999490456245477
+      },
+      "latency_max_us": {
+        "values": [
+          1484116.0,
+          767332.0,
+          183973.0
+        ],
+        "median": 767332.0,
+        "min": 183973.0,
+        "max": 1484116.0,
+        "span_over_median": 1.694368278659042
+      }
+    },
+    "M4": {
+      "qps": {
+        "values": [
+          9392.003487679938,
+          9787.728042760917,
+          9037.166634077214
+        ],
+        "median": 9392.003487679938,
+        "min": 9037.166634077214,
+        "max": 9787.728042760917,
+        "span_over_median": 0.07991494143589918
+      },
+      "received_mib_s": {
+        "values": [
+          10.067569656517268,
+          10.491758651793736,
+          9.687209412291324
+        ],
+        "median": 10.067569656517268,
+        "min": 9.687209412291324,
+        "max": 10.491758651793736,
+        "span_over_median": 0.0799149414358991
+      },
+      "server_cpu_pct": {
+        "values": [
+          101.17178673495972,
+          113.88726895875354,
+          128.21383213002522
+        ],
+        "median": 113.88726895875354,
+        "min": 101.17178673495972,
+        "max": 128.21383213002522,
+        "span_over_median": 0.2374457271853564
+      },
+      "client_cpu_pct": {
+        "values": [
+          121.02618670869552,
+          106.6664487284816,
+          94.35106059013171
+        ],
+        "median": 106.6664487284816,
+        "min": 94.35106059013171,
+        "max": 121.02618670869552,
+        "span_over_median": 0.2500798183172394
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          4800,
+          4800,
+          4480
+        ],
+        "median": 4800,
+        "min": 4480,
+        "max": 4800,
+        "span_over_median": 0.06666666666666667
+      },
+      "latency_mean_us": {
+        "values": [
+          1763.435789,
+          1729.841639,
+          2146.352539
+        ],
+        "median": 1763.435789,
+        "min": 1729.841639,
+        "max": 2146.352539,
+        "span_over_median": 0.236192835938865
+      },
+      "latency_p50_us": {
+        "values": [
+          1493.0,
+          1501.0,
+          1614.0
+        ],
+        "median": 1501.0,
+        "min": 1493.0,
+        "max": 1614.0,
+        "span_over_median": 0.08061292471685542
+      },
+      "latency_p95_us": {
+        "values": [
+          3764.0,
+          3590.0,
+          4847.0
+        ],
+        "median": 3764.0,
+        "min": 3590.0,
+        "max": 4847.0,
+        "span_over_median": 0.3339532412327311
+      },
+      "latency_p99_us": {
+        "values": [
+          4974.0,
+          4782.0,
+          11621.0
+        ],
+        "median": 4974.0,
+        "min": 4782.0,
+        "max": 11621.0,
+        "span_over_median": 1.3749497386409328
+      },
+      "latency_max_us": {
+        "values": [
+          21436.0,
+          11040.0,
+          53937.0
+        ],
+        "median": 21436.0,
+        "min": 11040.0,
+        "max": 53937.0,
+        "span_over_median": 2.001166262362381
+      }
+    },
+    "M5": {
+      "qps": {
+        "values": [
+          5479.307473584695,
+          5514.145908540315,
+          3174.156072148838
+        ],
+        "median": 5479.307473584695,
+        "min": 3174.156072148838,
+        "max": 5514.145908540315,
+        "span_over_median": 0.4270594135613636
+      },
+      "received_mib_s": {
+        "values": [
+          343.0533663917978,
+          345.26512603132073,
+          198.75283609379815
+        ],
+        "median": 343.0533663917978,
+        "min": 198.75283609379815,
+        "max": 345.26512603132073,
+        "span_over_median": 0.4270830847063963
+      },
+      "server_cpu_pct": {
+        "values": [
+          62.75541753917077,
+          60.170625957228644,
+          62.359111163551226
+        ],
+        "median": 62.359111163551226,
+        "min": 60.170625957228644,
+        "max": 62.75541753917077,
+        "span_over_median": 0.041450103019635934
+      },
+      "client_cpu_pct": {
+        "values": [
+          100.16623921038563,
+          96.40492016794663,
+          93.01471229250778
+        ],
+        "median": 96.40492016794663,
+        "min": 93.01471229250778,
+        "max": 100.16623921038563,
+        "span_over_median": 0.07418217768781094
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          5280,
+          5120,
+          5280
+        ],
+        "median": 5280,
+        "min": 5120,
+        "max": 5280,
+        "span_over_median": 0.030303030303030304
+      },
+      "latency_mean_us": {
+        "values": [
+          5810.297125,
+          5783.690041,
+          10821.984967
+        ],
+        "median": 5810.297125,
+        "min": 5783.690041,
+        "max": 10821.984967,
+        "span_over_median": 0.8671320618564753
+      },
+      "latency_p50_us": {
+        "values": [
+          5664.0,
+          5504.0,
+          8151.0
+        ],
+        "median": 5664.0,
+        "min": 5504.0,
+        "max": 8151.0,
+        "span_over_median": 0.4673375706214689
+      },
+      "latency_p95_us": {
+        "values": [
+          10060.0,
+          10338.0,
+          27469.0
+        ],
+        "median": 10338.0,
+        "min": 10060.0,
+        "max": 27469.0,
+        "span_over_median": 1.68398142774231
+      },
+      "latency_p99_us": {
+        "values": [
+          12516.0,
+          12334.0,
+          40745.0
+        ],
+        "median": 12516.0,
+        "min": 12334.0,
+        "max": 40745.0,
+        "span_over_median": 2.2699744327261104
+      },
+      "latency_max_us": {
+        "values": [
+          28272.0,
+          17416.0,
+          77410.0
+        ],
+        "median": 28272.0,
+        "min": 17416.0,
+        "max": 77410.0,
+        "span_over_median": 2.1220288624787775
+      }
+    },
+    "M6": {
+      "qps": {
+        "values": [
+          419.60096856808195,
+          405.21064367925277,
+          339.1623088349993
+        ],
+        "median": 405.21064367925277,
+        "min": 339.1623088349993,
+        "max": 419.60096856808195,
+        "span_over_median": 0.19851072766181932
+      },
+      "received_mib_s": {
+        "values": [
+          421.1875921100092,
+          406.6152478504777,
+          340.5123172136987
+        ],
+        "median": 406.6152478504777,
+        "min": 340.5123172136987,
+        "max": 421.1875921100092,
+        "span_over_median": 0.19840691002806848
+      },
+      "server_cpu_pct": {
+        "values": [
+          17.316272704575628,
+          16.729821318910965,
+          19.28472292552521
+        ],
+        "median": 17.316272704575628,
+        "min": 16.729821318910965,
+        "max": 19.28472292552521,
+        "span_over_median": 0.14754339171033848
+      },
+      "client_cpu_pct": {
+        "values": [
+          103.08672711895554,
+          97.6347890969505,
+          95.03325533190618
+        ],
+        "median": 97.6347890969505,
+        "min": 95.03325533190618,
+        "max": 103.08672711895554,
+        "span_over_median": 0.08248567812291102
+      },
+      "server_rss_sampled_max_kib": {
+        "values": [
+          5120,
+          5440,
+          5440
+        ],
+        "median": 5440,
+        "min": 5120,
+        "max": 5440,
+        "span_over_median": 0.058823529411764705
+      },
+      "latency_mean_us": {
+        "values": [
+          77468.289422,
+          78809.427847,
+          98007.224032
+        ],
+        "median": 78809.427847,
+        "min": 77468.289422,
+        "max": 98007.224032,
+        "span_over_median": 0.26061519758618373
+      },
+      "latency_p50_us": {
+        "values": [
+          66285.0,
+          76494.0,
+          80558.0
+        ],
+        "median": 76494.0,
+        "min": 66285.0,
+        "max": 80558.0,
+        "span_over_median": 0.18658979789264518
+      },
+      "latency_p95_us": {
+        "values": [
+          159730.0,
+          141418.0,
+          207166.0
+        ],
+        "median": 159730.0,
+        "min": 141418.0,
+        "max": 207166.0,
+        "span_over_median": 0.4116196080886496
+      },
+      "latency_p99_us": {
+        "values": [
+          194623.0,
+          170492.0,
+          338791.0
+        ],
+        "median": 194623.0,
+        "min": 170492.0,
+        "max": 338791.0,
+        "span_over_median": 0.8647436325614136
+      },
+      "latency_max_us": {
+        "values": [
+          307107.0,
+          218666.0,
+          618145.0
+        ],
+        "median": 307107.0,
+        "min": 218666.0,
+        "max": 618145.0,
+        "span_over_median": 1.3007811609634428
+      }
+    }
+  },
+  "samples": [
+    {
+      "index": 1,
+      "id": "M1",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 0,
+        "threads": 1,
+        "connections": 1
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 22807,
+        "responses_completed_total": 22807,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 22807,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 22807,
+        "latency_sum_us": 606063,
+        "latency_max_us": 278,
+        "connections_total": 6,
+        "connections_active": 0,
+        "logger_submitted": 5,
+        "logger_accepted": 5,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 5,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 11549,
+        "starttime": 16551755,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010516743990592659
+      },
+      "complete_wall_s": 12.138072158006253,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10000234,
+          "requests": 19043,
+          "bytes": 21499652,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 523.421381,
+            "p50": 521.0,
+            "p95": 733.0,
+            "p99": 832.0,
+            "max": 1266.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 525.139631,
+          "qps": 1904.255440422694,
+          "received_mib_s": 2.0503186149516366
+        },
+        "started_monotonic": 165519.609789472,
+        "ended_monotonic": 165529.628271513,
+        "started_wall_s": 1791459544.0125086,
+        "ended_wall_s": 1791459554.0311093,
+        "wall_s": 10.018482041021343,
+        "server_cpu_pct": 7.785610602546752,
+        "client_cpu_pct": 4.885610394826851,
+        "server_rss_sampled_max_kib": 4800,
+        "client_rss_sampled_max_kib": 4640,
+        "server_vmhwm_kib": 4800,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0008395010081585497,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 960
+          },
+          {
+            "elapsed_s": 1.031584983022185,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 2.0634601610072423,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 3.093027915019775,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 4.120917848020326,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 5.148745545011479,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 6.176501477020793,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 7.204259524005465,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 8.232521761005046,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 9.262200938013848,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4640
+          }
+        ],
+        "cleanup": {
+          "pid": 11560,
+          "starttime": 16551961,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.562002580612898e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2000329,
+        "requests": 3756,
+        "bytes": 4240629,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 530.734255,
+          "p50": 527.0,
+          "p95": 795.0,
+          "p99": 941.0,
+          "max": 1509.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 532.568956,
+        "qps": 1877.6911198107914,
+        "received_mib_s": 2.0217569023433244
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35727/payload-1024.bin\n  1 threads and 1 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   523.42us  132.37us   1.27ms   67.79%\n    Req/Sec     1.91k   324.93     3.95k    92.00%\n  Latency Distribution\n     50%  521.00us\n     75%  619.00us\n     90%  691.00us\n     99%  832.00us\n  19043 requests in 10.00s, 20.50MB read\nRequests/sec:   1904.26\nTransfer/sec:      2.05MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10000234,\"requests\":19043,\"bytes\":21499652,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":523.421381,\"p50\":521.000000,\"p95\":733.000000,\"p99\":832.000000,\"max\":1266.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":525.139631}\n"
+    },
+    {
+      "index": 2,
+      "id": "M2",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 542070,
+        "responses_completed_total": 542070,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 542070,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 542070,
+        "latency_sum_us": 11964650,
+        "latency_max_us": 1871,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 54,
+        "logger_accepted": 54,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 54,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 11608,
+        "starttime": 16552969,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010594619991024956
+      },
+      "complete_wall_s": 12.283250954991672,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10001177,
+          "requests": 453777,
+          "bytes": 512314233,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 693.4538,
+            "p50": 633.0,
+            "p95": 1204.0,
+            "p99": 1539.0,
+            "max": 5232.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 705.275199,
+          "qps": 45372.35967326646,
+          "received_mib_s": 48.852342673414064
+        },
+        "started_monotonic": 165531.884149688,
+        "ended_monotonic": 165541.911982068,
+        "started_wall_s": 1791459556.2868688,
+        "ended_wall_s": 1791459566.3148375,
+        "wall_s": 10.0278323800012,
+        "server_cpu_pct": 140.20976286002016,
+        "client_cpu_pct": 101.64342216496821,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0010050039854831994,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 1120
+          },
+          {
+            "elapsed_s": 1.0502114440023433,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.098422240000218,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.1138623289880343,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.125191964994883,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.127907925983891,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.127934216987342,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.172936265007593,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.175051775004249,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.21854257999803,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 11616,
+          "starttime": 16553188,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 9.868002962321043e-06
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2100193,
+        "requests": 88236,
+        "bytes": 99618654,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 766.910649,
+          "p50": 696.0,
+          "p95": 1328.0,
+          "p99": 1833.0,
+          "max": 13379.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 761.663901,
+        "qps": 42013.28163649722,
+        "received_mib_s": 45.23572440949986
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34043/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   693.45us  269.96us   5.23ms   74.67%\n    Req/Sec    22.81k     1.28k   26.04k    71.00%\n  Latency Distribution\n     50%  633.00us\n     75%  824.00us\n     90%    1.05ms\n     99%    1.54ms\n  453777 requests in 10.00s, 488.58MB read\nRequests/sec:  45372.36\nTransfer/sec:     48.85MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10001177,\"requests\":453777,\"bytes\":512314233,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":693.453800,\"p50\":633.000000,\"p95\":1204.000000,\"p99\":1539.000000,\"max\":5232.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":705.275199}\n"
+    },
+    {
+      "index": 3,
+      "id": "M3",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 4,
+        "threads": 4,
+        "connections": 128
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 703951,
+        "responses_completed_total": 703951,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 703951,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 703951,
+        "latency_sum_us": 25703585,
+        "latency_max_us": 1132014,
+        "connections_total": 260,
+        "connections_active": 0,
+        "logger_submitted": 241,
+        "logger_accepted": 241,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 241,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 11621,
+        "starttime": 16554197,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010666862013749778
+      },
+      "complete_wall_s": 12.55619862000458,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10248584,
+          "requests": 583785,
+          "bytes": 659093475,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 55263.027032,
+            "p50": 1716.0,
+            "p95": 366393.0,
+            "p99": 1056915.0,
+            "max": 1484116.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 2247.092255,
+          "qps": 56962.50330777404,
+          "received_mib_s": 61.33145020018813
+        },
+        "started_monotonic": 165544.162473026,
+        "ended_monotonic": 165554.488941421,
+        "started_wall_s": 1791459568.5651922,
+        "ended_wall_s": 1791459578.8917518,
+        "wall_s": 10.326468395011034,
+        "server_cpu_pct": 277.82973716223097,
+        "client_cpu_pct": 209.1184437308001,
+        "server_rss_sampled_max_kib": 7200,
+        "client_rss_sampled_max_kib": 5920,
+        "server_vmhwm_kib": 7200,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0010875070001929998,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0451885249931365,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 2.05136129600578,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 3.1014675030019134,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 4.146209700993495,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 5.196607824997045,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 6.2241429460118525,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 7.274458611005684,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 8.320796851010527,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 9.329981418006355,
+            "server_rss_kib": 7200,
+            "client_rss_kib": 5920
+          }
+        ],
+        "cleanup": {
+          "pid": 11632,
+          "starttime": 16554416,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.0415998985990882e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2098251,
+        "requests": 119922,
+        "bytes": 135392463,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 12668.362926,
+          "p50": 1631.0,
+          "p95": 85325.0,
+          "p99": 217604.0,
+          "max": 278618.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 2239.590134,
+        "qps": 57153.31483221026,
+        "received_mib_s": 61.53711572070429
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35319/payload-1024.bin\n  4 threads and 128 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    55.26ms  187.67ms   1.48s    93.09%\n    Req/Sec    15.83k     3.86k   26.42k    77.38%\n  Latency Distribution\n     50%    1.72ms\n     75%    2.94ms\n     90%  119.06ms\n     99%    1.06s \n  583785 requests in 10.25s, 628.56MB read\nRequests/sec:  56962.50\nTransfer/sec:     61.33MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10248584,\"requests\":583785,\"bytes\":659093475,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":55263.027032,\"p50\":1716.000000,\"p95\":366393.000000,\"p99\":1056915.000000,\"max\":1484116.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":2247.092255}\n"
+    },
+    {
+      "index": 4,
+      "id": "M4",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "short",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 114013,
+        "responses_completed_total": 114013,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 114013,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 114013,
+        "latency_sum_us": 3758735,
+        "latency_max_us": 3103,
+        "connections_total": 114044,
+        "connections_active": 0,
+        "logger_submitted": 3,
+        "logger_accepted": 3,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 3,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 11649,
+        "starttime": 16555453,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01047892399947159
+      },
+      "complete_wall_s": 12.116279200999998,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10019268,
+          "requests": 94101,
+          "bytes": 105769524,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 1763.435789,
+            "p50": 1493.0,
+            "p95": 3764.0,
+            "p99": 4974.0,
+            "max": 21436.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 3407.15376,
+          "qps": 9392.003487679938,
+          "received_mib_s": 10.067569656517268
+        },
+        "started_monotonic": 165556.605558817,
+        "ended_monotonic": 165566.638000002,
+        "started_wall_s": 1791459581.0082781,
+        "ended_wall_s": 1791459591.040808,
+        "wall_s": 10.032441185001517,
+        "server_cpu_pct": 101.17178673495972,
+        "client_cpu_pct": 121.02618670869552,
+        "server_rss_sampled_max_kib": 4800,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 4800,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0008816619811113924,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 0
+          },
+          {
+            "elapsed_s": 1.0158514969807584,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.0372314709820785,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.0465724039822817,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.058803646999877,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.076714839000488,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.114268385979813,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.1179688239935786,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.132251804985572,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.137140068982262,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 11659,
+          "starttime": 16555660,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.008500112220645e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2002293,
+        "requests": 19883,
+        "bytes": 22348592,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1690.866716,
+          "p50": 1381.0,
+          "p95": 3823.0,
+          "p99": 6306.0,
+          "max": 13778.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 3222.520545,
+        "qps": 9930.115123011468,
+        "received_mib_s": 10.644435254102266
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34927/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.76ms    1.11ms  21.44ms   77.50%\n    Req/Sec     4.72k     0.93k    6.31k    59.50%\n  Latency Distribution\n     50%    1.49ms\n     75%    2.28ms\n     90%    3.20ms\n     99%    4.97ms\n  94101 requests in 10.02s, 100.87MB read\nRequests/sec:   9392.00\nTransfer/sec:     10.07MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10019268,\"requests\":94101,\"bytes\":105769524,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":1763.435789,\"p50\":1493.000000,\"p95\":3764.000000,\"p99\":4974.000000,\"max\":21436.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":3407.153760}\n"
+    },
+    {
+      "index": 5,
+      "id": "M5",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 65536,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-65536.bin",
+        "size": 65536,
+        "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 66719,
+        "responses_completed_total": 66719,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 66719,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 66719,
+        "latency_sum_us": 4786490,
+        "latency_max_us": 4590,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 54,
+        "logger_accepted": 54,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 54,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 11663,
+        "starttime": 16556665,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010543733020313084
+      },
+      "complete_wall_s": 12.31510936797713,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10005279,
+          "requests": 54822,
+          "bytes": 3599074216,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 5810.297125,
+            "p50": 5664.0,
+            "p95": 10060.0,
+            "p99": 12516.0,
+            "max": 28272.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 5840.154099,
+          "qps": 5479.307473584695,
+          "received_mib_s": 343.0533663917978
+        },
+        "started_monotonic": 165568.870136813,
+        "ended_monotonic": 165578.925045612,
+        "started_wall_s": 1791459593.272856,
+        "ended_wall_s": 1791459603.327863,
+        "wall_s": 10.054908799007535,
+        "server_cpu_pct": 62.75541753917077,
+        "client_cpu_pct": 100.16623921038563,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 5120,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0011019560042768717,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0210269940143917,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 2.053562860004604,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 3.0640465629985556,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 4.071390920988051,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 5.079762134002522,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 6.100875358009944,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 7.11659614200471,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 8.135727884015068,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 9.149107954988722,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          }
+        ],
+        "cleanup": {
+          "pid": 11676,
+          "starttime": 16556887,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.4842022210359573e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2100628,
+        "requests": 11831,
+        "bytes": 777061890,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 5490.187322,
+          "p50": 5105.0,
+          "p95": 9543.0,
+          "p99": 11107.0,
+          "max": 18494.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 5681.691827,
+        "qps": 5632.125250163284,
+        "received_mib_s": 352.7821045663957
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34633/payload-65536.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     5.81ms    2.50ms  28.27ms   67.11%\n    Req/Sec     2.75k   189.79     3.16k    66.00%\n  Latency Distribution\n     50%    5.66ms\n     75%    7.39ms\n     90%    9.00ms\n     99%   12.52ms\n  54822 requests in 10.01s, 3.35GB read\nRequests/sec:   5479.31\nTransfer/sec:    343.05MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10005279,\"requests\":54822,\"bytes\":3599074216,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":5810.297125,\"p50\":5664.000000,\"p95\":10060.000000,\"p99\":12516.000000,\"max\":28272.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":5840.154099}\n"
+    },
+    {
+      "index": 6,
+      "id": "M6",
+      "repeat": 1,
+      "status": "valid",
+      "config": {
+        "size": 1048576,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 5089,
+        "responses_completed_total": 5089,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 5089,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 5089,
+        "latency_sum_us": 8902792,
+        "latency_max_us": 151876,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 265,
+        "logger_accepted": 265,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 265,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 11703,
+        "starttime": 16557897,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01059979700949043
+      },
+      "complete_wall_s": 12.26472914297483,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10011893,
+          "requests": 4201,
+          "bytes": 4421724516,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 77468.289422,
+            "p50": 66285.0,
+            "p95": 159730.0,
+            "p99": 194623.0,
+            "max": 307107.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 76262.931683,
+          "qps": 419.60096856808195,
+          "received_mib_s": 421.1875921100092
+        },
+        "started_monotonic": 165581.113254785,
+        "ended_monotonic": 165591.161606585,
+        "started_wall_s": 1791459605.5159738,
+        "ended_wall_s": 1791459615.5644102,
+        "wall_s": 10.048351799981901,
+        "server_cpu_pct": 17.316272704575628,
+        "client_cpu_pct": 103.08672711895554,
+        "server_rss_sampled_max_kib": 5120,
+        "client_rss_sampled_max_kib": 5600,
+        "server_vmhwm_kib": 5120,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0009291039896197617,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0230690779862925,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 2.039853450987721,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 3.06403563299682,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 4.07528664698475,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 5.087319957994623,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 6.099033443984808,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 7.127568636991782,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 8.130456760991365,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 9.142169211991131,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5600
+          }
+        ],
+        "cleanup": {
+          "pid": 11728,
+          "starttime": 16558111,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 9.695009794086218e-06
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2002212,
+        "requests": 818,
+        "bytes": 870461460,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 77325.181709,
+          "p50": 68986.0,
+          "p95": 138220.0,
+          "p99": 171140.0,
+          "max": 271392.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 78326.141809,
+        "qps": 408.5481457507996,
+        "received_mib_s": 414.6098104613729
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34913/payload-1048576.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    77.47ms   42.16ms 307.11ms   70.82%\n    Req/Sec   210.69     29.67   270.00     66.00%\n  Latency Distribution\n     50%   66.29ms\n     75%   95.68ms\n     90%  146.43ms\n     99%  194.62ms\n  4201 requests in 10.01s, 4.12GB read\nRequests/sec:    419.60\nTransfer/sec:    421.19MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10011893,\"requests\":4201,\"bytes\":4421724516,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":77468.289422,\"p50\":66285.000000,\"p95\":159730.000000,\"p99\":194623.000000,\"max\":307107.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":76262.931683}\n"
+    },
+    {
+      "index": 7,
+      "id": "M6",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1048576,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 4988,
+        "responses_completed_total": 4988,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 4988,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 4988,
+        "latency_sum_us": 8241554,
+        "latency_max_us": 172034,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 357,
+        "logger_accepted": 357,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 357,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 11792,
+        "starttime": 16559124,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010463975981110707
+      },
+      "complete_wall_s": 12.255366794997826,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10021948,
+          "requests": 4061,
+          "bytes": 4273027804,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 78809.427847,
+            "p50": 76494.0,
+            "p95": 141418.0,
+            "p99": 170492.0,
+            "max": 218666.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 78971.2721,
+          "qps": 405.21064367925277,
+          "received_mib_s": 406.6152478504777
+        },
+        "started_monotonic": 165593.380662007,
+        "ended_monotonic": 165603.422610262,
+        "started_wall_s": 1791459617.7833812,
+        "ended_wall_s": 1791459627.8254247,
+        "wall_s": 10.041948255005991,
+        "server_cpu_pct": 16.729821318910965,
+        "client_cpu_pct": 97.6347890969505,
+        "server_rss_sampled_max_kib": 5440,
+        "client_rss_sampled_max_kib": 5120,
+        "server_vmhwm_kib": 5440,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0009703949908725917,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 960
+          },
+          {
+            "elapsed_s": 1.015083925012732,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 2.025950973998988,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 3.0439617090160027,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 4.0918024010024965,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 5.117250031005824,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 6.144774500018684,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 7.15853673699894,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 8.173306003009202,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 9.184735966991866,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5120
+          }
+        ],
+        "cleanup": {
+          "pid": 11804,
+          "starttime": 16559338,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.2787990272045135e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2008789,
+        "requests": 858,
+        "bytes": 916013108,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 72926.840883,
+          "p50": 68553.0,
+          "p95": 121151.0,
+          "p99": 143597.0,
+          "max": 187084.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 74919.869464,
+        "qps": 427.1230079416006,
+        "received_mib_s": 434.878015854858
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:33857/payload-1048576.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    78.81ms   29.69ms 218.67ms   71.57%\n    Req/Sec   203.46     22.64   272.00     70.50%\n  Latency Distribution\n     50%   76.49ms\n     75%   90.55ms\n     90%  120.96ms\n     99%  170.49ms\n  4061 requests in 10.02s, 3.98GB read\nRequests/sec:    405.21\nTransfer/sec:    406.62MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10021948,\"requests\":4061,\"bytes\":4273027804,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":78809.427847,\"p50\":76494.000000,\"p95\":141418.000000,\"p99\":170492.000000,\"max\":218666.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":78971.272100}\n"
+    },
+    {
+      "index": 8,
+      "id": "M5",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 65536,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-65536.bin",
+        "size": 65536,
+        "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 66821,
+        "responses_completed_total": 66821,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 66821,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 66821,
+        "latency_sum_us": 4620562,
+        "latency_max_us": 4996,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 57,
+        "logger_accepted": 57,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 57,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 11840,
+        "starttime": 16560350,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010743847989942878
+      },
+      "complete_wall_s": 12.195548346004216,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10005720,
+          "requests": 55173,
+          "bytes": 3622438098,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 5783.690041,
+            "p50": 5504.0,
+            "p95": 10338.0,
+            "p99": 12334.0,
+            "max": 17416.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 5803.25594,
+          "qps": 5514.145908540315,
+          "received_mib_s": 345.26512603132073
+        },
+        "started_monotonic": 165605.581798762,
+        "ended_monotonic": 165615.653158173,
+        "started_wall_s": 1791459629.9845178,
+        "ended_wall_s": 1791459640.0560412,
+        "wall_s": 10.071359410998411,
+        "server_cpu_pct": 60.170625957228644,
+        "client_cpu_pct": 96.40492016794663,
+        "server_rss_sampled_max_kib": 5120,
+        "client_rss_sampled_max_kib": 5120,
+        "server_vmhwm_kib": 5120,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0009409449994564056,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 800
+          },
+          {
+            "elapsed_s": 1.0509804929897655,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 2.061123705992941,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 3.0746431130100973,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 4.078522666997742,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 5.100471306010149,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 6.133268097008113,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 7.177216818003217,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 8.207690351991914,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 9.241523088014219,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 5120
+          }
+        ],
+        "cleanup": {
+          "pid": 11847,
+          "starttime": 16560558,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 8.536007953807712e-06
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2002347,
+        "requests": 11580,
+        "bytes": 760670050,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 5473.825789,
+          "p50": 5419.0,
+          "p95": 8967.0,
+          "p99": 10790.0,
+          "max": 16207.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 5533.255959,
+        "qps": 5783.213399076184,
+        "received_mib_s": 362.2905969567003
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34509/payload-65536.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     5.78ms    2.52ms  17.42ms   65.04%\n    Req/Sec     2.77k   150.66     3.13k    67.50%\n  Latency Distribution\n     50%    5.50ms\n     75%    7.48ms\n     90%    9.27ms\n     99%   12.33ms\n  55173 requests in 10.01s, 3.37GB read\nRequests/sec:   5514.15\nTransfer/sec:    345.27MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10005720,\"requests\":55173,\"bytes\":3622438098,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":5783.690041,\"p50\":5504.000000,\"p95\":10338.000000,\"p99\":12334.000000,\"max\":17416.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":5803.255940}\n"
+    },
+    {
+      "index": 9,
+      "id": "M4",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "short",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 116505,
+        "responses_completed_total": 116505,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 116505,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 116505,
+        "latency_sum_us": 4282033,
+        "latency_max_us": 3897,
+        "connections_total": 116535,
+        "connections_active": 0,
+        "logger_submitted": 3,
+        "logger_accepted": 3,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 3,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 11900,
+        "starttime": 16561570,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01045675401110202
+      },
+      "complete_wall_s": 12.143974534003064,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10015501,
+          "requests": 98029,
+          "bytes": 110184596,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 1729.841639,
+            "p50": 1501.0,
+            "p95": 3590.0,
+            "p99": 4782.0,
+            "max": 11040.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 3269.400198,
+          "qps": 9787.728042760917,
+          "received_mib_s": 10.491758651793736
+        },
+        "started_monotonic": 165617.759931858,
+        "ended_monotonic": 165627.831294623,
+        "started_wall_s": 1791459642.1626508,
+        "ended_wall_s": 1791459652.234145,
+        "wall_s": 10.071362765011145,
+        "server_cpu_pct": 113.88726895875354,
+        "client_cpu_pct": 106.6664487284816,
+        "server_rss_sampled_max_kib": 4800,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 4800,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0011238279985263944,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0233822989976034,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.0395000429998618,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.040091016999213,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.05651656302507,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.064124727010494,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.091454014996998,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.098860684025567,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.108774716005428,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.11816943300073,
+            "server_rss_kib": 4800,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 11909,
+          "starttime": 16561776,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.50789855979383e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2005473,
+        "requests": 18434,
+        "bytes": 20719816,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1812.355227,
+          "p50": 1399.0,
+          "p95": 4436.0,
+          "p99": 6905.0,
+          "max": 15276.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 3481.346208,
+        "qps": 9191.846512019858,
+        "received_mib_s": 9.853015403280564
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34401/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.73ms    0.94ms  11.04ms   75.70%\n    Req/Sec     4.92k   689.87     6.29k    73.00%\n  Latency Distribution\n     50%    1.50ms\n     75%    2.15ms\n     90%    2.99ms\n     99%    4.78ms\n  98029 requests in 10.02s, 105.08MB read\nRequests/sec:   9787.73\nTransfer/sec:     10.49MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10015501,\"requests\":98029,\"bytes\":110184596,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":1729.841639,\"p50\":1501.000000,\"p95\":3590.000000,\"p99\":4782.000000,\"max\":11040.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":3269.400198}\n"
+    },
+    {
+      "index": 10,
+      "id": "M3",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 4,
+        "threads": 4,
+        "connections": 128
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 589820,
+        "responses_completed_total": 589820,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 589820,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 589820,
+        "latency_sum_us": 23255244,
+        "latency_max_us": 420257,
+        "connections_total": 260,
+        "connections_active": 0,
+        "logger_submitted": 245,
+        "logger_accepted": 245,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 245,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 12013,
+        "starttime": 16562785,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010698586993385106
+      },
+      "complete_wall_s": 12.326893909019418,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10091278,
+          "requests": 491322,
+          "bytes": 554703168,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 31934.5105,
+            "p50": 1912.0,
+            "p95": 236288.0,
+            "p99": 490635.0,
+            "max": 767332.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 2628.996023,
+          "qps": 48687.787612233056,
+          "received_mib_s": 52.42211784778709
+        },
+        "started_monotonic": 165630.024665332,
+        "ended_monotonic": 165640.135924918,
+        "started_wall_s": 1791459654.4273846,
+        "ended_wall_s": 1791459664.5388436,
+        "wall_s": 10.111259586003143,
+        "server_cpu_pct": 261.78736461916185,
+        "client_cpu_pct": 204.7862466973317,
+        "server_rss_sampled_max_kib": 6880,
+        "client_rss_sampled_max_kib": 5920,
+        "server_vmhwm_kib": 6880,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0015970210079103708,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 1600
+          },
+          {
+            "elapsed_s": 1.052231922018109,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 2.0601919339969754,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 3.1064648370083887,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 4.120180933998199,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 5.1242855960153975,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 6.145044064003741,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 7.147414522012696,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 8.195115287002409,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 5920
+          },
+          {
+            "elapsed_s": 9.221107261022553,
+            "server_rss_kib": 6880,
+            "client_rss_kib": 5920
+          }
+        ],
+        "cleanup": {
+          "pid": 12033,
+          "starttime": 16563002,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.5753001207485795e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2077290,
+        "requests": 98250,
+        "bytes": 110924460,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 14479.165502,
+          "p50": 1956.0,
+          "p95": 96911.0,
+          "p99": 220910.0,
+          "max": 323812.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 2706.291298,
+        "qps": 47297.19971693889,
+        "received_mib_s": 50.92491109244853
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35193/payload-1024.bin\n  4 threads and 128 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    31.93ms   92.12ms 767.33ms   91.40%\n    Req/Sec    13.46k     4.13k   26.01k    75.14%\n  Latency Distribution\n     50%    1.91ms\n     75%    3.65ms\n     90%   93.67ms\n     99%  490.64ms\n  491322 requests in 10.09s, 529.01MB read\nRequests/sec:  48687.79\nTransfer/sec:     52.42MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10091278,\"requests\":491322,\"bytes\":554703168,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":31934.510500,\"p50\":1912.000000,\"p95\":236288.000000,\"p99\":490635.000000,\"max\":767332.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":2628.996023}\n"
+    },
+    {
+      "index": 11,
+      "id": "M2",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 491710,
+        "responses_completed_total": 491710,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 491710,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 491710,
+        "latency_sum_us": 11906367,
+        "latency_max_us": 4351,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 52,
+        "logger_accepted": 52,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 52,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 12098,
+        "starttime": 16564019,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010628593008732423
+      },
+      "complete_wall_s": 12.357290738000302,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10099489,
+          "requests": 420066,
+          "bytes": 474254619,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 761.330203,
+            "p50": 691.0,
+            "p95": 1339.0,
+            "p99": 1806.0,
+            "max": 14207.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 769.363976,
+          "qps": 41592.79741777034,
+          "received_mib_s": 44.782904320934605
+        },
+        "started_monotonic": 165642.376623829,
+        "ended_monotonic": 165652.502524712,
+        "started_wall_s": 1791459666.779343,
+        "ended_wall_s": 1791459676.9053473,
+        "wall_s": 10.125900882994756,
+        "server_cpu_pct": 137.0742234235159,
+        "client_cpu_pct": 99.24815694055818,
+        "server_rss_sampled_max_kib": 5600,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 5600,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0012589079851750284,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 2080
+          },
+          {
+            "elapsed_s": 1.0041850929846987,
+            "server_rss_kib": 5600,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.0078561309783254,
+            "server_rss_kib": 5600,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.0584819549985696,
+            "server_rss_kib": 5600,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.105776654992951,
+            "server_rss_kib": 5600,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.1060876559931785,
+            "server_rss_kib": 5600,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.153440488997148,
+            "server_rss_kib": 5600,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.164538707002066,
+            "server_rss_kib": 5600,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.169957768986933,
+            "server_rss_kib": 5600,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.174910428992007,
+            "server_rss_kib": 5600,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 12129,
+          "starttime": 16564237,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.471900031901896e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2099620,
+        "requests": 71589,
+        "bytes": 80824086,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 905.170624,
+          "p50": 825.0,
+          "p95": 1576.0,
+          "p99": 2146.0,
+          "max": 9284.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 938.52184,
+        "qps": 34096.169783103614,
+        "received_mib_s": 36.711335844205124
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34399/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   761.33us  369.05us  14.21ms   83.18%\n    Req/Sec    21.01k     1.43k   28.96k    73.63%\n  Latency Distribution\n     50%  691.00us\n     75%    0.90ms\n     90%    1.15ms\n     99%    1.81ms\n  420066 requests in 10.10s, 452.28MB read\nRequests/sec:  41592.80\nTransfer/sec:     44.78MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10099489,\"requests\":420066,\"bytes\":474254619,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":761.330203,\"p50\":691.000000,\"p95\":1339.000000,\"p99\":1806.000000,\"max\":14207.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":769.363976}\n"
+    },
+    {
+      "index": 12,
+      "id": "M1",
+      "repeat": 2,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 0,
+        "threads": 1,
+        "connections": 1
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 25732,
+        "responses_completed_total": 25732,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 25732,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 25732,
+        "latency_sum_us": 823748,
+        "latency_max_us": 822,
+        "connections_total": 6,
+        "connections_active": 0,
+        "logger_submitted": 4,
+        "logger_accepted": 4,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 4,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 12165,
+        "starttime": 16565255,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010711786017054692
+      },
+      "complete_wall_s": 12.340602851007134,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10099707,
+          "requests": 21965,
+          "bytes": 24798485,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 458.176588,
+            "p50": 443.0,
+            "p95": 663.0,
+            "p99": 811.0,
+            "max": 2227.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 459.809105,
+          "qps": 2174.8155664317787,
+          "received_mib_s": 2.341620230199316
+        },
+        "started_monotonic": 165654.723970786,
+        "ended_monotonic": 165664.846609307,
+        "started_wall_s": 1791459679.12669,
+        "ended_wall_s": 1791459689.2494426,
+        "wall_s": 10.122638520988403,
+        "server_cpu_pct": 10.86673200588213,
+        "client_cpu_pct": 7.003589020096475,
+        "server_rss_sampled_max_kib": 4960,
+        "client_rss_sampled_max_kib": 4640,
+        "server_vmhwm_kib": 4960,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0010713390074670315,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.037847764993785,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 2.0807258920103777,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 3.1230829500127584,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 4.162819112010766,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 5.203188131010393,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 6.2360853840073105,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 7.2701884859998245,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 8.304397460015025,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 9.339573737001047,
+            "server_rss_kib": 4960,
+            "client_rss_kib": 4640
+          }
+        ],
+        "cleanup": {
+          "pid": 12170,
+          "starttime": 16565472,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.3469019904732704e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2099654,
+        "requests": 3760,
+        "bytes": 4245145,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 556.019144,
+          "p50": 547.0,
+          "p95": 742.0,
+          "p99": 840.0,
+          "max": 1292.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 558.418617,
+        "qps": 1790.771241356909,
+        "received_mib_s": 1.9281680486024888
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34663/payload-1024.bin\n  1 threads and 1 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   458.18us  116.85us   2.23ms   74.68%\n    Req/Sec     2.19k   167.37     2.53k    72.28%\n  Latency Distribution\n     50%  443.00us\n     75%  517.00us\n     90%  600.00us\n     99%  811.00us\n  21965 requests in 10.10s, 23.65MB read\nRequests/sec:   2174.82\nTransfer/sec:      2.34MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10099707,\"requests\":21965,\"bytes\":24798485,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":458.176588,\"p50\":443.000000,\"p95\":663.000000,\"p99\":811.000000,\"max\":2227.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":459.809105}\n"
+    },
+    {
+      "index": 13,
+      "id": "M3",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 4,
+        "threads": 4,
+        "connections": 128
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 595841,
+        "responses_completed_total": 595841,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 595841,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 595841,
+        "latency_sum_us": 25151686,
+        "latency_max_us": 153527,
+        "connections_total": 260,
+        "connections_active": 0,
+        "logger_submitted": 215,
+        "logger_accepted": 215,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 215,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 12278,
+        "starttime": 16566489,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010849209007574245
+      },
+      "complete_wall_s": 12.25767213400104,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10052780,
+          "requests": 491616,
+          "bytes": 555034569,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 5397.743332,
+            "p50": 1896.0,
+            "p95": 19576.0,
+            "p99": 75670.0,
+            "max": 183973.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 2617.400247,
+          "qps": 48903.48739353691,
+          "received_mib_s": 52.654311859297884
+        },
+        "started_monotonic": 165667.037671833,
+        "ended_monotonic": 165677.107471264,
+        "started_wall_s": 1791459691.440391,
+        "ended_wall_s": 1791459701.5105042,
+        "wall_s": 10.069799430988496,
+        "server_cpu_pct": 284.8120282489543,
+        "client_cpu_pct": 206.02740046792994,
+        "server_rss_sampled_max_kib": 7040,
+        "client_rss_sampled_max_kib": 5600,
+        "server_vmhwm_kib": 7040,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0013154959888197482,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 1600
+          },
+          {
+            "elapsed_s": 1.042288712982554,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 2.0646187200036366,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 3.104989518004004,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 5440
+          },
+          {
+            "elapsed_s": 4.127303716988536,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 5.13347842899384,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 6.182795581000391,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 7.18674284699955,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 8.190157920995262,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 9.199262401991291,
+            "server_rss_kib": 7040,
+            "client_rss_kib": 5600
+          }
+        ],
+        "cleanup": {
+          "pid": 12307,
+          "starttime": 16566703,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.3304001186043024e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2068415,
+        "requests": 104007,
+        "bytes": 117424323,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 10296.87638,
+          "p50": 1797.0,
+          "p95": 61908.0,
+          "p99": 166604.0,
+          "max": 266729.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 2545.570202,
+        "qps": 50283.42958255476,
+        "received_mib_s": 54.140276959165206
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34483/payload-1024.bin\n  4 threads and 128 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     5.40ms   13.48ms 183.97ms   94.85%\n    Req/Sec    12.46k     2.82k   21.38k    73.54%\n  Latency Distribution\n     50%    1.90ms\n     75%    3.56ms\n     90%    8.71ms\n     99%   75.67ms\n  491616 requests in 10.05s, 529.32MB read\nRequests/sec:  48903.49\nTransfer/sec:     52.65MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10052780,\"requests\":491616,\"bytes\":555034569,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":5397.743332,\"p50\":1896.000000,\"p95\":19576.000000,\"p99\":75670.000000,\"max\":183973.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":2617.400247}\n"
+    },
+    {
+      "index": 14,
+      "id": "M4",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "short",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 2,
+          "eof": true,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 3,
+          "eof": true,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 110203,
+        "responses_completed_total": 110203,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 110203,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 110203,
+        "latency_sum_us": 5170120,
+        "latency_max_us": 12356,
+        "connections_total": 110246,
+        "connections_active": 0,
+        "logger_submitted": 3,
+        "logger_accepted": 3,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 3,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 12428,
+        "starttime": 16567716,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01097187100094743
+      },
+      "complete_wall_s": 12.179251533001661,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10028807,
+          "requests": 90632,
+          "bytes": 101870368,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 2146.352539,
+            "p50": 1614.0,
+            "p95": 4847.0,
+            "p99": 11621.0,
+            "max": 53937.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 3540.932827,
+          "qps": 9037.166634077214,
+          "received_mib_s": 9.687209412291324
+        },
+        "started_monotonic": 165679.233747835,
+        "ended_monotonic": 165689.310663707,
+        "started_wall_s": 1791459703.6364672,
+        "ended_wall_s": 1791459713.7135334,
+        "wall_s": 10.076915871992242,
+        "server_cpu_pct": 128.21383213002522,
+        "client_cpu_pct": 94.35106059013171,
+        "server_rss_sampled_max_kib": 4480,
+        "client_rss_sampled_max_kib": 4480,
+        "server_vmhwm_kib": 4480,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.001483822998125106,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.053066926979227,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 2.057464240002446,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 3.0793321979872417,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 4.096412432991201,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 5.1156479099881835,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 6.132800908992067,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 7.167039159976412,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 8.185479860985652,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 9.19796773098642,
+            "server_rss_kib": 4480,
+            "client_rss_kib": 4480
+          }
+        ],
+        "cleanup": {
+          "pid": 12441,
+          "starttime": 16567923,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.5182013157755136e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2005959,
+        "requests": 19542,
+        "bytes": 21965208,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1767.198132,
+          "p50": 1492.0,
+          "p95": 3840.0,
+          "p99": 5447.0,
+          "max": 9511.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 3284.755296,
+        "qps": 9741.973789095391,
+        "received_mib_s": 10.442713297789783
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35431/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     2.15ms    2.28ms  53.94ms   93.89%\n    Req/Sec     4.55k     1.07k    5.91k    77.00%\n  Latency Distribution\n     50%    1.61ms\n     75%    2.33ms\n     90%    3.58ms\n     99%   11.62ms\n  90632 requests in 10.03s, 97.15MB read\nRequests/sec:   9037.17\nTransfer/sec:      9.69MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10028807,\"requests\":90632,\"bytes\":101870368,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":2146.352539,\"p50\":1614.000000,\"p95\":4847.000000,\"p99\":11621.000000,\"max\":53937.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":3540.932827}\n"
+    },
+    {
+      "index": 15,
+      "id": "M5",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 65536,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-65536.bin",
+        "size": 65536,
+        "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 65536,
+          "sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 36863,
+        "responses_completed_total": 36863,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 36863,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 36863,
+        "latency_sum_us": 4014235,
+        "latency_max_us": 32332,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 61,
+        "logger_accepted": 61,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 61,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 12863,
+        "starttime": 16568935,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010808057006215677
+      },
+      "complete_wall_s": 12.389221913996153,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10061257,
+          "requests": 31936,
+          "bytes": 2096840954,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 10821.984967,
+            "p50": 8151.0,
+            "p95": 27469.0,
+            "p99": 40745.0,
+            "max": 77410.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 10081.41984,
+          "qps": 3174.156072148838,
+          "received_mib_s": 198.75283609379815
+        },
+        "started_monotonic": 165691.54014255,
+        "ended_monotonic": 165701.691024886,
+        "started_wall_s": 1791459715.942862,
+        "ended_wall_s": 1791459726.0938554,
+        "wall_s": 10.150882336020004,
+        "server_cpu_pct": 62.359111163551226,
+        "client_cpu_pct": 93.01471229250778,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.013425178010948002,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 1.0424118540249765,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.0904813680099323,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.1363463570014574,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.184943613014184,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.186829138023313,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 6.210065079008928,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 7.253667215001769,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 8.29392201799783,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 9.301199457026087,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 13061,
+          "starttime": 16569154,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.3810000382363796e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2085201,
+        "requests": 4859,
+        "bytes": 319455310,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 14588.31375,
+          "p50": 10977.0,
+          "p95": 37624.0,
+          "p99": 52207.0,
+          "max": 72653.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 13732.544145,
+        "qps": 2330.2309945180345,
+        "received_mib_s": 146.1040563411377
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:33795/payload-65536.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    10.82ms    8.12ms  77.41ms   83.28%\n    Req/Sec     1.60k   438.52     3.14k    60.91%\n  Latency Distribution\n     50%    8.15ms\n     75%   13.53ms\n     90%   21.38ms\n     99%   40.74ms\n  31936 requests in 10.06s, 1.95GB read\nRequests/sec:   3174.16\nTransfer/sec:    198.75MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10061257,\"requests\":31936,\"bytes\":2096840954,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":10821.984967,\"p50\":8151.000000,\"p95\":27469.000000,\"p99\":40745.000000,\"max\":77410.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":10081.419840}\n"
+    },
+    {
+      "index": 16,
+      "id": "M6",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1048576,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 4120,
+        "responses_completed_total": 4120,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 4120,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 4120,
+        "latency_sum_us": 9468303,
+        "latency_max_us": 434635,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 245,
+        "logger_accepted": 245,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 245,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 13763,
+        "starttime": 16570174,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.0105572430184111
+      },
+      "complete_wall_s": 12.437489852018189,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10065977,
+          "requests": 3414,
+          "bytes": 3594087724,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 98007.224032,
+            "p50": 80558.0,
+            "p95": 207166.0,
+            "p99": 338791.0,
+            "max": 618145.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 94350.10662,
+          "qps": 339.1623088349993,
+          "received_mib_s": 340.5123172136987
+        },
+        "started_monotonic": 165703.982520854,
+        "ended_monotonic": 165714.094151742,
+        "started_wall_s": 1791459728.3852406,
+        "ended_wall_s": 1791459738.4970806,
+        "wall_s": 10.111630887986394,
+        "server_cpu_pct": 19.28472292552521,
+        "client_cpu_pct": 95.03325533190618,
+        "server_rss_sampled_max_kib": 5440,
+        "client_rss_sampled_max_kib": 5760,
+        "server_vmhwm_kib": 5440,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.002570240991190076,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0480550469947048,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5120
+          },
+          {
+            "elapsed_s": 2.08623577398248,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5280
+          },
+          {
+            "elapsed_s": 3.1178979559917934,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5600
+          },
+          {
+            "elapsed_s": 4.145884373981971,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 5.160288019978907,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 6.174863290973008,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 7.212349370995071,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 8.262795299990103,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5760
+          },
+          {
+            "elapsed_s": 9.301939439988928,
+            "server_rss_kib": 5440,
+            "client_rss_kib": 5760
+          }
+        ],
+        "cleanup": {
+          "pid": 13770,
+          "starttime": 16570398,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.85410026460886e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2075900,
+        "requests": 638,
+        "bytes": 682991620,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 100458.813456,
+          "p50": 90289.0,
+          "p95": 195644.0,
+          "p99": 240795.0,
+          "max": 318829.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 104120.376176,
+        "qps": 307.33657690640206,
+        "received_mib_s": 313.7682770435461
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34317/payload-1048576.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    98.01ms   60.66ms 618.15ms   82.40%\n    Req/Sec   170.47     27.72   230.00     72.45%\n  Latency Distribution\n     50%   80.56ms\n     75%  114.30ms\n     90%  183.51ms\n     99%  338.79ms\n  3414 requests in 10.07s, 3.35GB read\nRequests/sec:    339.16\nTransfer/sec:    340.51MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10065977,\"requests\":3414,\"bytes\":3594087724,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":98007.224032,\"p50\":80558.000000,\"p95\":207166.000000,\"p99\":338791.000000,\"max\":618145.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":94350.106620}\n"
+    },
+    {
+      "index": 17,
+      "id": "M1",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 0,
+        "threads": 1,
+        "connections": 1
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 24185,
+        "responses_completed_total": 24185,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 24185,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 24185,
+        "latency_sum_us": 992610,
+        "latency_max_us": 1061,
+        "connections_total": 6,
+        "connections_active": 0,
+        "logger_submitted": 3,
+        "logger_accepted": 3,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 3,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 13858,
+        "starttime": 16571419,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010835069988388568
+      },
+      "complete_wall_s": 12.174976808979409,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10001606,
+          "requests": 19750,
+          "bytes": 22297750,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 526.309322,
+            "p50": 475.0,
+            "p95": 872.0,
+            "p99": 1660.0,
+            "max": 11250.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 506.41043,
+          "qps": 1974.6828659317312,
+          "received_mib_s": 2.126137691151547
+        },
+        "started_monotonic": 165716.281119561,
+        "ended_monotonic": 165726.322015558,
+        "started_wall_s": 1791459740.6838386,
+        "ended_wall_s": 1791459750.7249193,
+        "wall_s": 10.04089599699364,
+        "server_cpu_pct": 12.449088212588443,
+        "client_cpu_pct": 7.890202231326844,
+        "server_rss_sampled_max_kib": 4640,
+        "client_rss_sampled_max_kib": 4640,
+        "server_vmhwm_kib": 4640,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0015086760104168206,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 1600
+          },
+          {
+            "elapsed_s": 1.0076791630126536,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 2.0158237059949897,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 3.025183248013491,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 4.04282525301096,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 5.08136983399163,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 6.113617182010785,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 7.144232662016293,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 8.17886968399398,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          },
+          {
+            "elapsed_s": 9.213808135013096,
+            "server_rss_kib": 4640,
+            "client_rss_kib": 4640
+          }
+        ],
+        "cleanup": {
+          "pid": 13967,
+          "starttime": 16571628,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.4018994988873601e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2000430,
+        "requests": 4429,
+        "bytes": 5000341,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 448.785763,
+          "p50": 436.0,
+          "p95": 627.0,
+          "p99": 760.0,
+          "max": 1197.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 451.66629,
+        "qps": 2214.0239848432584,
+        "received_mib_s": 2.3838358677750007
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:35629/payload-1024.bin\n  1 threads and 1 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   526.31us  339.80us  11.25ms   94.73%\n    Req/Sec     1.98k   423.64     2.85k    73.00%\n  Latency Distribution\n     50%  475.00us\n     75%  576.00us\n     90%  723.00us\n     99%    1.66ms\n  19750 requests in 10.00s, 21.26MB read\nRequests/sec:   1974.68\nTransfer/sec:      2.13MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10001606,\"requests\":19750,\"bytes\":22297750,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":526.309322,\"p50\":475.000000,\"p95\":872.000000,\"p99\":1660.000000,\"max\":11250.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":506.410430}\n"
+    },
+    {
+      "index": 18,
+      "id": "M2",
+      "repeat": 3,
+      "status": "valid",
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 332039,
+        "responses_completed_total": 332039,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 332039,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 332039,
+        "latency_sum_us": 10096891,
+        "latency_max_us": 9999,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 44,
+        "logger_accepted": 44,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 44,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 15273,
+        "starttime": 16572637,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.01059392699971795
+      },
+      "complete_wall_s": 12.216404548991704,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 10013182,
+          "requests": 278251,
+          "bytes": 314145379,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 1387.678142,
+            "p50": 961.0,
+            "p95": 3550.0,
+            "p99": 8979.0,
+            "max": 37210.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 1151.556774,
+          "qps": 27788.46923984803,
+          "received_mib_s": 29.91979767969935
+        },
+        "started_monotonic": 165728.456467298,
+        "ended_monotonic": 165738.550294591,
+        "started_wall_s": 1791459752.8591864,
+        "ended_wall_s": 1791459762.9531503,
+        "wall_s": 10.0938272929925,
+        "server_cpu_pct": 119.57803169843643,
+        "client_cpu_pct": 86.04621168850083,
+        "server_rss_sampled_max_kib": 5120,
+        "client_rss_sampled_max_kib": 4480,
+        "server_vmhwm_kib": 5120,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0016892649873625487,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 2080
+          },
+          {
+            "elapsed_s": 1.004080465005245,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 2.013328968983842,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 3.0152785489917733,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 4.025750192988198,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 5.049970177991781,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 6.09068610300892,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 7.091997837997042,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 8.097759519994725,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 4480
+          },
+          {
+            "elapsed_s": 9.143978314008564,
+            "server_rss_kib": 5120,
+            "client_rss_kib": 4480
+          }
+        ],
+        "cleanup": {
+          "pid": 15502,
+          "starttime": 16572845,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.4571007341146469e-05
+        }
+      },
+      "warmup_summary": {
+        "schema": 2,
+        "duration_us": 2004045,
+        "requests": 53741,
+        "bytes": 60673694,
+        "errors": {
+          "connect": 0,
+          "read": 0,
+          "write": 0,
+          "status": 0,
+          "timeout": 0
+        },
+        "latency_us": {
+          "mean": 1271.84845,
+          "p50": 1009.0,
+          "p95": 2816.0,
+          "p99": 5776.0,
+          "max": 14261.0
+        },
+        "latency_distribution": "wrk_corrected",
+        "population_status": "not_collected",
+        "corrected_population": null,
+        "nonzero_bins": null,
+        "correction_interval_us": 1193.30567,
+        "qps": 26816.264105845927,
+        "received_mib_s": 28.8730760283786
+      },
+      "measurement_raw_stdout": "Running 10s test @ http://127.0.0.1:34827/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency     1.39ms    1.70ms  37.21ms   93.69%\n    Req/Sec    13.97k     4.46k   21.84k    60.00%\n  Latency Distribution\n     50%    0.96ms\n     75%    1.40ms\n     90%    2.36ms\n     99%    8.98ms\n  278251 requests in 10.01s, 299.59MB read\nRequests/sec:  27788.47\nTransfer/sec:     29.92MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":10013182,\"requests\":278251,\"bytes\":314145379,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":1387.678142,\"p50\":961.000000,\"p95\":3550.000000,\"p99\":8979.000000,\"max\":37210.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":1151.556774}\n"
+    }
+  ],
+  "recovery": {
+    "total_s": 600,
+    "elapsed_at_formal_end_s": 263.0237378460006,
+    "remaining_at_formal_end_s": 336.97625985299237,
+    "phases": {
+      "fastchecks": {
+        "status": "passed",
+        "start_monotonic": 165475.922260662,
+        "deadline_monotonic": 165535.922260662,
+        "end_monotonic": 165477.170098099,
+        "elapsed_s": 1.247837437025737,
+        "error": null
+      },
+      "smoke": {
+        "status": "passed",
+        "start_monotonic": 165496.413239405,
+        "deadline_monotonic": 165556.413239405,
+        "end_monotonic": 165499.086974159,
+        "elapsed_s": 2.673734754003817,
+        "error": null
+      },
+      "formal": {
+        "status": "passed",
+        "start_monotonic": 165517.355955503,
+        "deadline_monotonic": 166065.86681048,
+        "end_monotonic": 165738.86518232,
+        "elapsed_s": 221.5092268169974,
+        "error": null
+      }
+    },
+    "usage": {
+      "logical_bytes": 42710346,
+      "allocated_bytes": 47382528,
+      "charged_bytes": 47382528,
+      "raw_bytes": 254877
+    },
+    "old_budget_sha256": "313f0377c241df71a59931805753e80d6b5ec2fb22795e00576e3eed1dd3bcab",
+    "old_settlement_sha256": "2c047339e376e53e639921748a4459a7c1ef466e8ec533cafe07c1cd6849cb76",
+    "rework_sha256": "e1ccb058e5d6f79f4ed66bd2d9bf1882155df051d8a7820492e5ad9b3b5f1131"
+  }
+}
