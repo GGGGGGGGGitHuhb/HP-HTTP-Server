@@ -63,6 +63,8 @@ class TcpConnection final : private base::NonCopyable {
 
   [[nodiscard]] bool peerClosed() const noexcept { return io_.peerHalfClosed(); }
 
+  [[nodiscard]] bool isDraining() const noexcept { return draining_; }
+
   [[nodiscard]] std::size_t pendingBytes() const noexcept { return io_.pendingBytes(); }
 
   // 所有者清理：注销，但不通知可能正在析构的所有者。

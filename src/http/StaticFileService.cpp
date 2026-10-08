@@ -20,22 +20,21 @@ using base::UniqueFd;
 ResponseResult errorResponse(Status status, ConnectionPolicy policy) {
   if (status == Status::kBadRequest || status == Status::kMethodNotAllowed)
     policy = ConnectionPolicy::kClose;
-  return {makeErrorResponse(status, policy), policy, std::nullopt};
+  return {makeErrorResponse(status, policy),
+          policy,
+          std::nullopt,
+          status,
+          errorContentBytes(status)};
 }
 
 bool isSymlinkAt(int parentFd, const std::string& component) {
   struct stat metadata {};
 
-  return ::fstatat(parentFd,
-                   component.c_str(),
-                   &metadata,
-                   AT_SYMLINK_NOFOLLOW) == 0 &&
+  return ::fstatat(parentFd, component.c_str(), &metadata, AT_SYMLINK_NOFOLLOW) == 0 &&
          S_ISLNK(metadata.st_mode);
 }
 
-Status classifyOpenError(int parentFd,
-                         const std::string& component,
-                         int errorNumber) {
+Status classifyOpenError(int parentFd, const std::string& component, int errorNumber) {
   if (errorNumber == ELOOP || isSymlinkAt(parentFd, component)) {
     return Status::kForbidden;
   }
@@ -75,8 +74,7 @@ PathResult validatePath(std::string_view target) {
   std::size_t start = 1;
   while (start <= path.size()) {
     const std::size_t slash = path.find('/', start);
-    const std::size_t end =
-        slash == std::string_view::npos ? path.size() : slash;
+    const std::size_t end = slash == std::string_view::npos ? path.size() : slash;
     const std::string_view component = path.substr(start, end - start);
     if (component.empty() || component == "." || component == "..") {
       return {Status::kForbidden, {}, {}};
@@ -106,24 +104,19 @@ ResponseResult prepareFileResponse(UniqueFd file,
   }
 
   const auto length = static_cast<std::size_t>(size);
-  return {makeResponseHeader(Status::kOk,
-                             length,
-                             contentTypeForPath(relativePath),
-                             false,
-                             policy),
+  return {makeResponseHeader(Status::kOk, length, contentTypeForPath(relativePath), false, policy),
           policy,
-          base::FileRegion(std::move(file), 0, length)};
+          base::FileRegion(std::move(file), 0, length),
+          Status::kOk,
+          length};
 }
 
 }  // namespace
 
 StaticFileService::StaticFileService(const std::string& rootPath) {
-  rootFd_ =
-      ::open(rootPath.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+  rootFd_ = ::open(rootPath.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
   if (rootFd_ == -1) {
-    throw std::system_error(errno,
-                            std::generic_category(),
-                            "static root is unavailable");
+    throw std::system_error(errno, std::generic_category(), "static root is unavailable");
   }
 
   struct stat metadata {};
@@ -132,9 +125,7 @@ StaticFileService::StaticFileService(const std::string& rootPath) {
     const int errorNumber = errno == 0 ? ENOTDIR : errno;
     ::close(rootFd_);
     rootFd_ = -1;
-    throw std::system_error(errorNumber,
-                            std::generic_category(),
-                            "static root is not a directory");
+    throw std::system_error(errorNumber, std::generic_category(), "static root is not a directory");
   }
 }
 
@@ -144,15 +135,13 @@ StaticFileService::~StaticFileService() {
   }
 }
 
-std::vector<std::byte> StaticFileService::buildResponseBytes(
-    const HttpRequest& request,
+std::vector<std::byte> StaticFileService::buildResponseBytes(const HttpRequest& request,
                                                              ConnectionPolicy policy) const {
   return handleResponse(request, policy).bytes;
 }
 
-ResponseResult StaticFileService::handleResponse(
-    const HttpRequest& request,
-    ConnectionPolicy policy) const {
+ResponseResult StaticFileService::handleResponse(const HttpRequest& request,
+                                                 ConnectionPolicy policy) const {
   auto result = onResponse(request, policy);
   if (!result.file) return result;
   try {
@@ -160,9 +149,8 @@ ResponseResult StaticFileService::handleResponse(
     result.bytes.resize(header + result.file->remaining());
     std::size_t offset = header;
     while (offset < result.bytes.size()) {
-      const auto count = ::read(result.file->fd(),
-                                result.bytes.data() + offset,
-                                result.bytes.size() - offset);
+      const auto count =
+          ::read(result.file->fd(), result.bytes.data() + offset, result.bytes.size() - offset);
       if (count > 0) {
         offset += static_cast<std::size_t>(count);
         continue;
@@ -187,28 +175,21 @@ ResponseResult StaticFileService::onResponse(const HttpRequest& request,
 
     int parentFd = rootFd_;
     UniqueFd currentDirectory;
-    for (std::size_t index = 0; index + 1 < validated.components.size();
-         ++index) {
+    for (std::size_t index = 0; index + 1 < validated.components.size(); ++index) {
       const std::string& component = validated.components[index];
       const int opened =
-          ::openat(parentFd,
-                   component.c_str(),
-                   O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+          ::openat(parentFd, component.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
       if (opened == -1) {
-        return errorResponse(classifyOpenError(parentFd, component, errno),
-                             policy);
+        return errorResponse(classifyOpenError(parentFd, component, errno), policy);
       }
       currentDirectory = UniqueFd(opened);
       parentFd = currentDirectory.get();
     }
 
     const std::string& filename = validated.components.back();
-    UniqueFd file(::openat(parentFd,
-                           filename.c_str(),
-                           O_RDONLY | O_NOFOLLOW | O_CLOEXEC));
+    UniqueFd file(::openat(parentFd, filename.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC));
     if (file.get() == -1) {
-      return errorResponse(classifyOpenError(parentFd, filename, errno),
-                           policy);
+      return errorResponse(classifyOpenError(parentFd, filename, errno), policy);
     }
 
     struct stat metadata {};
@@ -216,10 +197,7 @@ ResponseResult StaticFileService::onResponse(const HttpRequest& request,
     if (::fstat(file.get(), &metadata) == -1) {
       return errorResponse(Status::kInternalServerError, policy);
     }
-    return prepareFileResponse(std::move(file),
-                               validated.path,
-                               metadata,
-                               policy);
+    return prepareFileResponse(std::move(file), validated.path, metadata, policy);
   } catch (...) {
     return errorResponse(Status::kInternalServerError, policy);
   }

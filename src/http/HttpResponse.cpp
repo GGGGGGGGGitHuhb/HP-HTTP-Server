@@ -82,6 +82,8 @@ std::vector<std::byte> makeResponse(Status status,
   return response;
 }
 
+std::size_t errorContentBytes(Status status) { return errorBody(status).size(); }
+
 std::vector<std::byte> makeErrorResponse(Status status, ConnectionPolicy policy) {
   const std::string_view body = errorBody(status);
   return makeResponse(status,

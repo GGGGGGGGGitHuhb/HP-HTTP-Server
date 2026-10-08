@@ -4,6 +4,19 @@
 
 ## Unreleased
 
+### 2026-10-08 — V0.6/S1 指标与访问记录
+
+- 增加请求、状态码、错误、连接和服务端响应延迟的固定容量原子统计；ResponseResult显式传递状态/计划正文长度。completed表示kernel接收排空，非客户端已接收。
+- 增加默认关闭的 `--access-log` 与 `--metrics-on-exit`：有界JSON访问payload去除query/fragment；受控退出在worker/连接销毁与日志排空后向stdout导出文本，不自动创建文件或新增HTTP路由。日志异常不改变业务响应。
+- 修复本阶段首审发现：优雅drain真实排空保留完成通知、记completed；强制截断记aborted，drain不推进pipeline后缀。历史FAIL保留，范围内返工1/2后Reviewer002 PASS，独立12/12 CTest、ASan+UBSan/LSan2/2及18文件格式检查通过。
+- 仅S1完成，V0.6整体未完成，S2/S3未开始；不证明性能恢复或长尾修复。V0.5.1搁置未完成和RO-002/TD-001/TD-006保持。
+
+### 2026-10-08 — V0.5.1已搁置（未完成）
+
+- 管理停工并保存当前调查资料，不是整体验收或发布新版本。已合并TCP_NODELAY局部修复及原S1/S2证据保持；此前acda3f9日志批量优化有功能/专项验证，但S3高并发P3 E/C P99=3.2446，未达≤0.25门槛。
+- S4固定C/D构建与短HTTP冒烟、R033两方离线工具合同有限PASS；正式高并发诊断仍未完成，R034未封包/未动态执行，当前候选入口批准SHA过期，不能直接运行。
+- 高并发长尾尝试修复/定位未果，RO-002仍开放。S5/S6未开始；V0.6未启动。归档工具不代表已验收生产功能。详[停工记录](benchmark/results/V0.5.1/SHELVED.md)。
+
 ### V0.5.1/S2 小响应发送修复
 
 - 接收连接交付前启用TCP_NODELAY；失败只关闭当前连接。保留sendfile、背压与关闭流程，独立Reviewer001 PASS。

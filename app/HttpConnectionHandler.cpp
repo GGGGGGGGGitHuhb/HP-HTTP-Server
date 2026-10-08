@@ -10,18 +10,40 @@
 #include "http/HttpResponse.h"
 
 namespace hp::app {
-Session::Session(HttpCallbackStats* callbackStats) : stats(callbackStats) {
+Session::Session(HttpCallbackStats* callbackStats,
+                 metrics::ServerMetrics* serverMetrics,
+                 bool enableAccessLog)
+    : stats(callbackStats), metrics(serverMetrics), accessLogEnabled(enableAccessLog) {
   if (auto observer = sessionEventCallback.load()) observer(true, this);
 }
 
 Session::~Session() {
+  finishPendingRequest(true);
   if (auto observer = sessionEventCallback.load()) observer(false, this);
 }
 
+void Session::finishPendingRequest(bool aborted) noexcept {
+  if (!requestPending) return;
+  requestPending = false;
+  accessRecord.aborted = aborted;
+  const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+                           std::chrono::steady_clock::now() - requestStarted)
+                           .count();
+  accessRecord.durationUs = elapsed > 0 ? static_cast<std::uint64_t>(elapsed) : 0;
+  if (metrics) metrics->finishRequest(aborted, accessRecord.status, accessRecord.durationUs);
+  if (accessLogEnabled) submitAccessRecord(accessRecord, metrics);
+}
+
 void Session::onMessage(net::TcpConnection& connection) {
-  if (phase != Phase::kReading) return;
+  if (phase != Phase::kReading || connection.isDraining()) return;
   const auto input = connection.inputView();
   const bool eof = connection.peerClosed();
+  if (!requestPending && !input.empty()) {
+    requestPending = true;
+    requestStarted = std::chrono::steady_clock::now();
+    accessRecord = {};
+    if (metrics) metrics->beginRequest();
+  }
   if (stats) {
     ++stats->parses;
     if (eof) ++stats->eofNotifications;
@@ -32,6 +54,7 @@ void Session::onMessage(net::TcpConnection& connection) {
     stats->submittedBytes += input.size();
     stats->acceptedBytes += parsed.acceptedBytes;
   }
+  if (accessLogEnabled) accessRecord.copyRequest(parsed.request.method, parsed.request.target);
   connection.consumeInputBytes(parsed.acceptedBytes);  // 不得再次使用借用的输入。
   if (stats) stats->consumedBytes += parsed.acceptedBytes;
   // 请求尚未收完整
@@ -59,9 +82,15 @@ void Session::onMessage(net::TcpConnection& connection) {
     switch (parsed.status) {
       case http::ParseStatus::kNeedMore:
       case http::ParseStatus::kBadRequest:
+        accessRecord.status = static_cast<int>(http::Status::kBadRequest);
+        accessRecord.contentBytes = http::errorContentBytes(http::Status::kBadRequest);
+        if (metrics && requestPending) metrics->recordParseError();
         response = http::makeErrorResponse(http::Status::kBadRequest, policy);
         break;
       case http::ParseStatus::kMethodNotAllowed:
+        accessRecord.status = static_cast<int>(http::Status::kMethodNotAllowed);
+        accessRecord.contentBytes = http::errorContentBytes(http::Status::kMethodNotAllowed);
+        if (metrics && requestPending) metrics->recordParseError();
         response = http::makeErrorResponse(http::Status::kMethodNotAllowed, policy);
         break;
       case http::ParseStatus::kComplete: {
@@ -69,6 +98,8 @@ void Session::onMessage(net::TcpConnection& connection) {
         auto result = responseCallback(parsed.request, policy);
         if (close && result.effectivePolicy != http::ConnectionPolicy::kClose)
           throw std::logic_error("provider relaxed terminal connection policy");
+        accessRecord.status = static_cast<int>(result.status);
+        accessRecord.contentBytes = result.contentBytes;
         close = result.effectivePolicy == http::ConnectionPolicy::kClose;
         response = std::move(result.bytes);
         file = std::move(result.file);  // 仅当成功构造文件响应时，`file` 才有值
@@ -76,25 +107,27 @@ void Session::onMessage(net::TcpConnection& connection) {
       }
     }
   } catch (...) {
+    if (metrics) metrics->recordProviderError();
+    accessRecord.status = static_cast<int>(http::Status::kInternalServerError);
+    accessRecord.contentBytes = http::errorContentBytes(http::Status::kInternalServerError);
     close = true;
     file.reset();
     response =
         http::makeErrorResponse(http::Status::kInternalServerError, http::ConnectionPolicy::kClose);
   }
+  // send 可同步触发完成并递归处理pipeline，所有状态须先写定。
+  completed = true;
+  if (stats) ++stats->responses;
   if (file)
     connection.sendFile(response, std::move(*file));
   else
     connection.sendBytes(response);
-  completed = true;
-  if (stats) ++stats->responses;
-  base::info(
-      "S3 evidence: HTTP message callback produced one response via "
-      "incremental parser.");
 }
 
 void Session::onWriteComplete(net::TcpConnection& connection) {
   if (phase != Phase::kWriting) return;
-  if (close) {
+  finishPendingRequest(false);
+  if (close || connection.isDraining()) {
     phase = Phase::kClosing;
     connection.closeAfterFlush();
     return;
@@ -109,7 +142,7 @@ void HttpMessageHandler::onMessage(net::TcpConnection& connection,
                                    std::span<const std::byte>,
                                    bool) {
   if (!session) {
-    session = std::make_shared<Session>(stats);
+    session = std::make_shared<Session>(stats, metrics, accessLogEnabled);
     session->setResponseCallback(std::move(responseCallback));
     connection.setWriteCompleteCallback([session = session](net::TcpConnection& connection) {
       session->onWriteComplete(connection);
@@ -121,6 +154,8 @@ void HttpMessageHandler::onMessage(net::TcpConnection& connection,
 
 net::TcpConnection::MessageCallback HttpMessageFactory::onMessageFactory() const {
   HttpMessageHandler handler;
+  handler.metrics = metrics;
+  handler.accessLogEnabled = accessLogEnabled;
   handler.setResponseCallback(
       [target = &service](const http::HttpRequest& request, http::ConnectionPolicy policy) {
         return target->onResponse(request, policy);
@@ -132,10 +167,14 @@ net::TcpConnection::MessageCallback HttpMessageFactory::onMessageFactory() const
 }
 
 net::TcpConnection::MessageCallback makeHttpCallback(ResponseCallback responseCallback,
-                                                     HttpCallbackStats* stats) {
+                                                     HttpCallbackStats* stats,
+                                                     metrics::ServerMetrics* metrics,
+                                                     bool accessLogEnabled) {
   // 可变的 Session 仍延迟创建：创建发生在连接所属的 IO 线程。
   HttpMessageHandler handler;
   handler.stats = stats;
+  handler.metrics = metrics;
+  handler.accessLogEnabled = accessLogEnabled;
   handler.setResponseCallback(std::move(responseCallback));
   return
       [target = std::move(handler)](net::TcpConnection& connection,

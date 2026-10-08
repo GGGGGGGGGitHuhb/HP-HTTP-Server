@@ -1,0 +1,346 @@
+from inner_identity_v11 import CleanupIdentity,required_identity,cleanup_step,close_sample_resources,cleanup_evidence
+from proc_identity_v11 import error_record
+from cleanup_v11 import emit_error
+from control_protocol_v3 import encode_message, receive_message
+"""Power-identity diagnostic sample. Only executed inside an admitted root marker launcher."""
+import argparse
+import ctypes
+import hashlib
+import json
+import mmap
+import os
+from pathlib import Path
+import re
+import resource
+import signal
+import shutil
+import socket
+import subprocess
+import time
+from wire_types_v3 import Atomics, Control, Connection, Thread, identity as stable_identity, plain, write_json
+
+BASE = Path(__file__).resolve().parents[2]
+
+
+def identity(pid,tid=None):
+    return required_identity(stable_identity,pid,tid)
+
+
+def resource_gate(output,phase):
+    began=time.monotonic_ns()
+    available=None
+    for line in Path('/proc/meminfo').read_text().splitlines():
+        if line.startswith('MemAvailable:'):
+            fields=line.split()
+            demand(len(fields)==3 and fields[2]=='kB','MemAvailable units unknown')
+            available=int(fields[1])*1024
+    disk=shutil.disk_usage(output)
+    nofile=resource.getrlimit(resource.RLIMIT_NOFILE)
+    evidence=dict(read_start_ns=began,read_end_ns=time.monotonic_ns(),mem_available_bytes=available,
+                  disk_free_bytes=disk.free,nofile=list(nofile),output_filesystem=str(output))
+    write_json(output/f'resources-{phase}.json',evidence)
+    demand(available is not None and available>=1024**3,'MemAvailable below 1GiB/unknown')
+    demand(disk.free>=4*1024**3,'output disk free below 4GiB')
+    demand(nofile[0]==resource.RLIM_INFINITY or nofile[0]>=1024,'power nofile below 1024')
+    return evidence
+
+
+def demand(value, message):
+    if not value:
+        raise RuntimeError(message)
+
+
+identity_cleanup=CleanupIdentity()
+alive=identity_cleanup.alive
+
+
+def tuple_key(record, server=False):
+    if server:
+        return (record.remoteAddress,record.remotePort,record.localAddress,record.localPort)
+    return (record.localAddress,record.localPort,record.remoteAddress,record.remotePort)
+
+
+def freeze(control, atomics):
+    count=control.connections
+    servers=[control.serverConnections[index] for index in range(count)]
+    clients=[control.clientConnections[index] for index in range(count)]
+    demand(all(atomics.load(item,'ready') == 1 for item in servers+clients),'connection metadata incomplete')
+    by_tuple={tuple_key(item,True):item for item in servers}
+    demand(len(by_tuple)==count and len({tuple_key(item) for item in clients})==count,'duplicate connection tuple')
+    pairs=[];snapshots={}
+    for item in clients:
+        server=by_tuple.get(tuple_key(item))
+        demand(server is not None,'missing opposite endpoint')
+        demand(not item.closed and not server.closed,'connection closed before freeze')
+        for record in (item,server):
+            before_ns=time.monotonic_ns()
+            actual=identity(record.pid,record.tid)
+            actual['snapshot_start_ns']=before_ns;actual['snapshot_end_ns']=time.monotonic_ns()
+            demand(actual['starttime']==record.starttime,'thread identity drift')
+            snapshots[(record.pid,record.tid)]=actual
+        pairs.append((server,item))
+    # Identity-only rule: one per server worker; replace within that worker to cover both client workers.
+    chosen=list(pairs) if count<=8 else []
+    if count>8:
+        for worker in range(4):
+            choices=sorted((pair for pair in pairs if pair[0].worker==worker),key=lambda pair:pair[1].index)
+            demand(choices,'server worker not represented in frozen connections')
+            chosen.append(choices[0])
+        for worker in range(2):
+            if not any(pair[1].worker==worker for pair in chosen):
+                choices=sorted((pair for pair in pairs if pair[1].worker==worker),key=lambda pair:pair[1].index)
+                demand(choices,'client worker not represented')
+                replacement=choices[0]
+                position=next(index for index,pair in enumerate(chosen) if pair[0].worker==replacement[0].worker)
+                chosen[position]=replacement
+    if count>=8: demand({pair[0].worker for pair in chosen}==set(range(4)) and {pair[1].worker for pair in chosen}==set(range(2)),'frozen worker coverage')
+    demand(len(chosen)<=16,'selection cap')
+    control.selectedCount=len(chosen)
+    for index,(server,client) in enumerate(chosen):
+        control.selectedServer[index]=server.index
+        control.selectedClient[index]=client.index
+    def evidence(pair):
+        server,client=pair
+        return dict(server=plain(server),client=plain(client),four_tuple=list(tuple_key(client)),
+                    server_identity=snapshots[(server.pid,server.tid)],client_identity=snapshots[(client.pid,client.tid)])
+    return ([evidence(pair) for pair in chosen],[evidence(pair) for pair in pairs])
+
+
+def expected_markers(control):
+    result=[]
+    for endpoint,records in [('server',control.serverThreads),('client',control.clientThreads)]:
+        for index,item in enumerate(records):
+            role='worker' if index<(4 if endpoint=='server' else 2) else 'main' if index==(4 if endpoint=='server' else 2) else 'logger'
+            result.append(dict(endpoint=endpoint,role=role,worker=index,pid=item.pid,tid=item.tid,starttime=item.starttime))
+    return result
+
+
+def sample(args):
+    output=Path(args.output).absolute()
+    role_root=Path(__file__).resolve().parents[2]/'.cache/v0.5.1-s4'/args.role
+    demand(output.parent==role_root and re.fullmatch(r'run-[A-Za-z0-9_-]+',output.name) and output.is_dir() and not any(path.is_symlink() for path in (output,*output.parents)),'output outside exact admitted role run')
+    demand(os.getuid()==1000 and os.getgid()==1000,'load identity must remain power')
+    approved={
+        'run-r008-link-once':(2,1,0,1,'process-local'),
+        'run-r008-link-repeat':(2,16,0,1,'process-local'),
+        'run-r008-link-mapped':(8,16,0,1,'kernel-mapped'),
+        'run-r008-link-128':(128,0,1,3,'kernel-mapped'),
+    }
+    demand(approved.get(output.name)==(args.connections,args.requests_per_connection,args.warmup,args.duration,args.identity_scope) and args.detailed,'unapproved R008 run/configuration')
+    manifest=json.loads(Path(args.manifest).read_text())
+    demand(manifest.get('schema')==3 and manifest.get('role')==args.role,'manifest startup schema/role differs')
+    sealed_tools=json.loads(Path(args.manifest).read_text())['tools']
+    for tool in ('root_marker_launcher_v4.py','observed_sample_v4.py','wire_types_v3.py','control_protocol_v3.py','decode_v3.py','proc_identity_v11.py','cleanup_v11.py','inner_identity_v11.py','localize_v11.py','watchdog_v11.py'):
+        item=sealed_tools[tool]
+        demand(Path(item['path']).resolve()==Path(__file__).with_name(tool).resolve() and hashlib.sha256(Path(item['path']).read_bytes()).hexdigest()==item['sha256'],'sealed tool drift: '+tool)
+    for name in ('server','client','summary'):
+        item=manifest[name]
+        source_path=Path(item['path'])
+        demand(source_path.is_absolute() and source_path.is_relative_to(role_root) and not any(path.is_symlink() for path in (source_path,*source_path.parents)),'binary/summary outside own role scope')
+        demand(hashlib.sha256(Path(item['path']).read_bytes()).hexdigest()==item['sha256'],name+' sealed input drift')
+    runtime=manifest['runtime']
+    library=Path(runtime['library'])
+    demand(str(library.parent)==runtime['library_directory']
+           and hashlib.sha256(library.read_bytes()).hexdigest()==runtime['sha256'],
+           'sealed LuaJIT runtime drift')
+    os.umask(0o022)
+    root=output/'fixture'
+    root.mkdir()
+    payload=root/'payload-1024.bin'
+    payload.write_bytes(bytes(range(256))*4)
+    demand(manifest['payload']['name']==payload.name and manifest['payload']['size']==payload.stat().st_size
+           and manifest['payload']['sha256']==hashlib.sha256(payload.read_bytes()).hexdigest(),
+           'original P3 payload bytes differ')
+    control_path=output/'startup-control.bin'
+    fd=os.open(control_path,os.O_RDWR|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    os.ftruncate(fd,ctypes.sizeof(Control))
+    mapping=mmap.mmap(fd,ctypes.sizeof(Control));os.close(fd)
+    control=Control.from_buffer(mapping)
+    demand((ctypes.sizeof(Control),ctypes.sizeof(Connection),ctypes.sizeof(Thread))==(25192,64,32),'native ABI mismatch')
+    control.magic=b'S4CTRL03';control.version=3;control.bytes=ctypes.sizeof(Control)
+    control.phase=1;control.requestsPerConnection=args.requests_per_connection
+    control.connections=args.connections;control.detailed=int(args.detailed)
+    control.warmupNs=args.warmup*10**9;control.measurementNs=args.duration*10**9
+    atomics=Atomics()
+    channel=socket.socket(fileno=args.root_socket_fd) if args.identity_scope == "kernel-mapped" else None
+    marker_fd=args.marker_fd
+    env=os.environ.copy()
+    env.update(LD_LIBRARY_PATH=runtime['library_directory'],LUA_PATH=runtime['lua_path'])
+    env.update(HP_S4_CONTROL=str(control_path),HP_S4_OUTPUT=str(output),HP_S4_TRUSTED_SUMMARY=manifest["summary"]["path"])
+    if marker_fd is not None: env["HP_S4_MARKER_FD"]=str(marker_fd)
+    else: env.pop("HP_S4_MARKER_FD",None)
+    processes=[];streams=[];cleanup_errors=[];forced=False
+    result=dict(schema=3,status='invalid',parameters=dict(requests_per_connection=args.requests_per_connection,connections=args.connections,warmup=args.warmup,duration=args.duration,detailed=args.detailed),
+                route=dict(uid=os.getuid(),gid=os.getgid(),groups=os.getgroups(),affinity=sorted(os.sched_getaffinity(0)),nofile=list(resource.getrlimit(resource.RLIMIT_NOFILE)),
+                           tmp={name:env.get(name) for name in ('TMPDIR','TMP','TEMP','XDG_CACHE_HOME')},identity=identity(os.getpid())),
+                manifest=manifest,limits=['single fixed identity-selected subset; no automatic reconnect','raw first-write latency and original wrk corrected histogram are separate',
+                                         'completion window is [measurement_start,measurement_end); crossing requests retained as boundaries'])
+    def spawn(name,command):
+        stdout=(output/(name+'.stdout')).open('wb');stderr=(output/(name+'.stderr')).open('wb');streams.extend([stdout,stderr])
+        process=subprocess.Popen(command,stdout=stdout,stderr=stderr,env=env,pass_fds=(marker_fd,) if marker_fd is not None else ())
+        record=identity(process.pid)
+        processes.append((name,process,record))
+        write_json(output/'processes.json',[dict(name=n,**r) for n,p,r in processes])
+        return process
+    def stop_for_deadline(number,frame):raise TimeoutError('power sample work deadline/signal')
+    saved_handlers={sig:signal.signal(sig,stop_for_deadline) for sig in (signal.SIGALRM,signal.SIGTERM,signal.SIGINT)}
+    signal.setitimer(signal.ITIMER_REAL,max(0,args.work_deadline-time.monotonic()))
+    try:
+        result['resources_before_start']=resource_gate(output,'before-start')
+        command=[manifest['server']['path'],'--threads','4','--idle-timeout-ms','30000','--keep-alive-timeout-ms','15000','--shutdown-timeout-ms','5000','--port','0','--root',str(root)]
+        server=spawn('server',command);result['server_command']=command
+        startup_deadline=min(time.monotonic()+3,args.work_deadline)
+        port=None
+        while time.monotonic()<startup_deadline:
+            demand(server.poll() is None,'server ended during startup')
+            match=re.search(r'listening on port (\d+)\.',(output/'server.stdout').read_text(errors='replace'))
+            if match:port=int(match.group(1));break
+            time.sleep(.005)
+        demand(port,'listen port missing')
+        command=[manifest['client']['path'],'-t2','-c'+str(args.connections),'--timeout','2s','--latency','-d',str(args.duration)+'s','-s',manifest['summary']['path'],f'http://127.0.0.1:{port}/{payload.name}']
+        client=spawn('client',command);result['client_command']=command
+        if marker_fd is not None: os.close(marker_fd);marker_fd=None
+        thread_ready=connection_ready=False
+        while time.monotonic()<startup_deadline:
+            demand(server.poll() is None and client.poll() is None,'endpoint died during freeze')
+            demand(not atomics.load(control,'abortRun'),'observer aborted startup')
+            thread_ready=all(atomics.load(item,'ready')==1 for item in list(control.serverThreads)+list(control.clientThreads))
+            connection_ready=all(atomics.load(control.serverConnections[index],'ready')==1 and atomics.load(control.clientConnections[index],'ready')==1 and atomics.load(control.serverRegistrations[index],'ready')==1 and atomics.load(control.clientRegistrations[index],'ready')==1 for index in range(args.connections))
+            if thread_ready and connection_ready:break
+            time.sleep(.001)
+        demand(thread_ready and connection_ready,'startup metadata deadline')
+        result['frozen_connections'],result['all_connection_pairs']=freeze(control,atomics)
+        markers=expected_markers(control)
+        result['startup_threads']=markers
+        result['registration_records']={endpoint:[plain(item) for item in list(records)[:args.connections]] for endpoint,records in [('server',control.serverRegistrations),('client',control.clientRegistrations)]}
+        demand(not atomics.load(control,'abortRun') and atomics.load(control.firstFailure,'published')==0,'startup first failure already published')
+        demand(control.serverAttempts==control.clientAttempts==control.serverRegistered==control.clientRegistered==args.connections,'startup registration count differs')
+        atomics.store(control,'phase',2)
+        if channel is not None:
+            channel.send(encode_message(output.name,'frozen','ready',markers=markers))
+            reply=receive_message(channel,output.name,'go',args.work_deadline,set())
+        else:
+            reply=dict(mappings=[dict(item,namespace_tid=item['tid'],identity=identity(item['pid'],item['tid'])) for item in markers])
+        result['identity_scope']=args.identity_scope
+        result['kernel_mapping_verified']=channel is not None
+        expected={(item['endpoint'],item['role'],item['worker'],item['pid'],item['tid'],item['starttime']) for item in markers}
+        received={(item['endpoint'],item['role'],item['worker'],item['pid'],item['namespace_tid'],item['starttime']) for item in reply.get('mappings',[])}
+        demand(len(reply.get('mappings',[]))==9 and received==expected,'kernel TID mapping incomplete')
+        if channel is not None: demand(len({item['kernel_tid'] for item in reply['mappings']})==9 and all(type(item['kernel_tid']) is int and item['kernel_tid']>0 for item in reply['mappings']),'invalid/duplicate kernel TID')
+        for item in reply['mappings']:
+            actual=identity(item['pid'],item['namespace_tid'])
+            demand(actual['starttime']==item['starttime'] and actual['pid_namespace']==item['identity']['pid_namespace'],'mapped identity/namespace changed')
+        result['kernel_mappings' if channel is not None else 'process_local_mappings']=reply['mappings']
+        maps_begin=time.monotonic_ns()
+        client_pid=next(record['pid'] for name,process,record in processes if name=='client')
+        loaded=[]
+        status=library.stat()
+        for line in (Path('/proc')/str(client_pid)/'maps').read_text().splitlines():
+            fields=line.split(maxsplit=5)
+            if len(fields)==6 and 'libluajit' in fields[5]:
+                demand(fields[5]==str(library.resolve()) and int(fields[4])==status.st_ino,
+                       'client loaded a different LuaJIT DSO')
+                major,minor=(int(part,16) for part in fields[3].split(':'))
+                demand((major,minor)==(os.major(status.st_dev),os.minor(status.st_dev)),
+                       'client LuaJIT DSO device differs')
+                loaded.append(line)
+        demand(loaded,'client sealed LuaJIT not actually mapped')
+        result['runtime_mapping']=dict(read_start_ns=maps_begin,read_end_ns=time.monotonic_ns(),
+                                       library=runtime,actual_maps=loaded)
+        controller_identity=identity(os.getpid())
+        clock_evidence={}
+        for endpoint in ('server','client'):
+            evidence=json.loads((output/f'{endpoint}-clock.json').read_text())
+            main=next(item for item in reply['mappings'] if item['endpoint']==endpoint and item['role']=='main')
+            demand(evidence['pid']==main['pid'] and evidence['clock']=='CLOCK_MONOTONIC'
+                   and evidence['unit']=='ns' and evidence['resolution_ns']>0 and evidence['clock_pair_count']==32,
+                   'endpoint clock schema/identity invalid')
+            demand(evidence['boot_id']==main['identity']['boot_id']==controller_identity['boot_id']
+                   and evidence['time_namespace']==main['identity']['time_namespace']==controller_identity['time_namespace'],
+                   'endpoint/controller boot or time namespace differs')
+            for field in ('boot_read_ns','namespace_read_ns','resolution_read_ns'):
+                demand(len(evidence[field])==2 and 0<evidence[field][0]<=evidence[field][1]<time.monotonic_ns(),
+                       'clock field read interval invalid')
+            demand(0<=evidence['clock_pair_min_ns']<=evidence['clock_pair_max_ns'],'clock overhead evidence invalid')
+            clock_evidence[endpoint]=evidence
+        result['endpoint_clock_evidence']=clock_evidence
+        result['resources_after_prefault_before_go']=resource_gate(output,'after-prefault-before-go')
+        # File descriptions are closed in both loads before GO; numeric descriptors may be reused.
+        for endpoint in ('server','client'):
+            pid=next(r['pid'] for name,p,r in processes if name==endpoint)
+            links=[]
+            for path in (Path('/proc')/str(pid)/'fd').iterdir():
+                try:links.append(os.readlink(path))
+                except FileNotFoundError:pass
+            demand(not any(link.endswith('/trace_marker') for link in links),'inherited marker FD still open')
+        result['frozen_before_go_ns']=time.monotonic_ns()
+        control.startNs=time.monotonic_ns()+(0 if args.requests_per_connection else 20_000_000)
+        result['warmup_start_ns']=control.startNs
+        result['measurement_start_ns']=control.startNs+control.warmupNs
+        result['measurement_end_ns']=result['measurement_start_ns']+control.measurementNs
+        result['recording_start_ns']=time.monotonic_ns()
+        atomics.store(control,'phase',3)
+        atomics.store(control,'go',1)
+        while client.poll() is None:
+            demand(time.monotonic()<args.work_deadline,'power work deadline reached')
+            demand(server.poll() is None,'server died during sample')
+            demand(not atomics.load(control,'abortRun'),'observer overflow/invalid')
+            time.sleep(.005)
+        demand(client.returncode==0 and not atomics.load(control,'abortRun'),'client invalid')
+        atomics.store(control,'phase',4)
+        server.send_signal(signal.SIGTERM)
+        demand(server.wait(timeout=max(0,min(5.5,args.work_deadline-time.monotonic())))==0,'server stop invalid')
+        result['recording_end_ns']=time.monotonic_ns()
+        result['final_threads']=[dict(endpoint=e,**plain(t)) for e,items in [('server',control.serverThreads),('client',control.clientThreads)] for t in items]
+        result['connection_end_states']=[dict(endpoint=e,**plain(item)) for e,items in [('server',control.serverConnections),('client',control.clientConnections)] for item in list(items)[:args.connections]]
+        demand(all(item['stoppedNs'] for item in result['final_threads'] if item['worker']<(4 if item['endpoint']=='server' else 2)),'writer stop missing')
+        atomics.store(control,'phase',5)
+        demand(atomics.load(control.firstFailure,'published')==0,'first failure nonempty at stop')
+        if args.requests_per_connection: demand(control.completedConnections==args.connections and all((item['reserved']&0xffffffff)==args.requests_per_connection and not (item['reserved']>>32) for item in result['connection_end_states'] if item['endpoint']=='client'),'fixed per-connection target or pending state differs')
+        result['status']='valid'
+    except BaseException as error:
+        result['work_failure']=error_record(error,'inner.work')
+        result['error']=repr(error)
+        slot_deadline=min(args.total_deadline,time.monotonic()+.02)
+        while atomics.load(control.firstFailure,'published') == 1 and time.monotonic()<slot_deadline: time.sleep(.001)
+        failure=control.firstFailure
+        result['first_failure']=dict(plain(failure),connection=plain(failure.connection)) if atomics.load(failure,'published')==2 else 'unknown'
+        if channel is not None:
+            try: channel.send(encode_message(output.name,'aborted','abort',first_failure=result['first_failure']))
+            except BaseException as handshake_error: result['abort_delivery_error']=repr(handshake_error)
+    finally:
+        identity_cleanup.cleaning=True
+        signal.setitimer(signal.ITIMER_REAL,0)
+        for sig in (signal.SIGTERM,signal.SIGINT):signal.signal(sig,signal.SIG_IGN)
+        for name,process,record in reversed(processes):
+            if process.poll() is None and alive(record):cleanup_step(cleanup_errors,'terminate',process.terminate)
+        deadline=min(time.monotonic()+7,args.total_deadline-.4)
+        while time.monotonic()<deadline and any(process.poll() is None for name,process,record in processes):time.sleep(.005)
+        for name,process,record in processes:
+            if process.poll() is None:
+                forced=True
+                if alive(record):cleanup_step(cleanup_errors,'kill',process.kill)
+            try:process.wait(timeout=max(0,min(.1,args.total_deadline-time.monotonic()-.2)))
+            except BaseException as error:cleanup_errors.append(name+':'+repr(error))
+        remaining=[name for name,p,r in processes if p.poll() is None]
+        del control
+        close_sample_resources(marker_fd,channel,streams,mapping,saved_handlers,cleanup_errors)
+        result['cleanup']=dict(forced=forced,errors=cleanup_errors,remaining=remaining)
+        if identity_cleanup.unknown:result['cleanup']['unknown']=list(identity_cleanup.unknown.values())
+        if identity_cleanup.unknown or forced or cleanup_errors or remaining:result['status']='invalid'
+        if not cleanup_evidence(output/'sample.json',result,write_json,cleanup_errors):result['status']='invalid'
+    return 0 if result['status']=='valid' else 1
+
+
+if __name__=='__main__':
+    import json
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--role',choices=('builder','reviewer'),default='builder')
+    parser.add_argument('--output',required=True);parser.add_argument('--manifest',required=True)
+    parser.add_argument('--root-socket-fd',type=int);parser.add_argument('--marker-fd',type=int)
+    parser.add_argument('--requests-per-connection',type=int,default=0)
+    parser.add_argument('--identity-scope',choices=('process-local','kernel-mapped'),required=True)
+    parser.add_argument('--connections',type=int,required=True);parser.add_argument('--warmup',type=int,required=True);parser.add_argument('--duration',type=int,required=True)
+    parser.add_argument('--detailed',action='store_true')
+    parser.add_argument('--total-deadline',type=float,required=True);parser.add_argument('--work-deadline',type=float,required=True)
+    raise SystemExit(sample(parser.parse_args()))

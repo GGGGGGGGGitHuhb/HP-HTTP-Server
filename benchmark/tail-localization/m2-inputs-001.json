@@ -1,0 +1,33 @@
+{
+  "schema": 2,
+  "baseline_commit": "acda3f92d42a36d0b0554e185bc6f4155b4e5889",
+  "static_inventory_sha256": "8199f58a268884125ce50c454821fc6318533e50824817e2306726273c782b61",
+  "server": {
+    "path": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s4/builder/build-observed/hp_http_server",
+    "sha256": "735486748db3726c7134480fd90e015b66da2c1814b1baeefab963eb56fb8b46"
+  },
+  "client": {
+    "path": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s4/builder/wrk-observed/source/wrk",
+    "sha256": "b1c9ae3d262e1d6293e066668c2b972a52820e65e3f5074a0172bf5f2c4bea7a"
+  },
+  "summary": {
+    "path": "/home/power/projects/HP-HTTP-Server/.cache/v0.5.1-s4/builder/E-observed/source/benchmark/summary.lua",
+    "sha256": "0ded2fdca3ab1f53274ae70806117c3c6288fec1bb05b0a0b601d55bf36b73ea"
+  },
+  "runtime": {
+    "library_directory": "/home/power/projects/HP-HTTP-Server/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu",
+    "library": "/home/power/projects/HP-HTTP-Server/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu/libluajit-5.1.so.2.1.1703358377",
+    "version": "2.1.1703358377",
+    "sha256": "04c8976ae97b5e89ba27c008bb9d43c002bfc5b1f923c0598953df278ae14bfe",
+    "lua_path": "/home/power/projects/HP-HTTP-Server/.cache/v0.5-s4/tools/root/usr/share/luajit-2.1/?.lua;;"
+  },
+  "payload": {
+    "name": "payload-1024.bin",
+    "size": 1024,
+    "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+    "generation": "bytes(range(256)) repeated four times; original benchmark.fixture",
+    "url": "http://127.0.0.1:{actual_bound_port}/payload-1024.bin"
+  },
+  "server_patch_sha256": "02432706035eb87cf6b941615e18022a9ab64e127308b35ce54f8f5c5b609b1f",
+  "client_patch_sha256": "a582dd73f3fe29d6c9429ef672b672549319f937c1388dedc66123f0d7860693"
+}

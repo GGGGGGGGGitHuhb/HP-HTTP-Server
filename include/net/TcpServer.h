@@ -15,7 +15,8 @@ class TcpServer final : private base::NonCopyable {
   explicit TcpServer(std::uint16_t requestedPort,
                      std::size_t maxInputBytes = 0,
                      std::size_t workerCount = 0,
-                     ConnectionTimeouts timeouts = {});
+                     ConnectionTimeouts timeouts = {},
+                     metrics::ServerMetrics* metrics = nullptr);
   ~TcpServer() noexcept;
   void registerMessageFactoryCallback(MessageFactoryCallback messageFactoryCallback);
 
@@ -59,6 +60,7 @@ class TcpServer final : private base::NonCopyable {
 
   EventLoop mainEventLoop_;
   MessageFactoryCallback messageFactoryCallback_;  // 绑定 `onMessageFactory()`
+  metrics::ServerMetrics* metrics_;
   std::size_t maxInputBytes_;
   const std::size_t workerCount_;
   const ConnectionTimeouts timeouts_;
