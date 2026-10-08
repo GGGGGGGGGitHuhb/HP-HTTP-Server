@@ -2,6 +2,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "metrics/ServerMetrics.h"
 #include "net/ConnectionTimeouts.h"
 #include "net/EventLoop.h"
 #include "net/TcpConnection.h"
@@ -16,7 +17,8 @@ class ConnectionRegistry final : private base::NonCopyable {
 
   ConnectionRegistry(EventLoop& ownerEventLoop,
                      std::size_t maxInputBytes,
-                     ConnectionTimeouts timeouts = {});
+                     ConnectionTimeouts timeouts = {},
+                     metrics::ServerMetrics* metrics = nullptr);
   ~ConnectionRegistry() noexcept;
 
   void setStopCallback(StopCallback stopCallback) { stopCallback_ = std::move(stopCallback); }
@@ -41,6 +43,7 @@ class ConnectionRegistry final : private base::NonCopyable {
   bool draining_{false}, notified_{false};
   StopCallback stopCallback_;
 
+  metrics::ServerMetrics* metrics_;
   const ConnectionTimeouts timeouts_;
   EventLoop& ownerEventLoop_;
   std::size_t maxInputBytes_;
@@ -48,5 +51,6 @@ class ConnectionRegistry final : private base::NonCopyable {
   std::unordered_map<int, std::unique_ptr<TcpConnection>> connections_;
   TcpConnection* closingHead_{nullptr};
   TcpConnection::Identity nextIdentity_{1};
+  TcpConnection::Identity registeringIdentity_{0};
 };
 }  // namespace hp::net

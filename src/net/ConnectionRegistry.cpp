@@ -7,8 +7,12 @@
 namespace hp::net {
 ConnectionRegistry::ConnectionRegistry(EventLoop& ownerEventLoop,
                                        std::size_t maxInputBytes,
-                                       ConnectionTimeouts timeouts)
-    : timeouts_(timeouts), ownerEventLoop_(ownerEventLoop), maxInputBytes_(maxInputBytes) {
+                                       ConnectionTimeouts timeouts,
+                                       metrics::ServerMetrics* metrics)
+    : metrics_(metrics),
+      timeouts_(timeouts),
+      ownerEventLoop_(ownerEventLoop),
+      maxInputBytes_(maxInputBytes) {
   ownerEventLoop_.registerCleanupCallback([this]() { onCleanup(); });
 }
 
@@ -16,6 +20,7 @@ ConnectionRegistry::~ConnectionRegistry() noexcept {
   for (auto& [fd, connection] : connections_) {
     (void)fd;
     connection->deactivateConnection();
+    if (metrics_) metrics_->removeConnection();
   }
   connections_.clear();
   ownerEventLoop_.registerCleanupCallback({});
@@ -52,6 +57,7 @@ void ConnectionRegistry::onAccepted(Socket socket, TcpConnection::MessageCallbac
   // 连接注册表保存连接对象
   auto [position, inserted] = connections_.try_emplace(fd, std::move(connection));
   if (!inserted) throw std::logic_error("duplicate connection fd");
+  registeringIdentity_ = identity;
   try {
     // 启动该连接的事件监听
     position->second->activateConnection();
@@ -61,8 +67,11 @@ void ConnectionRegistry::onAccepted(Socket socket, TcpConnection::MessageCallbac
     position->second->deactivateConnection();
     onCleanup();
     connections_.erase(fd);
+    registeringIdentity_ = 0;
     throw;
   }
+  registeringIdentity_ = 0;
+  if (metrics_) metrics_->registerConnection();
 }
 
 void ConnectionRegistry::cancelTimeout(TcpConnection& connection) noexcept {
@@ -133,8 +142,10 @@ void ConnectionRegistry::onCleanup() noexcept {
     auto* connection = closingHead_;
     closingHead_ = connection->nextClosing_;
     const auto found = connections_.find(connection->fd());
-    if (found != connections_.end() && found->second->identity() == connection->identity())
+    if (found != connections_.end() && found->second->identity() == connection->identity()) {
+      if (metrics_ && connection->identity() != registeringIdentity_) metrics_->removeConnection();
       connections_.erase(found);
+    }
   }
   if (draining_ && connections_.empty() && !notified_) {
     notified_ = true;

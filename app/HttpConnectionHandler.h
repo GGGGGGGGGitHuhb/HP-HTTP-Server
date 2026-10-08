@@ -1,6 +1,8 @@
 #pragma once
 #include <atomic>
+#include <chrono>
 
+#include "AccessLog.h"
 #include "http/StaticFileService.h"
 #include "net/TcpServer.h"
 
@@ -34,7 +36,15 @@ struct Session {
   // 当前响应结束后是否要求关闭
   bool close{false};
 
-  explicit Session(HttpCallbackStats* callbackStats);
+  metrics::ServerMetrics* metrics{};
+  bool accessLogEnabled{};
+  bool requestPending{};
+  AccessRecord accessRecord;
+  std::chrono::steady_clock::time_point requestStarted;
+
+  explicit Session(HttpCallbackStats* callbackStats,
+                   metrics::ServerMetrics* serverMetrics = nullptr,
+                   bool enableAccessLog = false);
   ~Session();
   void setResponseCallback(ResponseCallback responseCallback) {
     this->responseCallback = std::move(responseCallback);
@@ -42,11 +52,14 @@ struct Session {
 
   void onMessage(net::TcpConnection& connection);
   void onWriteComplete(net::TcpConnection& connection);
+  void finishPendingRequest(bool aborted) noexcept;
 };
 
 struct HttpMessageHandler {
   ResponseCallback responseCallback;  // 绑定 `StaticFileService::onResponse()`
   HttpCallbackStats* stats{};
+  metrics::ServerMetrics* metrics{};
+  bool accessLogEnabled{};
   std::shared_ptr<Session> session;
 
   void setResponseCallback(ResponseCallback responseCallback) {
@@ -59,6 +72,8 @@ struct HttpMessageHandler {
 
 struct HttpMessageFactory {
   const http::StaticFileService& service;
+  metrics::ServerMetrics* metrics{};
+  bool accessLogEnabled{};
   // “为新连接创建 HTTP 消息回调”的工厂
   net::TcpConnection::MessageCallback onMessageFactory() const;
 };
@@ -67,6 +82,8 @@ struct HttpMessageFactory {
 // 自定义提供方和统计数据需要调用方同步；service 的生命周期须覆盖所有
 // 工作线程。
 net::TcpConnection::MessageCallback makeHttpCallback(ResponseCallback responseCallback,
-                                                     HttpCallbackStats* stats = nullptr);
+                                                     HttpCallbackStats* stats = nullptr,
+                                                     metrics::ServerMetrics* metrics = nullptr,
+                                                     bool accessLogEnabled = false);
 net::TcpServer::MessageFactoryCallback makeHttpFactory(const http::StaticFileService& service);
 }  // namespace hp::app

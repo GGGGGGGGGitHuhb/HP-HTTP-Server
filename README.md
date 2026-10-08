@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-2026-10-08：V0.5.1 **已搁置（未完成）**。这是用户决定的管理停工，不是验收通过。S1/S2已完成，TCP_NODELAY局部修复已验证；S3已终止且高并发P3验收FAIL，S4停工，长尾尝试修复/定位未果，RO-002仍开放；S5/S6未开始。V0.6仅为后续方向，本轮未启动。
+2026-10-08：V0.5.1 **已搁置（未完成）**。这是用户决定的管理停工，不是验收通过。S1/S2已完成，TCP_NODELAY局部修复已验证；S3已终止且高并发P3验收FAIL，S4停工，长尾尝试修复/定位未果，RO-002仍开放；S5/S6未开始。V0.6/S1已按用户提前批准启动，设计与审查计划Approved，S1已完成，Reviewer002独立PASS；V0.6整体未完成，S2/S3未开始；不再以V0.5.1验收完成为前置条件。
 
 [停工结论与有限验证](benchmark/results/V0.5.1/SHELVED.md)；[历史检查点](history/V0.5.1/README-checkpoints.md)；[诊断资料边界](benchmark/README.md)。现有诊断候选归档保留，不是生产功能或可恢复执行入口。
 
@@ -88,7 +88,7 @@ curl --http1.1 -i http://127.0.0.1:8080/missing.txt
 curl --http1.1 -i -X POST http://127.0.0.1:8080/
 ```
 
-预期信号包括 `6/6` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
+预期信号包括当前S1 `12/12` CTest 通过、启动输出中的 `V0.1 / S3 minimal HTTP static file server` 与实际端口，以及上述请求分别返回 `200`、`404`、`405`。服务进程通过 `Ctrl-C` 停止。
 
 ## 配置说明
 
@@ -139,9 +139,38 @@ CMakeLists.txt
 
 依赖方向保持 `app -> http/net`、`http -> base/标准库/Linux 文件 API`、`net -> base`。网络层不理解 HTTP，HTTP 层不管理 epoll 或连接 fd。
 
+## V0.6/S1 指标与访问记录
+
+当前实现提供基础统计、可选访问记录和退出快照，S1已独立验收，不包含性能验收或长尾修复。启动方式沿用上述二进制，可追加两个无值开关；重复开关或给开关传值返回2：
+
+```bash
+.cache/v0.6-s1/builder/build/hp_http_server --port 8080 --root www --threads 2 --access-log --metrics-on-exit
+```
+
+`--access-log` 默认关闭。启用时通过原有异步日志向stderr写入 `[INFO] ` 前缀的完整JSON payload，`event=http_access`；其他启动/诊断日志仍是文本。记录仅含method、path、status、content_bytes、duration_us、outcome、path_truncated。method最多16原始字节，path最多96原始字节，去除query/fragment，不记录headers/body/peer；非ASCII逐字节以 `\u00XX` 转义，不进行URL decode。path可能包含业务标识，请按需求选择开启。每条payload最多1024字节，极长path明确标记截断，JSON保持完整；日志队满、sink写失败或观测异常不改变HTTP响应，不增加同步fallback。
+
+`--metrics-on-exit` 默认关闭。正常或受控关闭时，在所有worker join、registry/Session销毁、异步日志排空后，stdout的唯一 `HP_METRICS_BEGIN`/`HP_METRICS_END` 段导出文本 `key integer`。没有自动写文件或监控HTTP路由；stdout写失败返回非零。CLI参数错误不导出。关闭后 `requests_started_total=responses_completed_total+requests_aborted_total`、`latency_count=requests_started_total`、`connections_active=logger_pending=0`。
+
+请求从首次非空parser feed计起；初始空FIN仍保留旧400协议，但不产生请求计数或访问记录。completed表示内存/sendfile输出已被kernel接收，不证明peer完整接收；aborted表示开始后尚未排空即关闭。`responses_status_<200/400/403/404/405/500/unknown>_total` 是已构造响应的状态（也含aborted），未构造响应用unknown；`content_bytes` 是计划正文长度。`errors_total` 每请求至多一次，表示aborted或status>=400；parse/provider原因分项可能重叠，不能相加。steady_clock整数微秒延迟包含该请求解析/provider/输出排队到终结，completed和aborted都入count/sum/max，不是RTT/P99。runtime逐原子快照非事务一致；uint64增量与sum饱和，超出范围不回绕，饱和后总账等式不再保证精确数量。
+
+最终 `logger_submitted/accepted/dropped_full/rejected_stopped/truncated/written/failed/pending` 属于全部共享日志；它们不是精确访问记录丢失数。`access_log_failures_total` 只记录格式化/提交异常；默认关闭无访问记录格式化或提交。HTTP关闭截止不限制阻塞stderr造成的日志join等待，沿用原日志限制。
+
 ## 测试与验证
 
-R6 当前命令（真实 socket/HTTP 与 sanitizer 测试须使用仓库规定的受控执行路线）：
+当前S1共12个活跃CTest（原9项加 `server_metrics_tests`、`http_observability_tests`、`observability_http_tests`）。使用Bash，在仓库根执行：
+
+```bash
+mkdir -p .cache/v0.6-s1/builder/tmp
+export TMPDIR="$PWD/.cache/v0.6-s1/builder/tmp" TMP="$TMPDIR" TEMP="$TMPDIR" PYTHONDONTWRITEBYTECODE=1
+cmake -S . -B .cache/v0.6-s1/builder/build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+cmake --build .cache/v0.6-s1/builder/build -j2
+ctest --test-dir .cache/v0.6-s1/builder/build --output-on-failure
+```
+
+真实socket/HTTP及LSan按仓库AGENTS受控执行。新测试在build下自行创建 `test-tmp/s1-observability-*` 干净夹具，保留stdout/stderr/result.json并回收自己启动的进程；无需旧benchmark入口。纯统计测试覆盖原子并发/饱和；Session专项覆盖provider/policy异常500、明确未排空中断、registry销毁、观测异常与日志队满/写失败；黑盒覆盖0/2worker、JSON消费者、CLI、sendfile/pipeline/错误/空连接/FIN/RST与关闭。独立Reviewer002：12/12 CTest与ASan+UBSan/LSan专项2/2通过。首审发现的优雅排空分类错误已修复并复验：真实pending→SIGTERM→读满8MiB/EOF记录completed，同时禁止pipeline推进；真正截断仍记aborted。首审FAIL及返工证据保留。
+
+
+R6 历史交付命令（真实 socket/HTTP 与 sanitizer 测试须使用仓库规定的受控执行路线）：
 
 ```bash
 mkdir -p .cache/refactor-r6/builder/{tmp,logs,build}
@@ -157,7 +186,7 @@ python3 scripts/format_cpp.py --files-from .cache/refactor-r6/builder/files.txt
 python3 scripts/format_cpp.py --check --files-from .cache/refactor-r6/builder/files.txt
 ```
 
-默认 CTest 为 6 项：保留 `cli_tests`、`http_server_integration_tests`、`server_integration_tests`（同一黑盒的历史别名）、`http_keep_alive_integration_tests`、`benchmark_runner_tests`；新增 `r6_callbacks_tests`，源码为 `tests/R6Callbacks_test.cpp`。
+R6交付时默认 CTest 为6项（当前12项见上）：保留 `cli_tests`、`http_server_integration_tests`、`server_integration_tests`（同一黑盒的历史别名）、`http_keep_alive_integration_tests`、`benchmark_runner_tests`；新增 `r6_callbacks_tests`，源码为 `tests/R6Callbacks_test.cpp`。
 
 新增专项验证注册拒绝时机、默认/空消息回调 echo、任务成功/停止/队满、共享槽与函数存储及入队分配失败、失败捕获析构重入、即时完成任务的 owner 析构与配额时序、HTTP 连接状态隔离/延迟 Session/阻塞写续传/关闭寿命。`EventLoopThread::post` 每次新增共享任务槽分配与引用计数成本，没有性能收益声明。
 

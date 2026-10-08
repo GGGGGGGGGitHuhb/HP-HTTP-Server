@@ -105,9 +105,7 @@ void TcpConnection::beginConnectionDrain() {
   inputStopped_ = true;
   readPaused_ = true;
   idleWaiting_ = false;
-  // 在后续写操作可能完成响应之前，禁止调用
-  // Session::HandleWriteComplete。
-  writeCompleteCallback_ = {};
+  // 保留终结通知；上层看到draining后只完成当前响应，不推进下一请求。
   if (timeoutActivityCallback_) timeoutActivityCallback_(*this, false);
   if (!io_.hasPendingOutput())
     requestClose();
@@ -197,7 +195,7 @@ void TcpConnection::flushOutput() {
     }
     // 必须响应排空
     if (!io_.hasPendingOutput() && written.bytesWritten && writeCompleteCallback_ &&
-        !inputStopped_) {
+        (!inputStopped_ || draining_)) {
       // 回调中的 Send 只排队：由外层循环推进下一个响应。
       writeCompleteCallback_(*this);
     } else

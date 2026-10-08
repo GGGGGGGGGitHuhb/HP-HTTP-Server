@@ -48,6 +48,8 @@ void printUsage(std::ostream& output) {
          << "       hp_http_server --help\n"
          << "V0.1 / S3 minimal HTTP static file server; restricted "
             "GET/keep-alive.\n"
+         << "--access-log enables bounded JSON access records (default off).\n"
+         << "--metrics-on-exit exports final counters to stdout (default off).\n"
          << "--threads defaults to 2 workers; 0 selects a single Reactor.\n"
          << "--idle-timeout-ms <0-86400000> defaults to 30000; "
             "--keep-alive-timeout-ms <0-86400000> defaults to 15000.\n"
@@ -99,6 +101,7 @@ struct ServerOptions {
   std::uint16_t port{0};
   std::string root;
   std::size_t threads{2};
+  bool accessLog{false}, metricsOnExit{false};
   std::chrono::milliseconds shutdownTimeout{5000};
   hp::net::ConnectionTimeouts timeouts{std::chrono::milliseconds(30000),
                                        std::chrono::milliseconds(15000)};
@@ -112,6 +115,12 @@ struct ServerOptions {
   ServerOptions options;
   for (int index = 1; index < argc; ++index) {
     const std::string_view option = argv[index];
+    if (option == "--access-log" || option == "--metrics-on-exit") {
+      bool& enabled = option == "--access-log" ? options.accessLog : options.metricsOnExit;
+      if (enabled) throw std::invalid_argument("observability option appears more than once");
+      enabled = true;
+      continue;
+    }
     if (option == "--port" || option == "--root" || option == "--threads" ||
         option == "--idle-timeout-ms" || option == "--keep-alive-timeout-ms" ||
         option == "--shutdown-timeout-ms") {
@@ -199,15 +208,20 @@ int runServer(int argc, char* argv[]) {
 
   ShutdownSignalMask mask;
   hp::base::LoggerSession logging;
+  hp::metrics::ServerMetrics metrics;
+  int exitCode = 0;
   try {
     hp::http::StaticFileService service(options.root);
     hp::app::SignalWatcher signals;
     hp::net::TcpServer server(options.port,
                               hp::http::kMaxRequestBytes,
                               options.threads,
-                              options.timeouts);
+                              options.timeouts,
+                              &metrics);
     server.registerMessageFactoryCallback(
-        [target = hp::app::HttpMessageFactory{service}]() { return target.onMessageFactory(); });
+        [target = hp::app::HttpMessageFactory{service, &metrics, options.accessLog}]() {
+          return target.onMessageFactory();
+        });
     ShutdownSignalHandler shutdownSignals{signals, server, options.shutdownTimeout};
     auto& signalChannel = server.watchControlFd(signals.fd());
     signalChannel.registerEventCallback([target = &shutdownSignals](std::uint32_t events) {
@@ -220,13 +234,30 @@ int runServer(int argc, char* argv[]) {
     std::cout << "V0.1 / S3 minimal HTTP static file server listening on port " << portText << "."
               << std::endl;
     server.runTcpServer();
-    return 0;
   } catch (const std::exception& error) {
     hp::base::error(error.what());
+    exitCode = 1;
   } catch (...) {
     hp::base::error("Unknown fatal error.");
+    exitCode = 1;
   }
-  return 1;
+  logging.stopSessionLogging();
+  if (options.metricsOnExit) {
+    const auto stats = logging.stats();
+    std::cout << "HP_METRICS_BEGIN\n"
+              << hp::metrics::ServerMetrics::serializeSnapshot(metrics.snapshot())
+              << "logger_submitted " << stats.submitted << '\n'
+              << "logger_accepted " << stats.accepted << '\n'
+              << "logger_dropped_full " << stats.droppedFull << '\n'
+              << "logger_rejected_stopped " << stats.rejectedStopped << '\n'
+              << "logger_truncated " << stats.truncated << '\n'
+              << "logger_written " << stats.written << '\n'
+              << "logger_failed " << stats.failed << '\n'
+              << "logger_pending " << stats.pending << "\nHP_METRICS_END\n"
+              << std::flush;
+    if (!std::cout) exitCode = 1;
+  }
+  return exitCode;
 }
 
 }  // namespace

@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(hp_http_core STATIC
+    src/metrics/ServerMetrics.cpp
     src/base/Logger.cpp
     src/base/AsyncLogger.cpp
     src/base/FileRegion.cpp
@@ -31,7 +32,7 @@ target_include_directories(hp_http_core PUBLIC include)
 find_package(Threads REQUIRED)
 target_link_libraries(hp_http_core PUBLIC Threads::Threads)
 
-add_library(hp_http_app STATIC app/HttpConnectionHandler.cpp app/SignalWatcher.cpp)
+add_library(hp_http_app STATIC app/HttpConnectionHandler.cpp app/AccessLog.cpp app/SignalWatcher.cpp)
 target_include_directories(hp_http_app PUBLIC app)
 target_link_libraries(hp_http_app PUBLIC hp_http_core)
 
@@ -100,5 +101,23 @@ if(BUILD_TESTING)
     add_test(NAME tcp_nodelay_http_tests
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/TcpNoDelayHttp_test.py $<TARGET_FILE:hp_http_server>)
     set_tests_properties(tcp_nodelay_http_tests PROPERTIES TIMEOUT 60
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(server_metrics_tests tests/ServerMetrics_test.cpp)
+    target_link_libraries(server_metrics_tests PRIVATE hp_http_core)
+    enable_debug_warnings(server_metrics_tests)
+    add_test(NAME server_metrics_tests COMMAND server_metrics_tests)
+    add_executable(http_observability_tests tests/HttpObservability_test.cpp)
+    target_link_libraries(http_observability_tests PRIVATE hp_http_app)
+    target_link_options(http_observability_tests PRIVATE
+        -Wl,--wrap=_ZN2hp4base4infoESt17basic_string_viewIcSt11char_traitsIcEE -Wl,--wrap=_Znwm)
+    enable_debug_warnings(http_observability_tests)
+    add_test(NAME http_observability_tests COMMAND http_observability_tests)
+    set_tests_properties(server_metrics_tests http_observability_tests PROPERTIES TIMEOUT 30)
+    add_test(NAME observability_http_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ObservabilityHttp_test.py $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(observability_http_tests PROPERTIES TIMEOUT 60
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()

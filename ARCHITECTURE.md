@@ -6,6 +6,15 @@
 
 ## 当前状态与目标架构
 
+V0.6/S1已完成并获Reviewer002独立PASS；V0.6全版本尚未完成。进程装配持有 `metrics::ServerMetrics`，生命周期覆盖server、所有worker/registry和HTTP Session。metrics模块只负责固定容量原子数值与文本序列化，不依赖net/http/logger；net的registry只调用连接计数接口，app决定请求/响应和访问记录口径。`ResponseResult` 显式传递status与contentBytes，文件响应直接使用已校验metadata的正文长度；兼容物化时保持元数据，不解析wire推测结果。
+
+每个IO owner上的Session从首次非空feed设置单一pending和steady_clock起点，NeedMore继续同一请求。响应元数据、phase及completed在send前写定；onWriteComplete先终结，再reset/parser推进pipeline。优雅drain保留实际输出排空通知；net保持inputStopped/readPaused，Session见isDraining立即进入closing并返回，禁止reset/feed/provider或推进pipeline后缀。force/deadline未排空仍由关闭析构记aborted。Session析构对仍pending的请求记aborted。终结先清pending，防止重复回调/析构重计；空连接不开始HTTP请求，初始空FIN的旧400响应不纳入请求总账。Session状态归属单一IO线程，跨worker只更新固定原子计数，无逐请求全局统计锁、URL标签或回调总线。
+
+ConnectionRegistry在连接实际注册/激活/超时设置成功后增加累计与活跃数；erase或析构减少活跃数。注册期间的identity标志避免失败setup在cleanup中误减未计数连接；不以accept或lazy Session创建数代替注册连接数。HTTP终结不占用registry closeCallback，仍通过连接持有的消息/写完成闭包保存Session；Session不反向持有连接，避免所有权环。
+
+访问记录在app持有有界owning method/path副本，parser reset和输入consume后不使用借用数据。默认不创建访问payload；启用后序列化完整有界JSON并通过原AsyncLogger提交。逐字节转义、query/fragment剔除和path截断在app完成，net不承担HTTP/日志策略。观测异常捕获并计数，不改业务关闭策略；全部日志共享丢弃/写失败统计。stdout最终导出只在worker停止/join、server/registry/Session销毁、LoggerSession drain之后执行；runtime快照逐字段读取，终态快照可复算。completed定义为kernel接收排空，status/contentBytes是构造时结果，延迟是服务端单调时钟区间，不宣称客户端接收或网络RTT。
+
+
 2026-09-28：V0.5.1/S2连接级TCP_NODELAY策略已交付并独立验收。Acceptor取得有效局部Socket后，在交付AcceptedCallback前调用Socket::setTcpNoDelay(true)；不设置监听socket或依赖继承。选项失败保留局部所有权，RAII关闭该连接并继续接收；无新持久回调、跨线程状态或逐响应选项开关。ConnectionIo的头部send/正文sendfile、offset、背压和关闭契约保持。默认客户端的约42ms正文等待已在局部负载消除，S3扩展验收尚未执行。
 
 

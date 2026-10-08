@@ -9,8 +9,10 @@ namespace hp::net {
 TcpServer::TcpServer(std::uint16_t requestedPort,
                      std::size_t maxInputBytes,
                      std::size_t workerCount,
-                     ConnectionTimeouts timeouts)
-    : maxInputBytes_(maxInputBytes),
+                     ConnectionTimeouts timeouts,
+                     metrics::ServerMetrics* metrics)
+    : metrics_(metrics),
+      maxInputBytes_(maxInputBytes),
       workerCount_(workerCount),
       timeouts_(timeouts),
       workerRegistries_(workerCount <= 64 ? workerCount : 0),
@@ -27,7 +29,7 @@ TcpServer::TcpServer(std::uint16_t requestedPort,
   if (workerCount == 0) {
     // 连接注册表属于主循环
     mainConnectionRegistry_ =
-        std::make_unique<ConnectionRegistry>(mainEventLoop_, maxInputBytes_, timeouts_);
+        std::make_unique<ConnectionRegistry>(mainEventLoop_, maxInputBytes_, timeouts_, metrics_);
     mainConnectionRegistry_->setStopCallback(
         [target = &mainEventLoop_]() { target->requestLoopStop(); });
   } else {
@@ -169,7 +171,7 @@ void TcpServer::onAccepted(Socket socket) {
 
 void TcpServer::initializeWorkerRegistry(std::size_t workerIndex, EventLoop& workerEventLoop) {
   workerRegistries_[workerIndex] =
-      std::make_unique<ConnectionRegistry>(workerEventLoop, maxInputBytes_, timeouts_);
+      std::make_unique<ConnectionRegistry>(workerEventLoop, maxInputBytes_, timeouts_, metrics_);
   workerRegistries_[workerIndex]->setStopCallback(
       [target = &workerEventLoop]() { target->requestLoopStop(); });
   workerEventLoop.registerControlCallback(
