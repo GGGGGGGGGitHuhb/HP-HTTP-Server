@@ -99,3 +99,7 @@ ctest --test-dir build-v0.5-s4-local --output-on-failure --timeout 60
 ```
 
 快速测试中的 fake wrk/HTTP/故障是明确标记的 synthetic 测试，包含真实 socket 和子进程生命周期验证，不能替代实际 wrk。默认 CTest 只运行快测，不自动触发五分钟压测。运行以上 socket/进程检查需要环境允许 loopback 与 `/proc`；不改变全局权限或设置。
+
+## V0.6/S2 当前S1场景矩阵
+
+独立固定S1源码的6×3矩阵入口见 [matrix/README.md](matrix/README.md)，结果见 [V0.6/S2-matrix.md](results/V0.6/S2-matrix.md)。首次失败2有效/1无效/15未执行保留；已批准R002的 [CPU原始证据齐备的新18套](results/V0.6/S2-builder-r002.md)有效、待独立审查，旧build.py/run.py/summary.lua仍保留历史A/B契约，不用修改旧常量启动新矩阵。新入口需要各角色有限预算授权，不恢复长尾定位。

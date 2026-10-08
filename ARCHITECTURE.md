@@ -674,3 +674,7 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 - 2026-09-10：依据V0.5/S3 Reviewer002最终PASS及Leader003同步已交付Buffer、直接recv、64KiB保留取舍和异常/瞬时存储界；HTTP背压及S2日志关闭限制保持。S4未开始。
 
 - 2026-09-10：Reviewer002 PASS、Leader005关闭S4及V0.5，保留S1 sendfile、S2阻塞stderr最终join限制和S3 Buffer边界；本阶段未改C++产品。
+
+## 独立矩阵测量边界
+
+V0.6/S2工具与产品分离：Build从固定已验收S1 git archive导出独立Release，不读取学习dirty；Run拥有loopback server/wrk/PID身份、夹具、审计与回收，Aggregate只消费已结束样本。现有S1指标出口提供独立终态总账，客户端wrk窗口不与kernel-complete机械相等。计量/公开结果的具体口径见benchmark/matrix/README.md；工具不成为产品运行依赖，不改HTTP/IO模块，也不承担根因定位。
