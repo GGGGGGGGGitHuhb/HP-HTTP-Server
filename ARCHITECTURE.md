@@ -6,7 +6,7 @@
 
 ## 当前状态与目标架构
 
-V0.6/S1已完成并获Reviewer002独立PASS；V0.6全版本尚未完成。进程装配持有 `metrics::ServerMetrics`，生命周期覆盖server、所有worker/registry和HTTP Session。metrics模块只负责固定容量原子数值与文本序列化，不依赖net/http/logger；net的registry只调用连接计数接口，app决定请求/响应和访问记录口径。`ResponseResult` 显式传递status与contentBytes，文件响应直接使用已校验metadata的正文长度；兼容物化时保持元数据，不解析wire推测结果。
+V0.6按各阶段批准范围已完成，S3为R002有限三样本分析；生产IO结构未因压测/分析工具改变。进程装配持有 `metrics::ServerMetrics`，生命周期覆盖server、所有worker/registry和HTTP Session。metrics模块只负责固定容量原子数值与文本序列化，不依赖net/http/logger；net的registry只调用连接计数接口，app决定请求/响应和访问记录口径。`ResponseResult` 显式传递status与contentBytes，文件响应直接使用已校验metadata的正文长度；兼容物化时保持元数据，不解析wire推测结果。
 
 每个IO owner上的Session从首次非空feed设置单一pending和steady_clock起点，NeedMore继续同一请求。响应元数据、phase及completed在send前写定；onWriteComplete先终结，再reset/parser推进pipeline。优雅drain保留实际输出排空通知；net保持inputStopped/readPaused，Session见isDraining立即进入closing并返回，禁止reset/feed/provider或推进pipeline后缀。force/deadline未排空仍由关闭析构记aborted。Session析构对仍pending的请求记aborted。终结先清pending，防止重复回调/析构重计；空连接不开始HTTP请求，初始空FIN的旧400响应不纳入请求总账。Session状态归属单一IO线程，跨worker只更新固定原子计数，无逐请求全局统计锁、URL标签或回调总线。
 
@@ -678,3 +678,9 @@ Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Revi
 ## 独立矩阵测量边界
 
 V0.6/S2工具与产品分离：Build从固定已验收S1 git archive导出独立Release，不读取学习dirty；Run拥有loopback server/wrk/PID身份、夹具、审计与回收，Aggregate只消费已结束样本。现有S1指标出口提供独立终态总账，客户端wrk窗口不与kernel-complete机械相等。计量/公开结果的具体口径见benchmark/matrix/README.md；工具不成为产品运行依赖，不改HTTP/IO模块，也不承担根因定位。
+
+## 性能材料的系统边界
+
+benchmark/matrix固定已验收产品archive/Release identity，benchmark/analysis仅只读复用各角色artifact并管理独立自有server/client/strace。线程CPU依据实际server /proc ticks和身份/clock；client为单child wait4，strace wrapper不是server CPU。父strace启动时系统调用汇总覆盖server完整生命周期，不能机械映射到5s HTTP窗口。异常finally持久化真实child退出缓存/cleanup，不补造旧失败记录。工具不接入生产IO或修改server行为。
+
+S3最终证据仅M2配对及M6未跟踪；M6 syscall未知、线程角色映射无依据则unknown，强跟踪扰动使syscall排名不能直接成为生产瓶颈判断。WSL2/closed-loop/hot cache限制、RO-002高并发长尾和TD-006冻结测试边界延续。

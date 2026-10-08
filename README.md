@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-2026-10-08：V0.5.1 **已搁置（未完成）**。这是用户决定的管理停工，不是验收通过。S1/S2已完成，TCP_NODELAY局部修复已验证；S3已终止且高并发P3验收FAIL，S4停工，长尾尝试修复/定位未果，RO-002仍开放；S5/S6未开始。V0.6/S1已按用户提前批准启动，设计与审查计划Approved，S1已完成，Reviewer002独立PASS；V0.6整体未完成，S2已完成、S3未开始；不再以V0.5.1验收完成为前置条件。
+2026-10-08：V0.5.1 **已搁置（未完成）**。这是用户决定的管理停工，不是验收通过。S1/S2已完成，TCP_NODELAY局部修复已验证；S3已终止且高并发P3验收FAIL，S4停工，长尾尝试修复/定位未果，RO-002仍开放；S5/S6未开始。V0.6已完成：S1/S2及S3（用户批准R002有限三样本范围）均独立PASS并收口；不再以V0.5.1验收完成为前置条件。S3仅小文件系统调用热点/跟踪扰动与小、大文件线程CPU证据，大文件syscall未知、无函数profile或长尾根因结论。
 
 [停工结论与有限验证](benchmark/results/V0.5.1/SHELVED.md)；[历史检查点](history/V0.5.1/README-checkpoints.md)；[诊断资料边界](benchmark/README.md)。现有诊断候选归档保留，不是生产功能或可恢复执行入口。
 
@@ -465,4 +465,8 @@ ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 timeout 60s ./build-v0
 
 ## V0.6/S2 场景矩阵
 
-新增独立 [矩阵工具与命令](benchmark/matrix/README.md)，固定已验收S1源码，覆盖正文大小、连接模式和worker/连接组合；[本轮结果](benchmark/results/V0.6/S2-matrix.md)保留首次工具超时的2有效/1无效/15未执行；R002新增 [CPU原始证据齐备的Builder18结果](benchmark/results/V0.6/S2-builder-r002.md)（Reviewer002独立PASS）。[Reviewer独立18结果](benchmark/results/V0.6/S2-reviewer-001.md)与逐CPU原始证据复算已通过，S2已完成。新专项 `matrix_benchmark_tests` 是功能/合成反例，新增注册1项且保留S1原12项；本轮只运行工具专项，不复跑整套，不能替代正式18样本；V0.6整体与S3尚未完成，不据此宣称修复长尾。
+新增独立 [矩阵工具与命令](benchmark/matrix/README.md)，固定已验收S1源码，覆盖正文大小、连接模式和worker/连接组合；[本轮结果](benchmark/results/V0.6/S2-matrix.md)保留首次工具超时的2有效/1无效/15未执行；R002新增 [CPU原始证据齐备的Builder18结果](benchmark/results/V0.6/S2-builder-r002.md)（Reviewer002独立PASS）。[Reviewer独立18结果](benchmark/results/V0.6/S2-reviewer-001.md)与逐CPU原始证据复算已通过，S2已完成。新专项 `matrix_benchmark_tests` 是功能/合成反例，新增注册1项且保留S1原12项；本轮只运行工具专项，不复跑整套，不能替代正式18样本；S2数据不据此宣称修复长尾；V0.6最终有限分析见下方S3。
+
+V0.6/S3已在Approved R002有限范围内由Reviewer001独立PASS。工具与命令见 [analysis](benchmark/analysis/README.md)，[Reviewer独立结果](benchmark/results/V0.6/S3-reviewer-limited.md)给出M2未跟踪/跟踪与M6未跟踪三条；新专项performance_analysis_tests验证工具与失败路径，本轮未复跑整套产品CTest/sanitizer。
+
+[Builder有限材料](benchmark/results/V0.6/S3-builder-limited.md)与原四套3valid/1invalid历史保持；系统调用汇总仅M2完整server生命周期，M6 syscall未知。M2单次strace相对QPS变化-95.85%仅证明强观测扰动，不能据排名断言生产瓶颈、稳定性能或原长尾根因；WSL2与既有RO-002/TD-001/TD-006边界保留。

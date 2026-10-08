@@ -1,0 +1,111 @@
+{
+  "status": "BLOCKED ptrace permission; not a product verdict",
+  "role": "Builder",
+  "product_commit": "1340f5bb8a303769a8be32b2d8cc29482fd2a8fe",
+  "product_tree": "f2fdabf35fb754b7f4e981708efd34e40e53ceac",
+  "product_binary_sha256": "9f95b5f3b31062737032e0ce130dfd725a4e9f923ec96524b3006ccbb2ac7530",
+  "strace": "strace -- version 6.8",
+  "probe": {
+    "status": "invalid",
+    "attach_stderr": "/usr/bin/strace: attach: ptrace(PTRACE_SEIZE, 26872): Operation not permitted\n",
+    "argv": [
+      "/usr/bin/strace",
+      "-f",
+      "-c",
+      "-p",
+      "26872"
+    ],
+    "server_identity": {
+      "pid": 26872,
+      "starttime": 17042093
+    },
+    "tracer_identity": {
+      "pid": 26876,
+      "starttime": 17042094
+    },
+    "tracer_cleanup": {
+      "pid": 26876,
+      "starttime": 17042094,
+      "returncode": 1,
+      "forced": false,
+      "reaped": true,
+      "cleanup_elapsed_s": 2.228299854323268e-05,
+      "wait4": {
+        "pid": 26876,
+        "ru_utime_s": 0.000726,
+        "ru_stime_s": 0.007526,
+        "read_monotonic": 170420.961058382
+      }
+    },
+    "server_cleanup": {
+      "pid": 26872,
+      "starttime": 17042093,
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "cleanup_elapsed_s": 0.010566090000793338,
+      "wait4": {
+        "pid": 26872,
+        "ru_utime_s": 0.0032749999999999997,
+        "ru_stime_s": 0.0,
+        "read_monotonic": 170420.972148165
+      }
+    }
+  },
+  "formal_counts": {
+    "valid": 0,
+    "invalid": 0,
+    "not_run": 4
+  },
+  "formal_not_run": [
+    {
+      "index": 1,
+      "id": "M2",
+      "traced": false
+    },
+    {
+      "index": 2,
+      "id": "M2",
+      "traced": true
+    },
+    {
+      "index": 3,
+      "id": "M6",
+      "traced": false
+    },
+    {
+      "index": 4,
+      "id": "M6",
+      "traced": true
+    }
+  ],
+  "phases": {
+    "fastchecks": {
+      "start_monotonic": 170389.736767931,
+      "deadline_monotonic": 170419.736767931,
+      "status": "passed",
+      "error": null,
+      "end_monotonic": 170390.851907623,
+      "elapsed_s": 1.1151396920031402
+    },
+    "probe": {
+      "start_monotonic": 170420.652218967,
+      "deadline_monotonic": 170440.652218967,
+      "status": "invalid",
+      "error": "ValueError('strace exited before attach; see trace.stderr')",
+      "end_monotonic": 170420.972703098,
+      "elapsed_s": 0.32048413099255413
+    }
+  },
+  "budget": {
+    "elapsed_window_s": 112.21594287201879,
+    "remaining_at_settlement_s": 67.78405625300366,
+    "active_phase_s": 1.4356238229956944,
+    "usage": {
+      "logical_bytes": 1125656,
+      "allocated_bytes": 1318912,
+      "charged_bytes": 1318912,
+      "raw_bytes": 5769
+    }
+  }
+}

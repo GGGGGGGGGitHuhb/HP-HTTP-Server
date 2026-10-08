@@ -1,0 +1,116 @@
+{
+  "role": "Builder",
+  "status": "incomplete; no full performance analysis",
+  "counts": {
+    "valid": 3,
+    "invalid": 1,
+    "not_run": 0
+  },
+  "product_identity": {
+    "commit": "1340f5bb8a303769a8be32b2d8cc29482fd2a8fe",
+    "tree": "f2fdabf35fb754b7f4e981708efd34e40e53ceac",
+    "binary_sha256": "9f95b5f3b31062737032e0ce130dfd725a4e9f923ec96524b3006ccbb2ac7530",
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "compiler_sha256": "52f1ddb33fe78b9441e0f42e9cd22c571f1101938e046c8a26582494e041cc73",
+    "server_libraries": {
+      "/lib/x86_64-linux-gnu/libstdc++.so.6": "a68762c86d371e6041f03f03a33a78fa235809ae7d81c90185940c93c3535aed",
+      "/lib/x86_64-linux-gnu/libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+      "/lib/x86_64-linux-gnu/libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+      "/lib/x86_64-linux-gnu/libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+      "/lib64/ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+    }
+  },
+  "strace": "strace -- version 6.8",
+  "phases": {
+    "fastchecks": {
+      "start_monotonic": 171666.552942958,
+      "deadline_monotonic": 171696.552942958,
+      "status": "passed",
+      "error": null,
+      "end_monotonic": 171667.457099453,
+      "elapsed_s": 0.9041564950020984
+    },
+    "probe": {
+      "start_monotonic": 171685.919649484,
+      "deadline_monotonic": 171705.919649484,
+      "status": "passed",
+      "error": null,
+      "end_monotonic": 171686.195504251,
+      "elapsed_s": 0.2758547669800464
+    },
+    "formal": {
+      "start_monotonic": 171701.50552241,
+      "deadline_monotonic": 171821.50552241,
+      "status": "invalid",
+      "error": "FileNotFoundError(2, 'No such file or directory')",
+      "end_monotonic": 171726.758236193,
+      "elapsed_s": 25.252713783003855
+    }
+  },
+  "failure": {
+    "exception": "FileNotFoundError(2, 'No such file or directory')",
+    "cleanup_error": "ValueError('traced identity-tree cleanup invalid')",
+    "trace_scope": "server_lifecycle",
+    "server_cleanup": {
+      "pid": 7009,
+      "starttime": 17172049,
+      "direct_child": false,
+      "tracee_disappeared": true,
+      "thread_tids": [],
+      "threads_disappeared": true,
+      "port_closed": true,
+      "forced": false,
+      "natural_wrapper_exit": false,
+      "wrapper_cleanup": {
+        "pid": 7006,
+        "starttime": 17172049,
+        "returncode": -13,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 1.121999230235815e-05,
+        "wait4": {
+          "pid": 7006,
+          "ru_utime_s": 0.632301,
+          "ru_stime_s": 7.675823,
+          "read_monotonic": 171726.754309716
+        }
+      },
+      "wrapper_reaped": true,
+      "server_returncode": null
+    },
+    "wrapper_cleanup": {
+      "pid": 7006,
+      "starttime": 17172049,
+      "returncode": -13,
+      "forced": false,
+      "reaped": true,
+      "cleanup_elapsed_s": 1.121999230235815e-05,
+      "wait4": {
+        "pid": 7006,
+        "ru_utime_s": 0.632301,
+        "ru_stime_s": 7.675823,
+        "read_monotonic": 171726.754309716
+      }
+    },
+    "measurement_identity": {
+      "pid": 7016,
+      "starttime": 17172171
+    },
+    "measurement_cleanup": "missing; exit/rusage not persisted",
+    "measurement_raw_stdout": "Running 5s test @ http://127.0.0.1:34513/payload-1048576.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    99.06ms   31.83ms 296.21ms   71.55%\n    Req/Sec   161.07     31.07   232.00     82.00%\n  Latency Distribution\n     50%   95.58ms\n     75%  116.81ms\n     90%  136.91ms\n     99%  206.23ms\n  1606 requests in 5.00s, 1.58GB read\nRequests/sec:    321.04\nTransfer/sec:    323.18MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":5002451,\"requests\":1606,\"bytes\":1695224764,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":99060.615148,\"p50\":95578.000000,\"p95\":152162.000000,\"p99\":206230.000000,\"max\":296207.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":99675.237858}\n",
+    "syscall_summary_raw": "% time     seconds  usecs/call     calls    errors syscall\n------ ----------- ----------- --------- --------- ----------------\n 33.51    4.082802        5502       742           epoll_wait\n 33.04    4.024953       13416       300        26 futex\n  9.09    1.107931          69     15990           rt_sigprocmask\n  8.77    1.068702         133      7989        66 sendfile\n  4.61    0.561849          70      7989           rt_sigpending\n  2.54    0.309385          76      4046           epoll_ctl\n  1.56    0.189467          95      1976           sendto\n  1.55    0.189000          95      1986         6 openat\n  1.35    0.164178          80      2035           close\n  1.31    0.159507          79      2007           recvfrom\n  1.20    0.146673          74      1981           fstat\n  1.10    0.133606          67      1974           fcntl\n  0.18    0.021490         134       160           write\n  0.07    0.008127         114        71         4 accept4\n  0.04    0.004518          79        57           mprotect\n  0.04    0.004513          66        68           setsockopt\n  0.01    0.001682          41        41           getsockopt\n  0.01    0.001528          44        34        15 read\n  0.01    0.001009          45        22           rt_sigtimedwait\n  0.00    0.000532          19        28           mmap\n  0.00    0.000240         240         1           execve\n  0.00    0.000213          71         3           clone3\n  0.00    0.000129          32         4           rseq\n  0.00    0.000096          19         5           munmap\n  0.00    0.000074          18         4           set_robust_list\n  0.00    0.000063          21         3           brk\n  0.00    0.000050          16         3           eventfd2\n  0.00    0.000046          15         3           epoll_create1\n  0.00    0.000043          14         3         2 newfstatat\n  0.00    0.000037          37         1           bind\n  0.00    0.000028          14         2           pread64\n  0.00    0.000021          21         1           socket\n  0.00    0.000017          17         1         1 access\n  0.00    0.000016          16         1           getsockname\n  0.00    0.000015          15         1           signalfd4\n  0.00    0.000014          14         1           rt_sigaction\n  0.00    0.000014          14         1           listen\n  0.00    0.000013          13         1           prlimit64\n  0.00    0.000013          13         1           getrandom\n  0.00    0.000011          11         1           arch_prctl\n  0.00    0.000011          11         1           set_tid_address\n------ ----------- ----------- --------- --------- ----------------\n100.00   12.182616         245     49538       120 total\n",
+    "final_metrics_marker_count": 0,
+    "root_cause": "unknown"
+  },
+  "budget": {
+    "elapsed_window_s": 263.8440831390035,
+    "remaining_at_settlement_s": 0,
+    "active_phase_s": 26.432725044986,
+    "usage": {
+      "logical_bytes": 3527325,
+      "allocated_bytes": 4067328,
+      "charged_bytes": 4067328,
+      "raw_bytes": 74139
+    }
+  }
+}
