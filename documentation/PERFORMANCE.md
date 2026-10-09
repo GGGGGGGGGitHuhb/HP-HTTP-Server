@@ -2,7 +2,21 @@
 
 [项目入口](../README.md) · [项目展示](PRESENTATION.md) · [面试讲解](INTERVIEW.md) · [实验索引](../benchmark/README.md)
 
-这里整理已有独立测量，不是V1.0/S2新压测。当前已提交实现的结构见[架构](../ARCHITECTURE.md)；下列测量分别绑定各自历史源码身份，不能直接当成当前分支重新验收。QPS表示客户端完成的HTTP请求/响应事务数每秒。
+这里按源码身份分别整理独立测量；V0.6及V0.5.1数据是历史证据，V1.0/S3提供当前候选的有限回归证据，不跨版本混池。实现结构见[架构](../ARCHITECTURE.md)。QPS表示客户端完成的HTTP请求/响应事务数每秒。
+
+## V1.0/S3：最终候选有限回归
+
+依据[Reviewer独立结果](../benchmark/results/V1.0/S3/reviewer-rework-005.md)、[机器样本与复算](../benchmark/results/V1.0/S3/reviewer-rework-005.json)及[Builder结果](../benchmark/results/V1.0/S3/builder-rework-003.md)。候选为base `20bd03142b4c828a7e939c30b501812da2bd5440` 加四测试文件补丁SHA `6ad80910acf90acc1c76ad3fefb4034864d521ae282f18500c30731acfd52b83`；产品实现不改。Release C++20、`-O3 -DNDEBUG`，无LTO/native/sanitizer；固定wrk/Lua身份见机器证据。
+
+WSL2同机loopback、closed-loop、热缓存、Keep-Alive；每档三轮，每样本2s预热+10s测量。Reviewer独立9valid/0invalid/0NotRun，前后各三同socket完整响应审计及五类客户端测量错误零。以下为Reviewer三轮中位数及[min,max]，Builder单独保存，不合并请求分布；本链未采CPU/RSS。
+
+| 档位（正文 / workers / wrk线程与连接） | QPS中位数 [min,max] | 接收MiB/s中位数 | 校正P99 ms中位数 [min,max] |
+| --- | ---: | ---: | ---: |
+| M2（1 KiB / 2 / 2×32） | 35356.00 [33623.47,36254.29] | 38.07 | 1.978 [1.959,2.034] |
+| M3（1 KiB / 4 / 4×128） | 58449.41 [53328.66,59231.06] | 62.93 | 530.383 [273.912,783.770] |
+| M6（1 MiB / 2 / 2×32） | 425.87 [414.31,425.95] | 427.50 | 181.181 [172.266,278.011] |
+
+本次候选验收通过不证明旧EOF根因已修复；M3长尾与RO-002仍开放，不宣称性能恢复、多核线性扩展或物理网卡容量。14当前CTest与23冻结目标分别说明，见[发布检查](RELEASE-CHECK.md)。
 
 ## V0.6/S2：六档独立基线
 
@@ -69,4 +83,4 @@ M2跟踪相对QPS变化-95.85%，表示巨大观测扰动，不能推断稳定�
 - RSS为每秒采样最大值，不是瞬时精确峰值；VmHWM可能包含预热。表内再取三轮采样最大值的中位。
 - server completed表示输出被kernel接收，且server统计覆盖审计/预热/退出；wrk requests只属客户端测量窗口，不要求两者机械相等，不能据server completed证明peer收全正文。
 
-五类测量错误零及前后状态/正文审计证明各套在声明的验证范围有效；不能扩展成公网/物理机容量或当前全量测试通过。RO-002、TD-001、TD-006仍[开放](../TECH-DEBT-TRACKER.md)，高并发长尾未关闭。V1.0整体未完成，最终回归属于尚未开始的S3。
+五类测量错误零及前后状态/正文审计证明各套在声明的验证范围有效；不能扩展成公网/物理机容量或全部历史测试覆盖。V1.0/S3独立最终回归已通过；RO-002、TD-001、TD-006仍[开放](../TECH-DEBT-TRACKER.md)，高并发长尾未关闭。

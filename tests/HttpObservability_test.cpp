@@ -1,7 +1,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <cassert>
 #include <condition_variable>
 #include <iostream>
 #include <limits>
@@ -13,6 +12,7 @@
 
 #include "AccessLog.h"
 #include "HttpConnectionHandler.h"
+#include "TestCheck.h"
 #include "base/AsyncLogger.h"
 #include "net/ConnectionRegistry.h"
 
@@ -63,7 +63,8 @@ struct SocketFixture {
 
   SocketFixture(ServerMetrics& metrics, hp::app::ResponseCallback provider, bool access = false) {
     int pair[2];
-    assert(socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, pair) == 0);
+    requireTestCondition(socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, pair) ==
+                         0);
     peer.reset(pair[1]);
     connection = std::make_unique<TcpConnection>(loop, hp::net::Socket(pair[0]), 1, 65536);
     connection->setCloseCallback([](int fd, auto identity) { ignoreClose(fd, identity); });
@@ -73,8 +74,8 @@ struct SocketFixture {
   }
 
   void write(std::string_view request) {
-    assert(::send(peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
-           static_cast<ssize_t>(request.size()));
+    requireTestCondition(::send(peer.fd(), request.data(), request.size(), MSG_NOSIGNAL) ==
+                         static_cast<ssize_t>(request.size()));
     loop.pollOnce(0);
   }
 
@@ -133,10 +134,11 @@ void testProvidersAndPipeline() {
     SocketFixture fixture(metrics, provider);
     fixture.write("GET / HTTP/1.1\r\nHost: test\r\nConnection: close\r\n\r\n");
     auto output = fixture.drain();
-    assert(output.find("500 Internal Server Error") != std::string::npos);
+    requireTestCondition(output.find("500 Internal Server Error") != std::string::npos);
     auto result = metrics.snapshot();
-    assert(result.requestsStarted == 1 && result.responsesCompleted == 1);
-    assert(result.providerErrors == 1 && result.errors == 1 && result.responseStatus[6] == 1);
+    requireTestCondition(result.requestsStarted == 1 && result.responsesCompleted == 1);
+    requireTestCondition(result.providerErrors == 1 && result.errors == 1 &&
+                         result.responseStatus[6] == 1);
   }
   ServerMetrics metrics;
   SocketFixture fixture(metrics, respond);
@@ -145,8 +147,8 @@ void testProvidersAndPipeline() {
       "close\r\n\r\n");
   fixture.drain();
   auto result = metrics.snapshot();
-  assert(result.requestsStarted == 2 && result.responsesCompleted == 2 &&
-         result.requestsAborted == 0);
+  requireTestCondition(result.requestsStarted == 2 && result.responsesCompleted == 2 &&
+                       result.requestsAborted == 0);
 }
 
 void testGracefulDrainCompleted() {
@@ -154,10 +156,10 @@ void testGracefulDrainCompleted() {
   SocketFixture fixture(metrics, largeResponse);
   fixture.write(
       "GET /slow HTTP/1.1\r\nHost: test\r\n\r\nGET /suffix HTTP/1.1\r\nHost: test\r\n\r\n");
-  assert(fixture.connection->pendingBytes() > 0);
-  assert(metrics.snapshot().requestsStarted == 1);
+  requireTestCondition(fixture.connection->pendingBytes() > 0);
+  requireTestCondition(metrics.snapshot().requestsStarted == 1);
   fixture.connection->beginConnectionDrain();
-  assert(fixture.connection->isDraining());
+  requireTestCondition(fixture.connection->isDraining());
   auto body = fixture.drain();
   char tail[16384];
   for (;;) {
@@ -165,17 +167,18 @@ void testGracefulDrainCompleted() {
     if (count <= 0) break;
     body.append(tail, static_cast<std::size_t>(count));
   }
-  assert(body.find("200 OK") != std::string::npos);
+  requireTestCondition(body.find("200 OK") != std::string::npos);
   const auto headerEnd = body.find("\r\n\r\n");
-  assert(headerEnd != std::string::npos);
-  assert(body.substr(headerEnd + 4) == std::string(1024 * 1024, 'R'));
+  requireTestCondition(headerEnd != std::string::npos);
+  requireTestCondition(body.substr(headerEnd + 4) == std::string(1024 * 1024, 'R'));
   const auto result = metrics.snapshot();
-  assert(result.requestsStarted == 1 && result.responsesCompleted == 1);
-  assert(result.requestsAborted == 0 && result.errors == 0);
-  assert(fixture.connection->state() == TcpConnection::State::kClosing);
+  requireTestCondition(result.requestsStarted == 1 && result.responsesCompleted == 1);
+  requireTestCondition(result.requestsAborted == 0 && result.errors == 0);
+  requireTestCondition(fixture.connection->state() == TcpConnection::State::kClosing);
   // 已排空或重复drain不得制造第二次完成，也不开始缓冲区中的suffix。
   fixture.connection->beginConnectionDrain();
-  assert(metrics.snapshot().responsesCompleted == 1 && metrics.snapshot().requestsStarted == 1);
+  requireTestCondition(metrics.snapshot().responsesCompleted == 1 &&
+                       metrics.snapshot().requestsStarted == 1);
 }
 
 void testAbortAndUniqueTerminal() {
@@ -184,19 +187,21 @@ void testAbortAndUniqueTerminal() {
     SocketFixture fixture(partial, respond);
     fixture.write("GET / HTTP/1.1\r\nHost: test\r\n");
     fixture.write("X-Partial: value");
-    assert(partial.snapshot().requestsStarted == 1);
+    requireTestCondition(partial.snapshot().requestsStarted == 1);
     fixture.connection->requestClose();
   }
-  assert(partial.snapshot().requestsAborted == 1 && partial.snapshot().responseStatus[0] == 1);
+  requireTestCondition(partial.snapshot().requestsAborted == 1 &&
+                       partial.snapshot().responseStatus[0] == 1);
   ServerMetrics slow;
   {
     SocketFixture fixture(slow, largeResponse, true);
     fixture.write("GET /slow?secret HTTP/1.1\r\nHost: test\r\n\r\n");
-    assert(fixture.connection->pendingBytes() > 0);
-    assert(slow.snapshot().responsesCompleted == 0);
+    requireTestCondition(fixture.connection->pendingBytes() > 0);
+    requireTestCondition(slow.snapshot().responsesCompleted == 0);
     fixture.connection->requestClose();
   }
-  assert(slow.snapshot().requestsAborted == 1 && slow.snapshot().responseStatus[1] == 1);
+  requireTestCondition(slow.snapshot().requestsAborted == 1 &&
+                       slow.snapshot().responseStatus[1] == 1);
   ServerMetrics unique;
   hp::app::Session session(nullptr, &unique, true);
   session.requestPending = true;
@@ -206,11 +211,12 @@ void testAbortAndUniqueTerminal() {
   session.finishPendingRequest(false);
   session.finishPendingRequest(true);
   throwSubmission = false;
-  assert(unique.snapshot().responsesCompleted == 1 && unique.snapshot().requestsAborted == 0);
-  assert(unique.snapshot().accessLogFailures == 1);
+  requireTestCondition(unique.snapshot().responsesCompleted == 1 &&
+                       unique.snapshot().requestsAborted == 0);
+  requireTestCondition(unique.snapshot().accessLogFailures == 1);
   failNextAllocation = true;
   hp::app::submitAccessRecord({}, &unique);
-  assert(!failNextAllocation && unique.snapshot().accessLogFailures == 2);
+  requireTestCondition(!failNextAllocation && unique.snapshot().accessLogFailures == 2);
 }
 
 void testRegistry() {
@@ -220,37 +226,42 @@ void testRegistry() {
   {
     hp::net::ConnectionRegistry registry(loop, 65536, {}, &metrics);
     int pair[2];
-    assert(socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, pair) == 0);
+    requireTestCondition(socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, pair) ==
+                         0);
     peer.reset(pair[1]);
     const auto serverFd = pair[0];
     registry.onAccepted(hp::net::Socket(serverFd), {});
-    assert(metrics.snapshot().connectionsTotal == 1 && metrics.snapshot().connectionsActive == 1);
+    requireTestCondition(metrics.snapshot().connectionsTotal == 1 &&
+                         metrics.snapshot().connectionsActive == 1);
     registry.onClose(serverFd, 1);
     registry.onClose(serverFd, 1);
     registry.onCleanup();
-    assert(metrics.snapshot().connectionsActive == 0);
+    requireTestCondition(metrics.snapshot().connectionsActive == 0);
     int nextPair[2];
-    assert(socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, nextPair) == 0);
+    requireTestCondition(
+        socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, nextPair) == 0);
     peer.reset(nextPair[1]);
     registry.onAccepted(hp::net::Socket(nextPair[0]), {});
-    assert(metrics.snapshot().connectionsActive == 1);
+    requireTestCondition(metrics.snapshot().connectionsActive == 1);
     bool registrationFailed = false;
     try {
       registry.onAccepted(hp::net::Socket{}, {});
     } catch (...) {
       registrationFailed = true;
     }
-    assert(registrationFailed && metrics.snapshot().connectionsActive == 1);
+    requireTestCondition(registrationFailed && metrics.snapshot().connectionsActive == 1);
     registry.beginConnectionsDrain(true);
-    assert(metrics.snapshot().connectionsActive == 0);
+    requireTestCondition(metrics.snapshot().connectionsActive == 0);
     int rejected[2];
-    assert(socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, rejected) == 0);
+    requireTestCondition(
+        socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, rejected) == 0);
     peer.reset(rejected[1]);
     registry.onAccepted(hp::net::Socket(rejected[0]), {});
-    assert(metrics.snapshot().connectionsTotal == 2);
+    requireTestCondition(metrics.snapshot().connectionsTotal == 2);
   }
-  assert(metrics.snapshot().connectionsActive == 0 && metrics.snapshot().connectionsTotal == 2);
-  assert(metrics.snapshot().requestsStarted == 0);
+  requireTestCondition(metrics.snapshot().connectionsActive == 0 &&
+                       metrics.snapshot().connectionsTotal == 2);
+  requireTestCondition(metrics.snapshot().requestsStarted == 0);
 }
 
 void testJsonBounds() {
@@ -259,9 +270,10 @@ void testJsonBounds() {
   record.copyRequest("\"\\\r\n", path + "?secret#fragment");
   record.contentBytes = record.durationUs = std::numeric_limits<std::uint64_t>::max();
   auto text = hp::app::serializeAccessRecord(record);
-  assert(text.size() <= hp::base::AsyncLogger::kMessageLimit);
-  assert(text.find("secret") == std::string::npos && text.find("\\u0080") != std::string::npos);
-  assert(text.find('\n') == std::string::npos && record.pathTruncated);
+  requireTestCondition(text.size() <= hp::base::AsyncLogger::kMessageLimit);
+  requireTestCondition(text.find("secret") == std::string::npos &&
+                       text.find("\\u0080") != std::string::npos);
+  requireTestCondition(text.find('\n') == std::string::npos && record.pathTruncated);
 }
 
 class GatedSink : public std::streambuf {
@@ -303,24 +315,26 @@ void testLoggerFailureDoesNotChangeHttp() {
   {
     SocketFixture fixture(metrics, respond, true);
     fixture.write("GET / HTTP/1.1\r\nHost: test\r\nConnection: close\r\n\r\n");
-    assert(fixture.drain().find("200 OK") != std::string::npos);
+    requireTestCondition(fixture.drain().find("200 OK") != std::string::npos);
   }
   // 消费线程受控停在首次write，唯一队列槽已由HTTP占据。
   hp::app::submitAccessRecord(record, &metrics);
-  assert(logger->stats().droppedFull == 1);
+  requireTestCondition(logger->stats().droppedFull == 1);
   sink.releaseWrite();
   logger->stopAsyncLogging();
-  assert(logger->stats().failed == 2 && logger->stats().pending == 0);
-  assert(logger->stats().truncated == 0 && metrics.snapshot().responsesCompleted == 1);
+  requireTestCondition(logger->stats().failed == 2 && logger->stats().pending == 0);
+  requireTestCondition(logger->stats().truncated == 0 &&
+                       metrics.snapshot().responsesCompleted == 1);
   submissionLogger = nullptr;
   throwSubmission = true;
   {
     SocketFixture fixture(metrics, respond, true);
     fixture.write("GET / HTTP/1.1\r\nHost: test\r\nConnection: close\r\n\r\n");
-    assert(fixture.drain().find("200 OK") != std::string::npos);
+    requireTestCondition(fixture.drain().find("200 OK") != std::string::npos);
   }
   throwSubmission = false;
-  assert(metrics.snapshot().responsesCompleted == 2 && metrics.snapshot().accessLogFailures == 1);
+  requireTestCondition(metrics.snapshot().responsesCompleted == 2 &&
+                       metrics.snapshot().accessLogFailures == 1);
 }
 }  // namespace
 

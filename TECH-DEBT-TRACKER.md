@@ -2,7 +2,7 @@
 
 ## 当前概况
 
-V0.6按有限范围已完成；V1.0/S1文档整理已通过独立静态审查并完成，不接受新风险或关闭条目。V0.5.1搁置未完成，长尾仍未解决；旧诊断入口仅归档，不能直接恢复。当前TD-001/004/005/006及RO-002/003保持Open，TD-002/003保持Closed。完整原检查点见 [归档](history/documentation/V1.0-S1/TECH-DEBT-TRACKER.md) 与 [停工记录](benchmark/results/V0.5.1/SHELVED.md)。
+V1.0主线阶段验收已完成，S3 Reviewer006独立PASS，待用户合并发布；不新增放行债务或关闭原条目。当前14项CTest含HTTP黑盒别名，23旧目标/31源码冻结限制保持；条件化压测不证明高并发长尾修复或物理机容量，历史EOF根因未知，见[发布检查](documentation/RELEASE-CHECK.md)。V0.6按有限范围已完成；V0.5.1搁置未完成，长尾仍未解决，旧诊断入口仅归档，不能直接恢复。TD-001/004/005/006及RO-002/003保持Open，TD-002/003保持Closed。完整原检查点见 [归档](history/documentation/V1.0-S1/TECH-DEBT-TRACKER.md) 与 [停工记录](benchmark/results/V0.5.1/SHELVED.md)。
 
 V0.6/S3独立有限三条PASS只说明Approved R002范围：M2 syscall全生命周期粗粒度证据及M6未跟踪CPU；M6 traced缺证仍invalid，旧raw不补造。strace巨大扰动不能解释为稳定瓶颈或长尾根因；S2矩阵也不证明恢复、物理机容量或多核线性扩展。无新债务豁免。
 

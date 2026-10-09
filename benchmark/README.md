@@ -1,5 +1,7 @@
 # 性能测试入口
 
+V1.0/S3最终候选有限回归已独立通过，见[发布检查](../documentation/RELEASE-CHECK.md)、[Reviewer结果](results/V1.0/S3/reviewer-rework-005.md)及[性能摘要](../documentation/PERFORMANCE.md)。仅当前14项测试及声明的三档负载验收，RO-002等原风险仍开放；下方历史诊断入口保持归档状态。
+
 服务构建/运行见 [根入口](../README.md)，当前能力与线程边界见 [架构](../ARCHITECTURE.md)。下方固定wrk/运行库与archive前提属于独立实验，不能当作新用户运行服务的依赖；历史命令不授权重启已搁置的诊断。展示用[性能摘要](../documentation/PERFORMANCE.md)集中六档基线、历史修复与有限观测；本轮仅静态整理既有证据，未执行实验。
 
 公共执行约定统一维护于 [CONTRACT.md](CONTRACT.md)。新增或调整测试规则前，按 C-01 核对冲突、上下游和历史发现；各场景只补充参数与已登记的例外，不自行复制公共规则。
