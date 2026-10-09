@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### 2026-10-08 — V0.6/S3 有限性能分析
+
+- 新analysis工具、独立CPU/thread/syscall原始证据消费者与专项失败测试；异常after读取时仍幂等持久化实际child wait4/cleanup，旧缺失raw不补造，产品及S2工具未改。
+- 用户Approved R002限定M2未跟踪/跟踪与M6未跟踪三条，Builder原有效三条及Reviewer独立三条复算通过，Reviewer001 PASS；原四套3valid/1invalid、M6 traced失败保留。系统调用仅M2全生命周期，M6 syscall未知，无函数CPU profile。
+- [独立有限结果](benchmark/results/V0.6/S3-reviewer-limited.md)显示M2单次strace相对QPS变化-95.85%，仅为跟踪扰动，不能推稳定瓶颈或性能恢复。S3及V0.6按批准范围已完成；WSL2/RO-002/TD-001/TD-006与V0.5.1搁置未完成保留，不包含新长尾诊断。
+
 ### 2026-10-08 — V0.6/S2 固定场景矩阵
 
 - 新增独立Release构建/身份校验与6场景×3轮矩阵，覆盖大小、连接模式和worker/连接组合；两个角色各自18有效样本，五measurement errors均零，HTTP审计及自有进程回收通过。

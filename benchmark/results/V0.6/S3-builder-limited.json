@@ -1,0 +1,2113 @@
+{
+  "status": "valid_selection",
+  "selection": "r001-valid-three",
+  "source_suite_counts": {
+    "valid": 3,
+    "invalid": 1,
+    "not_run": 0
+  },
+  "selected_counts": {
+    "valid": 3
+  },
+  "omitted_invalid": [
+    {
+      "index": 4,
+      "id": "M6",
+      "traced": true,
+      "missing": [
+        "server after CPU",
+        "measurement cleanup/rusage",
+        "final metrics"
+      ]
+    }
+  ],
+  "product_identity": {
+    "commit": "1340f5bb8a303769a8be32b2d8cc29482fd2a8fe",
+    "tree": "f2fdabf35fb754b7f4e981708efd34e40e53ceac",
+    "binary_sha256": "9f95b5f3b31062737032e0ce130dfd725a4e9f923ec96524b3006ccbb2ac7530",
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "compiler_sha256": "52f1ddb33fe78b9441e0f42e9cd22c571f1101938e046c8a26582494e041cc73",
+    "server_libraries": {
+      "/lib/x86_64-linux-gnu/libstdc++.so.6": "a68762c86d371e6041f03f03a33a78fa235809ae7d81c90185940c93c3535aed",
+      "/lib/x86_64-linux-gnu/libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+      "/lib/x86_64-linux-gnu/libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+      "/lib/x86_64-linux-gnu/libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+      "/lib64/ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+    }
+  },
+  "source_hashes": {
+    "result.json": "006ab99cbee08e8f274992d5c66738618d5a24ec0cb9564cbd56be505317a601",
+    "01-M2-untraced/result.json": "13e5f466091f753a8880299e45657b67ff1ad2dadeb711ea0a4a5b30f1d78ec5",
+    "01-M2-untraced/server.process.json": "8ee1e8ce532c1d9c34b59e4a2566853e1b9d0cf79e252a41c41c02885af3cd44",
+    "01-M2-untraced/server.cleanup.json": "6bc27b45e69cc3e12d8394c2b88ffd0b60ea70c33989975939bd7303a68fc6d4",
+    "01-M2-untraced/measurement.process.json": "7879762da46cc0b4b9ef3e6189fffdb6c5f87d29e40b30570c06fa533d8a24b9",
+    "01-M2-untraced/measurement.cleanup.json": "2e16c7831464b51453e7c8edc0decd80b56481d3f08f9cbf2f6eff713291c259",
+    "01-M2-untraced/measurement.stdout": "e7ef433f7569644dede1bf325ea1fe5f68ee4f92dc135cd9b1b91b9fed496941",
+    "01-M2-untraced/measurement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "01-M2-untraced/server.stdout": "73f5c9f1cc3ca7b78d622ce5b9bccfccadaf64b1dae2c7512e01bfb7d8792107",
+    "02-M2-traced/result.json": "80f4020228f1ad1dc61414e3808963e2f3fb16ecf75a1bab011bc1567b20802a",
+    "02-M2-traced/server.process.json": "db35e01f113a4623239197d6fc407554f3026490921ff49a34e2ad5fcda35bb9",
+    "02-M2-traced/server.cleanup.json": "a71af8edaed02dadd55a09ff4e611cec054b778d8511c3d617b1ff8860d818c3",
+    "02-M2-traced/measurement.process.json": "4580ed216b495f90e32fab37e400e99ff2aa3cbdf24a16efa4f9695518a154b5",
+    "02-M2-traced/measurement.cleanup.json": "cb89e9ffb087015f6957cf4b2b598420f853cf781b471019331ff7c32e171a35",
+    "02-M2-traced/measurement.stdout": "722f7f3a1b11310372f13b10e8edfd81eece2e6e04f2cac61d238b641e0ba77e",
+    "02-M2-traced/measurement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "02-M2-traced/wrapper.process.json": "418b7347fb8d16abb78b89b7f33e55c04453170bbd0c3e74cc88a6c656efaabf",
+    "02-M2-traced/wrapper.cleanup.json": "a05a2a45487444fafdea1463dbd72682725a8b104f0481fd9912b77fc82ee02a",
+    "02-M2-traced/wrapper.stdout": "3e6fda4c6de6752a5be628b6268a91681db9330593cfcf871b4cca8e81e45acb",
+    "02-M2-traced/trace-summary.stderr": "d628b10c85d280107dfa90e044f8694e51ae076d3140fea3326eb7304ee8f7ee",
+    "03-M6-untraced/result.json": "5915701bf5850c3f4ea0da0c183276a752a5cf2c41173cdac839bb3be229dff0",
+    "03-M6-untraced/server.process.json": "d47e781f39e7594e128aee17c96820e9e4c2af474d50d2615751978c35683601",
+    "03-M6-untraced/server.cleanup.json": "716a284780b3729025c01fab598291bf3488bab98544bd627e6557d858169551",
+    "03-M6-untraced/measurement.process.json": "7eca5e0a1ef539b1bc598d829062f971e2747fb20e9ef4f933cb460456a18f20",
+    "03-M6-untraced/measurement.cleanup.json": "52fd11403c1e67e120197df1c527193db1b576353209769115e6c1a4e02e776d",
+    "03-M6-untraced/measurement.stdout": "040a5c9c2882d05dfacac3a07623e8f5f5ddbc0eb810203d1d7bb8ac70ada96d",
+    "03-M6-untraced/measurement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "03-M6-untraced/server.stdout": "f0b2e74d0880e77e42c3c343cd525c9e5088fd35e2ae8ea8ce6cf16c50c8a594"
+  },
+  "samples": [
+    {
+      "index": 1,
+      "id": "M2",
+      "traced": false,
+      "cpu": {
+        "server_cpu_pct": 121.26464053540995,
+        "client_cpu_pct": 85.1890153229623
+      },
+      "thread_cpu": [
+        {
+          "tid": 6960,
+          "cpu_seconds": 0.0,
+          "wall_s": 5.121460769005353,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6961,
+          "cpu_seconds": 0.0,
+          "wall_s": 5.121451598999556,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6962,
+          "cpu_seconds": 3.12,
+          "wall_s": 5.121444926015101,
+          "cpu_pct": 60.92030755132248
+        },
+        {
+          "tid": 6963,
+          "cpu_seconds": 3.09,
+          "wall_s": 5.121480775997043,
+          "cpu_pct": 60.33411302609923
+        }
+      ],
+      "qps": 39302.21674195928,
+      "received_mib_s": 42.3166693454122,
+      "latency_us": {
+        "mean": 819.132183,
+        "p50": 730.0,
+        "p95": 1558.0,
+        "p99": 2304.0,
+        "max": 6919.0
+      }
+    },
+    {
+      "index": 2,
+      "id": "M2",
+      "traced": true,
+      "cpu": {
+        "server_cpu_pct": 68.0757588401814,
+        "client_cpu_pct": 7.3697299289391545
+      },
+      "thread_cpu": [
+        {
+          "tid": 6983,
+          "cpu_seconds": 0.0,
+          "wall_s": 5.009578035009326,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6984,
+          "cpu_seconds": 0.0,
+          "wall_s": 5.009538362995954,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6985,
+          "cpu_seconds": 1.49,
+          "wall_s": 5.009531080984743,
+          "cpu_pct": 29.74330283438634
+        },
+        {
+          "tid": 6986,
+          "cpu_seconds": 1.92,
+          "wall_s": 5.0095339469844475,
+          "cpu_pct": 38.32691863792576
+        }
+      ],
+      "qps": 2031.266553263279,
+      "received_mib_s": 2.187081267283227,
+      "latency_us": {
+        "mean": 15736.354309,
+        "p50": 15008.0,
+        "p95": 26580.0,
+        "p99": 31872.0,
+        "max": 41937.0
+      },
+      "syscalls": {
+        "rows": [
+          {
+            "syscall": "epoll_wait",
+            "system_seconds": 3.961939,
+            "calls": 871,
+            "errors": 0,
+            "percent_system_time": 33.57,
+            "computed_percent_system_time": 33.573130980782686
+          },
+          {
+            "syscall": "futex",
+            "system_seconds": 3.942027,
+            "calls": 272,
+            "errors": 27,
+            "percent_system_time": 33.4,
+            "computed_percent_system_time": 33.404398402090955
+          },
+          {
+            "syscall": "rt_sigprocmask",
+            "system_seconds": 0.634165,
+            "calls": 24717,
+            "errors": 0,
+            "percent_system_time": 5.37,
+            "computed_percent_system_time": 5.373859771295836
+          },
+          {
+            "syscall": "sendfile",
+            "system_seconds": 0.567888,
+            "calls": 12350,
+            "errors": 15,
+            "percent_system_time": 4.81,
+            "computed_percent_system_time": 4.812234162720506
+          },
+          {
+            "syscall": "sendto",
+            "system_seconds": 0.51674,
+            "calls": 12352,
+            "errors": 0,
+            "percent_system_time": 4.38,
+            "computed_percent_system_time": 4.378810401424567
+          },
+          {
+            "syscall": "openat",
+            "system_seconds": 0.46615,
+            "calls": 12362,
+            "errors": 6,
+            "percent_system_time": 3.95,
+            "computed_percent_system_time": 3.9501150842281647
+          },
+          {
+            "syscall": "close",
+            "system_seconds": 0.416186,
+            "calls": 12432,
+            "errors": 0,
+            "percent_system_time": 3.53,
+            "computed_percent_system_time": 3.5267244372939675
+          },
+          {
+            "syscall": "recvfrom",
+            "system_seconds": 0.379694,
+            "calls": 12403,
+            "errors": 0,
+            "percent_system_time": 3.22,
+            "computed_percent_system_time": 3.217494361881216
+          },
+          {
+            "syscall": "fstat",
+            "system_seconds": 0.331743,
+            "calls": 12357,
+            "errors": 0,
+            "percent_system_time": 2.81,
+            "computed_percent_system_time": 2.811161704144812
+          },
+          {
+            "syscall": "rt_sigpending",
+            "system_seconds": 0.291418,
+            "calls": 12350,
+            "errors": 0,
+            "percent_system_time": 2.47,
+            "computed_percent_system_time": 2.469451115768751
+          },
+          {
+            "syscall": "fcntl",
+            "system_seconds": 0.262941,
+            "calls": 12350,
+            "errors": 0,
+            "percent_system_time": 2.23,
+            "computed_percent_system_time": 2.2281394623233672
+          },
+          {
+            "syscall": "write",
+            "system_seconds": 0.008039,
+            "calls": 141,
+            "errors": 0,
+            "percent_system_time": 0.07,
+            "computed_percent_system_time": 0.06812179590713335
+          },
+          {
+            "syscall": "epoll_ctl",
+            "system_seconds": 0.006102,
+            "calls": 146,
+            "errors": 0,
+            "percent_system_time": 0.05,
+            "computed_percent_system_time": 0.05170782418526281
+          },
+          {
+            "syscall": "accept4",
+            "system_seconds": 0.004694,
+            "calls": 73,
+            "errors": 5,
+            "percent_system_time": 0.04,
+            "computed_percent_system_time": 0.03977655305238015
+          },
+          {
+            "syscall": "setsockopt",
+            "system_seconds": 0.003614,
+            "calls": 69,
+            "errors": 0,
+            "percent_system_time": 0.03,
+            "computed_percent_system_time": 0.0306247257629531
+          },
+          {
+            "syscall": "read",
+            "system_seconds": 0.002101,
+            "calls": 48,
+            "errors": 21,
+            "percent_system_time": 0.02,
+            "computed_percent_system_time": 0.017803693643598358
+          },
+          {
+            "syscall": "getsockopt",
+            "system_seconds": 0.001705,
+            "calls": 47,
+            "errors": 0,
+            "percent_system_time": 0.01,
+            "computed_percent_system_time": 0.014448023637475105
+          },
+          {
+            "syscall": "mprotect",
+            "system_seconds": 0.001583,
+            "calls": 57,
+            "errors": 0,
+            "percent_system_time": 0.01,
+            "computed_percent_system_time": 0.013414206110336124
+          },
+          {
+            "syscall": "rt_sigtimedwait",
+            "system_seconds": 0.000451,
+            "calls": 15,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.00382173528475148
+          },
+          {
+            "syscall": "mmap",
+            "system_seconds": 0.000412,
+            "calls": 28,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0034912526326332806
+          },
+          {
+            "syscall": "munmap",
+            "system_seconds": 0.000261,
+            "calls": 6,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.00221169159494487
+          },
+          {
+            "syscall": "clone3",
+            "system_seconds": 0.000259,
+            "calls": 3,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0021947437666311157
+          },
+          {
+            "syscall": "madvise",
+            "system_seconds": 0.000126,
+            "calls": 3,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0010677131837664889
+          },
+          {
+            "syscall": "bind",
+            "system_seconds": 0.000113,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.000957552299727089
+          },
+          {
+            "syscall": "set_robust_list",
+            "system_seconds": 9.7e-05,
+            "calls": 4,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0008219696732170588
+          },
+          {
+            "syscall": "rseq",
+            "system_seconds": 8.9e-05,
+            "calls": 4,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0007541783599620437
+          },
+          {
+            "syscall": "brk",
+            "system_seconds": 8.8e-05,
+            "calls": 3,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0007457044458051668
+          },
+          {
+            "syscall": "epoll_create1",
+            "system_seconds": 5.2e-05,
+            "calls": 3,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0004406435361575985
+          },
+          {
+            "syscall": "eventfd2",
+            "system_seconds": 4.9e-05,
+            "calls": 3,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.00041522179368696783
+          },
+          {
+            "syscall": "pread64",
+            "system_seconds": 3.3e-05,
+            "calls": 2,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0002796391671769376
+          },
+          {
+            "syscall": "socket",
+            "system_seconds": 3.2e-05,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0002711652530200606
+          },
+          {
+            "syscall": "signalfd4",
+            "system_seconds": 2.4e-05,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0002033739397650455
+          },
+          {
+            "syscall": "listen",
+            "system_seconds": 2.1e-05,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0001779521972944148
+          },
+          {
+            "syscall": "getsockname",
+            "system_seconds": 1.8e-05,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0001525304548237841
+          },
+          {
+            "syscall": "getrandom",
+            "system_seconds": 1.5e-05,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.00012710871235315342
+          },
+          {
+            "syscall": "arch_prctl",
+            "system_seconds": 1.4e-05,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.00011863479819627653
+          },
+          {
+            "syscall": "set_tid_address",
+            "system_seconds": 1.4e-05,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.00011863479819627653
+          },
+          {
+            "syscall": "prlimit64",
+            "system_seconds": 1.4e-05,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.00011863479819627653
+          },
+          {
+            "syscall": "rt_sigaction",
+            "system_seconds": 1.1e-05,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 9.321305572564585e-05
+          },
+          {
+            "syscall": "access",
+            "system_seconds": 0.0,
+            "calls": 1,
+            "errors": 1,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0
+          },
+          {
+            "syscall": "execve",
+            "system_seconds": 0.0,
+            "calls": 1,
+            "errors": 0,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0
+          },
+          {
+            "syscall": "newfstatat",
+            "system_seconds": 0.0,
+            "calls": 3,
+            "errors": 2,
+            "percent_system_time": 0.0,
+            "computed_percent_system_time": 0.0
+          }
+        ],
+        "total": {
+          "syscall": "total",
+          "system_seconds": 11.800922,
+          "calls": 125486,
+          "errors": 77,
+          "percent_system_time": 100.0
+        }
+      }
+    },
+    {
+      "index": 3,
+      "id": "M6",
+      "traced": false,
+      "cpu": {
+        "server_cpu_pct": 17.633030660250913,
+        "client_cpu_pct": 113.19424970378074
+      },
+      "thread_cpu": [
+        {
+          "tid": 6995,
+          "cpu_seconds": 0.0,
+          "wall_s": 5.04777248998289,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6996,
+          "cpu_seconds": 0.01,
+          "wall_s": 5.04777648000163,
+          "cpu_pct": 0.1981070287010167
+        },
+        {
+          "tid": 6997,
+          "cpu_seconds": 0.43,
+          "wall_s": 5.047782006004127,
+          "cpu_pct": 8.518592908499869
+        },
+        {
+          "tid": 6998,
+          "cpu_seconds": 0.46,
+          "wall_s": 5.047783943009563,
+          "cpu_pct": 9.112909847043518
+        }
+      ],
+      "qps": 427.452983166618,
+      "received_mib_s": 430.7059736250144,
+      "latency_us": {
+        "mean": 74088.523084,
+        "p50": 67032.0,
+        "p95": 139829.0,
+        "p99": 152496.0,
+        "max": 193417.0
+      }
+    }
+  ],
+  "pairs": {
+    "M2": {
+      "qps": {
+        "untraced": 39302.21674195928,
+        "traced": 2031.266553263279,
+        "relative_change": -0.9483167433888102
+      },
+      "received_mib_s": {
+        "untraced": 42.316669345412194,
+        "traced": 2.187081267283227,
+        "relative_change": -0.9483163183418086
+      }
+    }
+  },
+  "source_suite_id": "Builder S3 R001 original four sample suite",
+  "data_scope": "limited three approved samples; M6 traced omitted invalid",
+  "raw_samples": [
+    {
+      "index": 1,
+      "id": "M2",
+      "traced": false,
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "threads_before": [
+        {
+          "pid": 6960,
+          "tid": 6960,
+          "starttime": 17170172,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171702.834228174,
+          "role": "main reactor"
+        },
+        {
+          "pid": 6960,
+          "tid": 6961,
+          "starttime": 17170172,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171702.834263537,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6960,
+          "tid": 6962,
+          "starttime": 17170172,
+          "comm": "hp_http_server",
+          "utime_ticks": 10,
+          "stime_ticks": 32,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171702.834294579,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6960,
+          "tid": 6963,
+          "starttime": 17170172,
+          "comm": "hp_http_server",
+          "utime_ticks": 15,
+          "stime_ticks": 34,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171702.834316828,
+          "role": "background role unknown (worker/logger)"
+        }
+      ],
+      "threads_after": [
+        {
+          "pid": 6960,
+          "tid": 6960,
+          "starttime": 17170172,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171707.955688943,
+          "role": "main reactor"
+        },
+        {
+          "pid": 6960,
+          "tid": 6961,
+          "starttime": 17170172,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171707.955715136,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6960,
+          "tid": 6962,
+          "starttime": 17170172,
+          "comm": "hp_http_server",
+          "utime_ticks": 76,
+          "stime_ticks": 278,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171707.955739505,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6960,
+          "tid": 6963,
+          "starttime": 17170172,
+          "comm": "hp_http_server",
+          "utime_ticks": 87,
+          "stime_ticks": 271,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171707.955797604,
+          "role": "background role unknown (worker/logger)"
+        }
+      ],
+      "thread_cpu": [
+        {
+          "tid": 6960,
+          "role": "main reactor",
+          "cpu_seconds": 0.0,
+          "wall_s": 5.121460769005353,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6961,
+          "role": "background role unknown (worker/logger)",
+          "cpu_seconds": 0.0,
+          "wall_s": 5.121451598999556,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6962,
+          "role": "background role unknown (worker/logger)",
+          "cpu_seconds": 3.12,
+          "wall_s": 5.121444926015101,
+          "cpu_pct": 60.92030755132249
+        },
+        {
+          "tid": 6963,
+          "role": "background role unknown (worker/logger)",
+          "cpu_seconds": 3.09,
+          "wall_s": 5.121480775997043,
+          "cpu_pct": 60.33411302609924
+        }
+      ],
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 229541,
+        "responses_completed_total": 229541,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 229541,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 229541,
+        "latency_sum_us": 4836534,
+        "latency_max_us": 1189,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 49,
+        "logger_accepted": 49,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 49,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 6960,
+        "starttime": 17170172,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010457524011144415,
+        "wait4": {
+          "pid": 6960,
+          "ru_utime_s": 1.634395,
+          "ru_stime_s": 5.502921,
+          "read_monotonic": 171707.999378523
+        }
+      },
+      "complete_wall_s": 6.275466912018601,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 5100323,
+          "requests": 200454,
+          "bytes": 226312776,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 819.132183,
+            "p50": 730.0,
+            "p95": 1558.0,
+            "p99": 2304.0,
+            "max": 6919.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 814.203438,
+          "qps": 39302.21674195928,
+          "received_mib_s": 42.316669345412194
+        },
+        "started_monotonic": 171702.834416784,
+        "ended_monotonic": 171707.955447921,
+        "started_wall_s": 1791465727.2371361,
+        "ended_wall_s": 1791465732.3582687,
+        "wall_s": 5.121031137008686,
+        "server_cpu_pct": 121.26464053540995,
+        "client_cpu_pct": 85.18901532296229,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0009678580099716783,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 1280
+          },
+          {
+            "elapsed_s": 1.0165741920063738,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.0298115810146555,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.0424405070079956,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.055142903991509,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 5.070042419014499,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 6973,
+          "starttime": 17170283,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.5008990885689855e-05,
+          "wait4": {
+            "pid": 6973,
+            "ru_utime_s": 0.7913469999999999,
+            "ru_stime_s": 3.571209,
+            "read_monotonic": 171707.954957767
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 6960,
+            "starttime": 17170172,
+            "utime_ticks": 25,
+            "stime_ticks": 67,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 171702.834517238,
+            "cpu_seconds": 0.92,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 6960,
+            "starttime": 17170172,
+            "utime_ticks": 163,
+            "stime_ticks": 550,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 171707.955186994,
+            "cpu_seconds": 7.13,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "client": {
+            "pid": 6973,
+            "starttime": 17170283,
+            "wait4_pid": 6973,
+            "ru_utime_s": 0.7913469999999999,
+            "ru_stime_s": 3.571209,
+            "wait4_read_monotonic": 171707.954957767
+          }
+        }
+      },
+      "measurement_raw_stdout": "Running 5s test @ http://127.0.0.1:35565/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency   819.13us  419.94us   6.92ms   77.48%\n    Req/Sec    19.76k     1.71k   23.31k    75.49%\n  Latency Distribution\n     50%  730.00us\n     75%    1.01ms\n     90%    1.32ms\n     99%    2.30ms\n  200454 requests in 5.10s, 215.83MB read\nRequests/sec:  39302.22\nTransfer/sec:     42.32MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":5100323,\"requests\":200454,\"bytes\":226312776,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":819.132183,\"p50\":730.000000,\"p95\":1558.000000,\"p99\":2304.000000,\"max\":6919.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":814.203438}\n",
+      "server_launch_identity": {
+        "pid": 6960,
+        "starttime": 17170172
+      }
+    },
+    {
+      "index": 2,
+      "id": "M2",
+      "traced": true,
+      "config": {
+        "size": 1024,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1024.bin",
+        "size": 1024,
+        "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9"
+      },
+      "threads_before": [
+        {
+          "pid": 6983,
+          "tid": 6983,
+          "starttime": 17170800,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 1,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171709.179553158,
+          "role": "main reactor"
+        },
+        {
+          "pid": 6983,
+          "tid": 6984,
+          "starttime": 17170801,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171709.17962121,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6983,
+          "tid": 6985,
+          "starttime": 17170801,
+          "comm": "hp_http_server",
+          "utime_ticks": 2,
+          "stime_ticks": 29,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171709.179654523,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6983,
+          "tid": 6986,
+          "starttime": 17170801,
+          "comm": "hp_http_server",
+          "utime_ticks": 2,
+          "stime_ticks": 39,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171709.179680961,
+          "role": "background role unknown (worker/logger)"
+        }
+      ],
+      "threads_after": [
+        {
+          "pid": 6983,
+          "tid": 6983,
+          "starttime": 17170800,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 1,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171714.189131193,
+          "role": "main reactor"
+        },
+        {
+          "pid": 6983,
+          "tid": 6984,
+          "starttime": 17170801,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171714.189159573,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6983,
+          "tid": 6985,
+          "starttime": 17170801,
+          "comm": "hp_http_server",
+          "utime_ticks": 10,
+          "stime_ticks": 170,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171714.189185604,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6983,
+          "tid": 6986,
+          "starttime": 17170801,
+          "comm": "hp_http_server",
+          "utime_ticks": 12,
+          "stime_ticks": 221,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171714.189214908,
+          "role": "background role unknown (worker/logger)"
+        }
+      ],
+      "thread_cpu": [
+        {
+          "tid": 6983,
+          "role": "main reactor",
+          "cpu_seconds": 0.0,
+          "wall_s": 5.009578035009326,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6984,
+          "role": "background role unknown (worker/logger)",
+          "cpu_seconds": 0.0,
+          "wall_s": 5.009538362995954,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6985,
+          "role": "background role unknown (worker/logger)",
+          "cpu_seconds": 1.49,
+          "wall_s": 5.009531080984743,
+          "cpu_pct": 29.743302834386345
+        },
+        {
+          "tid": 6986,
+          "role": "background role unknown (worker/logger)",
+          "cpu_seconds": 1.92,
+          "wall_s": 5.0095339469844475,
+          "cpu_pct": 38.32691863792576
+        }
+      ],
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1024,
+          "sha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 12350,
+        "responses_completed_total": 12335,
+        "requests_aborted_total": 15,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 12350,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 15,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 12350,
+        "latency_sum_us": 10802832,
+        "latency_max_us": 2719,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 65,
+        "logger_accepted": 65,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 65,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 6983,
+        "starttime": 17170800,
+        "direct_child": false,
+        "tracee_disappeared": true,
+        "thread_tids": [
+          6983,
+          6984,
+          6985,
+          6986
+        ],
+        "threads_disappeared": true,
+        "port_closed": true,
+        "forced": false,
+        "natural_wrapper_exit": true,
+        "wrapper_cleanup": {
+          "pid": 6980,
+          "starttime": 17170800,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.0991992894560099e-05,
+          "wait4": {
+            "pid": 6980,
+            "ru_utime_s": 0.532262,
+            "ru_stime_s": 7.754113,
+            "read_monotonic": 171714.249614475
+          }
+        },
+        "wrapper_reaped": true,
+        "server_returncode": null
+      },
+      "complete_wall_s": 6.249155927012907,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 5002790,
+          "requests": 10162,
+          "bytes": 11473003,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 15736.354309,
+            "p50": 15008.0,
+            "p95": 26580.0,
+            "p99": 31872.0,
+            "max": 41937.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 15753.717772,
+          "qps": 2031.266553263279,
+          "received_mib_s": 2.187081267283227
+        },
+        "started_monotonic": 171709.179745023,
+        "ended_monotonic": 171714.188870236,
+        "started_wall_s": 1791465733.5824642,
+        "ended_wall_s": 1791465738.5916982,
+        "wall_s": 5.00912521299324,
+        "server_cpu_pct": 68.07575884018138,
+        "client_cpu_pct": 7.369729928939155,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 4800,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0011840490042231977,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 1600
+          },
+          {
+            "elapsed_s": 1.0135173599992413,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 2.025123639992671,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 3.0364868059987202,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          },
+          {
+            "elapsed_s": 4.047642185993027,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4800
+          }
+        ],
+        "cleanup": {
+          "pid": 6991,
+          "starttime": 17170918,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 2.0629988284781575e-05,
+          "wait4": {
+            "pid": 6991,
+            "ru_utime_s": 0.10122099999999999,
+            "ru_stime_s": 0.267938,
+            "read_monotonic": 171714.188171035
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 6983,
+            "starttime": 17170800,
+            "utime_ticks": 5,
+            "stime_ticks": 70,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 171709.179824313,
+            "cpu_seconds": 0.75,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 6983,
+            "starttime": 17170800,
+            "utime_ticks": 23,
+            "stime_ticks": 393,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 171714.188575439,
+            "cpu_seconds": 4.16,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "client": {
+            "pid": 6991,
+            "starttime": 17170918,
+            "wait4_pid": 6991,
+            "ru_utime_s": 0.10122099999999999,
+            "ru_stime_s": 0.267938,
+            "wait4_read_monotonic": 171714.188171035
+          }
+        }
+      },
+      "measurement_raw_stdout": "Running 5s test @ http://127.0.0.1:34251/payload-1024.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    15.74ms    3.69ms  41.94ms   93.63%\n    Req/Sec     1.02k    63.41     1.14k    66.00%\n  Latency Distribution\n     50%   15.01ms\n     75%   16.07ms\n     90%   17.38ms\n     99%   31.87ms\n  10162 requests in 5.00s, 10.94MB read\nRequests/sec:   2031.27\nTransfer/sec:      2.19MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":5002790,\"requests\":10162,\"bytes\":11473003,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":15736.354309,\"p50\":15008.000000,\"p95\":26580.000000,\"p99\":31872.000000,\"max\":41937.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":15753.717772}\n",
+      "server_launch_identity": {
+        "pid": 6983,
+        "starttime": 17170800
+      },
+      "trace": {
+        "trace_scope": "server_lifecycle",
+        "launch_requested_monotonic": 171708.002103939,
+        "wrapper_identity": {
+          "pid": 6980,
+          "starttime": 17170800,
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171708.002664266,
+          "cpu_seconds": 0.0,
+          "rss_kib": 160,
+          "hwm_kib": 160
+        },
+        "server_identity": {
+          "pid": 6983,
+          "starttime": 17170800,
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171708.013304954,
+          "cpu_seconds": 0.0,
+          "rss_kib": 4160,
+          "hwm_kib": 4160
+        },
+        "relation": {
+          "ppid": 6980,
+          "tracer_pid": 6980
+        },
+        "tracee_confirmed_monotonic": 171708.01362958,
+        "ready_monotonic": 171708.025161982,
+        "warmup_completed_monotonic": 171709.179431355,
+        "measurement_started_monotonic": 171709.179745023,
+        "measurement_ended_monotonic": 171714.188870236,
+        "post_audit_completed_monotonic": 171714.238994995,
+        "server_term_requested_monotonic": 171714.239380691,
+        "wrapper_wait_completed_monotonic": 171714.250783235,
+        "tracee_disappearance_verified_monotonic": 171714.250783427,
+        "summary": {
+          "clock_kind": "default strace system time; not wall or user CPU",
+          "rows": [
+            {
+              "syscall": "epoll_wait",
+              "percent_system_time": 33.57,
+              "system_seconds": 3.961939,
+              "usecs_per_call": 4548.0,
+              "calls": 871,
+              "errors": 0,
+              "computed_percent_system_time": 33.573130980782686
+            },
+            {
+              "syscall": "futex",
+              "percent_system_time": 33.4,
+              "system_seconds": 3.942027,
+              "usecs_per_call": 14492.0,
+              "calls": 272,
+              "errors": 27,
+              "computed_percent_system_time": 33.404398402090955
+            },
+            {
+              "syscall": "rt_sigprocmask",
+              "percent_system_time": 5.37,
+              "system_seconds": 0.634165,
+              "usecs_per_call": 25.0,
+              "calls": 24717,
+              "errors": 0,
+              "computed_percent_system_time": 5.373859771295836
+            },
+            {
+              "syscall": "sendfile",
+              "percent_system_time": 4.81,
+              "system_seconds": 0.567888,
+              "usecs_per_call": 45.0,
+              "calls": 12350,
+              "errors": 15,
+              "computed_percent_system_time": 4.812234162720506
+            },
+            {
+              "syscall": "sendto",
+              "percent_system_time": 4.38,
+              "system_seconds": 0.51674,
+              "usecs_per_call": 41.0,
+              "calls": 12352,
+              "errors": 0,
+              "computed_percent_system_time": 4.378810401424567
+            },
+            {
+              "syscall": "openat",
+              "percent_system_time": 3.95,
+              "system_seconds": 0.46615,
+              "usecs_per_call": 37.0,
+              "calls": 12362,
+              "errors": 6,
+              "computed_percent_system_time": 3.9501150842281647
+            },
+            {
+              "syscall": "close",
+              "percent_system_time": 3.53,
+              "system_seconds": 0.416186,
+              "usecs_per_call": 33.0,
+              "calls": 12432,
+              "errors": 0,
+              "computed_percent_system_time": 3.5267244372939675
+            },
+            {
+              "syscall": "recvfrom",
+              "percent_system_time": 3.22,
+              "system_seconds": 0.379694,
+              "usecs_per_call": 30.0,
+              "calls": 12403,
+              "errors": 0,
+              "computed_percent_system_time": 3.217494361881216
+            },
+            {
+              "syscall": "fstat",
+              "percent_system_time": 2.81,
+              "system_seconds": 0.331743,
+              "usecs_per_call": 26.0,
+              "calls": 12357,
+              "errors": 0,
+              "computed_percent_system_time": 2.811161704144812
+            },
+            {
+              "syscall": "rt_sigpending",
+              "percent_system_time": 2.47,
+              "system_seconds": 0.291418,
+              "usecs_per_call": 23.0,
+              "calls": 12350,
+              "errors": 0,
+              "computed_percent_system_time": 2.469451115768751
+            },
+            {
+              "syscall": "fcntl",
+              "percent_system_time": 2.23,
+              "system_seconds": 0.262941,
+              "usecs_per_call": 21.0,
+              "calls": 12350,
+              "errors": 0,
+              "computed_percent_system_time": 2.2281394623233672
+            },
+            {
+              "syscall": "write",
+              "percent_system_time": 0.07,
+              "system_seconds": 0.008039,
+              "usecs_per_call": 57.0,
+              "calls": 141,
+              "errors": 0,
+              "computed_percent_system_time": 0.06812179590713335
+            },
+            {
+              "syscall": "epoll_ctl",
+              "percent_system_time": 0.05,
+              "system_seconds": 0.006102,
+              "usecs_per_call": 41.0,
+              "calls": 146,
+              "errors": 0,
+              "computed_percent_system_time": 0.05170782418526281
+            },
+            {
+              "syscall": "accept4",
+              "percent_system_time": 0.04,
+              "system_seconds": 0.004694,
+              "usecs_per_call": 64.0,
+              "calls": 73,
+              "errors": 5,
+              "computed_percent_system_time": 0.03977655305238015
+            },
+            {
+              "syscall": "setsockopt",
+              "percent_system_time": 0.03,
+              "system_seconds": 0.003614,
+              "usecs_per_call": 52.0,
+              "calls": 69,
+              "errors": 0,
+              "computed_percent_system_time": 0.0306247257629531
+            },
+            {
+              "syscall": "read",
+              "percent_system_time": 0.02,
+              "system_seconds": 0.002101,
+              "usecs_per_call": 43.0,
+              "calls": 48,
+              "errors": 21,
+              "computed_percent_system_time": 0.017803693643598358
+            },
+            {
+              "syscall": "getsockopt",
+              "percent_system_time": 0.01,
+              "system_seconds": 0.001705,
+              "usecs_per_call": 36.0,
+              "calls": 47,
+              "errors": 0,
+              "computed_percent_system_time": 0.014448023637475105
+            },
+            {
+              "syscall": "mprotect",
+              "percent_system_time": 0.01,
+              "system_seconds": 0.001583,
+              "usecs_per_call": 27.0,
+              "calls": 57,
+              "errors": 0,
+              "computed_percent_system_time": 0.013414206110336124
+            },
+            {
+              "syscall": "rt_sigtimedwait",
+              "percent_system_time": 0.0,
+              "system_seconds": 0.000451,
+              "usecs_per_call": 30.0,
+              "calls": 15,
+              "errors": 0,
+              "computed_percent_system_time": 0.00382173528475148
+            },
+            {
+              "syscall": "mmap",
+              "percent_system_time": 0.0,
+              "system_seconds": 0.000412,
+              "usecs_per_call": 14.0,
+              "calls": 28,
+              "errors": 0,
+              "computed_percent_system_time": 0.0034912526326332806
+            },
+            {
+              "syscall": "munmap",
+              "percent_system_time": 0.0,
+              "system_seconds": 0.000261,
+              "usecs_per_call": 43.0,
+              "calls": 6,
+              "errors": 0,
+              "computed_percent_system_time": 0.00221169159494487
+            },
+            {
+              "syscall": "clone3",
+              "percent_system_time": 0.0,
+              "system_seconds": 0.000259,
+              "usecs_per_call": 86.0,
+              "calls": 3,
+              "errors": 0,
+              "computed_percent_system_time": 0.0021947437666311157
+            },
+            {
+              "syscall": "madvise",
+              "percent_system_time": 0.0,
+              "system_seconds": 0.000126,
+              "usecs_per_call": 42.0,
+              "calls": 3,
+              "errors": 0,
+              "computed_percent_system_time": 0.0010677131837664889
+            },
+            {
+              "syscall": "bind",
+              "percent_system_time": 0.0,
+              "system_seconds": 0.000113,
+              "usecs_per_call": 113.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.000957552299727089
+            },
+            {
+              "syscall": "set_robust_list",
+              "percent_system_time": 0.0,
+              "system_seconds": 9.7e-05,
+              "usecs_per_call": 24.0,
+              "calls": 4,
+              "errors": 0,
+              "computed_percent_system_time": 0.0008219696732170588
+            },
+            {
+              "syscall": "rseq",
+              "percent_system_time": 0.0,
+              "system_seconds": 8.9e-05,
+              "usecs_per_call": 22.0,
+              "calls": 4,
+              "errors": 0,
+              "computed_percent_system_time": 0.0007541783599620437
+            },
+            {
+              "syscall": "brk",
+              "percent_system_time": 0.0,
+              "system_seconds": 8.8e-05,
+              "usecs_per_call": 29.0,
+              "calls": 3,
+              "errors": 0,
+              "computed_percent_system_time": 0.0007457044458051668
+            },
+            {
+              "syscall": "epoll_create1",
+              "percent_system_time": 0.0,
+              "system_seconds": 5.2e-05,
+              "usecs_per_call": 17.0,
+              "calls": 3,
+              "errors": 0,
+              "computed_percent_system_time": 0.0004406435361575985
+            },
+            {
+              "syscall": "eventfd2",
+              "percent_system_time": 0.0,
+              "system_seconds": 4.9e-05,
+              "usecs_per_call": 16.0,
+              "calls": 3,
+              "errors": 0,
+              "computed_percent_system_time": 0.00041522179368696783
+            },
+            {
+              "syscall": "pread64",
+              "percent_system_time": 0.0,
+              "system_seconds": 3.3e-05,
+              "usecs_per_call": 16.0,
+              "calls": 2,
+              "errors": 0,
+              "computed_percent_system_time": 0.0002796391671769376
+            },
+            {
+              "syscall": "socket",
+              "percent_system_time": 0.0,
+              "system_seconds": 3.2e-05,
+              "usecs_per_call": 32.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.0002711652530200606
+            },
+            {
+              "syscall": "signalfd4",
+              "percent_system_time": 0.0,
+              "system_seconds": 2.4e-05,
+              "usecs_per_call": 24.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.0002033739397650455
+            },
+            {
+              "syscall": "listen",
+              "percent_system_time": 0.0,
+              "system_seconds": 2.1e-05,
+              "usecs_per_call": 21.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.0001779521972944148
+            },
+            {
+              "syscall": "getsockname",
+              "percent_system_time": 0.0,
+              "system_seconds": 1.8e-05,
+              "usecs_per_call": 18.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.0001525304548237841
+            },
+            {
+              "syscall": "getrandom",
+              "percent_system_time": 0.0,
+              "system_seconds": 1.5e-05,
+              "usecs_per_call": 15.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.00012710871235315342
+            },
+            {
+              "syscall": "arch_prctl",
+              "percent_system_time": 0.0,
+              "system_seconds": 1.4e-05,
+              "usecs_per_call": 14.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.00011863479819627653
+            },
+            {
+              "syscall": "set_tid_address",
+              "percent_system_time": 0.0,
+              "system_seconds": 1.4e-05,
+              "usecs_per_call": 14.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.00011863479819627653
+            },
+            {
+              "syscall": "prlimit64",
+              "percent_system_time": 0.0,
+              "system_seconds": 1.4e-05,
+              "usecs_per_call": 14.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.00011863479819627653
+            },
+            {
+              "syscall": "rt_sigaction",
+              "percent_system_time": 0.0,
+              "system_seconds": 1.1e-05,
+              "usecs_per_call": 11.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 9.321305572564585e-05
+            },
+            {
+              "syscall": "access",
+              "percent_system_time": 0.0,
+              "system_seconds": 0.0,
+              "usecs_per_call": 0.0,
+              "calls": 1,
+              "errors": 1,
+              "computed_percent_system_time": 0.0
+            },
+            {
+              "syscall": "execve",
+              "percent_system_time": 0.0,
+              "system_seconds": 0.0,
+              "usecs_per_call": 0.0,
+              "calls": 1,
+              "errors": 0,
+              "computed_percent_system_time": 0.0
+            },
+            {
+              "syscall": "newfstatat",
+              "percent_system_time": 0.0,
+              "system_seconds": 0.0,
+              "usecs_per_call": 0.0,
+              "calls": 3,
+              "errors": 2,
+              "computed_percent_system_time": 0.0
+            }
+          ],
+          "total": {
+            "syscall": "total",
+            "percent_system_time": 100.0,
+            "system_seconds": 11.800922,
+            "usecs_per_call": 94.0,
+            "calls": 125486,
+            "errors": 77
+          }
+        }
+      },
+      "syscall_raw_summary": "% time     seconds  usecs/call     calls    errors syscall\n------ ----------- ----------- --------- --------- ----------------\n 33.57    3.961939        4548       871           epoll_wait\n 33.40    3.942027       14492       272        27 futex\n  5.37    0.634165          25     24717           rt_sigprocmask\n  4.81    0.567888          45     12350        15 sendfile\n  4.38    0.516740          41     12352           sendto\n  3.95    0.466150          37     12362         6 openat\n  3.53    0.416186          33     12432           close\n  3.22    0.379694          30     12403           recvfrom\n  2.81    0.331743          26     12357           fstat\n  2.47    0.291418          23     12350           rt_sigpending\n  2.23    0.262941          21     12350           fcntl\n  0.07    0.008039          57       141           write\n  0.05    0.006102          41       146           epoll_ctl\n  0.04    0.004694          64        73         5 accept4\n  0.03    0.003614          52        69           setsockopt\n  0.02    0.002101          43        48        21 read\n  0.01    0.001705          36        47           getsockopt\n  0.01    0.001583          27        57           mprotect\n  0.00    0.000451          30        15           rt_sigtimedwait\n  0.00    0.000412          14        28           mmap\n  0.00    0.000261          43         6           munmap\n  0.00    0.000259          86         3           clone3\n  0.00    0.000126          42         3           madvise\n  0.00    0.000113         113         1           bind\n  0.00    0.000097          24         4           set_robust_list\n  0.00    0.000089          22         4           rseq\n  0.00    0.000088          29         3           brk\n  0.00    0.000052          17         3           epoll_create1\n  0.00    0.000049          16         3           eventfd2\n  0.00    0.000033          16         2           pread64\n  0.00    0.000032          32         1           socket\n  0.00    0.000024          24         1           signalfd4\n  0.00    0.000021          21         1           listen\n  0.00    0.000018          18         1           getsockname\n  0.00    0.000015          15         1           getrandom\n  0.00    0.000014          14         1           arch_prctl\n  0.00    0.000014          14         1           set_tid_address\n  0.00    0.000014          14         1           prlimit64\n  0.00    0.000011          11         1           rt_sigaction\n  0.00    0.000000           0         1         1 access\n  0.00    0.000000           0         1           execve\n  0.00    0.000000           0         3         2 newfstatat\n------ ----------- ----------- --------- --------- ----------------\n100.00   11.800922          94    125486        77 total\n"
+    },
+    {
+      "index": 3,
+      "id": "M6",
+      "traced": false,
+      "config": {
+        "size": 1048576,
+        "mode": "keepalive",
+        "workers": 2,
+        "threads": 2,
+        "connections": 32
+      },
+      "payload": {
+        "name": "payload-1048576.bin",
+        "size": 1048576,
+        "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+      },
+      "threads_before": [
+        {
+          "pid": 6995,
+          "tid": 6995,
+          "starttime": 17171425,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171715.364713996,
+          "role": "main reactor"
+        },
+        {
+          "pid": 6995,
+          "tid": 6996,
+          "starttime": 17171425,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171715.364741053,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6995,
+          "tid": 6997,
+          "starttime": 17171425,
+          "comm": "hp_http_server",
+          "utime_ticks": 1,
+          "stime_ticks": 5,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171715.364762257,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6995,
+          "tid": 6998,
+          "starttime": 17171425,
+          "comm": "hp_http_server",
+          "utime_ticks": 1,
+          "stime_ticks": 8,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171715.364783842,
+          "role": "background role unknown (worker/logger)"
+        }
+      ],
+      "threads_after": [
+        {
+          "pid": 6995,
+          "tid": 6995,
+          "starttime": 17171425,
+          "comm": "hp_http_server",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171720.412486486,
+          "role": "main reactor"
+        },
+        {
+          "pid": 6995,
+          "tid": 6996,
+          "starttime": 17171425,
+          "comm": "hp_http_server",
+          "utime_ticks": 1,
+          "stime_ticks": 0,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171720.412517533,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6995,
+          "tid": 6997,
+          "starttime": 17171425,
+          "comm": "hp_http_server",
+          "utime_ticks": 5,
+          "stime_ticks": 44,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171720.412544263,
+          "role": "background role unknown (worker/logger)"
+        },
+        {
+          "pid": 6995,
+          "tid": 6998,
+          "starttime": 17171425,
+          "comm": "hp_http_server",
+          "utime_ticks": 8,
+          "stime_ticks": 47,
+          "clock_ticks_per_second": 100,
+          "read_monotonic": 171720.412567785,
+          "role": "background role unknown (worker/logger)"
+        }
+      ],
+      "thread_cpu": [
+        {
+          "tid": 6995,
+          "role": "main reactor",
+          "cpu_seconds": 0.0,
+          "wall_s": 5.04777248998289,
+          "cpu_pct": 0.0
+        },
+        {
+          "tid": 6996,
+          "role": "background role unknown (worker/logger)",
+          "cpu_seconds": 0.01,
+          "wall_s": 5.04777648000163,
+          "cpu_pct": 0.1981070287010167
+        },
+        {
+          "tid": 6997,
+          "role": "background role unknown (worker/logger)",
+          "cpu_seconds": 0.43,
+          "wall_s": 5.047782006004127,
+          "cpu_pct": 8.518592908499869
+        },
+        {
+          "tid": 6998,
+          "role": "background role unknown (worker/logger)",
+          "cpu_seconds": 0.46,
+          "wall_s": 5.047783943009563,
+          "cpu_pct": 9.112909847043518
+        }
+      ],
+      "pre_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "post_audit": [
+        {
+          "request": 1,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 2,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        },
+        {
+          "request": 3,
+          "status": 200,
+          "body_bytes": 1048576,
+          "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+          "connection": 1,
+          "eof": false,
+          "extra_bytes": 0
+        }
+      ],
+      "metrics": {
+        "requests_started_total": 2592,
+        "responses_completed_total": 2592,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 2592,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 2592,
+        "latency_sum_us": 8621078,
+        "latency_max_us": 138759,
+        "connections_total": 68,
+        "connections_active": 0,
+        "logger_submitted": 343,
+        "logger_accepted": 343,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 343,
+        "logger_failed": 0,
+        "logger_pending": 0
+      },
+      "server_cleanup": {
+        "pid": 6995,
+        "starttime": 17171425,
+        "returncode": 0,
+        "forced": false,
+        "reaped": true,
+        "cleanup_elapsed_s": 0.010480693978024647,
+        "wait4": {
+          "pid": 6995,
+          "ru_utime_s": 0.156255,
+          "ru_stime_s": 0.924352,
+          "read_monotonic": 171720.489455324
+        }
+      },
+      "complete_wall_s": 6.235114192997571,
+      "measurement": {
+        "summary": {
+          "schema": 2,
+          "duration_us": 5008738,
+          "requests": 2141,
+          "bytes": 2262086060,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 74088.523084,
+            "p50": 67032.0,
+            "p95": 139829.0,
+            "p99": 152496.0,
+            "max": 193417.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 74862.034563,
+          "qps": 427.452983166618,
+          "received_mib_s": 430.7059736250144
+        },
+        "started_monotonic": 171715.36484054,
+        "ended_monotonic": 171720.412186156,
+        "started_wall_s": 1791465739.7675598,
+        "ended_wall_s": 1791465744.815,
+        "wall_s": 5.047345616010716,
+        "server_cpu_pct": 17.633030660250917,
+        "client_cpu_pct": 113.19424970378074,
+        "server_rss_sampled_max_kib": 5280,
+        "client_rss_sampled_max_kib": 5120,
+        "server_vmhwm_kib": 5280,
+        "rss_samples": [
+          {
+            "elapsed_s": 0.0009758550149854273,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 960
+          },
+          {
+            "elapsed_s": 1.0299630510271527,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 2.0510978079983033,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 3.0804995570215397,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 4960
+          },
+          {
+            "elapsed_s": 4.120561289018951,
+            "server_rss_kib": 5280,
+            "client_rss_kib": 5120
+          }
+        ],
+        "cleanup": {
+          "pid": 7002,
+          "starttime": 17171536,
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "cleanup_elapsed_s": 1.349899685010314e-05,
+          "wait4": {
+            "pid": 7002,
+            "ru_utime_s": 0.53688,
+            "ru_stime_s": 5.176425,
+            "read_monotonic": 171720.411640663
+          }
+        },
+        "cpu_evidence": {
+          "schema": 1,
+          "units": {
+            "ticks": "clock ticks",
+            "time": "seconds",
+            "cpu_pct": "one core = 100%"
+          },
+          "server_before": {
+            "pid": 6995,
+            "starttime": 17171425,
+            "utime_ticks": 4,
+            "stime_ticks": 14,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 171715.364907914,
+            "cpu_seconds": 0.18,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "server_after": {
+            "pid": 6995,
+            "starttime": 17171425,
+            "utime_ticks": 15,
+            "stime_ticks": 92,
+            "clock_ticks_per_second": 100,
+            "read_monotonic": 171720.411911747,
+            "cpu_seconds": 1.07,
+            "rss_kib": 5280,
+            "hwm_kib": 5280
+          },
+          "client": {
+            "pid": 7002,
+            "starttime": 17171536,
+            "wait4_pid": 7002,
+            "ru_utime_s": 0.53688,
+            "ru_stime_s": 5.176425,
+            "wait4_read_monotonic": 171720.411640663
+          }
+        }
+      },
+      "measurement_raw_stdout": "Running 5s test @ http://127.0.0.1:34009/payload-1048576.bin\n  2 threads and 32 connections\n  Thread Stats   Avg      Stdev     Max   +/- Stdev\n    Latency    74.09ms   35.45ms 193.42ms   61.87%\n    Req/Sec   214.70     24.51   262.00     71.00%\n  Latency Distribution\n     50%   67.03ms\n     75%   94.75ms\n     90%  131.37ms\n     99%  152.50ms\n  2141 requests in 5.01s, 2.11GB read\nRequests/sec:    427.45\nTransfer/sec:    430.71MB\nMATRIX_SUMMARY {\"schema\":2,\"duration_us\":5008738,\"requests\":2141,\"bytes\":2262086060,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":74088.523084,\"p50\":67032.000000,\"p95\":139829.000000,\"p99\":152496.000000,\"max\":193417.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":74862.034563}\n",
+      "server_launch_identity": {
+        "pid": 6995,
+        "starttime": 17171425
+      }
+    }
+  ]
+}

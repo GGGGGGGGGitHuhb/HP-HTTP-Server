@@ -128,3 +128,10 @@ if(BUILD_TESTING)
     set_tests_properties(matrix_benchmark_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_MATRIX_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()
+
+if(BUILD_TESTING)
+    add_test(NAME performance_analysis_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/PerformanceAnalysis_test.py)
+    set_tests_properties(performance_analysis_tests PROPERTIES TIMEOUT 30
+        ENVIRONMENT "HP_ANALYSIS_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()

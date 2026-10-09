@@ -102,4 +102,8 @@ ctest --test-dir build-v0.5-s4-local --output-on-failure --timeout 60
 
 ## V0.6/S2 当前S1场景矩阵
 
-独立固定S1源码的6×3矩阵入口见 [matrix/README.md](matrix/README.md)，结果见 [V0.6/S2-matrix.md](results/V0.6/S2-matrix.md)。首次失败2有效/1无效/15未执行保留；已批准R002的 [CPU原始证据齐备的新18套](results/V0.6/S2-builder-r002.md)有效、待独立审查，旧build.py/run.py/summary.lua仍保留历史A/B契约，不用修改旧常量启动新矩阵。新入口需要各角色有限预算授权，不恢复长尾定位。
+独立固定S1源码的6×3矩阵入口见 [matrix/README.md](matrix/README.md)，结果见 [V0.6/S2-matrix.md](results/V0.6/S2-matrix.md)。首次失败2有效/1无效/15未执行保留；已批准R002的 [CPU原始证据齐备的新18套](results/V0.6/S2-builder-r002.md)有效、已独立验收，旧build.py/run.py/summary.lua仍保留历史A/B契约，不用修改旧常量启动新矩阵。新入口需要各角色有限预算授权，不恢复长尾定位。
+
+V0.6/S3新 [analysis入口](analysis/README.md)按Approved R002只使用M2配对与M6未跟踪三条，不改S2工具/预算或恢复长尾实验；能力probe失败停止，不安装替代工具。
+
+S3最后R002的 [有限三样本材料](results/V0.6/S3-builder-limited.md)只读原有效三条，M6 traced缺口明确保留；Builder未重采，Reviewer独立三条PASS，见[独立有限分析](results/V0.6/S3-reviewer-limited.md)。S3/V0.6按批准范围已完成，大文件syscall未知，不提供函数栈/根因证明。
