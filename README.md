@@ -4,7 +4,7 @@ Linux C++20 静态 HTTP 服务器学习项目：提供受限 HTTP/1.1 GET、Keep
 
 ## 当前状态
 
-V0.6 已完成并发布；V1.0/S1 文档整理已完成并通过独立静态审查，V1.0整体未完成，S2展示材料与S3最终回归未开始。V0.5.1 **已搁置（未完成）**：局部 TCP_NODELAY 修复证据有效，高并发长尾仍未解决，停工不等于验收。
+V0.6 已完成并发布；V1.0/S1 文档整理与S2展示材料均已完成并通过独立静态审查，V1.0整体未完成，S3最终回归未开始。V0.5.1 **已搁置（未完成）**：局部 TCP_NODELAY 修复证据有效，高并发长尾仍未解决，停工不等于验收。
 
 ## 环境要求
 
@@ -59,7 +59,8 @@ ctest --test-dir build --output-on-failure
 - [架构](ARCHITECTURE.md)：现实现模块、线程、所有权和请求流。
 - [路线图](ROADMAP.md)：已交付、搁置与未来阶段。
 - [变更记录](CHANGELOG.md)：已验证的历史变化；[技术债](TECH-DEBT-TRACKER.md)：持续风险。
-- [性能索引](benchmark/README.md)：实验条件、结果和归档边界。
+- [性能摘要](documentation/PERFORMANCE.md)：六档基线、历史修复及观测边界；[实验索引](benchmark/README.md)：方法与原结果。
+- [项目展示](documentation/PRESENTATION.md)：讲解主线与Server简历条目；[面试讲解](documentation/INTERVIEW.md)：执行流、取舍与追问。
 - [文档迁移记录](history/documentation/V1.0-S1/INDEX.md)：旧根文档及锚点去向。
 - `AGENTS.md` 与 `docs/` 为本地协作资料，不随Git分发；公开使用与开发说明不依赖它们。
 
