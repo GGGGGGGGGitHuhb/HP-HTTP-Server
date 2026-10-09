@@ -1,686 +1,143 @@
 # HP HTTP Server 架构文档
 
-本文档记录 HP HTTP Server 的长期系统架构、模块职责、数据流、依赖边界和技术约束。它面向 Leader、Builder、Reviewer 和后续维护者，用于保证项目始终围绕 Linux C++ 高性能网络服务器这一主线演进。
-
-本文档不记录版本路线、阶段计划或具体实现任务。版本目标写入 `ROADMAP.md`，阶段设计写入 `docs/leader/designs/Vx/Sx-design.md`，实现过程写入 Builder 报告，审查结果写入 Reviewer 报告。
-
-## 当前状态与目标架构
-
-V0.6按各阶段批准范围已完成，S3为R002有限三样本分析；生产IO结构未因压测/分析工具改变。进程装配持有 `metrics::ServerMetrics`，生命周期覆盖server、所有worker/registry和HTTP Session。metrics模块只负责固定容量原子数值与文本序列化，不依赖net/http/logger；net的registry只调用连接计数接口，app决定请求/响应和访问记录口径。`ResponseResult` 显式传递status与contentBytes，文件响应直接使用已校验metadata的正文长度；兼容物化时保持元数据，不解析wire推测结果。
-
-每个IO owner上的Session从首次非空feed设置单一pending和steady_clock起点，NeedMore继续同一请求。响应元数据、phase及completed在send前写定；onWriteComplete先终结，再reset/parser推进pipeline。优雅drain保留实际输出排空通知；net保持inputStopped/readPaused，Session见isDraining立即进入closing并返回，禁止reset/feed/provider或推进pipeline后缀。force/deadline未排空仍由关闭析构记aborted。Session析构对仍pending的请求记aborted。终结先清pending，防止重复回调/析构重计；空连接不开始HTTP请求，初始空FIN的旧400响应不纳入请求总账。Session状态归属单一IO线程，跨worker只更新固定原子计数，无逐请求全局统计锁、URL标签或回调总线。
-
-ConnectionRegistry在连接实际注册/激活/超时设置成功后增加累计与活跃数；erase或析构减少活跃数。注册期间的identity标志避免失败setup在cleanup中误减未计数连接；不以accept或lazy Session创建数代替注册连接数。HTTP终结不占用registry closeCallback，仍通过连接持有的消息/写完成闭包保存Session；Session不反向持有连接，避免所有权环。
-
-访问记录在app持有有界owning method/path副本，parser reset和输入consume后不使用借用数据。默认不创建访问payload；启用后序列化完整有界JSON并通过原AsyncLogger提交。逐字节转义、query/fragment剔除和path截断在app完成，net不承担HTTP/日志策略。观测异常捕获并计数，不改业务关闭策略；全部日志共享丢弃/写失败统计。stdout最终导出只在worker停止/join、server/registry/Session销毁、LoggerSession drain之后执行；runtime快照逐字段读取，终态快照可复算。completed定义为kernel接收排空，status/contentBytes是构造时结果，延迟是服务端单调时钟区间，不宣称客户端接收或网络RTT。
-
-
-2026-09-28：V0.5.1/S2连接级TCP_NODELAY策略已交付并独立验收。Acceptor取得有效局部Socket后，在交付AcceptedCallback前调用Socket::setTcpNoDelay(true)；不设置监听socket或依赖继承。选项失败保留局部所有权，RAII关闭该连接并继续接收；无新持久回调、跨线程状态或逐响应选项开关。ConnectionIo的头部send/正文sendfile、offset、背压和关闭契约保持。默认客户端的约42ms正文等待已在局部负载消除，S3扩展验收尚未执行。
-
-
-R7 当前实现（2026-09-26，已验收）：仅更新项目自有语义名称与允许翻译的原有英文注释。`EventLoopThread::createWorkerThread()` 创建线程并等待初始化，`runWorkerEventLoop()` 在线程内初始化、执行通用 `EventLoop::runEventLoop()` 并清理；`TcpServer::runTcpServer()` 组织主循环及退出清理。服务器先选择 workerIndex，`EventLoopThreadPool::postTaskToWorkerAtIndex()` 保留指定目标、配额及转发约束；单线程与线程池分别 `joinWorkerThread()` / `joinWorkerThreads()`。模块边界、线程/任务所有权、协议及异常路径不变。用户受保护注释内的旧名称按明确要求保留；下方 R6 及更早文字为历史记录。
-
-R6 当前实现（2026-09-21，已验收）：生产文件使用 PascalCase，普通函数/变量使用 camelCase。回调按事件统一命名，外部短 lambda 转发到具名处理函数；有运行状态约束的槽通过公开 registerXxxCallback 检查后调用私有内联纯保存 setter，无约束槽直接使用 setter。主从 Reactor、每连接 HTTP 状态及原线程归属保持。EventLoopThread 投递使用共享任务槽，先完成分配再移动任务，入队前释放局部槽所有权；成功执行由 worker 释放任务捕获，失败路径先解锁后释放，新增一次槽分配成本不代表性能改善。下方 R1–R5 的旧符号和绑定形式属于历史记录。
-
-2026-09-17：R1基础接口重构已完成，独立Reviewer001 PASS、Leader005收口。基础/HTTP/Socket/Epoller普通操作与枚举/常量命名统一，当前调用者同步适配；RequestParser将ASCII比较和Header空白裁剪提取为同步具名私有方法，扫描计数、借用及拥有型请求结果保持。PathResult/ResponseResult状态和file/policy显式表达。所有权、线程和协议行为不变。
-
-2026-09-19：R2按R006及Reviewer005 PASS完成：Channel分别通过头文件可定位的setter绑定Acceptor::HandleListenerEvent、TcpConnection::HandleConnectionEvent、EventLoop::HandleWakeupEvent和ShutdownSignalHandler::HandleShutdownSignal；Acceptor通过set_AddConnection_callback绑定服务器。app通过TcpServer::set_CreateMessageCallback_callback显式绑定HttpMessageFactory::CreateMessageCallback；构造仍创建监听socket/worker，Run在外部装配后启用接收。WatchControlFd返回未启用的所属Channel，完成信号绑定后才启用兴趣。HTTP消息显式绑定按值持有的HttpMessageHandler::HandleMessage，Session仍在IO owner首次消息时创建；provider通过可定位setter转交，写完成绑定原共享Session，保留复制与pipeline语义。Registry的关闭/超时/活动目标具名注册；通用队列、定时器及任务转交保存已显式绑定的任务，线程/池载体使用具名方法而非自定义operator()。普通依赖仍可构造注入；无新共享所有权、协议架构或性能承诺。R3已完成下述ConnectionIo迁移；R4应用辅助已完成下述迁移，R5已完成日志和限定一致性检查，批准的渐进范围完成；后续全测试清理已独立验收，见下文。
-
-2026-09-19：R3完成ConnectionIo全套操作/常量及内部SendFileWithoutSigpipe命名，ReadOnce/ReadAvailable/WriteAvailable显式初始化结果字段；TcpConnection及直接测试调用同步迁移。独立Reviewer确认仅符号替换与三处等价初始化，读写预算、EINTR/EAGAIN/EOF、SIGPIPE屏蔽恢复、输入借用与文件所有权保持，无新回调或算法层次。
-
-2026-09-19：R4应用入口采用RunServer、ParseServerOptions与ServerOptions；ParseWorkerCount/ParseShutdownTimeout/ParseConnectionTimeout负责原有数字验证，选项重复/缺失检查和赋值仍在原解析顺序。SignalWatcher::ReadNextSignal明确表示消费信号，fd保留访问器拼写。参数默认值/边界、错误文本、退出码、两层信号屏蔽与恢复、构造析构顺序及R2具名绑定不变；未引入解析框架或新状态。
-
-2026-09-19：R5日志入口为Info/Warn/Error→WriteLog→AsyncLogger::Submit；consumer直接绑定AsyncLogger::ConsumeRecords与this，Stop维持禁止提交、唤醒、串行join顺序；LoggerSession::Stop及LogLevel::kInfo/kWarn/kError、kCapacity/kMessageLimit同步迁移。锁范围、1024槽/1024字节、消息复制、FIFO、逐条flush、失败计数和active_logger共享快照保持，无新所有权或性能承诺。已验收生产范围只保留三处短同步等待谓词、HTTP局部transform、Buffer标准deleter和合法getter/外部接口例外。
-
-2026-09-19：后续测试清理审查全部29个测试文件，具名测试任务保留原捕获、owner线程、断言与生命周期；仅应用测试观察接口在头文件声明set_RecordSessionEvent_callback并绑定RecordSessionEvent，原atomic/noexcept与创建/析构通知保持。没有新增生产运行逻辑修改。FS-01–04/FTC-01由独立Reviewer002关闭；规范允许的短同步谓词、直接ExpectThrows动作、getter、ABI/override和标准deleter仍保留。
-
-V0.5/S3已完成：Approved revision1、Builder001/002、Reviewer002最终PASS与Leader003收口齐备。base Buffer使用独占连续字节块和读/写/prepare游标，consume不搬移后缀；ConnectionIo直接recv到持有尾区，成功只commit实际字节。构造不分配，首次懒分配4KiB，生产输入容量≤16KiB；通用max_input=0仍无输入硬限。尾区不足才整理或增长，新块成功后转移所有权，失败保留原字节/游标。
-
-输出复用小header与尾空间，pending仍含file remaining且≤9MiB，file pending禁止普通追加。QueueFile仍复制header并持有FileRegion，先验证/分配，失败文件销毁一次；先头后sendfile、offset及预算不变。只有内存和文件都排空时，容量>64KiB释放为0、≤64KiB保留；这不是响应拒绝或读暂停门槛，重复大内存输出可能重新分配。单Buffer增长最多旧+新两块，生产输入瞬时≤32KiB、内存输出≤18MiB，另计parser/调用方/分配器等，不能视为进程RSS上限。
-
-既有HTTP单响应Writing暂停读取、完整排空后处理pipeline后缀、真实IO进展续期、idle/drain/RST回收均保持；Buffer整理/释放不是网络进展。独立真实0/1/2慢读及同owner健康控制、300轮回收和八sanitizer通过；机制减少复制和容量保留，不宣称QPS/RSS比例改善，无新通用高低水位或全局配额。
-
-2026-10-05：Approved R005修复候选将AsyncLogger消费者改为每批最多64条已有记录，队列锁内拷贝移出、锁外完整拼接/一次写入和flush，再锁内整批记账；不等待凑批。批内全部在途直至flush完成，失败整批计failed，停止仍排空并join。1024槽/1024字节正文保持，pending最多1088；当前ABI固定队列及批次输出/Record临时存储合计1,197,632字节，另有对象/线程/sink资源。该候选日志正确性经Reviewer009独立验证，整体性能仍因P3延迟FAIL；以下逐条flush是已发布历史行为。
-
-V0.5/S2已完成：Approved revision1、Builder001、独立Reviewer001 PASS和Leader003齐备。生产日志使用1024槽×最多1024字节正文的有界队列，单消费者在状态锁外写stderr并逐条flush；所有等级满队列丢新，无同步回退，计数包含在途记录。消息在提交返回前复制；固定槽和一个在途Record的当前ABI记录存储为1,066,000字节，另有固定对象及线程资源。flush不等于fsync或掉电持久化；没有QPS提升承诺。
-
-LoggerSession先于服务资源创建，服务/worker/callback销毁及fatal记录后才停止接收、排空并join；共享引用覆盖每次提交，stop后的调用仅拒绝计数。无会话旧库调用保留同步兼容。入口先以当前线程RAII屏蔽SIGINT/SIGTERM，让消费者继承，再创建服务信号消费器；日志join后恢复原mask。健康sink排空，可返回的写/flush失败计failed并继续消费。**阻塞stderr可能拖延最终join；HTTP shutdown_timeout不保证整个进程限时退出**，不detach、不改共享stderr标志。
-
-V0.5/S1已完成，Approved revision1、Builder002、Reviewer002 PASS及Leader003齐备。生产`PrepareResponse`提供小内存头和拥有型文件区域，transport先头后sendfile正文；保留8MiB文件、9MiB逻辑待发送上限及超时/关闭语义。旧物化接口仅显式兼容，生产正文read/pread为0；不据此承诺QPS提升。
-
-V0.4/S4及V0.4已完成，Approved revision1、Builder002、Reviewer002 PASS与Leader003齐备。每连接逻辑待发送上限9MiB，超限关闭；每loop普通未完成任务最多1024，含batch/执行者，固定控制通知绕过普通名额。应用signalfd接收SIGINT/SIGTERM，停止接收并仅排空已有输出，默认5000ms统一绝对截止（0立即、最大60000），再次观察信号强关；不推进pipeline后缀。
-
-V0.4/S3已完成，Approved设计 `docs/leader/designs/V0.4/S3-design.md`、Builder001、独立Reviewer001 PASS与Leader003齐备。owner单调定时队列缩短EventLoop等待，net按实际IO进展及app复用等待状态执行超时；timer只依赖base/标准库，不关闭fd或决定HTTP响应。默认idle30000/keep-alive15000ms，各0禁用对应策略，取较早截止；静默关闭可能截断未排空响应，不发送408。独立CTest20/20及全部必需sanitizer通过。
-
-V0.4/S2 已完成，Approved设计入口 `docs/leader/designs/V0.4/S2-design.md`。生产由main接收并按round-robin交接，固定worker各自持有ConnectionRegistry；默认2个worker，显式0回退main上的同一registry算法。每worker最多1024个未结束池任务（含执行者），满时关闭交接连接。Builder001、独立Reviewer001 PASS与Leader003齐备，默认CTest18/18、显式0回归3/3与全部必需sanitizer通过。
-
-V0.4/S1 已批准设计入口：`docs/leader/designs/V0.4/S1-design.md`。已交付单个事件循环线程、任务投递及唤醒/停止生命周期；该S1交付时生产仍单线程；主从Reactor已在S2交付，进程优雅关闭仍属S4。
-
-V0.3/S2已完成：http判定零body请求边界与连接策略，app驱动串行会话，net提供通用读暂停/恢复与非递归排空通知。原设计 `docs/leader/designs/V0.3/S2-design.md` 与Approved `docs/leader/reworks/V0.3/S2-rework-001.md`共同定义已交付契约；Reviewer001唯一PASS，Leader004完成收口。
-
-当前V0.1/V0.2及V0.3/S1/S2均已完成；S2独立Debug告警0、CTest15/15、全部12AC与专项sanitizer通过。V0.3/S3及V0.3已完成：S3独立Debug告警0、CTest15/15、8AC/RV与双专项sanitizer通过，Reviewer001 PASS、Leader004完成收口。S3仅新增测试和文档，不改变已交付架构；V0.4/S1已完成，Approved revision 1、Builder001、Reviewer001 PASS 与 Leader003 齐备；独立 Debug 零告警、CTest16/16 和必需 sanitizer 通过。当前生产每连接持有RequestParser，逐段feed新输入并立即consume accepted_bytes，包括NeedMore；每个响应实际排空后才重置parser并处理下一请求。
-
-本文档描述的是按版本逐步落地的目标架构，不代表所有模块已经存在。`V0.1 / S1`、`S2`、`S3` 均已完成；以下为V0.1历史交付：当时已落地 CMake/C++20、同步日志、Socket/Epoller fd RAII、非阻塞 listener、集中式单线程单 epoll LT、连接表、输出缓冲与短写续传、半关闭和连接错误隔离，以及有界的单请求 HTTP/1.1 `GET` 解析和静态文件响应。S3 以 root fd 为锚逐组件使用 `openat` 与 no-follow 约束，响应后统一关闭连接；不支持 body/chunked、keep-alive、第二个 pipelined 响应、URL decode 或 symlink 服务。Reviewer 在全新 `build-review-s3/` 中完成 Debug 构建、CTest `9/9` 与 RV-01 至 RV-10，唯一结论为 `PASS`。这些证据只证明 V0.1 的最小闭环，不构成生产安全、容量或性能承诺。
-
-S1 已交付的 EventLoop/Channel 保持注册 token 分发与 stale 过滤。当前，Acceptor 独占 listener Socket/Channel，负责 accept-drain 并移动交付 Socket；各owner的ConnectionRegistry建立并持有TcpConnection集合，main的TcpServer只管理监听、池和轮转交接。TcpConnection 独占 ConnectionIo/Channel，处理完整事件、interest、诊断及一次关闭通知；先 remove/token 失效，ConnectionRegistry 在本owner回调返回后校验 fd+稳定 identity 并回收，EventLoop 最后销毁。Channel 不拥有 fd。旧ApplicationHandler/Result生产路径已移除；TcpConnection发布通用消息，app适配器处理HTTP，S2已增加HTTP串行复用；V0.4/S1 已交付线程与 eventfd 唤醒原语，V0.4/S3已接入owner定时队列与连接超时。
-
-V0.4/S1 的 EventLoop 在构造线程绑定 owner，Channel 操作及清理只在 owner 执行；跨线程入口限于任务投递、停止和不可变线程身份。EventLoopThread 在 worker 构造/销毁 loop，以同步握手发布可用状态，正常停止排空已接收任务，失败取消并在 owner 释放，join 回传首次异常。内部唤醒 fd 按 remove、销毁 Channel、close 顺序回收；token 原子分配并在耗尽后锁存。S1交付时独立线程API无上限；当前S4统一普通任务1024上限；S2池入口另有固定1024边界，不允许绕过池直接投递生产交接。当前生产连接已移入worker，S4已交付有限截止的进程优雅关闭。
-
-阅读本文档时应区分：
-
-- “必须”“不得”表示从对应模块首次落地起就需要遵守的长期约束。
-- “后续”“长期”表示路线图中的目标能力，不能作为当前阶段已完成能力对外描述。
-- 某能力的真实完成状态，以 `ROADMAP.md`、最近 Builder 报告和 Reviewer 结论共同确定。
-- 性能结论只有在固定环境、命令、参数和结果证据齐全后才成立，架构目标本身不是性能承诺。
-
-## 项目技术概览
-
-HP HTTP Server 是一个面向高性能网络岗简历展示的 Linux C++ HTTP/1.1 服务器项目。项目核心价值是展示 Linux 系统编程、网络编程、并发模型、资源治理、协议解析、性能优化和压测分析能力。
-
-长期技术方向如下：
-
-- 主要语言：C++20。
-- 构建系统：LLVM/Clang++ + CMake + Ninja。
-- 目标平台：Linux，优先适配 WSL2 和常规 Linux 服务器环境。
-- 网络模型：Linux socket API、非阻塞 IO、`epoll`、Reactor 模型。
-- 协议层：HTTP/1.1，优先支持静态资源服务，后续保留轻量 L7 Reverse Proxy / Gateway 扩展边界。
-- 性能方向：连接复用、主从 Reactor、线程池、定时器、`sendfile` 零拷贝、输出缓冲高水位、异步日志、wrk 压测和 perf 分析。
-- 依赖原则：核心网络模型、连接管理、HTTP 解析和资源治理默认自研，不引入替代核心能力的大型网络库。
-- 默认不引入：Boost.Asio、libevent、libev、muduo、workflow、完整 Web 框架、数据库 ORM、复杂前端框架、HTTP/2/TLS 实现。
-
-项目允许使用标准库、Linux 系统调用、CMake、测试工具和压测工具。第三方依赖必须服务于测试、构建或非核心辅助能力，不能替代本项目需要展示的核心网络编程能力。
-
-## 系统分层
-
-系统按职责分为以下层次。各层可以随版本逐步落地，但依赖方向和职责边界应长期保持稳定。
-
-### 启动入口层
-
-启动入口层负责解析命令行参数、加载配置、初始化服务器对象并启动事件循环。它只做进程启动和运行参数组织，不直接处理 socket 事件、HTTP 语义或文件访问。
-
-典型目录：
-
-- `app/`
-- `config/`
-
-### 网络事件层
-
-网络事件层负责 Linux 网络 IO 抽象，包括 socket 生命周期、监听连接、`epoll` 等待、事件分发、连接读写和 fd 资源管理。
-
-该层的核心职责是把系统调用和事件模型封装为稳定的 C++ 对象，例如 `Socket`、`Epoller`、`EventLoop`、`Channel`、`Acceptor`、`TcpConnection`。该层不理解 HTTP 业务语义，不直接读取静态文件，不生成 HTTP 响应。
-
-典型目录：
-
-- `include/net/`
-- `src/net/`
-
-### 协议与应用层
-
-协议与应用层负责 HTTP/1.1 请求解析、响应构造、静态资源处理、错误响应、连接语义判断和后续 L7 Gateway 行为。
-
-该层接收网络层提供的字节流或完整请求上下文，输出可写回连接的响应数据或转发决策。它不直接管理 `epoll`，不直接拥有监听 socket，也不跨过网络层操作连接 fd。
-
-典型目录：
-
-- `include/http/`
-- `src/http/`
-- `include/proxy/`
-- `src/proxy/`
-
-### 基础设施层
-
-基础设施层提供跨模块通用能力，例如日志、Buffer、时间戳、线程池、定时器、不可拷贝基类、错误工具和统计指标。
-
-该层应尽量保持通用和低耦合，不能反向依赖 HTTP 或具体业务模块。基础设施层可以被网络层、协议层、代理层和测试代码复用。
-
-典型目录：
-
-- `include/base/`
-- `src/base/`
-- `include/timer/`
-- `src/timer/`
-- `include/metrics/`
-- `src/metrics/`
-
-### 测试与验证层
-
-2026-09-28 规划边界：V0.5.1 诊断工具属于独立验证层，不成为生产依赖。历史固定 A/B 基准与当前版本测量必须分开标识；跟踪、插桩和单因素实验的结果不能混入无插桩性能基线。当前生产模块、线程归属和 HTTP 契约保持，生产修复由后续批准设计决定。S1 已交付独立诊断入口并获 Reviewer002 PASS。当前文件响应路径先发送头部再 sendfile；时间线与客户端ACK单因素对照支持该拆分发送与ACK等待交互造成小正文等待，未直接观测内核Nagle状态。该S1诊断时点尚未修复；当前S2已完成连接级TCP_NODELAY最小修复，见本文最新状态。
-
-
-V0.5/S4已交付独立于生产依赖的Python构建/协调脚本及wrk Lua summary，固定两版本Release、两文件、三轮对比。每套累计日志2GiB、启动磁盘4GiB；完整长度/SHA/keep-alive/无尾字节前后审计与错误整套invalid、有限超时及owned进程回收均经Reviewer002验证。基准不承担逐请求计时body审计或生产性能保证；WSL同机与noise限制、1KiB明显下降及未知根因均保留。
-
-测试与验证层负责单元测试、集成测试、smoke test、压测脚本、性能报告和回归验证。它可以调用公开 API 或启动真实服务器进程，但不能成为生产代码依赖。
-
-典型目录：
-
-- `tests/`
-- `benchmark/`
-- `docs/builder/reports/`
-- `docs/reviewer/reports/`
-
-### 文档与协作层
-
-文档与协作层记录长期架构、版本路线、阶段设计、实现报告、审查报告和技术债。它不参与运行时逻辑，但约束所有 Agent 和开发者的实现边界。
-
-典型文件与目录：
-
-- `AGENTS.md`
-- `README.md`
-- `ROADMAP.md`
-- `ARCHITECTURE.md`
-- `TECH-DEBT-TRACKER.md`
-- `docs/leader/`
-- `docs/builder/`
-- `docs/reviewer/`
-- `docs/references/`
+本文描述当前V0.6交付后的实现，按现有源码静态核对；版本计划见 [ROADMAP](ROADMAP.md)，性能证据见 [benchmark](benchmark/README.md)。轻量L7代理仅为V1.1可选规划，当前没有proxy模块或upstream转发。
 
 ## 模块职责
 
-### `app/`
-
-`app/` 是可执行程序入口所在目录。
-
-主要职责：
-
-- 解析命令行参数，例如监听端口、静态资源根目录、配置文件路径、日志级别。
-- 创建服务器配置对象。
-- 初始化并启动 HTTP Server 或 Gateway Server。
-- 处理进程级退出码和最外层异常。
-- 用消息/排空回调组合HTTP parser、结构化响应与net，按请求顺序驱动单响应会话。
-
-不应承担的职责：
-
-- 不直接调用 `epoll_wait`。
-- 不解析 HTTP 请求。
-- 不读取静态文件内容。
-- 不实现网络连接状态机；app HTTP适配器拥有Reading/Writing/Closing串行会话，协议解析状态由http管理。
-
-### `include/base/` 与 `src/base/`
-
-`base` 模块提供基础工具和通用运行时能力。
-
-主要职责：
-
-- RAII 工具和不可拷贝基类。
-- 日志兼容接口、已交付有界异步实例及显式会话生命周期。
-- 已交付连续游标Buffer，用于ConnectionIo输入输出缓冲、持有可写尾区及空闲容量回收。
-- 线程、线程池、任务队列和时间工具。
-- 通用错误处理辅助函数。
-
-不应承担的职责：
-
-- 不依赖 `http`、`proxy` 或具体业务模块。
-- 不直接决定 HTTP 状态码。
-- 不直接管理监听 socket 的业务含义。
-
-### `include/net/` 与 `src/net/`
-
-`net` 模块是网络事件和连接生命周期的核心。
-
-当前实现边界：EventLoop注册分发/最近截止调度、owner TimerQueue取消/续期、Channel观察fd、Acceptor监听、TcpConnection消息/发送/消费/暂停恢复/写完成通知/排空关闭，TcpServer主线程factory/轮转交接、各owner ConnectionRegistry集合/identity回收。ConnectionIo只拥有Socket和输入/输出/发送游标，不调用应用；send复制响应存储，consume使旧span失效，close_after_flush停读并排空后关闭。net无HTTP规则，纯http无连接fd/epoll依赖；StaticFileService保留root文件fd/openat。
-
-主要职责：
-
-- 封装 Linux socket、bind、listen、accept、close 和非阻塞设置。
-- 封装 `epoll_create`、`epoll_ctl`、`epoll_wait`。
-- 管理 `EventLoop`、`Channel`、`Acceptor`、`TcpConnection` 等 Reactor 组件。
-- 管理连接 fd、读写事件、半关闭、错误事件、输出缓冲和连接关闭流程。
-- 为上层协议模块提供回调接口或字节流边界。
-
-不应承担的职责：
-
-- 不解析 HTTP header。
-- 不拼接 HTTP 响应。
-- 不访问静态资源根目录。
-- 不决定代理 upstream 选择策略。
-
-重要输入与输出：
-
-- 输入：监听端口、连接 fd、内核就绪事件、应用层待写数据。
-- 输出：连接建立事件、读到的字节流、写完成事件、连接关闭事件、错误事件。
-
-### `include/http/` 与 `src/http/`
-
-`http` 模块承载 HTTP/1.1 协议语义和静态文件服务。
-
-主要职责：
-
-- 解析请求行、Header、Connection 语义和请求边界。
-- 管理 HTTP 状态机，处理半包、粘包、非法请求和 Header 上限。
-- 构造 HTTP 响应状态行、Header 和 body。
-- 根据静态资源根目录解析请求路径，防止路径穿越。
-- 生成常见错误响应，例如 `400`、`403`、`404`、`405`、`500`。
-- 管理 MIME 类型、静态文件读取策略和后续缓存头策略。
-
-不应承担的职责：
-
-- 不直接调用 `epoll_ctl` 或 `epoll_wait`。
-- 不直接拥有连接 fd。
-- 不执行线程调度。
-- 不把日志、指标和文件传输优化混入请求解析器。
-
-重要输入与输出：
-
-- 输入：来自连接的字节流、静态资源根目录、请求上下文。
-- 输出：解析后的请求对象、响应对象、是否保持连接的决策。
-
-### `include/proxy/` 与 `src/proxy/`
-
-`proxy` 模块用于后续 L7 Reverse Proxy / Gateway 能力。该模块是长期架构边界，具体能力由后续阶段设计决定。
-
-主要职责：
-
-- 根据 HTTP 请求选择 upstream。
-- 维护转发请求与 upstream 响应的上下文。
-- 管理代理超时、转发失败、错误响应和访问日志字段。
-- 在需要时提供简单负载均衡策略和 upstream 健康状态读取。
-
-不应承担的职责：
-
-- 不实现 L4 转发、NAT、IPVS、XDP 或 DPDK 能力。
-- 不绕过 `net` 模块直接构造独立事件循环，除非阶段设计明确要求。
-- 不把静态文件服务逻辑复制到代理模块。
-
-### `include/timer/` 与 `src/timer/`
-
-`timer` 模块负责时间相关任务，尤其是连接超时和定时清理。
-
-主要职责：
-
-- 管理空闲连接超时。
-- 为 keep-alive、代理 upstream 超时、优雅关闭提供时间触发能力。
-- 与 `EventLoop` 协作，在事件循环中触发到期任务。
-
-不应承担的职责：
-
-- 不直接关闭连接 fd，应通过网络层连接对象完成关闭流程。
-- 不决定 HTTP 业务错误码。
-- 不持有协议层复杂状态。
-
-### `include/metrics/` 与 `src/metrics/`
-
-`metrics` 模块用于后续可观测能力。
-
-主要职责：
-
-- 统计请求数、错误数、活动连接数、响应延迟、写失败次数等指标。
-- 为日志、内部指标接口和压测报告提供稳定数据来源。
-
-不应承担的职责：
-
-- 不参与请求路由。
-- 不改变连接生命周期。
-- 不为了统计而阻塞主 IO 路径。
-
-### `tests/`
-
-`tests/` 存放单元测试、集成测试和 smoke test。
-
-主要职责：
-
-- 验证纯逻辑模块，例如 HTTP 解析、路径解析、响应构造、Buffer、定时器。
-- 验证跨模块链路，例如启动服务器后用 curl 或脚本访问真实端口。
-- 保护已发布行为不被后续重构破坏。
-
-不应承担的职责：
-
-- 不保存生产运行数据。
-- 不依赖不可复现的外部服务。
-- 不把压测结果伪装成单元测试结果。
-
-### `benchmark/`
-
-`benchmark/` 存放 wrk、perf、对比压测脚本和结果说明。
-
-主要职责：
-
-- 记录压测命令、环境、参数和结果。
-- 对比优化前后 QPS、平均延迟、P95/P99、CPU 和内存表现。
-- 支撑 README 和简历中的性能表述。
-
-不应承担的职责：
-
-- 不作为功能正确性的唯一验证依据。
-- 不覆盖 Reviewer 的独立验收报告。
-
-## 数据与控制流
-
-### 静态文件请求流
-
-当前监听链为 `EventLoop -> Channel -> Acceptor -> TcpServer -> TcpConnection`；消息链为 `TcpConnection::ReadMessages -> MessageCallback -> app Session -> RequestParser/HTTP`。每个factory创建共享会话Reading/Writing/Closing及独立parser；`RequestParser::Feed`接收新字节后立即由连接consume并丢弃旧view。解析成功后暂停读取，生产`service.PrepareResponse`返回内存头/拥有型文件区域或内存响应及effective_policy；策略先决定再序列化，服务400收紧close，`Handle`委托以保持兼容。app保存最终策略并移动提交完整响应，write-complete排空通知后close或reset并优先处理缓存后缀，无须新socket事件。Session不拥有连接/service，ConnectionIo只读写字节；service生命周期覆盖回调并保留root文件fd。
-
-以下请求流包含已交付连接复用与长期扩展；sendfile已交付，完整指标仍非当前能力：
-
-1. 用户通过浏览器、curl 或 wrk 发起 HTTP 请求。
-2. Linux 内核将监听 fd 或连接 fd 标记为就绪。
-3. `Epoller` 从 `epoll_wait` 返回就绪事件。
-4. `EventLoop` 根据 registration token 查表找到对应 `Channel`，忽略已失效 token。
-5. 监听 fd 就绪时，`Acceptor` 接收新 Socket 并移动交给 `TcpServer`，由其创建和持有 `TcpConnection`。
-6. 连接 fd 可读时，`TcpConnection` 将字节读入输入 Buffer。
-7. `http` 模块从输入 Buffer 中解析请求边界和 HTTP 语义。
-8. 静态文件服务逻辑解析路径，确认目标文件位于静态资源根目录内。
-9. `http` 模块构造响应；大文件传输可以在后续阶段使用 `sendfile` 交给网络层执行。
-10. `TcpConnection` 将响应数据写入输出 Buffer，并关注可写事件。
-11. 数据写完后，根据 HTTP Connection 语义选择保持连接或关闭连接。
-12. 日志和指标模块记录请求结果、状态码、耗时和错误信息。
-
-协议解析同步路径为 `RequestParser::Feed → FinishLine → ValidateHeader → EqualsAsciiCaseInsensitive / TrimHeaderWhitespace → BuildResult`。两个具名私有helper仅借用本次输入视图并更新parser自身的扫描计数；不会保存视图或异步执行。`FeedResult`返回独立请求值，调用者之后消费输入不会使它失效。
-
-基础缓冲的变更入口为`Buffer::Prepare/Commit/Consume/Append/Reset/ReleaseEmpty`，视图仍在下一次变更时失效；`FileRegion::Advance`推进独占文件区域，`UniqueFd::Release/Reset`转移或关闭fd。`Socket::CreateTcp/BindAny/Listen/AcceptNonBlocking`与`Epoller::Add/Modify/Remove/Wait`保持原系统调用错误及生命周期契约；这些命名变化不改变网络层的后续阶段装配结构。
-
-### L7 代理请求流
-
-L7 代理请求在 HTTP 请求解析后进入代理模块：
-
-1. `http` 模块解析请求并保留请求方法、路径、Header 和必要 body 信息。
-2. `proxy` 模块根据路由规则选择 upstream。
-3. `proxy` 模块通过 `net` 模块建立或复用 upstream 连接。
-4. 请求被转发到 upstream。
-5. upstream 响应返回后，代理模块生成对客户端的响应转发数据。
-6. 连接超时、upstream 不可用或响应异常时，代理模块生成明确的错误响应，并记录日志与指标。
-
-代理模块必须复用系统已有网络事件层和资源管理能力，不应形成第二套不受约束的网络框架。
-
-### 错误传播
-
-错误按层次向上传播：
-
-- 系统调用错误由 `net` 模块转换为连接错误、监听错误或可恢复事件。
-- HTTP 解析错误由 `http` 模块转换为 `400`、`405` 等响应。
-- 文件访问错误由静态文件服务转换为 `403`、`404` 或 `500`。
-- 代理失败由 `proxy` 模块转换为 `502`、`503` 或 `504`。
-- 进程启动错误由入口层输出日志并返回非零退出码。
-
-错误日志应包含足够定位信息，但不能泄露敏感路径、完整系统环境或不必要的内部实现细节。
+| 模块 | 当前职责与所有权 | 源码入口 |
+| --- | --- | --- |
+| app | CLI装配；SignalWatcher持有signalfd；每连接Session拥有parser、响应阶段与请求观测状态 | [main](app/main.cpp)、[HTTP适配](app/HttpConnectionHandler.cpp)、[信号](app/SignalWatcher.cpp)、[访问记录](app/AccessLog.cpp) |
+| base | UniqueFd/Socket相关资源基础、FileRegion独占正文fd与偏移；Buffer读写游标；LoggerSession管理AsyncLogger消费者 | [Buffer](src/base/Buffer.cpp)、[FileRegion](include/base/FileRegion.h)、[异步日志](src/base/AsyncLogger.cpp) |
+| net | TcpServer装配监听、线程池与registry；EventLoop/Epoller/Channel分离轮询、事件分发和fd所有权；TcpConnection管理单连接状态，ConnectionIo管理字节与文件发送 | [服务器](src/net/TcpServer.cpp)、[注册表](src/net/ConnectionRegistry.cpp)、[连接](src/net/TcpConnection.cpp)、[传输](src/net/ConnectionIo.cpp) |
+| http | 增量请求解析、显式ResponseResult、响应序列化、fd-relative静态文件服务；不管理连接或epoll | [parser](src/http/HttpRequest.cpp)、[response](src/http/HttpResponse.cpp)、[文件服务](src/http/StaticFileService.cpp) |
+| timer | owner线程的定时队列；EventLoop控制计时和到期分发 | [TimerQueue](src/timer/TimerQueue.cpp) |
+| metrics | 固定容量原子计数与延迟count/sum/max，退出序列化 | [ServerMetrics](src/metrics/ServerMetrics.cpp) |
+
+`include/` 与 `src/` 按模块分离头文件和实现，`app/` 保留现有组织；本项目明确保留布局。文件组织、内部类、类外实现及职责分组的通用规则只维护在个人 `personal-cpp-standards` Skill，不在项目复制第二份规范。
 
 ## 依赖方向
 
-长期依赖方向如下：
+`app → http/net/base/metrics`；`http → base/标准库/Linux文件API`；`net → base/timer/metrics`；metrics不依赖HTTP会话。网络层不理解HTTP，HTTP层不拥有连接fd。CMake将base/net/http/timer/metrics编入hp_http_core，将app适配与信号编入hp_http_app，再链接hp_http_server。
 
-```text
-app
-  -> http / proxy
-  -> net
-  -> base
-  -> metrics
+## 线程与资源所有权
 
-http
-  -> base
-  -> metrics
+默认主线程创建main EventLoop与Acceptor，只监听并处理进程信号。Acceptor接收后在交付前启用TCP_NODELAY；失败只关闭该连接。TcpServer按轮转选择worker，将持有Socket与回调的handoff通过EventLoopThread任务队列投递；目标worker才创建TcpConnection并在自己的ConnectionRegistry注册。`--threads 0` 使用main registry处理连接，库TcpServer默认workerCount为0，app默认2。
 
-proxy
-  -> http
-  -> net
-  -> base
-  -> metrics
+每个EventLoop始终绑定构造线程；注册、更新、移除、poll与销毁均在owner。Channel只分发事件、不关闭fd；Socket/UniqueFd/SignalWatcher等拥有fd。关闭先移除Channel，registry在安全回收点销毁连接，避免事件回调中释放仍被使用的对象。EventLoopThreadPool拥有workers并join，registry在对应owner清理；跨线程任务排队与eventfd唤醒不授权调用方直接操作目标loop。
 
-net
-  -> base
-  -> timer
-  -> metrics
+HTTP factory绑定文件服务provider；MessageHandler第一次收到输入通知时在连接owner创建共享Session。消息与writeComplete回调持有同一Session，parser和阶段状态不跨连接共享。send可同步触发完成回调，因此pending/响应阶段先于send设置；不能假设完成总是延迟发生。
 
-timer
-  -> base
+LoggerSession在服务对象前启动，唯一日志consumer与IO workers分离。服务/worker/registry/Session销毁后停止日志接收、排空并join，最后才导出metrics。StaticFileService活得比捕获它的provider及server更久；FileRegion独占文件fd，正常完成或中断均释放。
 
-metrics
-  -> base
-```
+## 数据与控制流
 
-约束如下：
-
-- `base` 不得依赖 `net`、`http`、`proxy`、`app`。
-- `net` 不得依赖 `http` 或 `proxy`。
-- `metrics` 只提供低层统计接口和数据结构，不得依赖 `net`、`http`、`proxy` 或 `app`。
-- `net`、`http` 和 `proxy` 可以依赖稳定的 `metrics` 接口，但不得依赖具体展示或报告逻辑。
-- `http` 不得依赖 `net`，HTTP 解析和响应构造必须可以脱离真实 socket 做单元测试。
-- `proxy` 可以依赖 `http` 和 `net`，但不能绕过 `net` 直接管理独立事件循环。
-- `app` 负责组合并注入配置、日志和指标对象；禁止用全局可变单例跨层传递业务状态。Approved V0.5/S2 REQ-01/05明确保留base日志兼容入口：仅发布当前LoggerSession的共享引用，锁内取引用、锁外提交，单进程至多一个活动会话；不得借此传递连接、请求、配置或其他跨层业务状态。该限定按高权威阶段设计澄清原通用措辞，不扩张全局状态许可。
-- 生产代码不得依赖 `tests` 或 `benchmark`。
-- 不允许循环依赖。
-- 不允许通过全局可变状态跨层传递连接、请求或配置。
-- 文件系统访问默认由 HTTP 静态文件服务模块或配置模块完成，网络层不得直接读取业务文件。
-
-## 数据模型与持久化
-
-项目主要运行时数据模型包括：
-
-- `ServerConfig`：监听地址、端口、静态资源根目录、线程数、连接限制、超时配置、日志配置。
-- `Socket` / fd 资源对象：封装 Linux fd 所有权和关闭语义。
-- `EventLoop`：单个事件循环及其管理的 Channel 集合。
-- `Channel`：fd 与关注事件、回调函数之间的绑定关系。
-- `TcpConnection`：单个 TCP 连接的生命周期、输入 Buffer、输出 Buffer、关闭状态和用户回调。
-- `HttpRequest`：请求方法、路径、版本、Header、解析状态。
-- `HttpResponse`：状态码、Header、body 或文件传输描述。
-- `Timer` / `TimerQueue`：定时任务和连接超时记录。
-- `Metrics`：请求计数、错误计数、连接数、延迟统计等观测数据。
-
-默认持久化策略：
-
-- 静态资源来自配置指定的文件目录。
-- 运行日志可以输出到 stdout/stderr，后续可扩展到日志文件。
-- benchmark 结果和分析报告保存到 `benchmark/` 或对应文档目录。
-- Builder、Reviewer、Leader 产生的报告保存在 `docs/` 下，不得被自动覆盖或删除。
-- 构建产物、临时文件和压测临时数据不属于长期事实来源。
-
-配置默认值应集中维护，不能散落在多个业务模块中。配置格式和命令行参数一旦出现在 README 或阶段设计中，后续修改需要同步更新相关文档。
-
-## 外部接口与集成
-
-### 命令行接口
-
-可执行程序通过命令行启动。命令行接口用于设置监听端口、静态资源根目录、配置文件路径、线程数、日志级别等运行参数。
-
-命令行参数解析失败时，应输出清晰错误信息并返回非零退出码。参数解析层不直接启动部分服务，也不吞掉配置错误。
-
-### HTTP 接口
-
-当前仅无请求体HTTP/1.1 GET默认保活，close token优先。只接受无CL/TE或唯一CL十进制零；重复/列表/非零或非法CL、任何TE/Expect为400关闭，合法非GET为405关闭。正常403/404及有界服务500可复用；provider异常500、服务400和显式close终止后缀。Connection按ASCII token判定，不解释Upgrade为协议切换。此为受限支持矩阵，不是完整HTTP/1.1支持。
-
-HTTP 接口是项目主要用户入口。
-
-长期支持方向包括：
-
-- `GET` 静态资源。
-- 基础错误响应。
-- HTTP/1.1 keep-alive。
-- 后续 L7 代理转发路径。
-- 后续内部指标接口。
-
-HTTP 接口必须限制请求头大小、路径解析范围和连接生命周期，避免异常客户端拖垮服务。
-
-### 文件输入输出
-
-文件输入主要包括静态资源、配置文件和测试夹具。文件输出主要包括日志、压测报告和文档报告。
-
-静态文件访问必须限制在配置的根目录内。任何路径拼接、URL decode、符号链接处理或规范化策略都必须防止路径穿越。
-
-### 系统命令和第三方服务
-
-生产运行时默认不调用外部系统命令。测试、压测和分析阶段可以使用 `curl`、`wrk`、`perf`、`ctest` 等工具，但这些工具不应成为服务器运行时依赖。
+1. epoll就绪→Channel→TcpConnection→ConnectionIo非阻塞recv，写入连续Buffer；消息span只在回调期间借用，consume后旧view失效。
+2. Session在Reading阶段增量feed parser，只consume本次acceptedBytes；首次非空feed开始请求统计。半包继续等输入，不复制/解析流水线后缀为当前请求。
+3. 完整请求→StaticFileService校验路径，以root目录fd逐级打开，拒绝symlink与越界；onResponse返回响应头及独占FileRegion。错误或自定义响应使用内存bytes；显式buildResponseBytes/handleResponse兼容入口会物化文件。
+4. Session进入Writing并pause读取，先写定状态；TcpConnection发送内存头，再sendfile正文。EAGAIN保留pending并关注可写，输出逻辑上限按内存+文件remaining计。
+5. 全部输出被kernel接收后writeComplete一次终结请求，计completed；保活时reset parser并处理已缓存后缀，一次只生成一个响应。close或draining时直接closeAfterFlush，不推进新请求/provider。
+6. 初始空FIN沿用400但无请求计数；开始后未排空即关闭计aborted。registry连接统计包含空连接。完成不证明peer完整收到，服务端延迟不是客户端RTT。
 
 ## 错误处理与安全边界
 
-输入校验原则：
+仅受限HTTP/1.1无body GET；合法非GET为405+Allow并关闭，解析错误400关闭。仅允许无Content-Length或唯一十进制零值，重复/列表/非零CL、Transfer-Encoding、Expect均400关闭。Connection token大小写无关合并、close优先；非法token400。普通403/404及服务有界500可复用，provider异常或放宽terminal policy生成500并关闭。
 
-- 命令行参数必须校验类型、范围和路径有效性。
-- HTTP 请求必须限制 Header 总大小、请求行格式、方法集合和版本格式。
-- URL decode 失败、路径非法、路径穿越应返回明确错误响应。
-- 代理 upstream 配置必须校验地址、端口和超时范围。
+请求累计16KiB、请求行4KiB、文件8MiB；不做URL decode，任何percent编码400，歧义路径/反斜杠/symlink403。无Range、压缩、缓存协商、目录列表、TLS、HTTP/2或代理。文件只读，root必须启动前成功打开为目录。
 
-安全边界：
+生产输入最多16KiB；库maxInputBytes=0无硬上限。输出上限9MiB，Writing暂停读取，文件未排空不推进pipeline。Buffer consume仅移动游标，尾空间不足才整理/增长；输出空闲容量>64KiB释放，否则保留。此门槛不是响应拒绝或RSS上限。单次增长旧+新暂存、parser/provider与其他资源需另计。
 
-- 静态文件服务不得访问静态根目录之外的文件。
-- 日志不得输出敏感环境变量、私钥、访问令牌或完整系统隐私路径。
-- 生产代码不得执行用户传入的系统命令。
-- fd、文件句柄、线程和定时任务必须有明确所有权。
-- 连接关闭必须经过统一流程，避免重复关闭、悬空回调和事件残留。
+## 超时与关闭
 
-失败处理原则：
+owner定时器处理idle/keep-alive；idle只按实际recv/send正字节刷新，keep-alive在响应排空且无下一请求部分输入/后缀时等待。到期静默关闭，可截断输出；两项0禁用，取较早截止。尚无全局连接/内存配额或总请求时限，持续少量输入可延长idle，同owner阻塞provider不能被timer抢占。
 
-- 单个连接失败不应导致进程退出。
-- 监听 socket 创建失败、配置加载失败、核心初始化失败应阻止服务启动。
-- 文件读取失败应映射为合适 HTTP 状态码。
-- upstream 不可用时应返回明确网关错误，并记录可诊断日志。
+SIGINT/SIGTERM由SignalWatcher/signalfd在main处理，停止监听并通知owner drain；只排空当前输出，不解析后缀。第一次观察到信号确定绝对截止，再次信号或到期强关。正常受控关闭（含截止截断）退出0，资源/worker错误退出1，CLI错误退出2。
 
-## 并发、状态与资源管理
+## 日志与观测
 
-当前生产HTTP沿用V0.3/S2复用契约，由V0.4/S2固定worker各自执行LT事件循环（显式0为单Reactor），每连接parser固定16KiB，transport未消费逻辑输入≤16KiB，最多一个未排空响应，文件≤8MiB。Writing暂停新的recv，实际排空后再推进缓存，EAGAIN退出等事件；暂停、peerEOF、永久关闭相互独立。临时复制允许固定倍数单响应内存，容量不随请求次数增长。初始空EOF/部分请求EOF为400关闭，已完成请求后的空闲EOF静默关闭；完整缓存请求在FIN后仍顺序排空。S3已提供实际recv/send进展续期的普通idle与响应排空后的keep-alive等待超时；无全局配额、最低速率或总请求时限，不声称完整slowloris/慢读防护或生产抗DoS。
+AsyncLogger固定1024槽、正文1024字节，队满全等级丢新，无ERROR同步fallback；唯一consumer每批最多64条一次写/flush，sink失败整批计failed不重试。无日志会话的库调用仍同步；停止会话后不自动fallback。阻塞stderr可拖延join，HTTP关闭截止不能保证进程限时退出。
 
-项目长期以非阻塞 IO 和 Reactor 模型作为并发基础。
-
-资源管理原则：
-
-- fd、文件句柄和 epoll 实例必须使用 RAII 管理。
-- 连接对象拥有自身 Buffer、状态和关闭流程。
-- 输出 Buffer 应设置高水位，慢连接不能无限占用内存。
-- 定时器负责清理空闲连接和超时请求。
-- 线程池任务必须有边界，不能无上限堆积。
-- 跨线程唤醒必须通过明确机制进入目标 `EventLoop`，不能直接跨线程修改连接内部状态。
-
-单 Reactor 和主从 Reactor 都应遵循同一套连接抽象。主 Reactor 负责接收连接，sub Reactor 负责连接读写。
-
-`V0.4` 中的“线程池”默认指固定大小的 `EventLoopThreadPool`：它拥有若干 sub Reactor 事件循环线程，并将新连接分配到这些事件循环。通用业务任务线程池不是 `V0.4` 的必需能力；只有后续阶段出现可证明需要与 IO 分离的阻塞任务时，才允许单独设计，且必须定义队列上限、拒绝策略和关闭语义。
-
-优雅关闭由 `V0.4 / S4` 负责。进程至少响应 `SIGINT` 和 `SIGTERM`，信号处理路径只触发异步安全的停止通知，实际停止监听、唤醒事件循环、排空或终止连接、回收线程和关闭 fd 均在正常控制流中完成。具体采用 `signalfd`、self-pipe 或等价机制，由阶段设计决定。
-
-生产factory在main串行生成每连接callback，Session/parser在owner首次使用时创建；共享StaticFileService只读root fd、每请求独立文件fd，所有worker及callback释放后才销毁service。立即停止与worker故障会停止接收并回收全部worker，不保证活动响应排空。避免引入无同步共享可变状态。
-
-每连接最多一个活跃timer，100000次续期不累积历史条目；同poll先IO/任务后按最新截止重验，到期回调走request_close与after_dispatch，纯timer也回收。停止或失败取消timer/callback后再销毁registry/loop；持续少量字节可续期，阻塞provider不能被同owner timer抢占。S4已有输出界限及优雅排空；drain取消普通idle/keepalive，只使用全局关闭截止。
+AccessLog默认off，有界owning记录去query/fragment，完整JSON payload≤1024字节，格式/提交失败不改变业务。ServerMetrics逐原子runtime snapshot非事务一致，uint64增量与sum饱和。最终snapshot在服务销毁与logger drain后导出stdout marker；饱和前started=completed+aborted，latency_count=started、active/logger_pending=0。详见 [字段与语义](documentation/RUNNING.md#v06s1-指标与访问记录)。
 
 ## 测试架构
 
-R6 按用户要求保留旧测试源码及名称，依赖旧生产接口的 23 个目标暂不构建或注册；继续使用 5 个兼容 CTest，并新增 R6 专项测试。历史完整测试结果不能代表迁移后的覆盖，按需恢复记录见 TD-006；当前命令和目标清单以 README / CMake 为准。
-
-测试按层级组织：
-
-- 单元测试：验证 HTTP 解析、响应构造、路径解析、Buffer、定时器、配置解析等纯逻辑。
-- 网络集成测试：启动服务器进程，使用 curl 或测试客户端验证真实 TCP/HTTP 链路。
-- smoke test：覆盖最小主流程，例如访问 `/`、访问存在文件、访问不存在文件、非法方法、路径穿越。
-- 回归测试：保护已完成版本的用户可见行为。
-- 压测与性能分析：使用 wrk、perf 等工具记录吞吐、延迟、CPU 热点和优化前后对比。
-
-Builder 至少应运行与当前阶段相关的单元测试和 smoke test。Reviewer 应独立复核关键集成路径，并在性能阶段关注压测命令、环境、参数和结果是否可复现。
-
-测试数据和测试夹具应放在测试目录或静态资源测试目录中，不能依赖开发者本机私有路径。
-
-## 架构约束
-
-所有 Agent 和开发者必须遵守以下长期约束：
-
-- 项目主线是 Linux C++ 高性能 HTTP Server，不得偏移为业务 Web 应用。
-- 核心网络模型必须基于 Linux socket、非阻塞 IO 和 `epoll` 自研实现。
-- 不得引入替代核心网络框架的大型依赖。
-- HTTP/2、TLS、数据库 ORM、复杂前端、跨平台兼容不是默认范围。
-- L7 Gateway 是应用层扩展，不得把项目变成 L4LB、XDP、DPDK 或内核网络项目。
-- `net` 模块不得理解 HTTP 语义。
-- `http` 模块不得管理 epoll 事件循环。
-- `base` 模块不得依赖业务模块。
-- 所有 fd 和文件资源必须有明确所有权。
-- 所有用户可见行为变化必须有测试或 smoke test 支撑。
-- 压测数据必须记录环境、命令和参数，不能只记录结论。
-- 架构边界变化必须先更新阶段设计或本文件，再进入实现。
-
-## 架构变更流程
-
-以下情况属于架构变更：
-
-- 新增或删除长期模块。
-- 改变模块依赖方向。
-- 改变网络并发模型。
-- 改变连接生命周期或关闭语义。
-- 引入大型第三方依赖。
-- 改变配置格式、运行入口或核心测试策略。
-- 将静态服务器扩展为 L7 Gateway。
-
-架构变更流程：
-
-1. Leader 在阶段设计中说明变更原因、影响范围、禁止范围和验收标准。
-2. 如变更影响长期结构，Leader 同步更新 `ARCHITECTURE.md`。
-3. Builder 按阶段设计实现，不得自行扩大架构范围。
-4. Reviewer 根据设计和本文档检查模块边界、依赖方向、资源生命周期和测试覆盖。
-5. 如变更带来延期项或风险，Leader 更新 `TECH-DEBT-TRACKER.md`。
-
-如果 Builder 发现实现与当前架构冲突，应在 Builder 报告中记录冲突点和建议，不应直接绕过架构约束继续扩大实现。
-
-## 变更记录
-
-- `2026-09-09`：增加 V0.4/S2 Draft 准备入口，主从Reactor、owner registry与池投递界限均为待批准方案；现行生产实现不变。
-
-- `2026-09-09`：登记 V0.4/S1 Draft 准备入口；新增能力未实现，现行生产架构不变。
-
-- `2026-09-09`：依据S3 Builder001、独立Reviewer001 PASS及Leader004关闭S3、V0.3与P3-01；TD-003按退出条件Closed，TD-005当前检查点完成并持续Open；V0.4未开始。
-
-- `2026-09-09`：依据PM“批准，开始工作”及Leader V0.3/S3-report-002登记S3 revision1 Approved、待实现；范围及既有架构不变，未新增验收或债务关闭声明。
-
-- `2026-09-08`：准备V0.3/S3 Draft revision1设计、审查与Leader001；S3设计中待批准，S1/S2已完成，V0.3尚未完成。
-
-- `2026-09-08`：依据V0.3/S2 Builder001、Reviewer001 PASS和Leader004关闭S2及P3-01，TD-003/005当前检查点完成但持续Open；V0.3进行中、S3未开始。
-
-- `2026-09-08`：依据PM原话“批准，进行开发”及Leader V0.3/S2-report-002，将S2 design/review revision1登记Approved，当前待实现 / Ready for Builder；无功能验收或新增债务。
-
-- `2026-09-08`：新增V0.3/S2 Draft设计入口并同步设计中状态；保留S1实际单响应/增量Parser事实，尚未批准架构实现变更。
-
-- `2026-09-08`：依据V0.3/S1 Builder001、Reviewer001 PASS及Leader003关闭S1/P3-01和TD003/005当前检查点；V0.3整体进行中，S2/S3未开始，无新债务。
-
-- `2026-09-08`：依据PM批准及Leader V0.3/S1-report-002，design/review revision1登记Approved，当前待实现；V0.3/S2/S3未开始，无新增债务。
-
-- `2026-09-08`：准备 V0.3/S1 Draft revision 1，当前阶段设计中等待批准；V0.2 已完成，功能代码未变。
-
-- `2026-09-08`：依据S3 Builder001、Reviewer001唯一PASS与Leader003，关闭S3和整个V0.2、P3-01/P3-02及TD-005检查点；V0.3未开始，无新增债务。
-
-- `2026-09-08`：依据 PM 当前批准和 Leader S3-report-002，V0.2/S3 revision1 登记 Approved，当前待实现；V0.2整体进行中，无新增债务。
-
-- `2026-09-08`：依据 S2 Builder 001、Reviewer 001 唯一 PASS 与 Leader 003，关闭 V0.2/S2、P3-01 和 TD-005 阶段检查点；V0.2 进行中，S3 未开始，无新增债务。
-
-- `2026-09-08`：依据 PM 明确批准与 Leader S2-report-002，V0.2/S2 revision 1 登记 Approved，当前待实现；S1 已完成，S3 未开始，无新增债务。
-
-- `2026-09-07`：依据 V0.2/S1 Builder 001 与 Reviewer 001 唯一 `PASS`，Leader report-003 关闭 S1 和 P3-01；V0.2 整体进行中、S2/S3 未开始，无新增债务。
-
-- `2026-09-07`：登记 PM 批准 V0.2/S1 revision 1，状态同步为`待实现 / Ready for Builder`；批准依据见 Leader S1-report-002，尚未实现或验收。
-
-- `2026-09-03`：记录 V0.2/S1 Draft revision 1 的架构方向与未实现状态；固定 S1 只抽取单线程 EventLoop/Channel，Acceptor/TcpConnection 与 HTTP 重接仍分别留在 S2/S3。
-- `2026-09-03`：依据 S3 Reviewer 报告 001 的唯一 `PASS`，同步 V0.1 最小 HTTP 静态文件服务、fd-relative 路径约束与单请求关闭语义为当前已落地能力；保留 Reactor、资源治理和性能能力的后续边界。
-- `2026-09-03`：记录 PM 批准 S3 revision 1；状态推进到 `待实现 / Ready for Builder`，并继续区分 Approved 目标与当前 S2 echo 实现。
-- `2026-09-03`：同步 S3 Draft revision 1 与 `Awaiting PM Decision` 门禁；HTTP 模块仍是目标边界，不描述为已落地。
-- `2026-09-01`：依据 S2 Reviewer 复审 `PASS` 同步已落地的单线程 epoll LT、TCP echo、连接 IO 与 fd 生命周期边界，并明确下一步为 S3 设计。
-- `2026-08-25`：依据独立 Reviewer `PASS` 同步 S1 已完成状态、当前已落地边界和 S2 设计前置条件。
-- `2026-08-24`：区分当前实现状态与长期目标架构，补充 metrics 依赖边界、`EventLoopThreadPool` 定义和信号驱动的优雅关闭约束。
-- `2026-05-21`：初始化长期架构文档，明确 C++20、Linux、epoll、HTTP/1.1、Reactor、静态文件服务和 L7 Gateway 扩展边界。
-
-- `2026-09-09`：依据 PM 批准与 Leader V0.4/S1-report-002 登记 S1 Approved revision 1；待实现，现行生产架构不变。
-
-- `2026-09-09`：依据 V0.4/S1 Reviewer001 PASS 与 Leader003 同步已交付线程原语和生命周期；生产 HTTP 仍单线程，线程池/定时器/治理继续后续阶段。
-
-- `2026-09-09`：依据 PM 明确批准及 Leader V0.4/S2-report-002 登记 S2 Approved revision 1；尚未实现，不改变当前生产能力说明。
-
-- `2026-09-09`：依据 V0.4/S2 Reviewer001 PASS与Leader003同步主从Reactor、owner registry及固定池边界；S2已完成，超时和优雅治理仍留S3/S4。
-
-- `2026-09-09`：依据PM批准与Leader V0.4/S3-report-002登记S3 Approved；当前生产仍为S2已交付能力，超时尚未实现。
-
-- `2026-09-09`：依据V0.4/S3 Reviewer001 PASS与Leader003同步timer/超时实际能力，S4及V0.4退出条件尚未完成。
-
-- 2026-09-09：S4 Reviewer002 PASS与Leader003关闭V0.4，六条退出条件满足；全局连接/内存配额、阻塞抢占与硬实时承诺仍不包含。
-
-## V0.5/S1 文件传输已交付边界
-
-文件区域move-only且每响应独占CLOEXEC fd，文件完成/取消先释放再推进HTTP；内存输出只保存头或显式内存响应，文件remaining计入逻辑pending。每轮有限调用和最多256KiB文件预算，offset只按实际进展更新；文件未排空不触发后缀或keep-alive等待。默认SIGPIPE路径以窄线程guard保持宿主原mask/pending语义，不全局改信号处置。
-
-文件须保持内容稳定，更新采用原子替换名称；增长只发送初始长度，截短提前EOF或unsupported/发送错误关闭连接，不自动read降级、不补第二响应。冷文件仍可能阻塞owner，不提供并发原地修改快照或性能保证。S2日志已完成并发布v0.5-s2；S3 Buffer已完成并经Reviewer002 PASS，S4固定压测基线已完成，独立数据与限制见benchmark/。
-
-- 2026-09-10：依据Reviewer002 PASS与Leader003关闭V0.5/S1；版本整体未完成。
-
-- 2026-09-10：依据V0.5/S2 Reviewer001 PASS与Leader003记录已交付日志队列、共享会话、信号mask及阻塞stderr关闭边界；澄清Approved日志兼容入口限定，S3/S4未开始。
-
-- 2026-09-10：依据V0.5/S3 Reviewer002最终PASS及Leader003同步已交付Buffer、直接recv、64KiB保留取舍和异常/瞬时存储界；HTTP背压及S2日志关闭限制保持。S4未开始。
-
-- 2026-09-10：Reviewer002 PASS、Leader005关闭S4及V0.5，保留S1 sendfile、S2阻塞stderr最终join限制和S3 Buffer边界；本阶段未改C++产品。
-
-## 独立矩阵测量边界
-
-V0.6/S2工具与产品分离：Build从固定已验收S1 git archive导出独立Release，不读取学习dirty；Run拥有loopback server/wrk/PID身份、夹具、审计与回收，Aggregate只消费已结束样本。现有S1指标出口提供独立终态总账，客户端wrk窗口不与kernel-complete机械相等。计量/公开结果的具体口径见benchmark/matrix/README.md；工具不成为产品运行依赖，不改HTTP/IO模块，也不承担根因定位。
+当前14个注册CTest与历史23个冻结停用目标分别说明于 [开发说明](documentation/DEVELOPMENT.md)。当前接口专项补充生命周期与观测/工具失败覆盖，不恢复全部历史穷举。历史28/28和S1的12/12不代表本轮14项已执行；本阶段没有动态回归。
 
 ## 性能材料的系统边界
 
-benchmark/matrix固定已验收产品archive/Release identity，benchmark/analysis仅只读复用各角色artifact并管理独立自有server/client/strace。线程CPU依据实际server /proc ticks和身份/clock；client为单child wait4，strace wrapper不是server CPU。父strace启动时系统调用汇总覆盖server完整生命周期，不能机械映射到5s HTTP窗口。异常finally持久化真实child退出缓存/cleanup，不补造旧失败记录。工具不接入生产IO或修改server行为。
+性能矩阵与analysis是独立工具，不改变服务器运行协议。固定S1 commit1340f5b、Release配置、wrk身份及CPU原始读取区间等条件见 [性能索引](benchmark/README.md)。S3有限三样本仅M2 syscall配对与M6未跟踪CPU；strace默认system time覆盖完整server生命周期，不是measurement独占、wall或函数CPU。M6 syscall未知，M2 -95.85%QPS变化仅观测扰动；不能推导恢复、线性线程扩展、容量或长尾根因。RO-002、TD-001、TD-006保持。
 
-S3最终证据仅M2配对及M6未跟踪；M6 syscall未知、线程角色映射无依据则unknown，强跟踪扰动使syscall排名不能直接成为生产瓶颈判断。WSL2/closed-loop/hot cache限制、RO-002高并发长尾和TD-006冻结测试边界延续。
+## 架构变更流程
+
+新架构或接口变更先形成Approved设计，实现/审查证据分角色记录，允许关闭后更新当前文档。旧架构时点完整保存在 [迁移归档](history/documentation/V1.0-S1/INDEX.md)，历史角色报告和性能raw保持原字节。
+
+<details>
+<summary>历史锚点导航</summary>
+
+旧标题对应迁移前历史时点，不作为当前能力或执行授权。
+
+<a id="当前状态与目标架构"></a>
+- [当前状态与目标架构](history/documentation/V1.0-S1/ARCHITECTURE.md#当前状态与目标架构)
+<a id="项目技术概览"></a>
+- [项目技术概览](history/documentation/V1.0-S1/ARCHITECTURE.md#项目技术概览)
+<a id="系统分层"></a>
+- [系统分层](history/documentation/V1.0-S1/ARCHITECTURE.md#系统分层)
+<a id="启动入口层"></a>
+- [启动入口层](history/documentation/V1.0-S1/ARCHITECTURE.md#启动入口层)
+<a id="网络事件层"></a>
+- [网络事件层](history/documentation/V1.0-S1/ARCHITECTURE.md#网络事件层)
+<a id="协议与应用层"></a>
+- [协议与应用层](history/documentation/V1.0-S1/ARCHITECTURE.md#协议与应用层)
+<a id="基础设施层"></a>
+- [基础设施层](history/documentation/V1.0-S1/ARCHITECTURE.md#基础设施层)
+<a id="测试与验证层"></a>
+- [测试与验证层](history/documentation/V1.0-S1/ARCHITECTURE.md#测试与验证层)
+<a id="文档与协作层"></a>
+- [文档与协作层](history/documentation/V1.0-S1/ARCHITECTURE.md#文档与协作层)
+<a id="app"></a>
+- [`app/`](history/documentation/V1.0-S1/ARCHITECTURE.md#app)
+<a id="includebase-与-srcbase"></a>
+- [`include/base/` 与 `src/base/`](history/documentation/V1.0-S1/ARCHITECTURE.md#includebase-与-srcbase)
+<a id="includenet-与-srcnet"></a>
+- [`include/net/` 与 `src/net/`](history/documentation/V1.0-S1/ARCHITECTURE.md#includenet-与-srcnet)
+<a id="includehttp-与-srchttp"></a>
+- [`include/http/` 与 `src/http/`](history/documentation/V1.0-S1/ARCHITECTURE.md#includehttp-与-srchttp)
+<a id="includeproxy-与-srcproxy"></a>
+- [`include/proxy/` 与 `src/proxy/`](history/documentation/V1.0-S1/ARCHITECTURE.md#includeproxy-与-srcproxy)
+<a id="includetimer-与-srctimer"></a>
+- [`include/timer/` 与 `src/timer/`](history/documentation/V1.0-S1/ARCHITECTURE.md#includetimer-与-srctimer)
+<a id="includemetrics-与-srcmetrics"></a>
+- [`include/metrics/` 与 `src/metrics/`](history/documentation/V1.0-S1/ARCHITECTURE.md#includemetrics-与-srcmetrics)
+<a id="tests"></a>
+- [`tests/`](history/documentation/V1.0-S1/ARCHITECTURE.md#tests)
+<a id="benchmark"></a>
+- [`benchmark/`](history/documentation/V1.0-S1/ARCHITECTURE.md#benchmark)
+<a id="静态文件请求流"></a>
+- [静态文件请求流](history/documentation/V1.0-S1/ARCHITECTURE.md#静态文件请求流)
+<a id="l7-代理请求流"></a>
+- [L7 代理请求流](history/documentation/V1.0-S1/ARCHITECTURE.md#l7-代理请求流)
+<a id="错误传播"></a>
+- [错误传播](history/documentation/V1.0-S1/ARCHITECTURE.md#错误传播)
+<a id="数据模型与持久化"></a>
+- [数据模型与持久化](history/documentation/V1.0-S1/ARCHITECTURE.md#数据模型与持久化)
+<a id="外部接口与集成"></a>
+- [外部接口与集成](history/documentation/V1.0-S1/ARCHITECTURE.md#外部接口与集成)
+<a id="命令行接口"></a>
+- [命令行接口](history/documentation/V1.0-S1/ARCHITECTURE.md#命令行接口)
+<a id="http-接口"></a>
+- [HTTP 接口](history/documentation/V1.0-S1/ARCHITECTURE.md#http-接口)
+<a id="文件输入输出"></a>
+- [文件输入输出](history/documentation/V1.0-S1/ARCHITECTURE.md#文件输入输出)
+<a id="系统命令和第三方服务"></a>
+- [系统命令和第三方服务](history/documentation/V1.0-S1/ARCHITECTURE.md#系统命令和第三方服务)
+<a id="并发状态与资源管理"></a>
+- [并发、状态与资源管理](history/documentation/V1.0-S1/ARCHITECTURE.md#并发状态与资源管理)
+<a id="架构约束"></a>
+- [架构约束](history/documentation/V1.0-S1/ARCHITECTURE.md#架构约束)
+<a id="变更记录"></a>
+- [变更记录](history/documentation/V1.0-S1/ARCHITECTURE.md#变更记录)
+<a id="v05s1-文件传输已交付边界"></a>
+- [V0.5/S1 文件传输已交付边界](history/documentation/V1.0-S1/ARCHITECTURE.md#v05s1-文件传输已交付边界)
+<a id="独立矩阵测量边界"></a>
+- [独立矩阵测量边界](history/documentation/V1.0-S1/ARCHITECTURE.md#独立矩阵测量边界)
+
+</details>

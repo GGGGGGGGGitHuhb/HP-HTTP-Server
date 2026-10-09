@@ -1,0 +1,1150 @@
+[
+  {
+    "file": "README.md",
+    "heading": "HP HTTP Server",
+    "old_anchor": "hp-http-server",
+    "archive": "README.md#hp-http-server",
+    "current": "../../../README.md#hp-http-server"
+  },
+  {
+    "file": "README.md",
+    "heading": "当前状态",
+    "old_anchor": "当前状态",
+    "archive": "README.md#当前状态",
+    "current": "../../../README.md#当前状态"
+  },
+  {
+    "file": "README.md",
+    "heading": "技术主线",
+    "old_anchor": "技术主线",
+    "archive": "README.md#技术主线",
+    "current": "../../../README.md#技术主线"
+  },
+  {
+    "file": "README.md",
+    "heading": "环境要求",
+    "old_anchor": "环境要求",
+    "archive": "README.md#环境要求",
+    "current": "../../../README.md#环境要求"
+  },
+  {
+    "file": "README.md",
+    "heading": "C++ 格式化与提交检查",
+    "old_anchor": "c-格式化与提交检查",
+    "archive": "README.md#c-格式化与提交检查",
+    "current": "../../../README.md#c-格式化与提交检查"
+  },
+  {
+    "file": "README.md",
+    "heading": "快速开始",
+    "old_anchor": "快速开始",
+    "archive": "README.md#快速开始",
+    "current": "../../../README.md#快速开始"
+  },
+  {
+    "file": "README.md",
+    "heading": "配置说明",
+    "old_anchor": "配置说明",
+    "archive": "README.md#配置说明",
+    "current": "../../../README.md#配置说明"
+  },
+  {
+    "file": "README.md",
+    "heading": "异步日志",
+    "old_anchor": "异步日志",
+    "archive": "README.md#异步日志",
+    "current": "../../../README.md#异步日志"
+  },
+  {
+    "file": "README.md",
+    "heading": "Buffer与既有背压",
+    "old_anchor": "buffer与既有背压",
+    "archive": "README.md#buffer与既有背压",
+    "current": "../../../README.md#buffer与既有背压"
+  },
+  {
+    "file": "README.md",
+    "heading": "项目结构",
+    "old_anchor": "项目结构",
+    "archive": "README.md#项目结构",
+    "current": "../../../README.md#项目结构"
+  },
+  {
+    "file": "README.md",
+    "heading": "V0.6/S1 指标与访问记录",
+    "old_anchor": "v06s1-指标与访问记录",
+    "archive": "README.md#v06s1-指标与访问记录",
+    "current": "../../../README.md#v06s1-指标与访问记录"
+  },
+  {
+    "file": "README.md",
+    "heading": "测试与验证",
+    "old_anchor": "测试与验证",
+    "archive": "README.md#测试与验证",
+    "current": "../../../README.md#测试与验证"
+  },
+  {
+    "file": "README.md",
+    "heading": "历史版本验证记录",
+    "old_anchor": "历史版本验证记录",
+    "archive": "README.md#历史版本验证记录",
+    "current": "../../../README.md#历史版本验证记录"
+  },
+  {
+    "file": "README.md",
+    "heading": "V0.4/S2 主从 Reactor 与专项验证",
+    "old_anchor": "v04s2-主从-reactor-与专项验证",
+    "archive": "README.md#v04s2-主从-reactor-与专项验证",
+    "current": "../../../README.md#v04s2-主从-reactor-与专项验证"
+  },
+  {
+    "file": "README.md",
+    "heading": "V0.4/S1 线程原语与专项验证",
+    "old_anchor": "v04s1-线程原语与专项验证",
+    "archive": "README.md#v04s1-线程原语与专项验证",
+    "current": "../../../README.md#v04s1-线程原语与专项验证"
+  },
+  {
+    "file": "README.md",
+    "heading": "文档索引",
+    "old_anchor": "文档索引",
+    "archive": "README.md#文档索引",
+    "current": "../../../README.md#文档索引"
+  },
+  {
+    "file": "README.md",
+    "heading": "开发流程",
+    "old_anchor": "开发流程",
+    "archive": "README.md#开发流程",
+    "current": "../../../README.md#开发流程"
+  },
+  {
+    "file": "README.md",
+    "heading": "已知限制",
+    "old_anchor": "已知限制",
+    "archive": "README.md#已知限制",
+    "current": "../../../README.md#已知限制"
+  },
+  {
+    "file": "README.md",
+    "heading": "许可证",
+    "old_anchor": "许可证",
+    "archive": "README.md#许可证",
+    "current": "../../../README.md#许可证"
+  },
+  {
+    "file": "README.md",
+    "heading": "V0.4/S3 历史实现验证",
+    "old_anchor": "v04s3-历史实现验证",
+    "archive": "README.md#v04s3-历史实现验证",
+    "current": "../../../README.md#v04s3-历史实现验证"
+  },
+  {
+    "file": "README.md",
+    "heading": "V0.4/S4 资源边界与关闭",
+    "old_anchor": "v04s4-资源边界与关闭",
+    "archive": "README.md#v04s4-资源边界与关闭",
+    "current": "../../../README.md#v04s4-资源边界与关闭"
+  },
+  {
+    "file": "README.md",
+    "heading": "V0.5/S1 文件传输",
+    "old_anchor": "v05s1-文件传输",
+    "archive": "README.md#v05s1-文件传输",
+    "current": "../../../README.md#v05s1-文件传输"
+  },
+  {
+    "file": "README.md",
+    "heading": "固定版本压测入口",
+    "old_anchor": "固定版本压测入口",
+    "archive": "README.md#固定版本压测入口",
+    "current": "../../../README.md#固定版本压测入口"
+  },
+  {
+    "file": "README.md",
+    "heading": "V0.6/S2 场景矩阵",
+    "old_anchor": "v06s2-场景矩阵",
+    "archive": "README.md#v06s2-场景矩阵",
+    "current": "../../../README.md#v06s2-场景矩阵"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "HP HTTP Server 架构文档",
+    "old_anchor": "hp-http-server-架构文档",
+    "archive": "ARCHITECTURE.md#hp-http-server-架构文档",
+    "current": "../../../ARCHITECTURE.md#hp-http-server-架构文档"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "当前状态与目标架构",
+    "old_anchor": "当前状态与目标架构",
+    "archive": "ARCHITECTURE.md#当前状态与目标架构",
+    "current": "../../../ARCHITECTURE.md#当前状态与目标架构"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "项目技术概览",
+    "old_anchor": "项目技术概览",
+    "archive": "ARCHITECTURE.md#项目技术概览",
+    "current": "../../../ARCHITECTURE.md#项目技术概览"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "系统分层",
+    "old_anchor": "系统分层",
+    "archive": "ARCHITECTURE.md#系统分层",
+    "current": "../../../ARCHITECTURE.md#系统分层"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "启动入口层",
+    "old_anchor": "启动入口层",
+    "archive": "ARCHITECTURE.md#启动入口层",
+    "current": "../../../ARCHITECTURE.md#启动入口层"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "网络事件层",
+    "old_anchor": "网络事件层",
+    "archive": "ARCHITECTURE.md#网络事件层",
+    "current": "../../../ARCHITECTURE.md#网络事件层"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "协议与应用层",
+    "old_anchor": "协议与应用层",
+    "archive": "ARCHITECTURE.md#协议与应用层",
+    "current": "../../../ARCHITECTURE.md#协议与应用层"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "基础设施层",
+    "old_anchor": "基础设施层",
+    "archive": "ARCHITECTURE.md#基础设施层",
+    "current": "../../../ARCHITECTURE.md#基础设施层"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "测试与验证层",
+    "old_anchor": "测试与验证层",
+    "archive": "ARCHITECTURE.md#测试与验证层",
+    "current": "../../../ARCHITECTURE.md#测试与验证层"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "文档与协作层",
+    "old_anchor": "文档与协作层",
+    "archive": "ARCHITECTURE.md#文档与协作层",
+    "current": "../../../ARCHITECTURE.md#文档与协作层"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "模块职责",
+    "old_anchor": "模块职责",
+    "archive": "ARCHITECTURE.md#模块职责",
+    "current": "../../../ARCHITECTURE.md#模块职责"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "`app/`",
+    "old_anchor": "app",
+    "archive": "ARCHITECTURE.md#app",
+    "current": "../../../ARCHITECTURE.md#app"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "`include/base/` 与 `src/base/`",
+    "old_anchor": "includebase-与-srcbase",
+    "archive": "ARCHITECTURE.md#includebase-与-srcbase",
+    "current": "../../../ARCHITECTURE.md#includebase-与-srcbase"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "`include/net/` 与 `src/net/`",
+    "old_anchor": "includenet-与-srcnet",
+    "archive": "ARCHITECTURE.md#includenet-与-srcnet",
+    "current": "../../../ARCHITECTURE.md#includenet-与-srcnet"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "`include/http/` 与 `src/http/`",
+    "old_anchor": "includehttp-与-srchttp",
+    "archive": "ARCHITECTURE.md#includehttp-与-srchttp",
+    "current": "../../../ARCHITECTURE.md#includehttp-与-srchttp"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "`include/proxy/` 与 `src/proxy/`",
+    "old_anchor": "includeproxy-与-srcproxy",
+    "archive": "ARCHITECTURE.md#includeproxy-与-srcproxy",
+    "current": "../../../ARCHITECTURE.md#includeproxy-与-srcproxy"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "`include/timer/` 与 `src/timer/`",
+    "old_anchor": "includetimer-与-srctimer",
+    "archive": "ARCHITECTURE.md#includetimer-与-srctimer",
+    "current": "../../../ARCHITECTURE.md#includetimer-与-srctimer"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "`include/metrics/` 与 `src/metrics/`",
+    "old_anchor": "includemetrics-与-srcmetrics",
+    "archive": "ARCHITECTURE.md#includemetrics-与-srcmetrics",
+    "current": "../../../ARCHITECTURE.md#includemetrics-与-srcmetrics"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "`tests/`",
+    "old_anchor": "tests",
+    "archive": "ARCHITECTURE.md#tests",
+    "current": "../../../ARCHITECTURE.md#tests"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "`benchmark/`",
+    "old_anchor": "benchmark",
+    "archive": "ARCHITECTURE.md#benchmark",
+    "current": "../../../ARCHITECTURE.md#benchmark"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "数据与控制流",
+    "old_anchor": "数据与控制流",
+    "archive": "ARCHITECTURE.md#数据与控制流",
+    "current": "../../../ARCHITECTURE.md#数据与控制流"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "静态文件请求流",
+    "old_anchor": "静态文件请求流",
+    "archive": "ARCHITECTURE.md#静态文件请求流",
+    "current": "../../../ARCHITECTURE.md#静态文件请求流"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "L7 代理请求流",
+    "old_anchor": "l7-代理请求流",
+    "archive": "ARCHITECTURE.md#l7-代理请求流",
+    "current": "../../../ARCHITECTURE.md#l7-代理请求流"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "错误传播",
+    "old_anchor": "错误传播",
+    "archive": "ARCHITECTURE.md#错误传播",
+    "current": "../../../ARCHITECTURE.md#错误传播"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "依赖方向",
+    "old_anchor": "依赖方向",
+    "archive": "ARCHITECTURE.md#依赖方向",
+    "current": "../../../ARCHITECTURE.md#依赖方向"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "数据模型与持久化",
+    "old_anchor": "数据模型与持久化",
+    "archive": "ARCHITECTURE.md#数据模型与持久化",
+    "current": "../../../ARCHITECTURE.md#数据模型与持久化"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "外部接口与集成",
+    "old_anchor": "外部接口与集成",
+    "archive": "ARCHITECTURE.md#外部接口与集成",
+    "current": "../../../ARCHITECTURE.md#外部接口与集成"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "命令行接口",
+    "old_anchor": "命令行接口",
+    "archive": "ARCHITECTURE.md#命令行接口",
+    "current": "../../../ARCHITECTURE.md#命令行接口"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "HTTP 接口",
+    "old_anchor": "http-接口",
+    "archive": "ARCHITECTURE.md#http-接口",
+    "current": "../../../ARCHITECTURE.md#http-接口"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "文件输入输出",
+    "old_anchor": "文件输入输出",
+    "archive": "ARCHITECTURE.md#文件输入输出",
+    "current": "../../../ARCHITECTURE.md#文件输入输出"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "系统命令和第三方服务",
+    "old_anchor": "系统命令和第三方服务",
+    "archive": "ARCHITECTURE.md#系统命令和第三方服务",
+    "current": "../../../ARCHITECTURE.md#系统命令和第三方服务"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "错误处理与安全边界",
+    "old_anchor": "错误处理与安全边界",
+    "archive": "ARCHITECTURE.md#错误处理与安全边界",
+    "current": "../../../ARCHITECTURE.md#错误处理与安全边界"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "并发、状态与资源管理",
+    "old_anchor": "并发状态与资源管理",
+    "archive": "ARCHITECTURE.md#并发状态与资源管理",
+    "current": "../../../ARCHITECTURE.md#并发状态与资源管理"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "测试架构",
+    "old_anchor": "测试架构",
+    "archive": "ARCHITECTURE.md#测试架构",
+    "current": "../../../ARCHITECTURE.md#测试架构"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "架构约束",
+    "old_anchor": "架构约束",
+    "archive": "ARCHITECTURE.md#架构约束",
+    "current": "../../../ARCHITECTURE.md#架构约束"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "架构变更流程",
+    "old_anchor": "架构变更流程",
+    "archive": "ARCHITECTURE.md#架构变更流程",
+    "current": "../../../ARCHITECTURE.md#架构变更流程"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "变更记录",
+    "old_anchor": "变更记录",
+    "archive": "ARCHITECTURE.md#变更记录",
+    "current": "../../../ARCHITECTURE.md#变更记录"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "V0.5/S1 文件传输已交付边界",
+    "old_anchor": "v05s1-文件传输已交付边界",
+    "archive": "ARCHITECTURE.md#v05s1-文件传输已交付边界",
+    "current": "../../../ARCHITECTURE.md#v05s1-文件传输已交付边界"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "独立矩阵测量边界",
+    "old_anchor": "独立矩阵测量边界",
+    "archive": "ARCHITECTURE.md#独立矩阵测量边界",
+    "current": "../../../ARCHITECTURE.md#独立矩阵测量边界"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "heading": "性能材料的系统边界",
+    "old_anchor": "性能材料的系统边界",
+    "archive": "ARCHITECTURE.md#性能材料的系统边界",
+    "current": "../../../ARCHITECTURE.md#性能材料的系统边界"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "HP HTTP Server 路线图",
+    "old_anchor": "hp-http-server-路线图",
+    "archive": "ROADMAP.md#hp-http-server-路线图",
+    "current": "../../../ROADMAP.md#hp-http-server-路线图"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "当前停工状态",
+    "old_anchor": "当前停工状态",
+    "archive": "ROADMAP.md#当前停工状态",
+    "current": "../../../ROADMAP.md#当前停工状态"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "当前推进方向",
+    "old_anchor": "当前推进方向",
+    "archive": "ROADMAP.md#当前推进方向",
+    "current": "../../../ROADMAP.md#当前推进方向"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "当前独立重构进度",
+    "old_anchor": "当前独立重构进度",
+    "archive": "ROADMAP.md#当前独立重构进度",
+    "current": "../../../ROADMAP.md#当前独立重构进度"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "项目概览",
+    "old_anchor": "项目概览",
+    "archive": "ROADMAP.md#项目概览",
+    "current": "../../../ROADMAP.md#项目概览"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "范围边界",
+    "old_anchor": "范围边界",
+    "archive": "ROADMAP.md#范围边界",
+    "current": "../../../ROADMAP.md#范围边界"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "长期覆盖范围",
+    "old_anchor": "长期覆盖范围",
+    "archive": "ROADMAP.md#长期覆盖范围",
+    "current": "../../../ROADMAP.md#长期覆盖范围"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "近期不做范围",
+    "old_anchor": "近期不做范围",
+    "archive": "ROADMAP.md#近期不做范围",
+    "current": "../../../ROADMAP.md#近期不做范围"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "不得随意删除或覆盖的内容",
+    "old_anchor": "不得随意删除或覆盖的内容",
+    "archive": "ROADMAP.md#不得随意删除或覆盖的内容",
+    "current": "../../../ROADMAP.md#不得随意删除或覆盖的内容"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "推进与完成规则",
+    "old_anchor": "推进与完成规则",
+    "archive": "ROADMAP.md#推进与完成规则",
+    "current": "../../../ROADMAP.md#推进与完成规则"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "版本路线",
+    "old_anchor": "版本路线",
+    "archive": "ROADMAP.md#版本路线",
+    "current": "../../../ROADMAP.md#版本路线"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.1 最小可运行 HTTP Server",
+    "old_anchor": "v01-最小可运行-http-server",
+    "archive": "ROADMAP.md#v01-最小可运行-http-server",
+    "current": "../../../ROADMAP.md#v01-最小可运行-http-server"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.2 Reactor 抽象重构",
+    "old_anchor": "v02-reactor-抽象重构",
+    "archive": "ROADMAP.md#v02-reactor-抽象重构",
+    "current": "../../../ROADMAP.md#v02-reactor-抽象重构"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.3 HTTP 状态机与连接复用",
+    "old_anchor": "v03-http-状态机与连接复用",
+    "archive": "ROADMAP.md#v03-http-状态机与连接复用",
+    "current": "../../../ROADMAP.md#v03-http-状态机与连接复用"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.4 并发模型与资源治理",
+    "old_anchor": "v04-并发模型与资源治理",
+    "archive": "ROADMAP.md#v04-并发模型与资源治理",
+    "current": "../../../ROADMAP.md#v04-并发模型与资源治理"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.5 性能优化与静态文件传输增强",
+    "old_anchor": "v05-性能优化与静态文件传输增强",
+    "archive": "ROADMAP.md#v05-性能优化与静态文件传输增强",
+    "current": "../../../ROADMAP.md#v05-性能优化与静态文件传输增强"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.5.1 性能回退诊断与修复",
+    "old_anchor": "v051-性能回退诊断与修复",
+    "archive": "ROADMAP.md#v051-性能回退诊断与修复",
+    "current": "../../../ROADMAP.md#v051-性能回退诊断与修复"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.6 可观测性与性能分析",
+    "old_anchor": "v06-可观测性与性能分析",
+    "archive": "ROADMAP.md#v06-可观测性与性能分析",
+    "current": "../../../ROADMAP.md#v06-可观测性与性能分析"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V1.0 简历交付版",
+    "old_anchor": "v10-简历交付版",
+    "archive": "ROADMAP.md#v10-简历交付版",
+    "current": "../../../ROADMAP.md#v10-简历交付版"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V1.1 轻量 L7 Gateway 扩展",
+    "old_anchor": "v11-轻量-l7-gateway-扩展",
+    "archive": "ROADMAP.md#v11-轻量-l7-gateway-扩展",
+    "current": "../../../ROADMAP.md#v11-轻量-l7-gateway-扩展"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "阶段设计摘要",
+    "old_anchor": "阶段设计摘要",
+    "archive": "ROADMAP.md#阶段设计摘要",
+    "current": "../../../ROADMAP.md#阶段设计摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.1 阶段摘要",
+    "old_anchor": "v01-阶段摘要",
+    "archive": "ROADMAP.md#v01-阶段摘要",
+    "current": "../../../ROADMAP.md#v01-阶段摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.2 阶段摘要",
+    "old_anchor": "v02-阶段摘要",
+    "archive": "ROADMAP.md#v02-阶段摘要",
+    "current": "../../../ROADMAP.md#v02-阶段摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.3 阶段摘要",
+    "old_anchor": "v03-阶段摘要",
+    "archive": "ROADMAP.md#v03-阶段摘要",
+    "current": "../../../ROADMAP.md#v03-阶段摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.4 阶段摘要",
+    "old_anchor": "v04-阶段摘要",
+    "archive": "ROADMAP.md#v04-阶段摘要",
+    "current": "../../../ROADMAP.md#v04-阶段摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.5 阶段摘要",
+    "old_anchor": "v05-阶段摘要",
+    "archive": "ROADMAP.md#v05-阶段摘要",
+    "current": "../../../ROADMAP.md#v05-阶段摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.5.1 阶段摘要",
+    "old_anchor": "v051-阶段摘要",
+    "archive": "ROADMAP.md#v051-阶段摘要",
+    "current": "../../../ROADMAP.md#v051-阶段摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V0.6 阶段摘要",
+    "old_anchor": "v06-阶段摘要",
+    "archive": "ROADMAP.md#v06-阶段摘要",
+    "current": "../../../ROADMAP.md#v06-阶段摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V1.0 阶段摘要",
+    "old_anchor": "v10-阶段摘要",
+    "archive": "ROADMAP.md#v10-阶段摘要",
+    "current": "../../../ROADMAP.md#v10-阶段摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "V1.1 阶段摘要",
+    "old_anchor": "v11-阶段摘要",
+    "archive": "ROADMAP.md#v11-阶段摘要",
+    "current": "../../../ROADMAP.md#v11-阶段摘要"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "长期演进方向",
+    "old_anchor": "长期演进方向",
+    "archive": "ROADMAP.md#长期演进方向",
+    "current": "../../../ROADMAP.md#长期演进方向"
+  },
+  {
+    "file": "ROADMAP.md",
+    "heading": "变更记录",
+    "old_anchor": "变更记录",
+    "archive": "ROADMAP.md#变更记录",
+    "current": "../../../ROADMAP.md#变更记录"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "Changelog",
+    "old_anchor": "changelog",
+    "archive": "CHANGELOG.md#changelog",
+    "current": "../../../CHANGELOG.md#changelog"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "Unreleased",
+    "old_anchor": "unreleased",
+    "archive": "CHANGELOG.md#unreleased",
+    "current": "../../../CHANGELOG.md#unreleased"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "2026-10-08 — V0.6/S3 有限性能分析",
+    "old_anchor": "2026-10-08--v06s3-有限性能分析",
+    "archive": "CHANGELOG.md#2026-10-08--v06s3-有限性能分析",
+    "current": "../../../CHANGELOG.md#2026-10-08--v06s3-有限性能分析"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "2026-10-08 — V0.6/S2 固定场景矩阵",
+    "old_anchor": "2026-10-08--v06s2-固定场景矩阵",
+    "archive": "CHANGELOG.md#2026-10-08--v06s2-固定场景矩阵",
+    "current": "../../../CHANGELOG.md#2026-10-08--v06s2-固定场景矩阵"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "2026-10-08 — V0.6/S1 指标与访问记录",
+    "old_anchor": "2026-10-08--v06s1-指标与访问记录",
+    "archive": "CHANGELOG.md#2026-10-08--v06s1-指标与访问记录",
+    "current": "../../../CHANGELOG.md#2026-10-08--v06s1-指标与访问记录"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "2026-10-08 — V0.5.1已搁置（未完成）",
+    "old_anchor": "2026-10-08--v051已搁置未完成",
+    "archive": "CHANGELOG.md#2026-10-08--v051已搁置未完成",
+    "current": "../../../CHANGELOG.md#2026-10-08--v051已搁置未完成"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "V0.5.1/S2 小响应发送修复",
+    "old_anchor": "v051s2-小响应发送修复",
+    "archive": "CHANGELOG.md#v051s2-小响应发送修复",
+    "current": "../../../CHANGELOG.md#v051s2-小响应发送修复"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "V0.5.1/S1 性能诊断",
+    "old_anchor": "v051s1-性能诊断",
+    "archive": "CHANGELOG.md#v051s1-性能诊断",
+    "current": "../../../CHANGELOG.md#v051s1-性能诊断"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "重构",
+    "old_anchor": "重构",
+    "archive": "CHANGELOG.md#重构",
+    "current": "../../../CHANGELOG.md#重构"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "新增",
+    "old_anchor": "新增",
+    "archive": "CHANGELOG.md#新增",
+    "current": "../../../CHANGELOG.md#新增"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "变更",
+    "old_anchor": "变更",
+    "archive": "CHANGELOG.md#变更",
+    "current": "../../../CHANGELOG.md#变更"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "验证",
+    "old_anchor": "验证",
+    "archive": "CHANGELOG.md#验证",
+    "current": "../../../CHANGELOG.md#验证"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "V0.0.0 - 2026-05-22",
+    "old_anchor": "v000---2026-05-22",
+    "archive": "CHANGELOG.md#v000---2026-05-22",
+    "current": "../../../CHANGELOG.md#v000---2026-05-22"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "新增",
+    "old_anchor": "新增-1",
+    "archive": "CHANGELOG.md#新增-1",
+    "current": "../../../CHANGELOG.md#新增-1"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "变更",
+    "old_anchor": "变更-1",
+    "archive": "CHANGELOG.md#变更-1",
+    "current": "../../../CHANGELOG.md#变更-1"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "兼容性",
+    "old_anchor": "兼容性",
+    "archive": "CHANGELOG.md#兼容性",
+    "current": "../../../CHANGELOG.md#兼容性"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "安全",
+    "old_anchor": "安全",
+    "archive": "CHANGELOG.md#安全",
+    "current": "../../../CHANGELOG.md#安全"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "验证",
+    "old_anchor": "验证-1",
+    "archive": "CHANGELOG.md#验证-1",
+    "current": "../../../CHANGELOG.md#验证-1"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "heading": "相关文档",
+    "old_anchor": "相关文档",
+    "archive": "CHANGELOG.md#相关文档",
+    "current": "../../../CHANGELOG.md#相关文档"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "HP HTTP Server 技术债跟踪",
+    "old_anchor": "hp-http-server-技术债跟踪",
+    "archive": "TECH-DEBT-TRACKER.md#hp-http-server-技术债跟踪",
+    "current": "../../../TECH-DEBT-TRACKER.md#hp-http-server-技术债跟踪"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "当前停工状态",
+    "old_anchor": "当前停工状态",
+    "archive": "TECH-DEBT-TRACKER.md#当前停工状态",
+    "current": "../../../TECH-DEBT-TRACKER.md#当前停工状态"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.6/S1收口检查点（2026-10-08）",
+    "old_anchor": "v06s1收口检查点2026-10-08",
+    "archive": "TECH-DEBT-TRACKER.md#v06s1收口检查点2026-10-08",
+    "current": "../../../TECH-DEBT-TRACKER.md#v06s1收口检查点2026-10-08"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.6/S2收口检查点（2026-10-08）",
+    "old_anchor": "v06s2收口检查点2026-10-08",
+    "archive": "TECH-DEBT-TRACKER.md#v06s2收口检查点2026-10-08",
+    "current": "../../../TECH-DEBT-TRACKER.md#v06s2收口检查点2026-10-08"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.6/S3收口检查点（2026-10-08）",
+    "old_anchor": "v06s3收口检查点2026-10-08",
+    "archive": "TECH-DEBT-TRACKER.md#v06s3收口检查点2026-10-08",
+    "current": "../../../TECH-DEBT-TRACKER.md#v06s3收口检查点2026-10-08"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "当前概况",
+    "old_anchor": "当前概况",
+    "archive": "TECH-DEBT-TRACKER.md#当前概况",
+    "current": "../../../TECH-DEBT-TRACKER.md#当前概况"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "类型与状态",
+    "old_anchor": "类型与状态",
+    "archive": "TECH-DEBT-TRACKER.md#类型与状态",
+    "current": "../../../TECH-DEBT-TRACKER.md#类型与状态"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "活动条目",
+    "old_anchor": "活动条目",
+    "archive": "TECH-DEBT-TRACKER.md#活动条目",
+    "current": "../../../TECH-DEBT-TRACKER.md#活动条目"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "TD-006 R6 旧测试迁移按需延期",
+    "old_anchor": "td-006-r6-旧测试迁移按需延期",
+    "archive": "TECH-DEBT-TRACKER.md#td-006-r6-旧测试迁移按需延期",
+    "current": "../../../TECH-DEBT-TRACKER.md#td-006-r6-旧测试迁移按需延期"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "TD-001 WSL2 性能数据代表性有限",
+    "old_anchor": "td-001-wsl2-性能数据代表性有限",
+    "archive": "TECH-DEBT-TRACKER.md#td-001-wsl2-性能数据代表性有限",
+    "current": "../../../TECH-DEBT-TRACKER.md#td-001-wsl2-性能数据代表性有限"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "TD-002 异步日志延期到性能阶段",
+    "old_anchor": "td-002-异步日志延期到性能阶段",
+    "archive": "TECH-DEBT-TRACKER.md#td-002-异步日志延期到性能阶段",
+    "current": "../../../TECH-DEBT-TRACKER.md#td-002-异步日志延期到性能阶段"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "TD-003 HTTP Parser 范围膨胀风险",
+    "old_anchor": "td-003-http-parser-范围膨胀风险",
+    "archive": "TECH-DEBT-TRACKER.md#td-003-http-parser-范围膨胀风险",
+    "current": "../../../TECH-DEBT-TRACKER.md#td-003-http-parser-范围膨胀风险"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "TD-004 L7 Gateway 范围膨胀风险",
+    "old_anchor": "td-004-l7-gateway-范围膨胀风险",
+    "archive": "TECH-DEBT-TRACKER.md#td-004-l7-gateway-范围膨胀风险",
+    "current": "../../../TECH-DEBT-TRACKER.md#td-004-l7-gateway-范围膨胀风险"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "TD-005 文档与实现漂移风险",
+    "old_anchor": "td-005-文档与实现漂移风险",
+    "archive": "TECH-DEBT-TRACKER.md#td-005-文档与实现漂移风险",
+    "current": "../../../TECH-DEBT-TRACKER.md#td-005-文档与实现漂移风险"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "风险观察",
+    "old_anchor": "风险观察",
+    "archive": "TECH-DEBT-TRACKER.md#风险观察",
+    "current": "../../../TECH-DEBT-TRACKER.md#风险观察"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "RO-001 初始目录和 CMake 结构验证",
+    "old_anchor": "ro-001-初始目录和-cmake-结构验证",
+    "archive": "TECH-DEBT-TRACKER.md#ro-001-初始目录和-cmake-结构验证",
+    "current": "../../../TECH-DEBT-TRACKER.md#ro-001-初始目录和-cmake-结构验证"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "RO-002 性能目标尚未量化",
+    "old_anchor": "ro-002-性能目标尚未量化",
+    "archive": "TECH-DEBT-TRACKER.md#ro-002-性能目标尚未量化",
+    "current": "../../../TECH-DEBT-TRACKER.md#ro-002-性能目标尚未量化"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "RO-003 L7 Gateway 与独立 L4LB 边界",
+    "old_anchor": "ro-003-l7-gateway-与独立-l4lb-边界",
+    "archive": "TECH-DEBT-TRACKER.md#ro-003-l7-gateway-与独立-l4lb-边界",
+    "current": "../../../TECH-DEBT-TRACKER.md#ro-003-l7-gateway-与独立-l4lb-边界"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "阶段边界",
+    "old_anchor": "阶段边界",
+    "archive": "TECH-DEBT-TRACKER.md#阶段边界",
+    "current": "../../../TECH-DEBT-TRACKER.md#阶段边界"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.3/S1 关闭检查点",
+    "old_anchor": "v03s1-关闭检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v03s1-关闭检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v03s1-关闭检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.3/S2 关闭检查点",
+    "old_anchor": "v03s2-关闭检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v03s2-关闭检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v03s2-关闭检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "关闭与更新规则",
+    "old_anchor": "关闭与更新规则",
+    "archive": "TECH-DEBT-TRACKER.md#关闭与更新规则",
+    "current": "../../../TECH-DEBT-TRACKER.md#关闭与更新规则"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.3/S3 检查点（已完成）",
+    "old_anchor": "v03s3-检查点已完成",
+    "archive": "TECH-DEBT-TRACKER.md#v03s3-检查点已完成",
+    "current": "../../../TECH-DEBT-TRACKER.md#v03s3-检查点已完成"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "变更记录",
+    "old_anchor": "变更记录",
+    "archive": "TECH-DEBT-TRACKER.md#变更记录",
+    "current": "../../../TECH-DEBT-TRACKER.md#变更记录"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.4/S3 准备检查点（设计中）",
+    "old_anchor": "v04s3-准备检查点设计中",
+    "archive": "TECH-DEBT-TRACKER.md#v04s3-准备检查点设计中",
+    "current": "../../../TECH-DEBT-TRACKER.md#v04s3-准备检查点设计中"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.4/S3 关闭检查点",
+    "old_anchor": "v04s3-关闭检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v04s3-关闭检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v04s3-关闭检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.4/S4 准备检查点（设计中）",
+    "old_anchor": "v04s4-准备检查点设计中",
+    "archive": "TECH-DEBT-TRACKER.md#v04s4-准备检查点设计中",
+    "current": "../../../TECH-DEBT-TRACKER.md#v04s4-准备检查点设计中"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.4/S4 批准检查点",
+    "old_anchor": "v04s4-批准检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v04s4-批准检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v04s4-批准检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.4/S4与版本关闭检查点",
+    "old_anchor": "v04s4与版本关闭检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v04s4与版本关闭检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v04s4与版本关闭检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S1 准备检查点（设计中）",
+    "old_anchor": "v05s1-准备检查点设计中",
+    "archive": "TECH-DEBT-TRACKER.md#v05s1-准备检查点设计中",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s1-准备检查点设计中"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S1 批准检查点",
+    "old_anchor": "v05s1-批准检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v05s1-批准检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s1-批准检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S1 关闭检查点",
+    "old_anchor": "v05s1-关闭检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v05s1-关闭检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s1-关闭检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S2 准备检查点（设计中）",
+    "old_anchor": "v05s2-准备检查点设计中",
+    "archive": "TECH-DEBT-TRACKER.md#v05s2-准备检查点设计中",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s2-准备检查点设计中"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S2 批准登记",
+    "old_anchor": "v05s2-批准登记",
+    "archive": "TECH-DEBT-TRACKER.md#v05s2-批准登记",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s2-批准登记"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S2 关闭检查点",
+    "old_anchor": "v05s2-关闭检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v05s2-关闭检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s2-关闭检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S3 准备检查点",
+    "old_anchor": "v05s3-准备检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v05s3-准备检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s3-准备检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S3 批准登记",
+    "old_anchor": "v05s3-批准登记",
+    "archive": "TECH-DEBT-TRACKER.md#v05s3-批准登记",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s3-批准登记"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S3 关闭检查点",
+    "old_anchor": "v05s3-关闭检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v05s3-关闭检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s3-关闭检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S4 准备检查点",
+    "old_anchor": "v05s4-准备检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v05s4-准备检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s4-准备检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S4 批准登记",
+    "old_anchor": "v05s4-批准登记",
+    "archive": "TECH-DEBT-TRACKER.md#v05s4-批准登记",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s4-批准登记"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S4 R001批准登记",
+    "old_anchor": "v05s4-r001批准登记",
+    "archive": "TECH-DEBT-TRACKER.md#v05s4-r001批准登记",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s4-r001批准登记"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "V0.5/S4 收口检查点",
+    "old_anchor": "v05s4-收口检查点",
+    "archive": "TECH-DEBT-TRACKER.md#v05s4-收口检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#v05s4-收口检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "R1重构收口检查点",
+    "old_anchor": "r1重构收口检查点",
+    "archive": "TECH-DEBT-TRACKER.md#r1重构收口检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#r1重构收口检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "R2重构收口检查点",
+    "old_anchor": "r2重构收口检查点",
+    "archive": "TECH-DEBT-TRACKER.md#r2重构收口检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#r2重构收口检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "R2最终回调注册收口检查点",
+    "old_anchor": "r2最终回调注册收口检查点",
+    "archive": "TECH-DEBT-TRACKER.md#r2最终回调注册收口检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#r2最终回调注册收口检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "R3 ConnectionIo收口检查点",
+    "old_anchor": "r3-connectionio收口检查点",
+    "archive": "TECH-DEBT-TRACKER.md#r3-connectionio收口检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#r3-connectionio收口检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "R4 CLI与信号辅助收口检查点",
+    "old_anchor": "r4-cli与信号辅助收口检查点",
+    "archive": "TECH-DEBT-TRACKER.md#r4-cli与信号辅助收口检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#r4-cli与信号辅助收口检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "R5与整体渐进重构收口检查点",
+    "old_anchor": "r5与整体渐进重构收口检查点",
+    "archive": "TECH-DEBT-TRACKER.md#r5与整体渐进重构收口检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#r5与整体渐进重构收口检查点"
+  },
+  {
+    "file": "TECH-DEBT-TRACKER.md",
+    "heading": "全测试清理收口检查点",
+    "old_anchor": "全测试清理收口检查点",
+    "archive": "TECH-DEBT-TRACKER.md#全测试清理收口检查点",
+    "current": "../../../TECH-DEBT-TRACKER.md#全测试清理收口检查点"
+  }
+]
