@@ -1,0 +1,4778 @@
+{
+  "diagnostic_scope": "Approved R002 revision1: unique one-server/one-socket/three-request M6 audit, no load, no retry",
+  "stage_conclusion": "FAIL",
+  "local_RAC_D01": true,
+  "status": "not_reproduced",
+  "root_cause": "unknown; not reproduced does not establish a repair",
+  "role_clock_continues": true,
+  "role_elapsed_at_publication_s": 240.96709037999972,
+  "role_expiry_utc": "2026-10-09T05:20:50.929431+00:00",
+  "request_timings": [
+    {
+      "index": 0,
+      "client_send_to_complete_s": 11.612059381004656,
+      "recv_calls": 18,
+      "max_client_between_recv_s": 0.7870027360040694
+    },
+    {
+      "index": 1,
+      "client_send_to_complete_s": 10.957933822995983,
+      "recv_calls": 18,
+      "max_client_between_recv_s": 0.7056588500272483
+    },
+    {
+      "index": 2,
+      "client_send_to_complete_s": 10.637295680004172,
+      "recv_calls": 18,
+      "max_client_between_recv_s": 0.7116322180081625
+    }
+  ],
+  "scan_calls": 55,
+  "old_scan_total_s": 35.859516945900396,
+  "new_scan_total_s": 0.02746789701632224,
+  "persistence_total_s": 0.009499240666627884,
+  "monitor_interval_over_1s": false,
+  "release_binary_sha256": "9f95b5f3b31062737032e0ce130dfd725a4e9f923ec96524b3006ccbb2ac7530",
+  "candidate": "20bd03142b4c828a7e939c30b501812da2bd5440",
+  "patch_sha256": "6ad80910acf90acc1c76ad3fefb4034864d521ae282f18500c30731acfd52b83",
+  "scan_sha256": "ddcaa27201b79c03de742fa32e6b0cb4b5d0714c17905ded5dc1c63b6de24b04",
+  "old_snapshot_files": 1921,
+  "old_snapshot_charge": 210219008,
+  "snapshot_limitations": [
+    "Frozen input is the post-cleanup snapshot; payload already removed and tail logs landed.",
+    "Failure-instant complete inventory was not recorded; exact per-file delta to that instant cannot be established.",
+    "Current read-only tree charge is 28672 bytes above Builder final recorded total; this is not a measured failure-instant delta.",
+    "Additional diagnostic-root accounting and trace persistence change observer overhead; no failure-cause inference from added observation.",
+    "Server metrics are aggregates; no exact per-request response-completion monotonic timestamp or close reason."
+  ],
+  "state": {
+    "status": "not_reproduced",
+    "started_monotonic": 227426.52663726,
+    "started_utc": "2026-10-09T04:50:50.929431+00:00",
+    "diagnostic_expiry_monotonic": 227606.52663726,
+    "role_expiry_monotonic": 229226.52663726,
+    "role_expiry_utc": "2026-10-09T05:20:50.929431+00:00",
+    "peak_total_bytes": 211767296,
+    "peak_log_bytes": 753664,
+    "completed_requests": [
+      {
+        "index": 0,
+        "status": 200,
+        "content_length": 1048576,
+        "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f"
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "content_length": 1048576,
+        "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f"
+      },
+      {
+        "index": 2,
+        "status": 200,
+        "content_length": 1048576,
+        "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f"
+      }
+    ],
+    "owned_left": 0,
+    "original_role_clock_continues": true,
+    "argv": [
+      "${REPOSITORY}/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+      "--port",
+      "0",
+      "--root",
+      "${REPOSITORY}/.cache/v1.0-s3/reviewer/diagnostic-001/payload",
+      "--threads",
+      "2",
+      "--idle-timeout-ms",
+      "30000",
+      "--keep-alive-timeout-ms",
+      "15000",
+      "--shutdown-timeout-ms",
+      "5000",
+      "--metrics-on-exit"
+    ],
+    "pid": 24092,
+    "starttime": "22742653",
+    "old_classifications": {
+      "source/build/test-tmp/s1-observability-qmz451iy/http-0.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/forced-2-0.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/graceful-completed-2.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/default.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/graceful-completed-0.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/graceful-completed-2.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/http-0.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/forced-0-50.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/forced-2-50.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/forced-0-50.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/forced-0-0.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/http-2.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/default.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/forced-2-50.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/http-2.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/forced-2-0.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/graceful-completed-0.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/forced-0-0.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s1-observability-qmz451iy/stdout-failed.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s2-http-bs7nq3e1/server-0.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/s2-http-bs7nq3e1/server-0.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s2-http-bs7nq3e1/server-2.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/s2-http-bs7nq3e1/server-2.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/analysis-functional-sxwc9a3c/interrupt-child.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/analysis-functional-sxwc9a3c/interrupt-child.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/matrix-functional-x4n49blz/identity.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/matrix-functional-x4n49blz/early.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/matrix-functional-x4n49blz/force.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/matrix-functional-x4n49blz/early.stdout": "frozen-test-process-capture",
+      "source/build/test-tmp/matrix-functional-x4n49blz/identity.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/matrix-functional-x4n49blz/force.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/matrix-functional-x4n49blz/negative-entry.stderr": "frozen-test-process-capture",
+      "source/build/test-tmp/matrix-functional-x4n49blz/synthetic-budget/overflow.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/http-0.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/forced-2-0.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/graceful-completed-2.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/default.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/graceful-completed-0.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/graceful-completed-2.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/http-0.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/forced-0-50.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/forced-2-50.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/forced-0-50.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/forced-0-0.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/http-2.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/default.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/forced-2-50.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/http-2.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/forced-2-0.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/graceful-completed-0.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/forced-0-0.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s1-observability-wvdxupph/stdout-failed.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/matrix-functional-_3aa1itn/identity.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/matrix-functional-_3aa1itn/early.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/matrix-functional-_3aa1itn/force.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/matrix-functional-_3aa1itn/early.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/matrix-functional-_3aa1itn/identity.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/matrix-functional-_3aa1itn/force.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/matrix-functional-_3aa1itn/negative-entry.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s2-http-inle48x2/server-0.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s2-http-inle48x2/server-0.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s2-http-inle48x2/server-2.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/s2-http-inle48x2/server-2.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/analysis-functional-rnwy3spo/interrupt-child.stderr": "frozen-test-process-capture",
+      "source/build-release/test-tmp/analysis-functional-rnwy3spo/interrupt-child.stdout": "frozen-test-process-capture",
+      "source/build-release/test-tmp/matrix-functional-_3aa1itn/synthetic-budget/overflow.stderr": "frozen-test-process-capture"
+    },
+    "server_exit": 0,
+    "forced": false,
+    "metrics": {
+      "requests_started_total": 3,
+      "responses_completed_total": 3,
+      "requests_aborted_total": 0,
+      "responses_status_unknown_total": 0,
+      "responses_status_200_total": 3,
+      "responses_status_400_total": 0,
+      "responses_status_403_total": 0,
+      "responses_status_404_total": 0,
+      "responses_status_405_total": 0,
+      "responses_status_500_total": 0,
+      "errors_total": 0,
+      "parse_errors_total": 0,
+      "provider_errors_total": 0,
+      "access_log_failures_total": 0,
+      "latency_count": 3,
+      "latency_sum_us": 988587,
+      "latency_max_us": 850645,
+      "connections_total": 1,
+      "connections_active": 0,
+      "logger_submitted": 5,
+      "logger_accepted": 5,
+      "logger_dropped_full": 0,
+      "logger_rejected_stopped": 0,
+      "logger_truncated": 0,
+      "logger_written": 5,
+      "logger_failed": 0,
+      "logger_pending": 0
+    },
+    "old_tree_unchanged": true,
+    "guards": [
+      {
+        "position": "readiness",
+        "begin": 227426.537837032,
+        "scan_begin": 227426.537853574,
+        "scan_end": 227427.259761222,
+        "new_scan_begin": 227427.259761474,
+        "new_scan_end": 227427.260555182,
+        "end": 227427.26055541,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1507328,
+        "new_logs": 12288,
+        "total": 211726336,
+        "logs": 708608
+      },
+      {
+        "position": "request-0-begin",
+        "begin": 227427.269738494,
+        "scan_begin": 227427.269755583,
+        "scan_end": 227428.048348774,
+        "new_scan_begin": 227428.04834906,
+        "new_scan_end": 227428.04888254,
+        "end": 227428.048882669,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1507328,
+        "new_logs": 12288,
+        "total": 211726336,
+        "logs": 708608
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227428.050483059,
+        "scan_begin": 227428.050495947,
+        "scan_end": 227428.811884973,
+        "new_scan_begin": 227428.811885131,
+        "new_scan_end": 227428.812416624,
+        "end": 227428.812416737,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1507328,
+        "new_logs": 12288,
+        "total": 211726336,
+        "logs": 708608
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227428.812562955,
+        "scan_begin": 227428.81257064,
+        "scan_end": 227429.470896543,
+        "new_scan_begin": 227429.470897013,
+        "new_scan_end": 227429.471771258,
+        "end": 227429.471771489,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1507328,
+        "new_logs": 12288,
+        "total": 211726336,
+        "logs": 708608
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227429.472186817,
+        "scan_begin": 227429.472202088,
+        "scan_end": 227430.114959074,
+        "new_scan_begin": 227430.114959335,
+        "new_scan_end": 227430.11539994,
+        "end": 227430.115400061,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1511424,
+        "new_logs": 16384,
+        "total": 211730432,
+        "logs": 712704
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227430.115734625,
+        "scan_begin": 227430.115759208,
+        "scan_end": 227430.835091887,
+        "new_scan_begin": 227430.835092218,
+        "new_scan_end": 227430.835614445,
+        "end": 227430.835614579,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1511424,
+        "new_logs": 16384,
+        "total": 211730432,
+        "logs": 712704
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227430.835922181,
+        "scan_begin": 227430.835938033,
+        "scan_end": 227431.498401035,
+        "new_scan_begin": 227431.49840132,
+        "new_scan_end": 227431.498884306,
+        "end": 227431.498884387,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1511424,
+        "new_logs": 16384,
+        "total": 211730432,
+        "logs": 712704
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227431.499065119,
+        "scan_begin": 227431.499074605,
+        "scan_end": 227432.148423064,
+        "new_scan_begin": 227432.14842333,
+        "new_scan_end": 227432.148959292,
+        "end": 227432.1489594,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1511424,
+        "new_logs": 16384,
+        "total": 211730432,
+        "logs": 712704
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227432.149165831,
+        "scan_begin": 227432.14919651,
+        "scan_end": 227432.837084492,
+        "new_scan_begin": 227432.837084859,
+        "new_scan_end": 227432.837552607,
+        "end": 227432.837552731,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1511424,
+        "new_logs": 16384,
+        "total": 211730432,
+        "logs": 712704
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227432.838105797,
+        "scan_begin": 227432.838149887,
+        "scan_end": 227433.486363781,
+        "new_scan_begin": 227433.486364013,
+        "new_scan_end": 227433.48687063,
+        "end": 227433.486870757,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1515520,
+        "new_logs": 20480,
+        "total": 211734528,
+        "logs": 716800
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227433.487345615,
+        "scan_begin": 227433.487386391,
+        "scan_end": 227434.123199559,
+        "new_scan_begin": 227434.123199814,
+        "new_scan_end": 227434.123826104,
+        "end": 227434.123826179,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1515520,
+        "new_logs": 20480,
+        "total": 211734528,
+        "logs": 716800
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227434.124417737,
+        "scan_begin": 227434.124474896,
+        "scan_end": 227434.746194702,
+        "new_scan_begin": 227434.746194957,
+        "new_scan_end": 227434.746672959,
+        "end": 227434.746673061,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1515520,
+        "new_logs": 20480,
+        "total": 211734528,
+        "logs": 716800
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227434.747222406,
+        "scan_begin": 227434.747266438,
+        "scan_end": 227435.421730019,
+        "new_scan_begin": 227435.42173031,
+        "new_scan_end": 227435.422318925,
+        "end": 227435.42231902,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1515520,
+        "new_logs": 20480,
+        "total": 211734528,
+        "logs": 716800
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227435.422996194,
+        "scan_begin": 227435.423045144,
+        "scan_end": 227436.173532002,
+        "new_scan_begin": 227436.17353224,
+        "new_scan_end": 227436.173987335,
+        "end": 227436.173987407,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1515520,
+        "new_logs": 20480,
+        "total": 211734528,
+        "logs": 716800
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227436.174638622,
+        "scan_begin": 227436.174705105,
+        "scan_end": 227436.862790787,
+        "new_scan_begin": 227436.862791043,
+        "new_scan_end": 227436.863299894,
+        "end": 227436.863299987,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1515520,
+        "new_logs": 20480,
+        "total": 211734528,
+        "logs": 716800
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227436.863984445,
+        "scan_begin": 227436.86405173,
+        "scan_end": 227437.649791159,
+        "new_scan_begin": 227437.649791418,
+        "new_scan_end": 227437.650339266,
+        "end": 227437.650339321,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1519616,
+        "new_logs": 24576,
+        "total": 211738624,
+        "logs": 720896
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227437.651200153,
+        "scan_begin": 227437.651244697,
+        "scan_end": 227438.282152744,
+        "new_scan_begin": 227438.282152972,
+        "new_scan_end": 227438.282619472,
+        "end": 227438.282619564,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1519616,
+        "new_logs": 24576,
+        "total": 211738624,
+        "logs": 720896
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227438.283425245,
+        "scan_begin": 227438.283468395,
+        "scan_end": 227438.939884525,
+        "new_scan_begin": 227438.939884886,
+        "new_scan_end": 227438.94056178,
+        "end": 227438.940561911,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1519616,
+        "new_logs": 24576,
+        "total": 211738624,
+        "logs": 720896
+      },
+      {
+        "position": "request-0-body",
+        "begin": 227438.941409549,
+        "scan_begin": 227438.941451965,
+        "scan_end": 227439.639421531,
+        "new_scan_begin": 227439.639421815,
+        "new_scan_end": 227439.639799179,
+        "end": 227439.639799247,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1519616,
+        "new_logs": 24576,
+        "total": 211738624,
+        "logs": 720896
+      },
+      {
+        "position": "request-1-begin",
+        "begin": 227439.661071822,
+        "scan_begin": 227439.661083327,
+        "scan_end": 227440.263446185,
+        "new_scan_begin": 227440.263446464,
+        "new_scan_end": 227440.263850997,
+        "end": 227440.263851072,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1519616,
+        "new_logs": 24576,
+        "total": 211738624,
+        "logs": 720896
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227440.265247477,
+        "scan_begin": 227440.265264199,
+        "scan_end": 227440.851475471,
+        "new_scan_begin": 227440.851475779,
+        "new_scan_end": 227440.851920792,
+        "end": 227440.85192091,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1523712,
+        "new_logs": 28672,
+        "total": 211742720,
+        "logs": 724992
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227440.852134839,
+        "scan_begin": 227440.852145742,
+        "scan_end": 227441.487758521,
+        "new_scan_begin": 227441.487758831,
+        "new_scan_end": 227441.488260003,
+        "end": 227441.488260125,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1523712,
+        "new_logs": 28672,
+        "total": 211742720,
+        "logs": 724992
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227441.488502775,
+        "scan_begin": 227441.488530782,
+        "scan_end": 227442.122967256,
+        "new_scan_begin": 227442.122967501,
+        "new_scan_end": 227442.123337469,
+        "end": 227442.123337537,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1523712,
+        "new_logs": 28672,
+        "total": 211742720,
+        "logs": 724992
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227442.12356795,
+        "scan_begin": 227442.123587656,
+        "scan_end": 227442.723859481,
+        "new_scan_begin": 227442.723859741,
+        "new_scan_end": 227442.724433582,
+        "end": 227442.724433702,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1523712,
+        "new_logs": 28672,
+        "total": 211742720,
+        "logs": 724992
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227442.724703126,
+        "scan_begin": 227442.724729016,
+        "scan_end": 227443.37316257,
+        "new_scan_begin": 227443.373162742,
+        "new_scan_end": 227443.373543535,
+        "end": 227443.373543596,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1523712,
+        "new_logs": 28672,
+        "total": 211742720,
+        "logs": 724992
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227443.373715041,
+        "scan_begin": 227443.373737375,
+        "scan_end": 227443.969300947,
+        "new_scan_begin": 227443.969301254,
+        "new_scan_end": 227443.969680577,
+        "end": 227443.969680658,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1527808,
+        "new_logs": 32768,
+        "total": 211746816,
+        "logs": 729088
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227443.969857043,
+        "scan_begin": 227443.969867085,
+        "scan_end": 227444.568810384,
+        "new_scan_begin": 227444.568810633,
+        "new_scan_end": 227444.569339374,
+        "end": 227444.569339467,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1527808,
+        "new_logs": 32768,
+        "total": 211746816,
+        "logs": 729088
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227444.569780419,
+        "scan_begin": 227444.569818049,
+        "scan_end": 227445.153241441,
+        "new_scan_begin": 227445.153241772,
+        "new_scan_end": 227445.153653835,
+        "end": 227445.153653919,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1527808,
+        "new_logs": 32768,
+        "total": 211746816,
+        "logs": 729088
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227445.153839783,
+        "scan_begin": 227445.153871316,
+        "scan_end": 227445.790427604,
+        "new_scan_begin": 227445.790427813,
+        "new_scan_end": 227445.79080575,
+        "end": 227445.790805879,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1527808,
+        "new_logs": 32768,
+        "total": 211746816,
+        "logs": 729088
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227445.791000581,
+        "scan_begin": 227445.791014039,
+        "scan_end": 227446.44067463,
+        "new_scan_begin": 227446.440674861,
+        "new_scan_end": 227446.441145992,
+        "end": 227446.441146136,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1527808,
+        "new_logs": 32768,
+        "total": 211746816,
+        "logs": 729088
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227446.441586228,
+        "scan_begin": 227446.441617724,
+        "scan_end": 227447.117977974,
+        "new_scan_begin": 227447.117978201,
+        "new_scan_end": 227447.118491101,
+        "end": 227447.118491208,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1527808,
+        "new_logs": 32768,
+        "total": 211746816,
+        "logs": 729088
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227447.118707274,
+        "scan_begin": 227447.118743837,
+        "scan_end": 227447.815438142,
+        "new_scan_begin": 227447.815438524,
+        "new_scan_end": 227447.815949775,
+        "end": 227447.815949854,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1531904,
+        "new_logs": 36864,
+        "total": 211750912,
+        "logs": 733184
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227447.816398744,
+        "scan_begin": 227447.816440197,
+        "scan_end": 227448.473829026,
+        "new_scan_begin": 227448.473829283,
+        "new_scan_end": 227448.474433545,
+        "end": 227448.47443365,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1531904,
+        "new_logs": 36864,
+        "total": 211750912,
+        "logs": 733184
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227448.475235439,
+        "scan_begin": 227448.475299805,
+        "scan_end": 227449.135104799,
+        "new_scan_begin": 227449.135105038,
+        "new_scan_end": 227449.135499602,
+        "end": 227449.135499673,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1531904,
+        "new_logs": 36864,
+        "total": 211750912,
+        "logs": 733184
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227449.135701555,
+        "scan_begin": 227449.135728825,
+        "scan_end": 227449.840518714,
+        "new_scan_begin": 227449.840519037,
+        "new_scan_end": 227449.841144348,
+        "end": 227449.841144487,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1531904,
+        "new_logs": 36864,
+        "total": 211750912,
+        "logs": 733184
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227449.841479407,
+        "scan_begin": 227449.841534273,
+        "scan_end": 227450.530777735,
+        "new_scan_begin": 227450.530778061,
+        "new_scan_end": 227450.531284754,
+        "end": 227450.53128483,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1531904,
+        "new_logs": 36864,
+        "total": 211750912,
+        "logs": 733184
+      },
+      {
+        "position": "request-1-body",
+        "begin": 227450.531830688,
+        "scan_begin": 227450.531879284,
+        "scan_end": 227451.200046785,
+        "new_scan_begin": 227451.20004716,
+        "new_scan_end": 227451.200615417,
+        "end": 227451.200615527,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1536000,
+        "new_logs": 40960,
+        "total": 211755008,
+        "logs": 737280
+      },
+      {
+        "position": "request-2-begin",
+        "begin": 227451.221896362,
+        "scan_begin": 227451.221907219,
+        "scan_end": 227451.885151793,
+        "new_scan_begin": 227451.885152012,
+        "new_scan_end": 227451.885746518,
+        "end": 227451.88574663,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1536000,
+        "new_logs": 40960,
+        "total": 211755008,
+        "logs": 737280
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227451.88711518,
+        "scan_begin": 227451.887124307,
+        "scan_end": 227452.598143941,
+        "new_scan_begin": 227452.598144201,
+        "new_scan_end": 227452.598642059,
+        "end": 227452.598642133,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1536000,
+        "new_logs": 40960,
+        "total": 211755008,
+        "logs": 737280
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227452.598861213,
+        "scan_begin": 227452.598887364,
+        "scan_end": 227453.205121768,
+        "new_scan_begin": 227453.205122193,
+        "new_scan_end": 227453.205532753,
+        "end": 227453.205532832,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1536000,
+        "new_logs": 40960,
+        "total": 211755008,
+        "logs": 737280
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227453.205843802,
+        "scan_begin": 227453.205883404,
+        "scan_end": 227453.864818361,
+        "new_scan_begin": 227453.864818923,
+        "new_scan_end": 227453.865268533,
+        "end": 227453.865268609,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1536000,
+        "new_logs": 40960,
+        "total": 211755008,
+        "logs": 737280
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227453.865659655,
+        "scan_begin": 227453.865695698,
+        "scan_end": 227454.504792323,
+        "new_scan_begin": 227454.504792643,
+        "new_scan_end": 227454.505175045,
+        "end": 227454.505175147,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1540096,
+        "new_logs": 45056,
+        "total": 211759104,
+        "logs": 741376
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227454.50550825,
+        "scan_begin": 227454.505547792,
+        "scan_end": 227455.086980143,
+        "new_scan_begin": 227455.086980296,
+        "new_scan_end": 227455.08736132,
+        "end": 227455.087361404,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1540096,
+        "new_logs": 45056,
+        "total": 211759104,
+        "logs": 741376
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227455.087550563,
+        "scan_begin": 227455.087573171,
+        "scan_end": 227455.703151092,
+        "new_scan_begin": 227455.703151255,
+        "new_scan_end": 227455.703599522,
+        "end": 227455.703599614,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1540096,
+        "new_logs": 45056,
+        "total": 211759104,
+        "logs": 741376
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227455.703879875,
+        "scan_begin": 227455.703895374,
+        "scan_end": 227456.295578258,
+        "new_scan_begin": 227456.295578667,
+        "new_scan_end": 227456.2959537,
+        "end": 227456.295953754,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1540096,
+        "new_logs": 45056,
+        "total": 211759104,
+        "logs": 741376
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227456.296393779,
+        "scan_begin": 227456.296439866,
+        "scan_end": 227456.868642667,
+        "new_scan_begin": 227456.868643022,
+        "new_scan_end": 227456.869030055,
+        "end": 227456.8690301,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1540096,
+        "new_logs": 45056,
+        "total": 211759104,
+        "logs": 741376
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227456.869218957,
+        "scan_begin": 227456.869228908,
+        "scan_end": 227457.455757859,
+        "new_scan_begin": 227457.455758166,
+        "new_scan_end": 227457.456211252,
+        "end": 227457.456211343,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1544192,
+        "new_logs": 49152,
+        "total": 211763200,
+        "logs": 745472
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227457.456472231,
+        "scan_begin": 227457.456513941,
+        "scan_end": 227458.093829476,
+        "new_scan_begin": 227458.093829836,
+        "new_scan_end": 227458.094349909,
+        "end": 227458.094350011,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1544192,
+        "new_logs": 49152,
+        "total": 211763200,
+        "logs": 745472
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227458.094915174,
+        "scan_begin": 227458.09495735,
+        "scan_end": 227458.732892068,
+        "new_scan_begin": 227458.732892496,
+        "new_scan_end": 227458.733469757,
+        "end": 227458.73346987,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1544192,
+        "new_logs": 49152,
+        "total": 211763200,
+        "logs": 745472
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227458.733833995,
+        "scan_begin": 227458.733884618,
+        "scan_end": 227459.336781134,
+        "new_scan_begin": 227459.336781372,
+        "new_scan_end": 227459.337211343,
+        "end": 227459.337211433,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1544192,
+        "new_logs": 49152,
+        "total": 211763200,
+        "logs": 745472
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227459.337412327,
+        "scan_begin": 227459.337454991,
+        "scan_end": 227459.941065741,
+        "new_scan_begin": 227459.941065992,
+        "new_scan_end": 227459.941487879,
+        "end": 227459.941487974,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1544192,
+        "new_logs": 49152,
+        "total": 211763200,
+        "logs": 745472
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227459.9423823,
+        "scan_begin": 227459.942525861,
+        "scan_end": 227460.581114635,
+        "new_scan_begin": 227460.581114885,
+        "new_scan_end": 227460.581627288,
+        "end": 227460.581627411,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1544192,
+        "new_logs": 49152,
+        "total": 211763200,
+        "logs": 745472
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227460.58189565,
+        "scan_begin": 227460.581933696,
+        "scan_end": 227461.214556141,
+        "new_scan_begin": 227461.214556464,
+        "new_scan_end": 227461.215133347,
+        "end": 227461.215133492,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1548288,
+        "new_logs": 53248,
+        "total": 211767296,
+        "logs": 749568
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227461.21542457,
+        "scan_begin": 227461.21546054,
+        "scan_end": 227461.890952983,
+        "new_scan_begin": 227461.890953315,
+        "new_scan_end": 227461.891431853,
+        "end": 227461.891431948,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1548288,
+        "new_logs": 53248,
+        "total": 211767296,
+        "logs": 749568
+      },
+      {
+        "position": "request-2-body",
+        "begin": 227461.891893706,
+        "scan_begin": 227461.891932956,
+        "scan_end": 227462.501287448,
+        "new_scan_begin": 227462.501287709,
+        "new_scan_end": 227462.501876928,
+        "end": 227462.501877075,
+        "old_total": 210219008,
+        "old_logs": 696320,
+        "new_total": 1548288,
+        "new_logs": 53248,
+        "total": 211767296,
+        "logs": 749568
+      }
+    ],
+    "persistence_intervals": [
+      {
+        "event": "clock_start",
+        "start": 227426.52721935,
+        "end": 227426.527244326
+      },
+      {
+        "event": "governance_pass",
+        "start": 227426.534477781,
+        "end": 227426.534568803
+      },
+      {
+        "event": "server_start",
+        "start": 227426.537760754,
+        "end": 227426.537825691
+      },
+      {
+        "event": "guard_begin",
+        "start": 227426.537837808,
+        "end": 227426.537853029
+      },
+      {
+        "event": "guard_end",
+        "start": 227427.260562525,
+        "end": 227427.260635588
+      },
+      {
+        "event": "ready",
+        "start": 227427.26151611,
+        "end": 227427.261576692
+      },
+      {
+        "event": "socket_connected",
+        "start": 227427.269634173,
+        "end": 227427.269730517
+      },
+      {
+        "event": "guard_begin",
+        "start": 227427.269739312,
+        "end": 227427.269754785
+      },
+      {
+        "event": "guard_end",
+        "start": 227428.048890487,
+        "end": 227428.048962067
+      },
+      {
+        "event": "send_begin",
+        "start": 227428.048969563,
+        "end": 227428.048986622
+      },
+      {
+        "event": "send_end",
+        "start": 227428.04903388,
+        "end": 227428.049041911
+      },
+      {
+        "event": "recv_begin",
+        "start": 227428.049044881,
+        "end": 227428.049056489
+      },
+      {
+        "event": "recv_end",
+        "start": 227428.050087315,
+        "end": 227428.050238161
+      },
+      {
+        "event": "header_complete",
+        "start": 227428.050388103,
+        "end": 227428.05043106
+      },
+      {
+        "event": "recv_begin",
+        "start": 227428.050434069,
+        "end": 227428.050451458
+      },
+      {
+        "event": "recv_end",
+        "start": 227428.050466474,
+        "end": 227428.050478993
+      },
+      {
+        "event": "guard_begin",
+        "start": 227428.050483612,
+        "end": 227428.050494793
+      },
+      {
+        "event": "guard_end",
+        "start": 227428.812423622,
+        "end": 227428.812486947
+      },
+      {
+        "event": "recv_begin",
+        "start": 227428.812493797,
+        "end": 227428.812505849
+      },
+      {
+        "event": "recv_end",
+        "start": 227428.812545679,
+        "end": 227428.812554698
+      },
+      {
+        "event": "guard_begin",
+        "start": 227428.812563349,
+        "end": 227428.812570338
+      },
+      {
+        "event": "guard_end",
+        "start": 227429.471784568,
+        "end": 227429.471879493
+      },
+      {
+        "event": "recv_begin",
+        "start": 227429.47188693,
+        "end": 227429.471903814
+      },
+      {
+        "event": "recv_end",
+        "start": 227429.471997037,
+        "end": 227429.472065239
+      },
+      {
+        "event": "guard_begin",
+        "start": 227429.472187339,
+        "end": 227429.4722009
+      },
+      {
+        "event": "guard_end",
+        "start": 227430.115405553,
+        "end": 227430.115465604
+      },
+      {
+        "event": "recv_begin",
+        "start": 227430.115471037,
+        "end": 227430.115483985
+      },
+      {
+        "event": "recv_end",
+        "start": 227430.115536509,
+        "end": 227430.115545683
+      },
+      {
+        "event": "guard_begin",
+        "start": 227430.115735252,
+        "end": 227430.115758702
+      },
+      {
+        "event": "guard_end",
+        "start": 227430.835621675,
+        "end": 227430.8356893
+      },
+      {
+        "event": "recv_begin",
+        "start": 227430.835698729,
+        "end": 227430.835711586
+      },
+      {
+        "event": "recv_end",
+        "start": 227430.835757646,
+        "end": 227430.835767156
+      },
+      {
+        "event": "guard_begin",
+        "start": 227430.835922634,
+        "end": 227430.835937427
+      },
+      {
+        "event": "guard_end",
+        "start": 227431.498890802,
+        "end": 227431.498954442
+      },
+      {
+        "event": "recv_begin",
+        "start": 227431.498959552,
+        "end": 227431.498972079
+      },
+      {
+        "event": "recv_end",
+        "start": 227431.499009277,
+        "end": 227431.499030709
+      },
+      {
+        "event": "guard_begin",
+        "start": 227431.499065532,
+        "end": 227431.499074197
+      },
+      {
+        "event": "guard_end",
+        "start": 227432.14896582,
+        "end": 227432.149044182
+      },
+      {
+        "event": "recv_begin",
+        "start": 227432.149049878,
+        "end": 227432.149063156
+      },
+      {
+        "event": "recv_end",
+        "start": 227432.149098075,
+        "end": 227432.149107704
+      },
+      {
+        "event": "guard_begin",
+        "start": 227432.149166408,
+        "end": 227432.149195551
+      },
+      {
+        "event": "guard_end",
+        "start": 227432.8375612,
+        "end": 227432.837705195
+      },
+      {
+        "event": "recv_begin",
+        "start": 227432.837715735,
+        "end": 227432.837731132
+      },
+      {
+        "event": "recv_end",
+        "start": 227432.837775112,
+        "end": 227432.837789244
+      },
+      {
+        "event": "guard_begin",
+        "start": 227432.838106786,
+        "end": 227432.838149116
+      },
+      {
+        "event": "guard_end",
+        "start": 227433.486877872,
+        "end": 227433.486956973
+      },
+      {
+        "event": "recv_begin",
+        "start": 227433.486962987,
+        "end": 227433.486977512
+      },
+      {
+        "event": "recv_end",
+        "start": 227433.487024123,
+        "end": 227433.487034273
+      },
+      {
+        "event": "guard_begin",
+        "start": 227433.487346858,
+        "end": 227433.487385611
+      },
+      {
+        "event": "guard_end",
+        "start": 227434.123833275,
+        "end": 227434.123915275
+      },
+      {
+        "event": "recv_begin",
+        "start": 227434.123921168,
+        "end": 227434.123935396
+      },
+      {
+        "event": "recv_end",
+        "start": 227434.123979718,
+        "end": 227434.123989104
+      },
+      {
+        "event": "guard_begin",
+        "start": 227434.124419213,
+        "end": 227434.124473493
+      },
+      {
+        "event": "guard_end",
+        "start": 227434.746679939,
+        "end": 227434.746752066
+      },
+      {
+        "event": "recv_begin",
+        "start": 227434.746758006,
+        "end": 227434.746771643
+      },
+      {
+        "event": "recv_end",
+        "start": 227434.746820829,
+        "end": 227434.746830116
+      },
+      {
+        "event": "guard_begin",
+        "start": 227434.747223567,
+        "end": 227434.747265564
+      },
+      {
+        "event": "guard_end",
+        "start": 227435.422327856,
+        "end": 227435.422422098
+      },
+      {
+        "event": "recv_begin",
+        "start": 227435.422429479,
+        "end": 227435.422445369
+      },
+      {
+        "event": "recv_end",
+        "start": 227435.422495361,
+        "end": 227435.422505645
+      },
+      {
+        "event": "guard_begin",
+        "start": 227435.42299725,
+        "end": 227435.423044122
+      },
+      {
+        "event": "guard_end",
+        "start": 227436.173993764,
+        "end": 227436.174065847
+      },
+      {
+        "event": "recv_begin",
+        "start": 227436.174071513,
+        "end": 227436.174084975
+      },
+      {
+        "event": "recv_end",
+        "start": 227436.174141122,
+        "end": 227436.174150688
+      },
+      {
+        "event": "guard_begin",
+        "start": 227436.174639762,
+        "end": 227436.17470364
+      },
+      {
+        "event": "guard_end",
+        "start": 227436.863308123,
+        "end": 227436.863394629
+      },
+      {
+        "event": "recv_begin",
+        "start": 227436.863401674,
+        "end": 227436.863417446
+      },
+      {
+        "event": "recv_end",
+        "start": 227436.863442289,
+        "end": 227436.86345075
+      },
+      {
+        "event": "guard_begin",
+        "start": 227436.863985776,
+        "end": 227436.864050991
+      },
+      {
+        "event": "guard_end",
+        "start": 227437.650346632,
+        "end": 227437.650438609
+      },
+      {
+        "event": "recv_begin",
+        "start": 227437.650445025,
+        "end": 227437.650457584
+      },
+      {
+        "event": "recv_end",
+        "start": 227437.6505017,
+        "end": 227437.650512294
+      },
+      {
+        "event": "guard_begin",
+        "start": 227437.651201386,
+        "end": 227437.651244089
+      },
+      {
+        "event": "guard_end",
+        "start": 227438.282625642,
+        "end": 227438.282692779
+      },
+      {
+        "event": "recv_begin",
+        "start": 227438.282698207,
+        "end": 227438.282710947
+      },
+      {
+        "event": "recv_end",
+        "start": 227438.282779786,
+        "end": 227438.282792747
+      },
+      {
+        "event": "guard_begin",
+        "start": 227438.283426564,
+        "end": 227438.283466918
+      },
+      {
+        "event": "guard_end",
+        "start": 227438.940570016,
+        "end": 227438.940649877
+      },
+      {
+        "event": "recv_begin",
+        "start": 227438.940656362,
+        "end": 227438.940672148
+      },
+      {
+        "event": "recv_end",
+        "start": 227438.940696004,
+        "end": 227438.940705071
+      },
+      {
+        "event": "guard_begin",
+        "start": 227438.941410819,
+        "end": 227438.941451392
+      },
+      {
+        "event": "guard_end",
+        "start": 227439.639805468,
+        "end": 227439.63987238
+      },
+      {
+        "event": "tail_begin",
+        "start": 227439.640099557,
+        "end": 227439.640152077
+      },
+      {
+        "event": "tail_end",
+        "start": 227439.660323401,
+        "end": 227439.660390743
+      },
+      {
+        "event": "request_complete",
+        "start": 227439.661028944,
+        "end": 227439.661068196
+      },
+      {
+        "event": "guard_begin",
+        "start": 227439.661072264,
+        "end": 227439.66108289
+      },
+      {
+        "event": "guard_end",
+        "start": 227440.263857682,
+        "end": 227440.263922192
+      },
+      {
+        "event": "send_begin",
+        "start": 227440.263927172,
+        "end": 227440.263938154
+      },
+      {
+        "event": "send_end",
+        "start": 227440.263999145,
+        "end": 227440.264050068
+      },
+      {
+        "event": "recv_begin",
+        "start": 227440.264057577,
+        "end": 227440.264090197
+      },
+      {
+        "event": "recv_end",
+        "start": 227440.264949575,
+        "end": 227440.264999065
+      },
+      {
+        "event": "header_complete",
+        "start": 227440.265177844,
+        "end": 227440.265216445
+      },
+      {
+        "event": "recv_begin",
+        "start": 227440.265218106,
+        "end": 227440.265228333
+      },
+      {
+        "event": "recv_end",
+        "start": 227440.265236146,
+        "end": 227440.265245278
+      },
+      {
+        "event": "guard_begin",
+        "start": 227440.265247796,
+        "end": 227440.265263742
+      },
+      {
+        "event": "guard_end",
+        "start": 227440.851929531,
+        "end": 227440.852028147
+      },
+      {
+        "event": "recv_begin",
+        "start": 227440.85203457,
+        "end": 227440.852049948
+      },
+      {
+        "event": "recv_end",
+        "start": 227440.852112478,
+        "end": 227440.85212253
+      },
+      {
+        "event": "guard_begin",
+        "start": 227440.852135431,
+        "end": 227440.852145178
+      },
+      {
+        "event": "guard_end",
+        "start": 227441.488266607,
+        "end": 227441.488331105
+      },
+      {
+        "event": "recv_begin",
+        "start": 227441.48833699,
+        "end": 227441.488350555
+      },
+      {
+        "event": "recv_end",
+        "start": 227441.488414124,
+        "end": 227441.488441173
+      },
+      {
+        "event": "guard_begin",
+        "start": 227441.488503158,
+        "end": 227441.488530068
+      },
+      {
+        "event": "guard_end",
+        "start": 227442.123342979,
+        "end": 227442.123404645
+      },
+      {
+        "event": "recv_begin",
+        "start": 227442.123408878,
+        "end": 227442.123419425
+      },
+      {
+        "event": "recv_end",
+        "start": 227442.123457546,
+        "end": 227442.123465374
+      },
+      {
+        "event": "guard_begin",
+        "start": 227442.123568351,
+        "end": 227442.123587093
+      },
+      {
+        "event": "guard_end",
+        "start": 227442.724440667,
+        "end": 227442.724511344
+      },
+      {
+        "event": "recv_begin",
+        "start": 227442.724516055,
+        "end": 227442.724527804
+      },
+      {
+        "event": "recv_end",
+        "start": 227442.724562542,
+        "end": 227442.724570928
+      },
+      {
+        "event": "guard_begin",
+        "start": 227442.724703457,
+        "end": 227442.724728308
+      },
+      {
+        "event": "guard_end",
+        "start": 227443.373548963,
+        "end": 227443.373612523
+      },
+      {
+        "event": "recv_begin",
+        "start": 227443.373618095,
+        "end": 227443.37364009
+      },
+      {
+        "event": "recv_end",
+        "start": 227443.3736776,
+        "end": 227443.373685483
+      },
+      {
+        "event": "guard_begin",
+        "start": 227443.373715339,
+        "end": 227443.373736729
+      },
+      {
+        "event": "guard_end",
+        "start": 227443.969686022,
+        "end": 227443.969744679
+      },
+      {
+        "event": "recv_begin",
+        "start": 227443.969749356,
+        "end": 227443.969761059
+      },
+      {
+        "event": "recv_end",
+        "start": 227443.969798795,
+        "end": 227443.969805749
+      },
+      {
+        "event": "guard_begin",
+        "start": 227443.969857586,
+        "end": 227443.969866508
+      },
+      {
+        "event": "guard_end",
+        "start": 227444.569347334,
+        "end": 227444.569429492
+      },
+      {
+        "event": "recv_begin",
+        "start": 227444.56943557,
+        "end": 227444.569449554
+      },
+      {
+        "event": "recv_end",
+        "start": 227444.569490336,
+        "end": 227444.569518211
+      },
+      {
+        "event": "guard_begin",
+        "start": 227444.56978112,
+        "end": 227444.569817153
+      },
+      {
+        "event": "guard_end",
+        "start": 227445.153659876,
+        "end": 227445.153720128
+      },
+      {
+        "event": "recv_begin",
+        "start": 227445.153724894,
+        "end": 227445.153735936
+      },
+      {
+        "event": "recv_end",
+        "start": 227445.153774599,
+        "end": 227445.15378273
+      },
+      {
+        "event": "guard_begin",
+        "start": 227445.153840547,
+        "end": 227445.153870653
+      },
+      {
+        "event": "guard_end",
+        "start": 227445.79081218,
+        "end": 227445.790872386
+      },
+      {
+        "event": "recv_begin",
+        "start": 227445.79087746,
+        "end": 227445.79088901
+      },
+      {
+        "event": "recv_end",
+        "start": 227445.790928395,
+        "end": 227445.790935915
+      },
+      {
+        "event": "guard_begin",
+        "start": 227445.791001909,
+        "end": 227445.791013622
+      },
+      {
+        "event": "guard_end",
+        "start": 227446.441157147,
+        "end": 227446.441231943
+      },
+      {
+        "event": "recv_begin",
+        "start": 227446.441236692,
+        "end": 227446.441249953
+      },
+      {
+        "event": "recv_end",
+        "start": 227446.441296158,
+        "end": 227446.44130483
+      },
+      {
+        "event": "guard_begin",
+        "start": 227446.441586891,
+        "end": 227446.441617131
+      },
+      {
+        "event": "guard_end",
+        "start": 227447.118496962,
+        "end": 227447.118574441
+      },
+      {
+        "event": "recv_begin",
+        "start": 227447.118579948,
+        "end": 227447.118596964
+      },
+      {
+        "event": "recv_end",
+        "start": 227447.118633707,
+        "end": 227447.118641152
+      },
+      {
+        "event": "guard_begin",
+        "start": 227447.118707733,
+        "end": 227447.118743076
+      },
+      {
+        "event": "guard_end",
+        "start": 227447.815958175,
+        "end": 227447.816123334
+      },
+      {
+        "event": "recv_begin",
+        "start": 227447.816134172,
+        "end": 227447.816168946
+      },
+      {
+        "event": "recv_end",
+        "start": 227447.816221212,
+        "end": 227447.816250728
+      },
+      {
+        "event": "guard_begin",
+        "start": 227447.816399551,
+        "end": 227447.816439512
+      },
+      {
+        "event": "guard_end",
+        "start": 227448.474442849,
+        "end": 227448.474581114
+      },
+      {
+        "event": "recv_begin",
+        "start": 227448.47459273,
+        "end": 227448.474635594
+      },
+      {
+        "event": "recv_end",
+        "start": 227448.474705184,
+        "end": 227448.474791769
+      },
+      {
+        "event": "guard_begin",
+        "start": 227448.475241492,
+        "end": 227448.475298902
+      },
+      {
+        "event": "guard_end",
+        "start": 227449.135505125,
+        "end": 227449.135566008
+      },
+      {
+        "event": "recv_begin",
+        "start": 227449.135571229,
+        "end": 227449.135584847
+      },
+      {
+        "event": "recv_end",
+        "start": 227449.135607377,
+        "end": 227449.135613856
+      },
+      {
+        "event": "guard_begin",
+        "start": 227449.135702156,
+        "end": 227449.13572815
+      },
+      {
+        "event": "guard_end",
+        "start": 227449.841154115,
+        "end": 227449.841258666
+      },
+      {
+        "event": "recv_begin",
+        "start": 227449.841266227,
+        "end": 227449.841283235
+      },
+      {
+        "event": "recv_end",
+        "start": 227449.841312754,
+        "end": 227449.841322732
+      },
+      {
+        "event": "guard_begin",
+        "start": 227449.841480805,
+        "end": 227449.841533418
+      },
+      {
+        "event": "guard_end",
+        "start": 227450.531291246,
+        "end": 227450.531374434
+      },
+      {
+        "event": "recv_begin",
+        "start": 227450.531379329,
+        "end": 227450.531404034
+      },
+      {
+        "event": "recv_end",
+        "start": 227450.531437981,
+        "end": 227450.531446066
+      },
+      {
+        "event": "guard_begin",
+        "start": 227450.531831645,
+        "end": 227450.531878379
+      },
+      {
+        "event": "guard_end",
+        "start": 227451.200627456,
+        "end": 227451.200724125
+      },
+      {
+        "event": "tail_begin",
+        "start": 227451.200870043,
+        "end": 227451.200926749
+      },
+      {
+        "event": "tail_end",
+        "start": 227451.221211035,
+        "end": 227451.221284694
+      },
+      {
+        "event": "request_complete",
+        "start": 227451.221860995,
+        "end": 227451.221893301
+      },
+      {
+        "event": "guard_begin",
+        "start": 227451.2218969,
+        "end": 227451.22190688
+      },
+      {
+        "event": "guard_end",
+        "start": 227451.885755005,
+        "end": 227451.885827885
+      },
+      {
+        "event": "send_begin",
+        "start": 227451.885833512,
+        "end": 227451.88584777
+      },
+      {
+        "event": "send_end",
+        "start": 227451.885880007,
+        "end": 227451.885888167
+      },
+      {
+        "event": "recv_begin",
+        "start": 227451.885891103,
+        "end": 227451.885899251
+      },
+      {
+        "event": "recv_end",
+        "start": 227451.886726648,
+        "end": 227451.886801174
+      },
+      {
+        "event": "header_complete",
+        "start": 227451.887038074,
+        "end": 227451.88707742
+      },
+      {
+        "event": "recv_begin",
+        "start": 227451.887079276,
+        "end": 227451.887093221
+      },
+      {
+        "event": "recv_end",
+        "start": 227451.887101912,
+        "end": 227451.887110238
+      },
+      {
+        "event": "guard_begin",
+        "start": 227451.887115707,
+        "end": 227451.887123055
+      },
+      {
+        "event": "guard_end",
+        "start": 227452.598654177,
+        "end": 227452.598728323
+      },
+      {
+        "event": "recv_begin",
+        "start": 227452.59873413,
+        "end": 227452.598747249
+      },
+      {
+        "event": "recv_end",
+        "start": 227452.59878842,
+        "end": 227452.598796571
+      },
+      {
+        "event": "guard_begin",
+        "start": 227452.598861594,
+        "end": 227452.598886698
+      },
+      {
+        "event": "guard_end",
+        "start": 227453.205538926,
+        "end": 227453.205602725
+      },
+      {
+        "event": "recv_begin",
+        "start": 227453.205607554,
+        "end": 227453.205618965
+      },
+      {
+        "event": "recv_end",
+        "start": 227453.205682594,
+        "end": 227453.205702751
+      },
+      {
+        "event": "guard_begin",
+        "start": 227453.205844412,
+        "end": 227453.205882706
+      },
+      {
+        "event": "guard_end",
+        "start": 227453.865275453,
+        "end": 227453.865368822
+      },
+      {
+        "event": "recv_begin",
+        "start": 227453.865375793,
+        "end": 227453.865389747
+      },
+      {
+        "event": "recv_end",
+        "start": 227453.865462549,
+        "end": 227453.86547167
+      },
+      {
+        "event": "guard_begin",
+        "start": 227453.865660253,
+        "end": 227453.865695003
+      },
+      {
+        "event": "guard_end",
+        "start": 227454.505181202,
+        "end": 227454.505242525
+      },
+      {
+        "event": "recv_begin",
+        "start": 227454.505247093,
+        "end": 227454.505258825
+      },
+      {
+        "event": "recv_end",
+        "start": 227454.505296203,
+        "end": 227454.50530361
+      },
+      {
+        "event": "guard_begin",
+        "start": 227454.505508919,
+        "end": 227454.505547165
+      },
+      {
+        "event": "guard_end",
+        "start": 227455.087367127,
+        "end": 227455.08743227
+      },
+      {
+        "event": "recv_begin",
+        "start": 227455.08743728,
+        "end": 227455.087449372
+      },
+      {
+        "event": "recv_end",
+        "start": 227455.087509425,
+        "end": 227455.087521002
+      },
+      {
+        "event": "guard_begin",
+        "start": 227455.087550915,
+        "end": 227455.087572615
+      },
+      {
+        "event": "guard_end",
+        "start": 227455.703606367,
+        "end": 227455.70367838
+      },
+      {
+        "event": "recv_begin",
+        "start": 227455.703683094,
+        "end": 227455.703696151
+      },
+      {
+        "event": "recv_end",
+        "start": 227455.703787881,
+        "end": 227455.703821131
+      },
+      {
+        "event": "guard_begin",
+        "start": 227455.703880401,
+        "end": 227455.703894898
+      },
+      {
+        "event": "guard_end",
+        "start": 227456.295959742,
+        "end": 227456.29603647
+      },
+      {
+        "event": "recv_begin",
+        "start": 227456.296041418,
+        "end": 227456.296055213
+      },
+      {
+        "event": "recv_end",
+        "start": 227456.296094498,
+        "end": 227456.296112834
+      },
+      {
+        "event": "guard_begin",
+        "start": 227456.296394722,
+        "end": 227456.296428153
+      },
+      {
+        "event": "guard_end",
+        "start": 227456.869036571,
+        "end": 227456.869100994
+      },
+      {
+        "event": "recv_begin",
+        "start": 227456.869106213,
+        "end": 227456.86912817
+      },
+      {
+        "event": "recv_end",
+        "start": 227456.869163162,
+        "end": 227456.869171155
+      },
+      {
+        "event": "guard_begin",
+        "start": 227456.869219457,
+        "end": 227456.869228391
+      },
+      {
+        "event": "guard_end",
+        "start": 227457.456218614,
+        "end": 227457.456304334
+      },
+      {
+        "event": "recv_begin",
+        "start": 227457.456310986,
+        "end": 227457.456327797
+      },
+      {
+        "event": "recv_end",
+        "start": 227457.456369822,
+        "end": 227457.456382843
+      },
+      {
+        "event": "guard_begin",
+        "start": 227457.456472938,
+        "end": 227457.45651304
+      },
+      {
+        "event": "guard_end",
+        "start": 227458.094357208,
+        "end": 227458.094427012
+      },
+      {
+        "event": "recv_begin",
+        "start": 227458.094432062,
+        "end": 227458.094443553
+      },
+      {
+        "event": "recv_end",
+        "start": 227458.094482926,
+        "end": 227458.094490738
+      },
+      {
+        "event": "guard_begin",
+        "start": 227458.094916299,
+        "end": 227458.094956541
+      },
+      {
+        "event": "guard_end",
+        "start": 227458.733477802,
+        "end": 227458.733581882
+      },
+      {
+        "event": "recv_begin",
+        "start": 227458.733588876,
+        "end": 227458.733604867
+      },
+      {
+        "event": "recv_end",
+        "start": 227458.733669873,
+        "end": 227458.733699332
+      },
+      {
+        "event": "guard_begin",
+        "start": 227458.733834801,
+        "end": 227458.733883156
+      },
+      {
+        "event": "guard_end",
+        "start": 227459.337217126,
+        "end": 227459.337285279
+      },
+      {
+        "event": "recv_begin",
+        "start": 227459.337290575,
+        "end": 227459.337307419
+      },
+      {
+        "event": "recv_end",
+        "start": 227459.337330044,
+        "end": 227459.337337515
+      },
+      {
+        "event": "guard_begin",
+        "start": 227459.337413064,
+        "end": 227459.337454123
+      },
+      {
+        "event": "guard_end",
+        "start": 227459.94149433,
+        "end": 227459.941783761
+      },
+      {
+        "event": "recv_begin",
+        "start": 227459.941791603,
+        "end": 227459.94189096
+      },
+      {
+        "event": "recv_end",
+        "start": 227459.94193144,
+        "end": 227459.941979072
+      },
+      {
+        "event": "guard_begin",
+        "start": 227459.942383214,
+        "end": 227459.942522458
+      },
+      {
+        "event": "guard_end",
+        "start": 227460.581637284,
+        "end": 227460.581730014
+      },
+      {
+        "event": "recv_begin",
+        "start": 227460.58173586,
+        "end": 227460.581749967
+      },
+      {
+        "event": "recv_end",
+        "start": 227460.581785841,
+        "end": 227460.581794776
+      },
+      {
+        "event": "guard_begin",
+        "start": 227460.581896575,
+        "end": 227460.58193255
+      },
+      {
+        "event": "guard_end",
+        "start": 227461.215141718,
+        "end": 227461.215223698
+      },
+      {
+        "event": "recv_begin",
+        "start": 227461.215243441,
+        "end": 227461.215258805
+      },
+      {
+        "event": "recv_end",
+        "start": 227461.215297991,
+        "end": 227461.21530649
+      },
+      {
+        "event": "guard_begin",
+        "start": 227461.215425529,
+        "end": 227461.215458998
+      },
+      {
+        "event": "guard_end",
+        "start": 227461.891438897,
+        "end": 227461.891507055
+      },
+      {
+        "event": "recv_begin",
+        "start": 227461.891512826,
+        "end": 227461.891527241
+      },
+      {
+        "event": "recv_end",
+        "start": 227461.891547178,
+        "end": 227461.891555015
+      },
+      {
+        "event": "guard_begin",
+        "start": 227461.891894613,
+        "end": 227461.891931984
+      },
+      {
+        "event": "guard_end",
+        "start": 227462.501884926,
+        "end": 227462.501953243
+      },
+      {
+        "event": "tail_begin",
+        "start": 227462.502125095,
+        "end": 227462.502167981
+      },
+      {
+        "event": "tail_end",
+        "start": 227462.522303643,
+        "end": 227462.522379605
+      },
+      {
+        "event": "request_complete",
+        "start": 227462.523129192,
+        "end": 227462.523176726
+      },
+      {
+        "event": "audit_complete",
+        "start": 227462.523179793,
+        "end": 227462.52319262
+      },
+      {
+        "event": "socket_closed",
+        "start": 227462.523222964,
+        "end": 227462.523231046
+      },
+      {
+        "event": "server_reaped",
+        "start": 227462.52458075,
+        "end": 227462.524628669
+      },
+      {
+        "event": "cleanup_complete",
+        "start": 227462.525399675,
+        "end": 227462.525433174
+      },
+      {
+        "event": "settled",
+        "start": 227462.906815719,
+        "end": 227462.906853452
+      }
+    ],
+    "max_scan_s": 0.7857394290040247,
+    "max_guard_interval_s": 0.7872157079982571,
+    "max_persistence_s": 0.000289430987322703,
+    "final_total_bytes": 211173376,
+    "final_log_bytes": 753664,
+    "elapsed_s": 36.38073338501272,
+    "diagnostic_within_180s": true,
+    "RAC_D01": true
+  },
+  "trace": [
+    {
+      "kind": "clock_start",
+      "mono": 227426.52721935,
+      "elapsed_s": 0.0005820900260005146,
+      "role_expiry_utc": "2026-10-09T05:20:50.929431+00:00"
+    },
+    {
+      "kind": "governance_pass",
+      "mono": 227426.534477781,
+      "elapsed_s": 0.007840521022444591,
+      "root_disjoint": true,
+      "full_path_capture": true,
+      "fixture_total_only": true,
+      "failed_finally_reaped": true
+    },
+    {
+      "kind": "server_start",
+      "mono": 227426.537760754,
+      "elapsed_s": 0.011123494012281299,
+      "pid": 24092,
+      "starttime": "22742653",
+      "argv": [
+        "${REPOSITORY}/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+        "--port",
+        "0",
+        "--root",
+        "${REPOSITORY}/.cache/v1.0-s3/reviewer/diagnostic-001/payload",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--metrics-on-exit"
+      ],
+      "payload_sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f"
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227426.537837808,
+      "elapsed_s": 0.011200548004126176,
+      "position": "readiness"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227427.260562525,
+      "elapsed_s": 0.7339252650272101,
+      "position": "readiness",
+      "begin": 227426.537837032,
+      "scan_begin": 227426.537853574,
+      "scan_end": 227427.259761222,
+      "new_scan_begin": 227427.259761474,
+      "new_scan_end": 227427.260555182,
+      "end": 227427.26055541,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1507328,
+      "new_logs": 12288,
+      "total": 211726336,
+      "logs": 708608
+    },
+    {
+      "kind": "ready",
+      "mono": 227427.26151611,
+      "elapsed_s": 0.7348788500239607,
+      "port": 34927,
+      "listener_owned": true
+    },
+    {
+      "kind": "socket_connected",
+      "mono": 227427.269634173,
+      "elapsed_s": 0.7429969130025711,
+      "local": [
+        "127.0.0.1",
+        37440
+      ],
+      "remote": [
+        "127.0.0.1",
+        34927
+      ]
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227427.269739312,
+      "elapsed_s": 0.7431020520161837,
+      "position": "request-0-begin"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227428.048890487,
+      "elapsed_s": 1.5222532270126976,
+      "position": "request-0-begin",
+      "begin": 227427.269738494,
+      "scan_begin": 227427.269755583,
+      "scan_end": 227428.048348774,
+      "new_scan_begin": 227428.04834906,
+      "new_scan_end": 227428.04888254,
+      "end": 227428.048882669,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1507328,
+      "new_logs": 12288,
+      "total": 211726336,
+      "logs": 708608
+    },
+    {
+      "kind": "send_begin",
+      "mono": 227428.048969563,
+      "elapsed_s": 1.5223323030222673,
+      "index": 0,
+      "bytes": 69
+    },
+    {
+      "kind": "send_end",
+      "mono": 227428.04903388,
+      "elapsed_s": 1.522396620013751,
+      "index": 0,
+      "bytes": 69
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227428.049044881,
+      "elapsed_s": 1.5224076209997293,
+      "index": 0,
+      "phase": "header",
+      "cumulative": 0
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227428.050087315,
+      "elapsed_s": 1.5234500550141092,
+      "index": 0,
+      "phase": "header",
+      "bytes": 108,
+      "cumulative": 108
+    },
+    {
+      "kind": "header_complete",
+      "mono": 227428.050388103,
+      "elapsed_s": 1.523750843014568,
+      "index": 0,
+      "header_bytes": 108,
+      "body_bytes": 0
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227428.050434069,
+      "elapsed_s": 1.5237968090223148,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 0
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227428.050466474,
+      "elapsed_s": 1.5238292140129488,
+      "index": 0,
+      "phase": "body",
+      "bytes": 13032,
+      "cumulative": 13032
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227428.050483612,
+      "elapsed_s": 1.52384635200724,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227428.812423622,
+      "elapsed_s": 2.2857863620156422,
+      "position": "request-0-body",
+      "begin": 227428.050483059,
+      "scan_begin": 227428.050495947,
+      "scan_end": 227428.811884973,
+      "new_scan_begin": 227428.811885131,
+      "new_scan_end": 227428.812416624,
+      "end": 227428.812416737,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1507328,
+      "new_logs": 12288,
+      "total": 211726336,
+      "logs": 708608
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227428.812493797,
+      "elapsed_s": 2.2858565370261203,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 13032
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227428.812545679,
+      "elapsed_s": 2.285908418998588,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 78568
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227428.812563349,
+      "elapsed_s": 2.2859260890109,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227429.471784568,
+      "elapsed_s": 2.9451473080262076,
+      "position": "request-0-body",
+      "begin": 227428.812562955,
+      "scan_begin": 227428.81257064,
+      "scan_end": 227429.470896543,
+      "new_scan_begin": 227429.470897013,
+      "new_scan_end": 227429.471771258,
+      "end": 227429.471771489,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1507328,
+      "new_logs": 12288,
+      "total": 211726336,
+      "logs": 708608
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227429.47188693,
+      "elapsed_s": 2.9452496700105257,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 78568
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227429.471997037,
+      "elapsed_s": 2.9453597770188935,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 144104
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227429.472187339,
+      "elapsed_s": 2.9455500790209044,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227430.115405553,
+      "elapsed_s": 3.58876829300425,
+      "position": "request-0-body",
+      "begin": 227429.472186817,
+      "scan_begin": 227429.472202088,
+      "scan_end": 227430.114959074,
+      "new_scan_begin": 227430.114959335,
+      "new_scan_end": 227430.11539994,
+      "end": 227430.115400061,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1511424,
+      "new_logs": 16384,
+      "total": 211730432,
+      "logs": 712704
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227430.115471037,
+      "elapsed_s": 3.5888337770011276,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 144104
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227430.115536509,
+      "elapsed_s": 3.588899249007227,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 209640
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227430.115735252,
+      "elapsed_s": 3.589097992022289,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227430.835621675,
+      "elapsed_s": 4.308984415023588,
+      "position": "request-0-body",
+      "begin": 227430.115734625,
+      "scan_begin": 227430.115759208,
+      "scan_end": 227430.835091887,
+      "new_scan_begin": 227430.835092218,
+      "new_scan_end": 227430.835614445,
+      "end": 227430.835614579,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1511424,
+      "new_logs": 16384,
+      "total": 211730432,
+      "logs": 712704
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227430.835698729,
+      "elapsed_s": 4.3090614690154325,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 209640
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227430.835757646,
+      "elapsed_s": 4.309120386024006,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 275176
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227430.835922634,
+      "elapsed_s": 4.30928537400905,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227431.498890802,
+      "elapsed_s": 4.972253542015096,
+      "position": "request-0-body",
+      "begin": 227430.835922181,
+      "scan_begin": 227430.835938033,
+      "scan_end": 227431.498401035,
+      "new_scan_begin": 227431.49840132,
+      "new_scan_end": 227431.498884306,
+      "end": 227431.498884387,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1511424,
+      "new_logs": 16384,
+      "total": 211730432,
+      "logs": 712704
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227431.498959552,
+      "elapsed_s": 4.972322292014724,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 275176
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227431.499009277,
+      "elapsed_s": 4.9723720170150045,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 340712
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227431.499065532,
+      "elapsed_s": 4.972428272012621,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227432.14896582,
+      "elapsed_s": 5.622328560013557,
+      "position": "request-0-body",
+      "begin": 227431.499065119,
+      "scan_begin": 227431.499074605,
+      "scan_end": 227432.148423064,
+      "new_scan_begin": 227432.14842333,
+      "new_scan_end": 227432.148959292,
+      "end": 227432.1489594,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1511424,
+      "new_logs": 16384,
+      "total": 211730432,
+      "logs": 712704
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227432.149049878,
+      "elapsed_s": 5.622412618016824,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 340712
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227432.149098075,
+      "elapsed_s": 5.622460815007798,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 406248
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227432.149166408,
+      "elapsed_s": 5.622529148007743,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227432.8375612,
+      "elapsed_s": 6.310923940007342,
+      "position": "request-0-body",
+      "begin": 227432.149165831,
+      "scan_begin": 227432.14919651,
+      "scan_end": 227432.837084492,
+      "new_scan_begin": 227432.837084859,
+      "new_scan_end": 227432.837552607,
+      "end": 227432.837552731,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1511424,
+      "new_logs": 16384,
+      "total": 211730432,
+      "logs": 712704
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227432.837715735,
+      "elapsed_s": 6.311078475002432,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 406248
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227432.837775112,
+      "elapsed_s": 6.31113785202615,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 471784
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227432.838106786,
+      "elapsed_s": 6.311469526001019,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227433.486877872,
+      "elapsed_s": 6.960240612010239,
+      "position": "request-0-body",
+      "begin": 227432.838105797,
+      "scan_begin": 227432.838149887,
+      "scan_end": 227433.486363781,
+      "new_scan_begin": 227433.486364013,
+      "new_scan_end": 227433.48687063,
+      "end": 227433.486870757,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1515520,
+      "new_logs": 20480,
+      "total": 211734528,
+      "logs": 716800
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227433.486962987,
+      "elapsed_s": 6.9603257270064205,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 471784
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227433.487024123,
+      "elapsed_s": 6.960386863007443,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 537320
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227433.487346858,
+      "elapsed_s": 6.9607095980027225,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227434.123833275,
+      "elapsed_s": 7.597196015005466,
+      "position": "request-0-body",
+      "begin": 227433.487345615,
+      "scan_begin": 227433.487386391,
+      "scan_end": 227434.123199559,
+      "new_scan_begin": 227434.123199814,
+      "new_scan_end": 227434.123826104,
+      "end": 227434.123826179,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1515520,
+      "new_logs": 20480,
+      "total": 211734528,
+      "logs": 716800
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227434.123921168,
+      "elapsed_s": 7.597283908020472,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 537320
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227434.123979718,
+      "elapsed_s": 7.5973424580006395,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 602856
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227434.124419213,
+      "elapsed_s": 7.597781953023514,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227434.746679939,
+      "elapsed_s": 8.2200426790223,
+      "position": "request-0-body",
+      "begin": 227434.124417737,
+      "scan_begin": 227434.124474896,
+      "scan_end": 227434.746194702,
+      "new_scan_begin": 227434.746194957,
+      "new_scan_end": 227434.746672959,
+      "end": 227434.746673061,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1515520,
+      "new_logs": 20480,
+      "total": 211734528,
+      "logs": 716800
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227434.746758006,
+      "elapsed_s": 8.220120746002067,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 602856
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227434.746820829,
+      "elapsed_s": 8.220183569006622,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 668392
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227434.747223567,
+      "elapsed_s": 8.220586307026679,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227435.422327856,
+      "elapsed_s": 8.895690596022177,
+      "position": "request-0-body",
+      "begin": 227434.747222406,
+      "scan_begin": 227434.747266438,
+      "scan_end": 227435.421730019,
+      "new_scan_begin": 227435.42173031,
+      "new_scan_end": 227435.422318925,
+      "end": 227435.42231902,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1515520,
+      "new_logs": 20480,
+      "total": 211734528,
+      "logs": 716800
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227435.422429479,
+      "elapsed_s": 8.895792219002033,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 668392
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227435.422495361,
+      "elapsed_s": 8.895858101022895,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 733928
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227435.42299725,
+      "elapsed_s": 8.896359990001656,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227436.173993764,
+      "elapsed_s": 9.647356504021445,
+      "position": "request-0-body",
+      "begin": 227435.422996194,
+      "scan_begin": 227435.423045144,
+      "scan_end": 227436.173532002,
+      "new_scan_begin": 227436.17353224,
+      "new_scan_end": 227436.173987335,
+      "end": 227436.173987407,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1515520,
+      "new_logs": 20480,
+      "total": 211734528,
+      "logs": 716800
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227436.174071513,
+      "elapsed_s": 9.647434253012761,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 733928
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227436.174141122,
+      "elapsed_s": 9.647503862011945,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 799464
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227436.174639762,
+      "elapsed_s": 9.648002502013696,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227436.863308123,
+      "elapsed_s": 10.336670863005565,
+      "position": "request-0-body",
+      "begin": 227436.174638622,
+      "scan_begin": 227436.174705105,
+      "scan_end": 227436.862790787,
+      "new_scan_begin": 227436.862791043,
+      "new_scan_end": 227436.863299894,
+      "end": 227436.863299987,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1515520,
+      "new_logs": 20480,
+      "total": 211734528,
+      "logs": 716800
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227436.863401674,
+      "elapsed_s": 10.33676441400894,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 799464
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227436.863442289,
+      "elapsed_s": 10.336805029015522,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 865000
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227436.863985776,
+      "elapsed_s": 10.337348516011843,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227437.650346632,
+      "elapsed_s": 11.123709372011945,
+      "position": "request-0-body",
+      "begin": 227436.863984445,
+      "scan_begin": 227436.86405173,
+      "scan_end": 227437.649791159,
+      "new_scan_begin": 227437.649791418,
+      "new_scan_end": 227437.650339266,
+      "end": 227437.650339321,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1519616,
+      "new_logs": 24576,
+      "total": 211738624,
+      "logs": 720896
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227437.650445025,
+      "elapsed_s": 11.123807765019592,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 865000
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227437.6505017,
+      "elapsed_s": 11.123864440014586,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 930536
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227437.651201386,
+      "elapsed_s": 11.124564126017503,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227438.282625642,
+      "elapsed_s": 11.755988382006763,
+      "position": "request-0-body",
+      "begin": 227437.651200153,
+      "scan_begin": 227437.651244697,
+      "scan_end": 227438.282152744,
+      "new_scan_begin": 227438.282152972,
+      "new_scan_end": 227438.282619472,
+      "end": 227438.282619564,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1519616,
+      "new_logs": 24576,
+      "total": 211738624,
+      "logs": 720896
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227438.282698207,
+      "elapsed_s": 11.756060947023798,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 930536
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227438.282779786,
+      "elapsed_s": 11.756142526020994,
+      "index": 0,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 996072
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227438.283426564,
+      "elapsed_s": 11.756789304025006,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227438.940570016,
+      "elapsed_s": 12.413932756026043,
+      "position": "request-0-body",
+      "begin": 227438.283425245,
+      "scan_begin": 227438.283468395,
+      "scan_end": 227438.939884525,
+      "new_scan_begin": 227438.939884886,
+      "new_scan_end": 227438.94056178,
+      "end": 227438.940561911,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1519616,
+      "new_logs": 24576,
+      "total": 211738624,
+      "logs": 720896
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227438.940656362,
+      "elapsed_s": 12.414019102026941,
+      "index": 0,
+      "phase": "body",
+      "cumulative": 996072
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227438.940696004,
+      "elapsed_s": 12.41405874400516,
+      "index": 0,
+      "phase": "body",
+      "bytes": 52504,
+      "cumulative": 1048576
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227438.941410819,
+      "elapsed_s": 12.41477355902316,
+      "position": "request-0-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227439.639805468,
+      "elapsed_s": 13.11316820801585,
+      "position": "request-0-body",
+      "begin": 227438.941409549,
+      "scan_begin": 227438.941451965,
+      "scan_end": 227439.639421531,
+      "new_scan_begin": 227439.639421815,
+      "new_scan_end": 227439.639799179,
+      "end": 227439.639799247,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1519616,
+      "new_logs": 24576,
+      "total": 211738624,
+      "logs": 720896
+    },
+    {
+      "kind": "tail_begin",
+      "mono": 227439.640099557,
+      "elapsed_s": 13.11346229701303,
+      "index": 0
+    },
+    {
+      "kind": "tail_end",
+      "mono": 227439.660323401,
+      "elapsed_s": 13.133686141023645,
+      "index": 0,
+      "readable": false
+    },
+    {
+      "kind": "request_complete",
+      "mono": 227439.661028944,
+      "elapsed_s": 13.134391684026923,
+      "index": 0,
+      "status": 200,
+      "content_length": 1048576,
+      "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f"
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227439.661072264,
+      "elapsed_s": 13.134435004001716,
+      "position": "request-1-begin"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227440.263857682,
+      "elapsed_s": 13.737220422015525,
+      "position": "request-1-begin",
+      "begin": 227439.661071822,
+      "scan_begin": 227439.661083327,
+      "scan_end": 227440.263446185,
+      "new_scan_begin": 227440.263446464,
+      "new_scan_end": 227440.263850997,
+      "end": 227440.263851072,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1519616,
+      "new_logs": 24576,
+      "total": 211738624,
+      "logs": 720896
+    },
+    {
+      "kind": "send_begin",
+      "mono": 227440.263927172,
+      "elapsed_s": 13.737289912009146,
+      "index": 1,
+      "bytes": 69
+    },
+    {
+      "kind": "send_end",
+      "mono": 227440.263999145,
+      "elapsed_s": 13.737361885025166,
+      "index": 1,
+      "bytes": 69
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227440.264057577,
+      "elapsed_s": 13.737420317018405,
+      "index": 1,
+      "phase": "header",
+      "cumulative": 0
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227440.264949575,
+      "elapsed_s": 13.738312315021176,
+      "index": 1,
+      "phase": "header",
+      "bytes": 108,
+      "cumulative": 108
+    },
+    {
+      "kind": "header_complete",
+      "mono": 227440.265177844,
+      "elapsed_s": 13.738540584017755,
+      "index": 1,
+      "header_bytes": 108,
+      "body_bytes": 0
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227440.265218106,
+      "elapsed_s": 13.738580846023979,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 0
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227440.265236146,
+      "elapsed_s": 13.738598886004183,
+      "index": 1,
+      "phase": "body",
+      "bytes": 13032,
+      "cumulative": 13032
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227440.265247796,
+      "elapsed_s": 13.73861053600558,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227440.851929531,
+      "elapsed_s": 14.325292271008948,
+      "position": "request-1-body",
+      "begin": 227440.265247477,
+      "scan_begin": 227440.265264199,
+      "scan_end": 227440.851475471,
+      "new_scan_begin": 227440.851475779,
+      "new_scan_end": 227440.851920792,
+      "end": 227440.85192091,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1523712,
+      "new_logs": 28672,
+      "total": 211742720,
+      "logs": 724992
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227440.85203457,
+      "elapsed_s": 14.325397310021799,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 13032
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227440.852112478,
+      "elapsed_s": 14.325475218007341,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 78568
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227440.852135431,
+      "elapsed_s": 14.325498171005165,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227441.488266607,
+      "elapsed_s": 14.9616293470026,
+      "position": "request-1-body",
+      "begin": 227440.852134839,
+      "scan_begin": 227440.852145742,
+      "scan_end": 227441.487758521,
+      "new_scan_begin": 227441.487758831,
+      "new_scan_end": 227441.488260003,
+      "end": 227441.488260125,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1523712,
+      "new_logs": 28672,
+      "total": 211742720,
+      "logs": 724992
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227441.48833699,
+      "elapsed_s": 14.961699730018154,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 78568
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227441.488414124,
+      "elapsed_s": 14.961776864016429,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 144104
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227441.488503158,
+      "elapsed_s": 14.961865898018004,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227442.123342979,
+      "elapsed_s": 15.596705719013698,
+      "position": "request-1-body",
+      "begin": 227441.488502775,
+      "scan_begin": 227441.488530782,
+      "scan_end": 227442.122967256,
+      "new_scan_begin": 227442.122967501,
+      "new_scan_end": 227442.123337469,
+      "end": 227442.123337537,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1523712,
+      "new_logs": 28672,
+      "total": 211742720,
+      "logs": 724992
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227442.123408878,
+      "elapsed_s": 15.596771618002094,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 144104
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227442.123457546,
+      "elapsed_s": 15.59682028600946,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 209640
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227442.123568351,
+      "elapsed_s": 15.596931091014994,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227442.724440667,
+      "elapsed_s": 16.197803407005267,
+      "position": "request-1-body",
+      "begin": 227442.12356795,
+      "scan_begin": 227442.123587656,
+      "scan_end": 227442.723859481,
+      "new_scan_begin": 227442.723859741,
+      "new_scan_end": 227442.724433582,
+      "end": 227442.724433702,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1523712,
+      "new_logs": 28672,
+      "total": 211742720,
+      "logs": 724992
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227442.724516055,
+      "elapsed_s": 16.197878795006545,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 209640
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227442.724562542,
+      "elapsed_s": 16.19792528200196,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 275176
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227442.724703457,
+      "elapsed_s": 16.198066197015578,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227443.373548963,
+      "elapsed_s": 16.84691170300357,
+      "position": "request-1-body",
+      "begin": 227442.724703126,
+      "scan_begin": 227442.724729016,
+      "scan_end": 227443.37316257,
+      "new_scan_begin": 227443.373162742,
+      "new_scan_end": 227443.373543535,
+      "end": 227443.373543596,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1523712,
+      "new_logs": 28672,
+      "total": 211742720,
+      "logs": 724992
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227443.373618095,
+      "elapsed_s": 16.846980835020076,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 275176
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227443.3736776,
+      "elapsed_s": 16.847040340013336,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 340712
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227443.373715339,
+      "elapsed_s": 16.847078079008497,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227443.969686022,
+      "elapsed_s": 17.44304876201204,
+      "position": "request-1-body",
+      "begin": 227443.373715041,
+      "scan_begin": 227443.373737375,
+      "scan_end": 227443.969300947,
+      "new_scan_begin": 227443.969301254,
+      "new_scan_end": 227443.969680577,
+      "end": 227443.969680658,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1527808,
+      "new_logs": 32768,
+      "total": 211746816,
+      "logs": 729088
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227443.969749356,
+      "elapsed_s": 17.44311209602165,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 340712
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227443.969798795,
+      "elapsed_s": 17.44316153501859,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 406248
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227443.969857586,
+      "elapsed_s": 17.443220326007577,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227444.569347334,
+      "elapsed_s": 18.04271007401985,
+      "position": "request-1-body",
+      "begin": 227443.969857043,
+      "scan_begin": 227443.969867085,
+      "scan_end": 227444.568810384,
+      "new_scan_begin": 227444.568810633,
+      "new_scan_end": 227444.569339374,
+      "end": 227444.569339467,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1527808,
+      "new_logs": 32768,
+      "total": 211746816,
+      "logs": 729088
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227444.56943557,
+      "elapsed_s": 18.0427983100235,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 406248
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227444.569490336,
+      "elapsed_s": 18.042853076010942,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 471784
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227444.56978112,
+      "elapsed_s": 18.04314386000624,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227445.153659876,
+      "elapsed_s": 18.627022616012255,
+      "position": "request-1-body",
+      "begin": 227444.569780419,
+      "scan_begin": 227444.569818049,
+      "scan_end": 227445.153241441,
+      "new_scan_begin": 227445.153241772,
+      "new_scan_end": 227445.153653835,
+      "end": 227445.153653919,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1527808,
+      "new_logs": 32768,
+      "total": 211746816,
+      "logs": 729088
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227445.153724894,
+      "elapsed_s": 18.6270876339986,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 471784
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227445.153774599,
+      "elapsed_s": 18.62713733900455,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 537320
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227445.153840547,
+      "elapsed_s": 18.627203287003795,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227445.79081218,
+      "elapsed_s": 19.26417492001201,
+      "position": "request-1-body",
+      "begin": 227445.153839783,
+      "scan_begin": 227445.153871316,
+      "scan_end": 227445.790427604,
+      "new_scan_begin": 227445.790427813,
+      "new_scan_end": 227445.79080575,
+      "end": 227445.790805879,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1527808,
+      "new_logs": 32768,
+      "total": 211746816,
+      "logs": 729088
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227445.79087746,
+      "elapsed_s": 19.26424020002014,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 537320
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227445.790928395,
+      "elapsed_s": 19.264291135012172,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 602856
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227445.791001909,
+      "elapsed_s": 19.264364649017807,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227446.441157147,
+      "elapsed_s": 19.9145198870101,
+      "position": "request-1-body",
+      "begin": 227445.791000581,
+      "scan_begin": 227445.791014039,
+      "scan_end": 227446.44067463,
+      "new_scan_begin": 227446.440674861,
+      "new_scan_end": 227446.441145992,
+      "end": 227446.441146136,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1527808,
+      "new_logs": 32768,
+      "total": 211746816,
+      "logs": 729088
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227446.441236692,
+      "elapsed_s": 19.914599431998795,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 602856
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227446.441296158,
+      "elapsed_s": 19.914658898022026,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 668392
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227446.441586891,
+      "elapsed_s": 19.914949630998308,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227447.118496962,
+      "elapsed_s": 20.591859702020884,
+      "position": "request-1-body",
+      "begin": 227446.441586228,
+      "scan_begin": 227446.441617724,
+      "scan_end": 227447.117977974,
+      "new_scan_begin": 227447.117978201,
+      "new_scan_end": 227447.118491101,
+      "end": 227447.118491208,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1527808,
+      "new_logs": 32768,
+      "total": 211746816,
+      "logs": 729088
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227447.118579948,
+      "elapsed_s": 20.59194268801366,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 668392
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227447.118633707,
+      "elapsed_s": 20.59199644700857,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 733928
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227447.118707733,
+      "elapsed_s": 20.59207047300879,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227447.815958175,
+      "elapsed_s": 21.2893209150061,
+      "position": "request-1-body",
+      "begin": 227447.118707274,
+      "scan_begin": 227447.118743837,
+      "scan_end": 227447.815438142,
+      "new_scan_begin": 227447.815438524,
+      "new_scan_end": 227447.815949775,
+      "end": 227447.815949854,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1531904,
+      "new_logs": 36864,
+      "total": 211750912,
+      "logs": 733184
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227447.816134172,
+      "elapsed_s": 21.28949691200978,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 733928
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227447.816221212,
+      "elapsed_s": 21.28958395202062,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 799464
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227447.816399551,
+      "elapsed_s": 21.289762291009538,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227448.474442849,
+      "elapsed_s": 21.947805589006748,
+      "position": "request-1-body",
+      "begin": 227447.816398744,
+      "scan_begin": 227447.816440197,
+      "scan_end": 227448.473829026,
+      "new_scan_begin": 227448.473829283,
+      "new_scan_end": 227448.474433545,
+      "end": 227448.47443365,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1531904,
+      "new_logs": 36864,
+      "total": 211750912,
+      "logs": 733184
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227448.47459273,
+      "elapsed_s": 21.94795547000831,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 799464
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227448.474705184,
+      "elapsed_s": 21.948067924007773,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 865000
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227448.475241492,
+      "elapsed_s": 21.948604232020443,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227449.135505125,
+      "elapsed_s": 22.608867865026696,
+      "position": "request-1-body",
+      "begin": 227448.475235439,
+      "scan_begin": 227448.475299805,
+      "scan_end": 227449.135104799,
+      "new_scan_begin": 227449.135105038,
+      "new_scan_end": 227449.135499602,
+      "end": 227449.135499673,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1531904,
+      "new_logs": 36864,
+      "total": 211750912,
+      "logs": 733184
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227449.135571229,
+      "elapsed_s": 22.608933969022473,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 865000
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227449.135607377,
+      "elapsed_s": 22.608970116998535,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 930536
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227449.135702156,
+      "elapsed_s": 22.60906489600893,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227449.841154115,
+      "elapsed_s": 23.31451685502543,
+      "position": "request-1-body",
+      "begin": 227449.135701555,
+      "scan_begin": 227449.135728825,
+      "scan_end": 227449.840518714,
+      "new_scan_begin": 227449.840519037,
+      "new_scan_end": 227449.841144348,
+      "end": 227449.841144487,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1531904,
+      "new_logs": 36864,
+      "total": 211750912,
+      "logs": 733184
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227449.841266227,
+      "elapsed_s": 23.314628967025783,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 930536
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227449.841312754,
+      "elapsed_s": 23.31467549400986,
+      "index": 1,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 996072
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227449.841480805,
+      "elapsed_s": 23.31484354499844,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227450.531291246,
+      "elapsed_s": 24.004653986019548,
+      "position": "request-1-body",
+      "begin": 227449.841479407,
+      "scan_begin": 227449.841534273,
+      "scan_end": 227450.530777735,
+      "new_scan_begin": 227450.530778061,
+      "new_scan_end": 227450.531284754,
+      "end": 227450.53128483,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1531904,
+      "new_logs": 36864,
+      "total": 211750912,
+      "logs": 733184
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227450.531379329,
+      "elapsed_s": 24.00474206902436,
+      "index": 1,
+      "phase": "body",
+      "cumulative": 996072
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227450.531437981,
+      "elapsed_s": 24.004800721013453,
+      "index": 1,
+      "phase": "body",
+      "bytes": 52504,
+      "cumulative": 1048576
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227450.531831645,
+      "elapsed_s": 24.005194385012146,
+      "position": "request-1-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227451.200627456,
+      "elapsed_s": 24.673990196024533,
+      "position": "request-1-body",
+      "begin": 227450.531830688,
+      "scan_begin": 227450.531879284,
+      "scan_end": 227451.200046785,
+      "new_scan_begin": 227451.20004716,
+      "new_scan_end": 227451.200615417,
+      "end": 227451.200615527,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1536000,
+      "new_logs": 40960,
+      "total": 211755008,
+      "logs": 737280
+    },
+    {
+      "kind": "tail_begin",
+      "mono": 227451.200870043,
+      "elapsed_s": 24.674232782999752,
+      "index": 1
+    },
+    {
+      "kind": "tail_end",
+      "mono": 227451.221211035,
+      "elapsed_s": 24.694573775021126,
+      "index": 1,
+      "readable": false
+    },
+    {
+      "kind": "request_complete",
+      "mono": 227451.221860995,
+      "elapsed_s": 24.69522373500513,
+      "index": 1,
+      "status": 200,
+      "content_length": 1048576,
+      "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f"
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227451.2218969,
+      "elapsed_s": 24.695259640022414,
+      "position": "request-2-begin"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227451.885755005,
+      "elapsed_s": 25.359117745014373,
+      "position": "request-2-begin",
+      "begin": 227451.221896362,
+      "scan_begin": 227451.221907219,
+      "scan_end": 227451.885151793,
+      "new_scan_begin": 227451.885152012,
+      "new_scan_end": 227451.885746518,
+      "end": 227451.88574663,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1536000,
+      "new_logs": 40960,
+      "total": 211755008,
+      "logs": 737280
+    },
+    {
+      "kind": "send_begin",
+      "mono": 227451.885833512,
+      "elapsed_s": 25.359196252014954,
+      "index": 2,
+      "bytes": 69
+    },
+    {
+      "kind": "send_end",
+      "mono": 227451.885880007,
+      "elapsed_s": 25.359242747013923,
+      "index": 2,
+      "bytes": 69
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227451.885891103,
+      "elapsed_s": 25.359253843023907,
+      "index": 2,
+      "phase": "header",
+      "cumulative": 0
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227451.886726648,
+      "elapsed_s": 25.3600893880066,
+      "index": 2,
+      "phase": "header",
+      "bytes": 13140,
+      "cumulative": 13140
+    },
+    {
+      "kind": "header_complete",
+      "mono": 227451.887038074,
+      "elapsed_s": 25.360400814010063,
+      "index": 2,
+      "header_bytes": 108,
+      "body_bytes": 13032
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227451.887079276,
+      "elapsed_s": 25.360442016011802,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 13032
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227451.887101912,
+      "elapsed_s": 25.360464652010705,
+      "index": 2,
+      "phase": "body",
+      "bytes": 11584,
+      "cumulative": 24616
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227451.887115707,
+      "elapsed_s": 25.360478447022615,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227452.598654177,
+      "elapsed_s": 26.072016917023575,
+      "position": "request-2-body",
+      "begin": 227451.88711518,
+      "scan_begin": 227451.887124307,
+      "scan_end": 227452.598143941,
+      "new_scan_begin": 227452.598144201,
+      "new_scan_end": 227452.598642059,
+      "end": 227452.598642133,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1536000,
+      "new_logs": 40960,
+      "total": 211755008,
+      "logs": 737280
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227452.59873413,
+      "elapsed_s": 26.072096870018868,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 24616
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227452.59878842,
+      "elapsed_s": 26.072151160013163,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 90152
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227452.598861594,
+      "elapsed_s": 26.072224333998747,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227453.205538926,
+      "elapsed_s": 26.678901666018646,
+      "position": "request-2-body",
+      "begin": 227452.598861213,
+      "scan_begin": 227452.598887364,
+      "scan_end": 227453.205121768,
+      "new_scan_begin": 227453.205122193,
+      "new_scan_end": 227453.205532753,
+      "end": 227453.205532832,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1536000,
+      "new_logs": 40960,
+      "total": 211755008,
+      "logs": 737280
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227453.205607554,
+      "elapsed_s": 26.678970294015016,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 90152
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227453.205682594,
+      "elapsed_s": 26.679045334021794,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 155688
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227453.205844412,
+      "elapsed_s": 26.679207152017625,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227453.865275453,
+      "elapsed_s": 27.338638193003135,
+      "position": "request-2-body",
+      "begin": 227453.205843802,
+      "scan_begin": 227453.205883404,
+      "scan_end": 227453.864818361,
+      "new_scan_begin": 227453.864818923,
+      "new_scan_end": 227453.865268533,
+      "end": 227453.865268609,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1536000,
+      "new_logs": 40960,
+      "total": 211755008,
+      "logs": 737280
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227453.865375793,
+      "elapsed_s": 27.338738532998832,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 155688
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227453.865462549,
+      "elapsed_s": 27.338825289014494,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 221224
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227453.865660253,
+      "elapsed_s": 27.33902299302281,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227454.505181202,
+      "elapsed_s": 27.9785439420084,
+      "position": "request-2-body",
+      "begin": 227453.865659655,
+      "scan_begin": 227453.865695698,
+      "scan_end": 227454.504792323,
+      "new_scan_begin": 227454.504792643,
+      "new_scan_end": 227454.505175045,
+      "end": 227454.505175147,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1540096,
+      "new_logs": 45056,
+      "total": 211759104,
+      "logs": 741376
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227454.505247093,
+      "elapsed_s": 27.978609833022347,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 221224
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227454.505296203,
+      "elapsed_s": 27.978658943000482,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 286760
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227454.505508919,
+      "elapsed_s": 27.97887165902648,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227455.087367127,
+      "elapsed_s": 28.56072986702202,
+      "position": "request-2-body",
+      "begin": 227454.50550825,
+      "scan_begin": 227454.505547792,
+      "scan_end": 227455.086980143,
+      "new_scan_begin": 227455.086980296,
+      "new_scan_end": 227455.08736132,
+      "end": 227455.087361404,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1540096,
+      "new_logs": 45056,
+      "total": 211759104,
+      "logs": 741376
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227455.08743728,
+      "elapsed_s": 28.560800020000897,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 286760
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227455.087509425,
+      "elapsed_s": 28.560872165020555,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 352296
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227455.087550915,
+      "elapsed_s": 28.560913655004697,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227455.703606367,
+      "elapsed_s": 29.176969107007608,
+      "position": "request-2-body",
+      "begin": 227455.087550563,
+      "scan_begin": 227455.087573171,
+      "scan_end": 227455.703151092,
+      "new_scan_begin": 227455.703151255,
+      "new_scan_end": 227455.703599522,
+      "end": 227455.703599614,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1540096,
+      "new_logs": 45056,
+      "total": 211759104,
+      "logs": 741376
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227455.703683094,
+      "elapsed_s": 29.177045834017918,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 352296
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227455.703787881,
+      "elapsed_s": 29.1771506210207,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 417832
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227455.703880401,
+      "elapsed_s": 29.17724314102088,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227456.295959742,
+      "elapsed_s": 29.769322482025018,
+      "position": "request-2-body",
+      "begin": 227455.703879875,
+      "scan_begin": 227455.703895374,
+      "scan_end": 227456.295578258,
+      "new_scan_begin": 227456.295578667,
+      "new_scan_end": 227456.2959537,
+      "end": 227456.295953754,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1540096,
+      "new_logs": 45056,
+      "total": 211759104,
+      "logs": 741376
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227456.296041418,
+      "elapsed_s": 29.76940415802528,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 417832
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227456.296094498,
+      "elapsed_s": 29.769457237998722,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 483368
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227456.296394722,
+      "elapsed_s": 29.769757462025154,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227456.869036571,
+      "elapsed_s": 30.342399311019108,
+      "position": "request-2-body",
+      "begin": 227456.296393779,
+      "scan_begin": 227456.296439866,
+      "scan_end": 227456.868642667,
+      "new_scan_begin": 227456.868643022,
+      "new_scan_end": 227456.869030055,
+      "end": 227456.8690301,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1540096,
+      "new_logs": 45056,
+      "total": 211759104,
+      "logs": 741376
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227456.869106213,
+      "elapsed_s": 30.342468953022035,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 483368
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227456.869163162,
+      "elapsed_s": 30.34252590200049,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 548904
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227456.869219457,
+      "elapsed_s": 30.342582197015872,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227457.456218614,
+      "elapsed_s": 30.929581354022957,
+      "position": "request-2-body",
+      "begin": 227456.869218957,
+      "scan_begin": 227456.869228908,
+      "scan_end": 227457.455757859,
+      "new_scan_begin": 227457.455758166,
+      "new_scan_end": 227457.456211252,
+      "end": 227457.456211343,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1544192,
+      "new_logs": 49152,
+      "total": 211763200,
+      "logs": 745472
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227457.456310986,
+      "elapsed_s": 30.929673726001056,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 548904
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227457.456369822,
+      "elapsed_s": 30.92973256201367,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 614440
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227457.456472938,
+      "elapsed_s": 30.929835678020027,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227458.094357208,
+      "elapsed_s": 31.567719948012382,
+      "position": "request-2-body",
+      "begin": 227457.456472231,
+      "scan_begin": 227457.456513941,
+      "scan_end": 227458.093829476,
+      "new_scan_begin": 227458.093829836,
+      "new_scan_end": 227458.094349909,
+      "end": 227458.094350011,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1544192,
+      "new_logs": 49152,
+      "total": 211763200,
+      "logs": 745472
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227458.094432062,
+      "elapsed_s": 31.56779480201658,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 614440
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227458.094482926,
+      "elapsed_s": 31.56784566602437,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 679976
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227458.094916299,
+      "elapsed_s": 31.5682790389983,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227458.733477802,
+      "elapsed_s": 32.206840541999554,
+      "position": "request-2-body",
+      "begin": 227458.094915174,
+      "scan_begin": 227458.09495735,
+      "scan_end": 227458.732892068,
+      "new_scan_begin": 227458.732892496,
+      "new_scan_end": 227458.733469757,
+      "end": 227458.73346987,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1544192,
+      "new_logs": 49152,
+      "total": 211763200,
+      "logs": 745472
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227458.733588876,
+      "elapsed_s": 32.20695161601179,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 679976
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227458.733669873,
+      "elapsed_s": 32.20703261301969,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 745512
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227458.733834801,
+      "elapsed_s": 32.20719754102174,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227459.337217126,
+      "elapsed_s": 32.810579866025364,
+      "position": "request-2-body",
+      "begin": 227458.733833995,
+      "scan_begin": 227458.733884618,
+      "scan_end": 227459.336781134,
+      "new_scan_begin": 227459.336781372,
+      "new_scan_end": 227459.337211343,
+      "end": 227459.337211433,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1544192,
+      "new_logs": 49152,
+      "total": 211763200,
+      "logs": 745472
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227459.337290575,
+      "elapsed_s": 32.81065331501304,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 745512
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227459.337330044,
+      "elapsed_s": 32.8106927840272,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 811048
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227459.337413064,
+      "elapsed_s": 32.81077580401325,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227459.94149433,
+      "elapsed_s": 33.414857070019934,
+      "position": "request-2-body",
+      "begin": 227459.337412327,
+      "scan_begin": 227459.337454991,
+      "scan_end": 227459.941065741,
+      "new_scan_begin": 227459.941065992,
+      "new_scan_end": 227459.941487879,
+      "end": 227459.941487974,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1544192,
+      "new_logs": 49152,
+      "total": 211763200,
+      "logs": 745472
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227459.941791603,
+      "elapsed_s": 33.41515434300527,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 811048
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227459.94193144,
+      "elapsed_s": 33.41529418001301,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 876584
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227459.942383214,
+      "elapsed_s": 33.41574595400016,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227460.581637284,
+      "elapsed_s": 34.055000024003675,
+      "position": "request-2-body",
+      "begin": 227459.9423823,
+      "scan_begin": 227459.942525861,
+      "scan_end": 227460.581114635,
+      "new_scan_begin": 227460.581114885,
+      "new_scan_end": 227460.581627288,
+      "end": 227460.581627411,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1544192,
+      "new_logs": 49152,
+      "total": 211763200,
+      "logs": 745472
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227460.58173586,
+      "elapsed_s": 34.05509860001621,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 876584
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227460.581785841,
+      "elapsed_s": 34.05514858101378,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 942120
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227460.581896575,
+      "elapsed_s": 34.05525931500597,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227461.215141718,
+      "elapsed_s": 34.68850445802673,
+      "position": "request-2-body",
+      "begin": 227460.58189565,
+      "scan_begin": 227460.581933696,
+      "scan_end": 227461.214556141,
+      "new_scan_begin": 227461.214556464,
+      "new_scan_end": 227461.215133347,
+      "end": 227461.215133492,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1548288,
+      "new_logs": 53248,
+      "total": 211767296,
+      "logs": 749568
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227461.215243441,
+      "elapsed_s": 34.688606181007344,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 942120
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227461.215297991,
+      "elapsed_s": 34.68866073101526,
+      "index": 2,
+      "phase": "body",
+      "bytes": 65536,
+      "cumulative": 1007656
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227461.215425529,
+      "elapsed_s": 34.68878826900618,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227461.891438897,
+      "elapsed_s": 35.36480163701344,
+      "position": "request-2-body",
+      "begin": 227461.21542457,
+      "scan_begin": 227461.21546054,
+      "scan_end": 227461.890952983,
+      "new_scan_begin": 227461.890953315,
+      "new_scan_end": 227461.891431853,
+      "end": 227461.891431948,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1548288,
+      "new_logs": 53248,
+      "total": 211767296,
+      "logs": 749568
+    },
+    {
+      "kind": "recv_begin",
+      "mono": 227461.891512826,
+      "elapsed_s": 35.364875566010596,
+      "index": 2,
+      "phase": "body",
+      "cumulative": 1007656
+    },
+    {
+      "kind": "recv_end",
+      "mono": 227461.891547178,
+      "elapsed_s": 35.364909918018384,
+      "index": 2,
+      "phase": "body",
+      "bytes": 40920,
+      "cumulative": 1048576
+    },
+    {
+      "kind": "guard_begin",
+      "mono": 227461.891894613,
+      "elapsed_s": 35.36525735302712,
+      "position": "request-2-body"
+    },
+    {
+      "kind": "guard_end",
+      "mono": 227462.501884926,
+      "elapsed_s": 35.97524766600691,
+      "position": "request-2-body",
+      "begin": 227461.891893706,
+      "scan_begin": 227461.891932956,
+      "scan_end": 227462.501287448,
+      "new_scan_begin": 227462.501287709,
+      "new_scan_end": 227462.501876928,
+      "end": 227462.501877075,
+      "old_total": 210219008,
+      "old_logs": 696320,
+      "new_total": 1548288,
+      "new_logs": 53248,
+      "total": 211767296,
+      "logs": 749568
+    },
+    {
+      "kind": "tail_begin",
+      "mono": 227462.502125095,
+      "elapsed_s": 35.97548783500679,
+      "index": 2
+    },
+    {
+      "kind": "tail_end",
+      "mono": 227462.522303643,
+      "elapsed_s": 35.99566638300894,
+      "index": 2,
+      "readable": false
+    },
+    {
+      "kind": "request_complete",
+      "mono": 227462.523129192,
+      "elapsed_s": 35.996491932019126,
+      "index": 2,
+      "status": 200,
+      "content_length": 1048576,
+      "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f"
+    },
+    {
+      "kind": "audit_complete",
+      "mono": 227462.523179793,
+      "elapsed_s": 35.9965425330156,
+      "count": 3
+    },
+    {
+      "kind": "socket_closed",
+      "mono": 227462.523222964,
+      "elapsed_s": 35.996585704007884
+    },
+    {
+      "kind": "server_reaped",
+      "mono": 227462.52458075,
+      "elapsed_s": 35.99794349001604,
+      "exit": 0,
+      "forced": false
+    },
+    {
+      "kind": "cleanup_complete",
+      "mono": 227462.525399675,
+      "elapsed_s": 35.99876241502352,
+      "owned_left": 0,
+      "payload_absent": true,
+      "metrics": {
+        "requests_started_total": 3,
+        "responses_completed_total": 3,
+        "requests_aborted_total": 0,
+        "responses_status_unknown_total": 0,
+        "responses_status_200_total": 3,
+        "responses_status_400_total": 0,
+        "responses_status_403_total": 0,
+        "responses_status_404_total": 0,
+        "responses_status_405_total": 0,
+        "responses_status_500_total": 0,
+        "errors_total": 0,
+        "parse_errors_total": 0,
+        "provider_errors_total": 0,
+        "access_log_failures_total": 0,
+        "latency_count": 3,
+        "latency_sum_us": 988587,
+        "latency_max_us": 850645,
+        "connections_total": 1,
+        "connections_active": 0,
+        "logger_submitted": 5,
+        "logger_accepted": 5,
+        "logger_dropped_full": 0,
+        "logger_rejected_stopped": 0,
+        "logger_truncated": 0,
+        "logger_written": 5,
+        "logger_failed": 0,
+        "logger_pending": 0
+      }
+    },
+    {
+      "kind": "settled",
+      "mono": 227462.906815719,
+      "elapsed_s": 36.3788723910111,
+      "status": "not_reproduced",
+      "RAC_D01": true
+    }
+  ],
+  "evidence": {
+    ".cache/v1.0-s3/reviewer/diagnostic-001/manifest/state.json": "f2587ff0df9bd21c31692f9e0680a482dce8d335c026b3e0ce8abe8e1f79b48a",
+    ".cache/v1.0-s3/reviewer/diagnostic-001/manifest/prepared.json": "7a654c41835364e4c1ab8cb35bd7a1b3d3ae75ce226c32dd70251162484ff4e5",
+    ".cache/v1.0-s3/reviewer/diagnostic-001/manifest/old-before.json": "c4e7fb6d820291b1f559d1cfb1128e9e3889d5c03de4265ed0d4d5a26c2bb8ec",
+    ".cache/v1.0-s3/reviewer/diagnostic-001/manifest/old-after.json": "c4e7fb6d820291b1f559d1cfb1128e9e3889d5c03de4265ed0d4d5a26c2bb8ec",
+    ".cache/v1.0-s3/reviewer/diagnostic-001/manifest/exact-scan.txt": "442000f02633744ebfb311f6c33a2bc8539c19676be7b4d247f1d107bacaa2df",
+    ".cache/v1.0-s3/reviewer/diagnostic-001/tmp/diagnose.py": "92c58c0bed632c53a7e7740540c7abf1266f0b86843a21dda6721d9e879d25c2",
+    ".cache/v1.0-s3/reviewer/diagnostic-001/logs/trace.jsonl": "b19986774ebad1db2b59e8f6ddfbb04c70f32dc8ba0db407377fe35ad986295a",
+    ".cache/v1.0-s3/reviewer/diagnostic-001/logs/server.stdout": "98e2ba834d2658599c7bad164c8d76c3cd60bf1df656cd93005eeb3bfdbe74d5",
+    ".cache/v1.0-s3/reviewer/diagnostic-001/logs/server.stderr": "9c2789b1cae29fe62b241b029331f43ee3491287e4ed735d1ba095837bc45bea"
+  },
+  "publication_settlement": {
+    "dynamic_state_preserved": true,
+    "final_total_bytes": 211197952,
+    "final_capture_bytes": 753664,
+    "max_total_bytes": 211767296,
+    "max_capture_bytes": 753664,
+    "role_elapsed_at_settlement_s": 240.98053478400107,
+    "role_clock_continues": true,
+    "role_expiry_utc": "2026-10-09T05:20:50.929431+00:00"
+  }
+}

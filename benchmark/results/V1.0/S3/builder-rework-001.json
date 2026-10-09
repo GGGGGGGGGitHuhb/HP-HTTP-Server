@@ -1,0 +1,4078 @@
+{
+  "schema": 1,
+  "role": "Builder",
+  "batch": "rework-001",
+  "result": "stopped_after_performance_pre_audit_failure",
+  "candidate": {
+    "base": "20bd03142b4c828a7e939c30b501812da2bd5440",
+    "base_tree": "e2ac5d0eea28896a1a338549452c96cba8e594a0",
+    "base_archive_sha256": "886b66b3c4b9db58e2da372c960d7a2b0a8911aa62c6eb82e04f5fd6b135f78d",
+    "patch_sha256": "6ad80910acf90acc1c76ad3fefb4034864d521ae282f18500c30731acfd52b83",
+    "original_file_count": 581,
+    "candidate_files_manifest_sha256": "85e719faab83ab7a475f34c0b0e06d6bb401b53df08531d9cfd141b684e6614c"
+  },
+  "ctest": [
+    {
+      "build": "debug",
+      "executed": 14,
+      "passed": 14,
+      "failed": 0,
+      "tests": [
+        {
+          "number": 1,
+          "name": "cli_tests",
+          "outcome": "Passed    0.11 sec"
+        },
+        {
+          "number": 2,
+          "name": "http_server_integration_tests",
+          "outcome": "Passed    1.69 sec"
+        },
+        {
+          "number": 3,
+          "name": "http_keep_alive_integration_tests",
+          "outcome": "Passed    1.65 sec"
+        },
+        {
+          "number": 4,
+          "name": "server_integration_tests",
+          "outcome": "Passed    1.80 sec"
+        },
+        {
+          "number": 5,
+          "name": "benchmark_runner_tests",
+          "outcome": "Passed    2.70 sec"
+        },
+        {
+          "number": 6,
+          "name": "async_logger_batch_tests",
+          "outcome": "Passed    0.01 sec"
+        },
+        {
+          "number": 7,
+          "name": "r6_callbacks_tests",
+          "outcome": "Passed    0.01 sec"
+        },
+        {
+          "number": 8,
+          "name": "tcp_nodelay_tests",
+          "outcome": "Passed    0.05 sec"
+        },
+        {
+          "number": 9,
+          "name": "tcp_nodelay_http_tests",
+          "outcome": "Passed    0.62 sec"
+        },
+        {
+          "number": 10,
+          "name": "server_metrics_tests",
+          "outcome": "Passed    0.02 sec"
+        },
+        {
+          "number": 11,
+          "name": "http_observability_tests",
+          "outcome": "Passed    0.07 sec"
+        },
+        {
+          "number": 12,
+          "name": "observability_http_tests",
+          "outcome": "Passed    1.01 sec"
+        },
+        {
+          "number": 13,
+          "name": "matrix_benchmark_tests",
+          "outcome": "Passed    0.34 sec"
+        },
+        {
+          "number": 14,
+          "name": "performance_analysis_tests",
+          "outcome": "Passed    0.10 sec"
+        }
+      ],
+      "ctest_stdout_sha256": "13696fdc1c1ec5775c7b91a0b036de6712bd7cc6838a1800a3839fb5afd0132b"
+    },
+    {
+      "build": "release",
+      "executed": 14,
+      "passed": 14,
+      "failed": 0,
+      "tests": [
+        {
+          "number": 1,
+          "name": "cli_tests",
+          "outcome": "Passed    0.10 sec"
+        },
+        {
+          "number": 2,
+          "name": "http_server_integration_tests",
+          "outcome": "Passed    1.42 sec"
+        },
+        {
+          "number": 3,
+          "name": "http_keep_alive_integration_tests",
+          "outcome": "Passed    1.62 sec"
+        },
+        {
+          "number": 4,
+          "name": "server_integration_tests",
+          "outcome": "Passed    2.00 sec"
+        },
+        {
+          "number": 5,
+          "name": "benchmark_runner_tests",
+          "outcome": "Passed    2.57 sec"
+        },
+        {
+          "number": 6,
+          "name": "async_logger_batch_tests",
+          "outcome": "Passed    0.01 sec"
+        },
+        {
+          "number": 7,
+          "name": "r6_callbacks_tests",
+          "outcome": "Passed    0.01 sec"
+        },
+        {
+          "number": 8,
+          "name": "tcp_nodelay_tests",
+          "outcome": "Passed    0.04 sec"
+        },
+        {
+          "number": 9,
+          "name": "tcp_nodelay_http_tests",
+          "outcome": "Passed    0.58 sec"
+        },
+        {
+          "number": 10,
+          "name": "server_metrics_tests",
+          "outcome": "Passed    0.01 sec"
+        },
+        {
+          "number": 11,
+          "name": "http_observability_tests",
+          "outcome": "Passed    0.06 sec"
+        },
+        {
+          "number": 12,
+          "name": "observability_http_tests",
+          "outcome": "Passed    0.94 sec"
+        },
+        {
+          "number": 13,
+          "name": "matrix_benchmark_tests",
+          "outcome": "Passed    0.26 sec"
+        },
+        {
+          "number": 14,
+          "name": "performance_analysis_tests",
+          "outcome": "Passed    0.08 sec"
+        }
+      ],
+      "ctest_stdout_sha256": "99db9b93e5e87296e166bbc8ca484cad9bb1e2654c87b367cf51771eeb0fba16"
+    },
+    {
+      "build": "asan",
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "number": 6,
+          "name": "async_logger_batch_tests",
+          "outcome": "Passed    0.03 sec"
+        },
+        {
+          "number": 7,
+          "name": "r6_callbacks_tests",
+          "outcome": "Passed    0.04 sec"
+        },
+        {
+          "number": 8,
+          "name": "tcp_nodelay_tests",
+          "outcome": "Passed    0.06 sec"
+        },
+        {
+          "number": 10,
+          "name": "server_metrics_tests",
+          "outcome": "Passed    0.02 sec"
+        },
+        {
+          "number": 11,
+          "name": "http_observability_tests",
+          "outcome": "Passed    0.09 sec"
+        }
+      ],
+      "ctest_stdout_sha256": "00c63184805aa338bd9739cfb077b0d000dbb5de595ef3ca45fdc827cc253983"
+    }
+  ],
+  "builds": [
+    {
+      "candidate": "20bd03142b4c828a7e939c30b501812da2bd5440",
+      "patch_sha256": "6ad80910acf90acc1c76ad3fefb4034864d521ae282f18500c30731acfd52b83",
+      "build": "debug",
+      "binary": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server",
+      "binary_sha256": "3fb57fb08fcd8fd895e8053fcd716519277cd783eb6a295bc21200080387adc0",
+      "libraries": {
+        "/lib/x86_64-linux-gnu/libstdc++.so.6": "a68762c86d371e6041f03f03a33a78fa235809ae7d81c90185940c93c3535aed",
+        "/lib/x86_64-linux-gnu/libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+        "/lib/x86_64-linux-gnu/libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+        "/lib/x86_64-linux-gnu/libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+        "/lib64/ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+      },
+      "tests": [
+        {
+          "backtrace": 1,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/cli_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+          ],
+          "name": "cli_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 3,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/http_server_integration_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+          ],
+          "name": "http_server_integration_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 5,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/http_keep_alive_integration_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+          ],
+          "name": "http_keep_alive_integration_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 7,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/http_server_integration_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+          ],
+          "name": "server_integration_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 9,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/benchmark_runner_tests.py"
+          ],
+          "name": "benchmark_runner_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 11,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/async_logger_batch_tests"
+          ],
+          "name": "async_logger_batch_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 13,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/r6_callbacks_tests"
+          ],
+          "name": "r6_callbacks_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 15,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/tcp_nodelay_tests"
+          ],
+          "name": "tcp_nodelay_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 17,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/TcpNoDelayHttp_test.py",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+          ],
+          "name": "tcp_nodelay_http_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 19,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/server_metrics_tests"
+          ],
+          "name": "server_metrics_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 21,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/http_observability_tests"
+          ],
+          "name": "http_observability_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 23,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/ObservabilityHttp_test.py",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+          ],
+          "name": "observability_http_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 25,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/MatrixBenchmark_test.py"
+          ],
+          "name": "matrix_benchmark_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_MATRIX_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 120.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        },
+        {
+          "backtrace": 27,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/PerformanceAnalysis_test.py"
+          ],
+          "name": "performance_analysis_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_ANALYSIS_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build"
+            }
+          ]
+        }
+      ],
+      "compile_commands_sha256": "08e679121f892c8d01d5956c89102358524a1a38733d727cf92a3907fa77c9da",
+      "cmake_cache_sha256": "f01868852e562a651ca923a84d16f41142dc034c7fd6eb1b5bac6c7633b0161a"
+    },
+    {
+      "candidate": "20bd03142b4c828a7e939c30b501812da2bd5440",
+      "patch_sha256": "6ad80910acf90acc1c76ad3fefb4034864d521ae282f18500c30731acfd52b83",
+      "build": "release",
+      "binary": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+      "binary_sha256": "9f95b5f3b31062737032e0ce130dfd725a4e9f923ec96524b3006ccbb2ac7530",
+      "libraries": {
+        "/lib/x86_64-linux-gnu/libstdc++.so.6": "a68762c86d371e6041f03f03a33a78fa235809ae7d81c90185940c93c3535aed",
+        "/lib/x86_64-linux-gnu/libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+        "/lib/x86_64-linux-gnu/libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+        "/lib/x86_64-linux-gnu/libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+        "/lib64/ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+      },
+      "tests": [
+        {
+          "backtrace": 1,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/cli_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server"
+          ],
+          "name": "cli_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 3,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/http_server_integration_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server"
+          ],
+          "name": "http_server_integration_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 5,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/http_keep_alive_integration_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server"
+          ],
+          "name": "http_keep_alive_integration_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 7,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/http_server_integration_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server"
+          ],
+          "name": "server_integration_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 9,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/benchmark_runner_tests.py"
+          ],
+          "name": "benchmark_runner_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 11,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/async_logger_batch_tests"
+          ],
+          "name": "async_logger_batch_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 13,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/r6_callbacks_tests"
+          ],
+          "name": "r6_callbacks_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 15,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/tcp_nodelay_tests"
+          ],
+          "name": "tcp_nodelay_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 17,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/TcpNoDelayHttp_test.py",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server"
+          ],
+          "name": "tcp_nodelay_http_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 19,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/server_metrics_tests"
+          ],
+          "name": "server_metrics_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 21,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/http_observability_tests"
+          ],
+          "name": "http_observability_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 23,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/ObservabilityHttp_test.py",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server"
+          ],
+          "name": "observability_http_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 25,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/MatrixBenchmark_test.py"
+          ],
+          "name": "matrix_benchmark_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_MATRIX_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 120.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        },
+        {
+          "backtrace": 27,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/PerformanceAnalysis_test.py"
+          ],
+          "name": "performance_analysis_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_ANALYSIS_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release"
+            }
+          ]
+        }
+      ],
+      "compile_commands_sha256": "0c19581bfe0ef5a43232cf57e70d618a353e01ea4c4501ffd6b652e3e34098d2",
+      "cmake_cache_sha256": "94872f1678343c77ee264caed60f759f58bd2f6ce631a90217bae95a948ca022"
+    },
+    {
+      "candidate": "20bd03142b4c828a7e939c30b501812da2bd5440",
+      "patch_sha256": "6ad80910acf90acc1c76ad3fefb4034864d521ae282f18500c30731acfd52b83",
+      "build": "asan",
+      "binary": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/hp_http_server",
+      "binary_sha256": "b817a5f437fd14d581f3dd06800a8d4a0588a1d9941b5e277dfd4324d5220adf",
+      "libraries": {
+        "/lib/x86_64-linux-gnu/libasan.so.8": "936ffe52a061956e109a810d671bd339f99ce5175e1b97fae49c2af8540ea0a8",
+        "/lib/x86_64-linux-gnu/libstdc++.so.6": "a68762c86d371e6041f03f03a33a78fa235809ae7d81c90185940c93c3535aed",
+        "/lib/x86_64-linux-gnu/libm.so.6": "f06f2ce1f1833df5f41cf13b6447ff07bea993ad9b27297d3428c2f70ab3f0e7",
+        "/lib/x86_64-linux-gnu/libubsan.so.1": "d1931e866644901a63a667b126e92f2f3e23d5fd78732c1f0fdba48d0ba5d606",
+        "/lib/x86_64-linux-gnu/libgcc_s.so.1": "02f3f192bf5f79b811f1e34a650fea443d407408703448906585232383957f60",
+        "/lib/x86_64-linux-gnu/libc.so.6": "511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0",
+        "/lib64/ld-linux-x86-64.so.2": "6222a16be7f2d458d6870efe6e715fc0c8d45766fb79cf7dcc3125538d703e28"
+      },
+      "tests": [
+        {
+          "backtrace": 1,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/cli_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/hp_http_server"
+          ],
+          "name": "cli_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 3,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/http_server_integration_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/hp_http_server"
+          ],
+          "name": "http_server_integration_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 5,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/http_keep_alive_integration_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/hp_http_server"
+          ],
+          "name": "http_keep_alive_integration_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 7,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/http_server_integration_tests",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/hp_http_server"
+          ],
+          "name": "server_integration_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/test-tmp"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 9,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/benchmark_runner_tests.py"
+          ],
+          "name": "benchmark_runner_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 11,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/async_logger_batch_tests"
+          ],
+          "name": "async_logger_batch_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 13,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/r6_callbacks_tests"
+          ],
+          "name": "r6_callbacks_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 15,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/tcp_nodelay_tests"
+          ],
+          "name": "tcp_nodelay_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 17,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/TcpNoDelayHttp_test.py",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/hp_http_server"
+          ],
+          "name": "tcp_nodelay_http_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 19,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/server_metrics_tests"
+          ],
+          "name": "server_metrics_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 21,
+          "command": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/http_observability_tests"
+          ],
+          "name": "http_observability_tests",
+          "properties": [
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 23,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/ObservabilityHttp_test.py",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/hp_http_server"
+          ],
+          "name": "observability_http_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_S3_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 60.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 25,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/MatrixBenchmark_test.py"
+          ],
+          "name": "matrix_benchmark_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_MATRIX_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 120.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        },
+        {
+          "backtrace": 27,
+          "command": [
+            "/usr/bin/python3",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/PerformanceAnalysis_test.py"
+          ],
+          "name": "performance_analysis_tests",
+          "properties": [
+            {
+              "name": "ENVIRONMENT",
+              "value": [
+                "HP_ANALYSIS_TEST_TMP_ROOT=<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/test-tmp",
+                "PYTHONDONTWRITEBYTECODE=1"
+              ]
+            },
+            {
+              "name": "TIMEOUT",
+              "value": 30.0
+            },
+            {
+              "name": "WORKING_DIRECTORY",
+              "value": "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan"
+            }
+          ]
+        }
+      ],
+      "compile_commands_sha256": "72bcab8f8e4d7b139ea60a6155bfd720967cc70665c7606d9c47a330c001f5d1",
+      "cmake_cache_sha256": "a80df7f3c02d52f0f9bbc822e5f4ba48d790f898c8de9cab88495e3df4a5eb2b"
+    }
+  ],
+  "http_smoke": {
+    "debug_threads_0": "passed",
+    "debug_threads_2": "passed",
+    "release_threads_0": "passed",
+    "release_threads_2": "passed"
+  },
+  "cli_readme": {
+    "help": "passed",
+    "required_parameters": "passed",
+    "port": 8080,
+    "index_200": "passed",
+    "missing_404": "passed",
+    "post_405": "passed",
+    "sigint_normal_exit": "passed"
+  },
+  "checker_probe": {
+    "release_flags": [
+      "-O3",
+      "-DNDEBUG"
+    ],
+    "true_returncode": 0,
+    "true_side_effect_evaluations": 1,
+    "true_allocations": 0,
+    "true_stdout_bytes": 0,
+    "true_stderr_bytes": 0,
+    "false_returncode": -6,
+    "false_stderr": "Test condition failed at <repository>/.cache/v1.0-s3/builder/rework-001/tmp/checker-probe.cpp:19\n",
+    "caller_source_sha256": "4893c4845cb6349d1b3acb5b8666ea6f19ca1c8beec01ee38e15f1f297ffe76c",
+    "core_files_disabled_for_owned_processes": true
+  },
+  "governance": {
+    "passed": [
+      "requests",
+      "duration_us",
+      "bytes",
+      "errors",
+      "latency_us",
+      "corrected_population",
+      "error",
+      "count-zero",
+      "ordering",
+      "duplicate",
+      "missing",
+      "nonzero",
+      "output-stop",
+      "deadline-stop",
+      "canonical-same-name-non-target",
+      "generated-initial-state",
+      "fixture-classification",
+      "failure-finally-reap"
+    ],
+    "owned_left": 0
+  },
+  "performance": {
+    "admission_smoke_valid": 1,
+    "formal_valid": 3,
+    "formal_invalid": 1,
+    "formal_not_run": 5,
+    "first_failure": {
+      "sample": "r2-M6",
+      "formal_index": 4,
+      "stage": "pre_audit",
+      "message": "header EOF"
+    },
+    "samples": [
+      {
+        "name": "smoke-M2",
+        "config": {
+          "bytes": 1024,
+          "workers": 2,
+          "threads": 2,
+          "connections": 32
+        },
+        "status": "valid",
+        "port": 34981,
+        "server_identity": {
+          "pid": 10816,
+          "starttime": "22566478",
+          "listener_owned": true
+        },
+        "pre_audit": [
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 0
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 1
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 2
+          }
+        ],
+        "warmup": {
+          "schema": 2,
+          "duration_us": 1100270,
+          "requests": 43861,
+          "bytes": 49519174,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 792.269698,
+            "p50": 740.0,
+            "p95": 1381.0,
+            "p99": 1889.0,
+            "max": 3193.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 802.732268,
+          "qps": 39863.8516000618,
+          "received_mib_s": 42.92143238791583
+        },
+        "measurement": {
+          "schema": 2,
+          "duration_us": 1000689,
+          "requests": 38250,
+          "bytes": 43184250,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 903.288118,
+            "p50": 736.0,
+            "p95": 1636.0,
+            "p99": 4601.0,
+            "max": 14035.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 837.177725,
+          "qps": 38223.66389557595,
+          "received_mib_s": 41.155354059319734
+        },
+        "post_audit": [
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 0
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 1
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 2
+          }
+        ],
+        "cleanup": {
+          "argv": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+            "--port",
+            "0",
+            "--root",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/smoke-M2",
+            "--threads",
+            "2",
+            "--idle-timeout-ms",
+            "30000",
+            "--keep-alive-timeout-ms",
+            "15000",
+            "--shutdown-timeout-ms",
+            "5000",
+            "--metrics-on-exit"
+          ],
+          "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+          "env": {
+            "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "NO_PROXY": "127.0.0.1,localhost",
+            "no_proxy": "127.0.0.1,localhost"
+          },
+          "pid": 10816,
+          "starttime": "22566478",
+          "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/smoke-M2-server.stdout",
+          "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/smoke-M2-server.stderr",
+          "children": {},
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "descendant_survivors": 0
+        },
+        "metrics": {
+          "requests_started_total": 82174,
+          "responses_completed_total": 82174,
+          "requests_aborted_total": 0,
+          "responses_status_unknown_total": 0,
+          "responses_status_200_total": 82174,
+          "responses_status_400_total": 0,
+          "responses_status_403_total": 0,
+          "responses_status_404_total": 0,
+          "responses_status_405_total": 0,
+          "responses_status_500_total": 0,
+          "errors_total": 0,
+          "parse_errors_total": 0,
+          "provider_errors_total": 0,
+          "access_log_failures_total": 0,
+          "latency_count": 82174,
+          "latency_sum_us": 1872403,
+          "latency_max_us": 1051,
+          "connections_total": 68,
+          "connections_active": 0,
+          "logger_submitted": 60,
+          "logger_accepted": 60,
+          "logger_dropped_full": 0,
+          "logger_rejected_stopped": 0,
+          "logger_truncated": 0,
+          "logger_written": 60,
+          "logger_failed": 0,
+          "logger_pending": 0
+        },
+        "warmup_raw_summary": "MATRIX_SUMMARY {\"schema\":2,\"duration_us\":1100270,\"requests\":43861,\"bytes\":49519174,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":792.269698,\"p50\":740.000000,\"p95\":1381.000000,\"p99\":1889.000000,\"max\":3193.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":802.732268}",
+        "warmup_stdout_sha256": "a626e8740c004b9b777910f7c470a43f779628f80854e7d7427d19ddf228c8e6",
+        "measurement_raw_summary": "MATRIX_SUMMARY {\"schema\":2,\"duration_us\":1000689,\"requests\":38250,\"bytes\":43184250,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":903.288118,\"p50\":736.000000,\"p95\":1636.000000,\"p99\":4601.000000,\"max\":14035.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":837.177725}",
+        "measurement_stdout_sha256": "7b850eadf33930b8bc5f03571ecd98663187cb3bc68f832f23b63e914ef37aa6"
+      },
+      {
+        "name": "r1-M2",
+        "config": {
+          "bytes": 1024,
+          "workers": 2,
+          "threads": 2,
+          "connections": 32
+        },
+        "status": "valid",
+        "port": 35493,
+        "server_identity": {
+          "pid": 10840,
+          "starttime": "22567246",
+          "listener_owned": true
+        },
+        "pre_audit": [
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 0
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 1
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 2
+          }
+        ],
+        "warmup": {
+          "schema": 2,
+          "duration_us": 2100118,
+          "requests": 79082,
+          "bytes": 89283578,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 839.018749,
+            "p50": 773.0,
+            "p95": 1528.0,
+            "p99": 2037.0,
+            "max": 4911.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 849.798639,
+          "qps": 37655.97933068522,
+          "received_mib_s": 40.544129051536196
+        },
+        "measurement": {
+          "schema": 2,
+          "duration_us": 10015383,
+          "requests": 385468,
+          "bytes": 435193582,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 831.58203,
+            "p50": 766.0,
+            "p95": 1488.0,
+            "p99": 1957.0,
+            "max": 18053.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 831.436737,
+          "qps": 38487.59453332938,
+          "received_mib_s": 41.4395477255575
+        },
+        "post_audit": [
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 0
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 1
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 2
+          }
+        ],
+        "cleanup": {
+          "argv": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+            "--port",
+            "0",
+            "--root",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/r1-M2",
+            "--threads",
+            "2",
+            "--idle-timeout-ms",
+            "30000",
+            "--keep-alive-timeout-ms",
+            "15000",
+            "--shutdown-timeout-ms",
+            "5000",
+            "--metrics-on-exit"
+          ],
+          "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+          "env": {
+            "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "NO_PROXY": "127.0.0.1,localhost",
+            "no_proxy": "127.0.0.1,localhost"
+          },
+          "pid": 10840,
+          "starttime": "22567246",
+          "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M2-server.stdout",
+          "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M2-server.stderr",
+          "children": {},
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "descendant_survivors": 0
+        },
+        "metrics": {
+          "requests_started_total": 464611,
+          "responses_completed_total": 464611,
+          "requests_aborted_total": 0,
+          "responses_status_unknown_total": 0,
+          "responses_status_200_total": 464611,
+          "responses_status_400_total": 0,
+          "responses_status_403_total": 0,
+          "responses_status_404_total": 0,
+          "responses_status_405_total": 0,
+          "responses_status_500_total": 0,
+          "errors_total": 0,
+          "parse_errors_total": 0,
+          "provider_errors_total": 0,
+          "access_log_failures_total": 0,
+          "latency_count": 464611,
+          "latency_sum_us": 10612432,
+          "latency_max_us": 1266,
+          "connections_total": 68,
+          "connections_active": 0,
+          "logger_submitted": 58,
+          "logger_accepted": 58,
+          "logger_dropped_full": 0,
+          "logger_rejected_stopped": 0,
+          "logger_truncated": 0,
+          "logger_written": 58,
+          "logger_failed": 0,
+          "logger_pending": 0
+        },
+        "warmup_raw_summary": "MATRIX_SUMMARY {\"schema\":2,\"duration_us\":2100118,\"requests\":79082,\"bytes\":89283578,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":839.018749,\"p50\":773.000000,\"p95\":1528.000000,\"p99\":2037.000000,\"max\":4911.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":849.798639}",
+        "warmup_stdout_sha256": "de603440092a72057ada88921de4adfa63d3fbd7cfa3c11f2fba4804201aab7a",
+        "measurement_raw_summary": "MATRIX_SUMMARY {\"schema\":2,\"duration_us\":10015383,\"requests\":385468,\"bytes\":435193582,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":831.582030,\"p50\":766.000000,\"p95\":1488.000000,\"p99\":1957.000000,\"max\":18053.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":831.436737}",
+        "measurement_stdout_sha256": "d36b3514d88c294ec8610c807823f35f8f5232fdddd374c56a0660b5cad0cb1d"
+      },
+      {
+        "name": "r1-M3",
+        "config": {
+          "bytes": 1024,
+          "workers": 4,
+          "threads": 4,
+          "connections": 128
+        },
+        "status": "valid",
+        "port": 35007,
+        "server_identity": {
+          "pid": 10862,
+          "starttime": "22569012",
+          "listener_owned": true
+        },
+        "pre_audit": [
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 0
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 1
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 2
+          }
+        ],
+        "warmup": {
+          "schema": 2,
+          "duration_us": 2069186,
+          "requests": 106365,
+          "bytes": 120086400,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 7486.970016,
+            "p50": 1890.0,
+            "p95": 39001.0,
+            "p99": 136743.0,
+            "max": 199205.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 2490.065416,
+          "qps": 51404.272018078605,
+          "received_mib_s": 55.34703764170427
+        },
+        "measurement": {
+          "schema": 2,
+          "duration_us": 10086817,
+          "requests": 548562,
+          "bytes": 619326918,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 29965.206638,
+            "p50": 1830.0,
+            "p95": 207937.0,
+            "p99": 548077.0,
+            "max": 834638.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 2353.631086,
+          "qps": 54384.05395874635,
+          "received_mib_s": 58.55525832932625
+        },
+        "post_audit": [
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 0
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 1
+          },
+          {
+            "status": 200,
+            "content_length": 1024,
+            "sha256": "4613a38a7f79ada3fc343ea4de1488f8828f0fe602d8cb7bdce958040b204b8b",
+            "same_socket_index": 2
+          }
+        ],
+        "cleanup": {
+          "argv": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+            "--port",
+            "0",
+            "--root",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/r1-M3",
+            "--threads",
+            "4",
+            "--idle-timeout-ms",
+            "30000",
+            "--keep-alive-timeout-ms",
+            "15000",
+            "--shutdown-timeout-ms",
+            "5000",
+            "--metrics-on-exit"
+          ],
+          "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+          "env": {
+            "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "NO_PROXY": "127.0.0.1,localhost",
+            "no_proxy": "127.0.0.1,localhost"
+          },
+          "pid": 10862,
+          "starttime": "22569012",
+          "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M3-server.stdout",
+          "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M3-server.stderr",
+          "children": {},
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "descendant_survivors": 0
+        },
+        "metrics": {
+          "requests_started_total": 655164,
+          "responses_completed_total": 655164,
+          "requests_aborted_total": 0,
+          "responses_status_unknown_total": 0,
+          "responses_status_200_total": 655164,
+          "responses_status_400_total": 0,
+          "responses_status_403_total": 0,
+          "responses_status_404_total": 0,
+          "responses_status_405_total": 0,
+          "responses_status_500_total": 0,
+          "errors_total": 0,
+          "parse_errors_total": 0,
+          "provider_errors_total": 0,
+          "access_log_failures_total": 0,
+          "latency_count": 655164,
+          "latency_sum_us": 23336148,
+          "latency_max_us": 520907,
+          "connections_total": 260,
+          "connections_active": 0,
+          "logger_submitted": 234,
+          "logger_accepted": 234,
+          "logger_dropped_full": 0,
+          "logger_rejected_stopped": 0,
+          "logger_truncated": 0,
+          "logger_written": 234,
+          "logger_failed": 0,
+          "logger_pending": 0
+        },
+        "warmup_raw_summary": "MATRIX_SUMMARY {\"schema\":2,\"duration_us\":2069186,\"requests\":106365,\"bytes\":120086400,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":7486.970016,\"p50\":1890.000000,\"p95\":39001.000000,\"p99\":136743.000000,\"max\":199205.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":2490.065416}",
+        "warmup_stdout_sha256": "708bd95b15d1569ab12ce128a59fe6b3c661b88112a4d834fd2b96972b2c2b98",
+        "measurement_raw_summary": "MATRIX_SUMMARY {\"schema\":2,\"duration_us\":10086817,\"requests\":548562,\"bytes\":619326918,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":29965.206638,\"p50\":1830.000000,\"p95\":207937.000000,\"p99\":548077.000000,\"max\":834638.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":2353.631086}",
+        "measurement_stdout_sha256": "682be1f642d8fb641653f9a4eb9d71d6f02b377a78d85cc1be57baa84e5ba496"
+      },
+      {
+        "name": "r1-M6",
+        "config": {
+          "bytes": 1048576,
+          "workers": 2,
+          "threads": 2,
+          "connections": 32
+        },
+        "status": "valid",
+        "port": 34011,
+        "server_identity": {
+          "pid": 10904,
+          "starttime": "22570837",
+          "listener_owned": true
+        },
+        "pre_audit": [
+          {
+            "status": 200,
+            "content_length": 1048576,
+            "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f",
+            "same_socket_index": 0
+          },
+          {
+            "status": 200,
+            "content_length": 1048576,
+            "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f",
+            "same_socket_index": 1
+          },
+          {
+            "status": 200,
+            "content_length": 1048576,
+            "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f",
+            "same_socket_index": 2
+          }
+        ],
+        "warmup": {
+          "schema": 2,
+          "duration_us": 2002626,
+          "requests": 688,
+          "bytes": 737680356,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 93771.098535,
+            "p50": 75976.0,
+            "p95": 219027.0,
+            "p99": 254084.0,
+            "max": 325148.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 93145.395349,
+          "qps": 343.5489202676886,
+          "received_mib_s": 351.2921580138374
+        },
+        "measurement": {
+          "schema": 2,
+          "duration_us": 10023470,
+          "requests": 3933,
+          "bytes": 4140057892,
+          "errors": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "latency_us": {
+            "mean": 81527.779648,
+            "p50": 70378.0,
+            "p95": 153711.0,
+            "p99": 181295.0,
+            "max": 284558.0
+          },
+          "latency_distribution": "wrk_corrected",
+          "population_status": "not_collected",
+          "corrected_population": null,
+          "nonzero_bins": null,
+          "correction_interval_us": 81553.785914,
+          "qps": 392.3790862844903,
+          "received_mib_s": 393.9021995412168
+        },
+        "post_audit": [
+          {
+            "status": 200,
+            "content_length": 1048576,
+            "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f",
+            "same_socket_index": 0
+          },
+          {
+            "status": 200,
+            "content_length": 1048576,
+            "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f",
+            "same_socket_index": 1
+          },
+          {
+            "status": 200,
+            "content_length": 1048576,
+            "sha256": "aca1cd027e979588d14b877b7b0cb8585ad9fec599eb45801992ee5382b3760f",
+            "same_socket_index": 2
+          }
+        ],
+        "cleanup": {
+          "argv": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+            "--port",
+            "0",
+            "--root",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/r1-M6",
+            "--threads",
+            "2",
+            "--idle-timeout-ms",
+            "30000",
+            "--keep-alive-timeout-ms",
+            "15000",
+            "--shutdown-timeout-ms",
+            "5000",
+            "--metrics-on-exit"
+          ],
+          "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+          "env": {
+            "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "NO_PROXY": "127.0.0.1,localhost",
+            "no_proxy": "127.0.0.1,localhost"
+          },
+          "pid": 10904,
+          "starttime": "22570837",
+          "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M6-server.stdout",
+          "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M6-server.stderr",
+          "children": {},
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "descendant_survivors": 0
+        },
+        "metrics": {
+          "requests_started_total": 4691,
+          "responses_completed_total": 4690,
+          "requests_aborted_total": 1,
+          "responses_status_unknown_total": 0,
+          "responses_status_200_total": 4691,
+          "responses_status_400_total": 0,
+          "responses_status_403_total": 0,
+          "responses_status_404_total": 0,
+          "responses_status_405_total": 0,
+          "responses_status_500_total": 0,
+          "errors_total": 1,
+          "parse_errors_total": 0,
+          "provider_errors_total": 0,
+          "access_log_failures_total": 0,
+          "latency_count": 4691,
+          "latency_sum_us": 13622030,
+          "latency_max_us": 1869438,
+          "connections_total": 68,
+          "connections_active": 0,
+          "logger_submitted": 309,
+          "logger_accepted": 309,
+          "logger_dropped_full": 0,
+          "logger_rejected_stopped": 0,
+          "logger_truncated": 0,
+          "logger_written": 309,
+          "logger_failed": 0,
+          "logger_pending": 0
+        },
+        "warmup_raw_summary": "MATRIX_SUMMARY {\"schema\":2,\"duration_us\":2002626,\"requests\":688,\"bytes\":737680356,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":93771.098535,\"p50\":75976.000000,\"p95\":219027.000000,\"p99\":254084.000000,\"max\":325148.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":93145.395349}",
+        "warmup_stdout_sha256": "f4c4d5bde851514411d538b871d36735728df0855a3f67ccfedf6fd47ce75782",
+        "measurement_raw_summary": "MATRIX_SUMMARY {\"schema\":2,\"duration_us\":10023470,\"requests\":3933,\"bytes\":4140057892,\"errors\":{\"connect\":0,\"read\":0,\"write\":0,\"status\":0,\"timeout\":0},\"latency_us\":{\"mean\":81527.779648,\"p50\":70378.000000,\"p95\":153711.000000,\"p99\":181295.000000,\"max\":284558.000000},\"latency_distribution\":\"wrk_corrected\",\"population_status\":\"not_collected\",\"corrected_population\":null,\"nonzero_bins\":null,\"correction_interval_us\":81553.785914}",
+        "measurement_stdout_sha256": "f1bcbbd6cffc9a885bdd146029eedc44ba6edac6ae33d8df59aaad8e935a3613"
+      },
+      {
+        "name": "r2-M6",
+        "config": {
+          "bytes": 1048576,
+          "workers": 2,
+          "threads": 2,
+          "connections": 32
+        },
+        "status": "invalid",
+        "port": 34371,
+        "server_identity": {
+          "pid": 11224,
+          "starttime": "22580324",
+          "listener_owned": true
+        },
+        "failure": "header EOF",
+        "cleanup": {
+          "argv": [
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+            "--port",
+            "0",
+            "--root",
+            "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/r2-M6",
+            "--threads",
+            "2",
+            "--idle-timeout-ms",
+            "30000",
+            "--keep-alive-timeout-ms",
+            "15000",
+            "--shutdown-timeout-ms",
+            "5000",
+            "--metrics-on-exit"
+          ],
+          "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+          "env": {
+            "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+            "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "NO_PROXY": "127.0.0.1,localhost",
+            "no_proxy": "127.0.0.1,localhost"
+          },
+          "pid": 11224,
+          "starttime": "22580324",
+          "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r2-M6-server.stdout",
+          "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r2-M6-server.stderr",
+          "children": {},
+          "returncode": 0,
+          "forced": false,
+          "reaped": true,
+          "descendant_survivors": 0
+        },
+        "existing_failure_capture": {
+          "server_stdout_sha256": "e8945b49e513d7ac0b0e2d31198d321da62c00f0607f5dcad5f0ed59c906c156",
+          "server_stderr_sha256": "c66ee114517902932f05af32c412185e14e8cd25f5fb1e5a49e698fe35579f77",
+          "final_metrics": {
+            "requests_started_total": 2,
+            "responses_completed_total": 2,
+            "requests_aborted_total": 0,
+            "responses_status_unknown_total": 0,
+            "responses_status_200_total": 2,
+            "responses_status_400_total": 0,
+            "responses_status_403_total": 0,
+            "responses_status_404_total": 0,
+            "responses_status_405_total": 0,
+            "responses_status_500_total": 0,
+            "errors_total": 0,
+            "parse_errors_total": 0,
+            "provider_errors_total": 0,
+            "access_log_failures_total": 0,
+            "latency_count": 2,
+            "latency_sum_us": 2299225,
+            "latency_max_us": 1959143,
+            "connections_total": 1,
+            "connections_active": 0,
+            "logger_submitted": 12,
+            "logger_accepted": 12,
+            "logger_dropped_full": 0,
+            "logger_rejected_stopped": 0,
+            "logger_truncated": 0,
+            "logger_written": 12,
+            "logger_failed": 0,
+            "logger_pending": 0
+          },
+          "necessary_stderr": "[INFO] HP HTTP Server V0.1 / S3 minimal HTTP static file server\n[INFO] Listening on TCP port 34371.\n[INFO] S3 evidence: connection write reached EAGAIN with 812552 response bytes pending.\n[INFO] S3 evidence: connection write reached EAGAIN with 718432 response bytes pending.\n[INFO] S3 evidence: connection write reached EAGAIN with 634448 response bytes pending.\n[INFO] S3 evidence: connection write reached EAGAIN with 489648 response bytes pending.\n[INFO] S3 evidence: connection write reached EAGAIN with 302856 response bytes pending.\n[INFO] S3 evidence: connection write reached EAGAIN with 116064 response bytes pending.\n[INFO] S3 evidence: connection write reached EAGAIN with 599696 response bytes pending.\n[INFO] S3 evidence: connection write reached EAGAIN with 412904 response bytes pending.\n[INFO] S3 evidence: connection write reached EAGAIN with 163848 response bytes pending.\n[INFO] Shutdown signal observed: 15.\n",
+          "failure_stage": "pre_audit",
+          "warmup": "NotRun",
+          "measurement": "NotRun",
+          "audit_read_progress": "audit() only returns on success: per-read bytes, partial observations, and exact request index were not persisted; no new dynamic collection performed",
+          "root_cause": "unknown; two final completed 200 responses do not alone prove why the next header read received EOF"
+        }
+      }
+    ],
+    "not_run": [
+      "r2-M3",
+      "r2-M2",
+      "r3-M3",
+      "r3-M2",
+      "r3-M6"
+    ],
+    "aggregates": null,
+    "reason_no_aggregation": "three valid rows are one round each, not a completed three-round scenario"
+  },
+  "budget": {
+    "limit_s": 1800,
+    "new_batch_elapsed_s": 475.213277214003,
+    "previous_batch_elapsed_s": 146.0728357490152,
+    "cumulative_builder_consumed_s": 621.2861129630182,
+    "peak_total_bytes": 211230720,
+    "peak_capture_bytes": 696320,
+    "final_total_bytes": 210190336,
+    "final_capture_bytes": 696320,
+    "maximum_includes_final": true,
+    "total_limit_bytes": 4294967296,
+    "capture_limit_bytes": 536870912
+  },
+  "cleanup": {
+    "owned_left": 0,
+    "forced": 0,
+    "unreaped": 0
+  },
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/sleep",
+        "20"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 3,
+      "starttime": "22536299",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/synthetic-owned-sleep.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/synthetic-owned-sleep.stderr",
+      "children": {},
+      "returncode": -15,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0
+    },
+    {
+      "argv": [
+        "/usr/bin/sleep",
+        "20"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 4,
+      "starttime": "22536318",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/synthetic-deadline-sleep.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/synthetic-deadline-sleep.stderr",
+      "children": {},
+      "returncode": -15,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0
+    },
+    {
+      "argv": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O3",
+        "-DNDEBUG",
+        "-I",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/tmp/checker-probe.cpp",
+        "-Wl,--wrap=malloc",
+        "-Wl,--wrap=_Znwm",
+        "-o",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/tmp/checker-probe"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 5,
+      "starttime": "22536338",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/checker-compile.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/checker-compile.stderr",
+      "children": {
+        "8": "22536353"
+      },
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.6445864340057597
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/tmp/checker-probe"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 10,
+      "starttime": "22536403",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/checker-true.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/checker-true.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.3163131109904498
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/tmp/checker-probe",
+        "false"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 11,
+      "starttime": "22536434",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/checker-false.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/checker-false.stderr",
+      "children": {},
+      "returncode": -6,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.31719351798528805
+    },
+    {
+      "argv": [
+        "cmake",
+        "--version"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 12,
+      "starttime": "22536466",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-cmake.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-cmake.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.3405046959815081
+    },
+    {
+      "argv": [
+        "g++",
+        "--version"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 13,
+      "starttime": "22536501",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-g++.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-g++.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.2940439190133475
+    },
+    {
+      "argv": [
+        "python3",
+        "--version"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 14,
+      "starttime": "22536531",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-python3.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-python3.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.28924860700499266
+    },
+    {
+      "argv": [
+        "curl",
+        "--version"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 15,
+      "starttime": "22536560",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-curl.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-curl.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.3186144719948061
+    },
+    {
+      "argv": [
+        "bash",
+        "--version"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 16,
+      "starttime": "22536593",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-bash.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-bash.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.3040299770073034
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+        "--version"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "LD_LIBRARY_PATH": "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu"
+      },
+      "pid": 17,
+      "starttime": "22536624",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-wrk.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/version-wrk.stderr",
+      "children": {},
+      "returncode": 1,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.28804559700074606
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+        "-B",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DBUILD_TESTING=ON",
+        "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 18,
+      "starttime": "22536653",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-configure.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-configure.stderr",
+      "children": {
+        "21": "22536664",
+        "24": "22536666",
+        "28": "22536823",
+        "29": "22536823",
+        "32": "22536867",
+        "33": "22536867",
+        "35": "22536900",
+        "36": "22536901",
+        "37": "22536901",
+        "40": "22536902",
+        "42": "22536903",
+        "45": "22536908",
+        "46": "22536908",
+        "47": "22536908",
+        "50": "22536947",
+        "51": "22536947",
+        "52": "22536947",
+        "60": "22536952",
+        "61": "22536953",
+        "62": "22536953"
+      },
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 5.5127229950157925
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build",
+        "-j2"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 71,
+      "starttime": "22537205",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-build.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-build.stderr",
+      "children": {
+        "72": "22537207",
+        "75": "22537208",
+        "82": "22537209",
+        "89": "22537210",
+        "90": "22537210",
+        "83": "22537209",
+        "88": "22537210",
+        "91": "22537210",
+        "95": "22537287",
+        "96": "22537287",
+        "97": "22537346",
+        "106": "22537367",
+        "107": "22537367",
+        "114": "22537389",
+        "117": "22537390",
+        "118": "22537391",
+        "119": "22537457",
+        "127": "22537502",
+        "128": "22537502",
+        "132": "22537559",
+        "133": "22537559",
+        "137": "22537599",
+        "138": "22537599",
+        "139": "22537599",
+        "146": "22537636",
+        "149": "22537637",
+        "150": "22537637",
+        "154": "22537703",
+        "155": "22537703",
+        "159": "22537742",
+        "160": "22537742",
+        "164": "22537799",
+        "165": "22537799",
+        "172": "22537851",
+        "169": "22537838",
+        "170": "22537838",
+        "171": "22537838",
+        "175": "22537855",
+        "176": "22537855",
+        "182": "22537879",
+        "183": "22537879",
+        "187": "22537991",
+        "188": "22537991",
+        "192": "22538026",
+        "193": "22538026",
+        "197": "22538044",
+        "198": "22538045",
+        "202": "22538159",
+        "203": "22538159",
+        "207": "22538208",
+        "208": "22538208",
+        "214": "22538354",
+        "212": "22538311",
+        "213": "22538311",
+        "222": "22538401",
+        "223": "22538401",
+        "227": "22538435",
+        "228": "22538435",
+        "234": "22538604",
+        "235": "22538605",
+        "245": "22538628",
+        "251": "22538629",
+        "253": "22538629",
+        "246": "22538628",
+        "252": "22538629",
+        "254": "22538629",
+        "264": "22538813",
+        "265": "22538813",
+        "258": "22538802",
+        "259": "22538803",
+        "260": "22538803",
+        "272": "22538844",
+        "275": "22538845",
+        "276": "22538845",
+        "294": "22538939",
+        "297": "22538940",
+        "298": "22538940",
+        "299": "22539008",
+        "308": "22539022",
+        "309": "22539022",
+        "310": "22539023",
+        "322": "22539060",
+        "317": "22539055",
+        "320": "22539056",
+        "321": "22539056",
+        "328": "22539071",
+        "331": "22539072",
+        "332": "22539072",
+        "333": "22539230",
+        "342": "22539246",
+        "343": "22539247",
+        "344": "22539247",
+        "346": "22539278",
+        "352": "22539285",
+        "355": "22539286",
+        "356": "22539286",
+        "360": "22539499"
+      },
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 23.43231727500097
+    },
+    {
+      "argv": [
+        "ctest",
+        "--test-dir",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build",
+        "--show-only=json-v1"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 369,
+      "starttime": "22539549",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-registration.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-registration.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.4651895189890638
+    },
+    {
+      "argv": [
+        "ldd",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 370,
+      "starttime": "22539596",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-ldd.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-ldd.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.46942305099219084
+    },
+    {
+      "argv": [
+        "ctest",
+        "--test-dir",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build",
+        "--output-on-failure",
+        "-j1"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 8765,
+      "starttime": "22541287",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-ctest.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-ctest.stderr",
+      "children": {
+        "8843": "22541300",
+        "8848": "22541304",
+        "8858": "22541469",
+        "8859": "22541472",
+        "8869": "22541634",
+        "8874": "22541637",
+        "8881": "22541814",
+        "8898": "22541966",
+        "8900": "22541966",
+        "8910": "22542077",
+        "8911": "22542077",
+        "8937": "22542091",
+        "8940": "22542123",
+        "8951": "22542161",
+        "8965": "22542185",
+        "8987": "22542262",
+        "8988": "22542270"
+      },
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 10.411627797991969
+    },
+    {
+      "argv": [
+        "bash",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/http_smoke_test.sh",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "HP_S3_TEST_TMP_ROOT": "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/smoke",
+        "HP_HTTP_TEST_THREADS": "0"
+      },
+      "pid": 8995,
+      "starttime": "22542328",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-smoke-0.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-smoke-0.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.5717902850010432
+    },
+    {
+      "argv": [
+        "bash",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/http_smoke_test.sh",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "HP_S3_TEST_TMP_ROOT": "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/smoke",
+        "HP_HTTP_TEST_THREADS": "2"
+      },
+      "pid": 9030,
+      "starttime": "22542386",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-smoke-2.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/debug-smoke-2.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.519272842007922
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server",
+        "--help"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 9067,
+      "starttime": "22542455",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-cli-help.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-cli-help.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.509848055022303
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 9068,
+      "starttime": "22542506",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/cli-missing-all.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/cli-missing-all.stderr",
+      "children": {},
+      "returncode": 2,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.48668590100714937
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server",
+        "--port",
+        "0"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 9069,
+      "starttime": "22542555",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/cli-missing-root.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/cli-missing-root.stderr",
+      "children": {},
+      "returncode": 2,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.5443861609965097
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server",
+        "--root",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/www"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 9070,
+      "starttime": "22542609",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/cli-missing-port.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/cli-missing-port.stderr",
+      "children": {},
+      "returncode": 2,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.5238506100140512
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build/hp_http_server",
+        "--port",
+        "8080",
+        "--root",
+        "./www",
+        "--threads",
+        "2"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 9071,
+      "starttime": "22542662",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-server.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-server.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0
+    },
+    {
+      "argv": [
+        "curl",
+        "--silent",
+        "--show-error",
+        "--max-time",
+        "3",
+        "-o",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/tmp/index.body",
+        "-w",
+        "%{http_code}",
+        "http://127.0.0.1:8080/"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 9075,
+      "starttime": "22542702",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-index.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-index.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.5284012430056464
+    },
+    {
+      "argv": [
+        "curl",
+        "--silent",
+        "--show-error",
+        "--max-time",
+        "3",
+        "-o",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/tmp/missing.body",
+        "-w",
+        "%{http_code}",
+        "http://127.0.0.1:8080/missing.txt"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 9076,
+      "starttime": "22542755",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-missing.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-missing.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.5834811789973173
+    },
+    {
+      "argv": [
+        "curl",
+        "--silent",
+        "--show-error",
+        "--max-time",
+        "3",
+        "-o",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/tmp/post.body",
+        "-w",
+        "%{http_code}",
+        "-X",
+        "POST",
+        "http://127.0.0.1:8080/"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 9078,
+      "starttime": "22542814",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-post.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/readme-post.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.5517942610022146
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+        "-B",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DBUILD_TESTING=ON",
+        "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 3,
+      "starttime": "22549197",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-configure.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-configure.stderr",
+      "children": {
+        "6": "22549202",
+        "9": "22549206",
+        "13": "22549424",
+        "14": "22549424",
+        "17": "22549477",
+        "18": "22549477",
+        "20": "22549516",
+        "21": "22549517",
+        "22": "22549517",
+        "30": "22549521",
+        "31": "22549521",
+        "32": "22549521",
+        "35": "22549572",
+        "36": "22549573",
+        "37": "22549573",
+        "45": "22549578",
+        "46": "22549578",
+        "47": "22549578"
+      },
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 7.5708949560066685
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release",
+        "-j2"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 56,
+      "starttime": "22549955",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-build.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-build.stderr",
+      "children": {
+        "57": "22549956",
+        "60": "22549958",
+        "67": "22549959",
+        "80": "22550022",
+        "81": "22550022",
+        "68": "22549959",
+        "75": "22549960",
+        "76": "22549960",
+        "85": "22550094",
+        "86": "22550095",
+        "90": "22550147",
+        "91": "22550148",
+        "92": "22550148",
+        "112": "22550207",
+        "113": "22550208",
+        "104": "22550184",
+        "107": "22550185",
+        "108": "22550185",
+        "117": "22550257",
+        "118": "22550257",
+        "122": "22550396",
+        "123": "22550396",
+        "127": "22550414",
+        "128": "22550414",
+        "129": "22550414",
+        "133": "22550444",
+        "134": "22550445",
+        "141": "22550458",
+        "144": "22550459",
+        "145": "22550459",
+        "149": "22550522",
+        "150": "22550522",
+        "154": "22550592",
+        "155": "22550592",
+        "159": "22550735",
+        "160": "22550735",
+        "164": "22550788",
+        "165": "22550789",
+        "166": "22550789",
+        "172": "22550836",
+        "173": "22550837",
+        "177": "22550935",
+        "178": "22550935",
+        "182": "22550963",
+        "183": "22550963",
+        "187": "22551066",
+        "188": "22551066",
+        "192": "22551123",
+        "193": "22551123",
+        "197": "22551212",
+        "198": "22551212",
+        "202": "22551261",
+        "203": "22551261",
+        "207": "22551306",
+        "208": "22551307",
+        "212": "22551357",
+        "213": "22551357",
+        "230": "22551546",
+        "236": "22551547",
+        "239": "22551547",
+        "231": "22551546",
+        "237": "22551547",
+        "238": "22551547",
+        "243": "22551756",
+        "244": "22551756",
+        "248": "22551801",
+        "249": "22551802",
+        "250": "22551802",
+        "251": "22551836",
+        "257": "22551844",
+        "260": "22551845",
+        "261": "22551845",
+        "279": "22551914",
+        "282": "22551915",
+        "283": "22551915",
+        "287": "22551983",
+        "288": "22551984",
+        "289": "22551984",
+        "296": "22552019",
+        "299": "22552020",
+        "300": "22552021",
+        "313": "22552074",
+        "316": "22552075",
+        "317": "22552075",
+        "321": "22552197",
+        "322": "22552198",
+        "323": "22552198",
+        "330": "22552243",
+        "333": "22552244",
+        "334": "22552244"
+      },
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 25.698203022009693
+    },
+    {
+      "argv": [
+        "ctest",
+        "--test-dir",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release",
+        "--show-only=json-v1"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 354,
+      "starttime": "22552525",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-registration.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-registration.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.8512870199920144
+    },
+    {
+      "argv": [
+        "ldd",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 355,
+      "starttime": "22552610",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-ldd.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-ldd.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.8187815120036248
+    },
+    {
+      "argv": [
+        "ctest",
+        "--test-dir",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release",
+        "--output-on-failure",
+        "-j1"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 9871,
+      "starttime": "22555181",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-ctest.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-ctest.stderr",
+      "children": {
+        "9947": "22555194",
+        "9952": "22555196",
+        "9962": "22555336",
+        "9963": "22555337",
+        "9973": "22555498",
+        "9978": "22555499",
+        "9982": "22555698",
+        "10005": "22555925",
+        "10006": "22555925",
+        "10036": "22555961",
+        "10039": "22555993",
+        "10050": "22556027",
+        "10070": "22556077"
+      },
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 9.73899923299905
+    },
+    {
+      "argv": [
+        "bash",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/http_smoke_test.sh",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "HP_S3_TEST_TMP_ROOT": "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/smoke",
+        "HP_HTTP_TEST_THREADS": "0"
+      },
+      "pid": 10093,
+      "starttime": "22556156",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-smoke-0.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-smoke-0.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.6195909919915721
+    },
+    {
+      "argv": [
+        "bash",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/tests/http_smoke_test.sh",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "HP_S3_TEST_TMP_ROOT": "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/smoke",
+        "HP_HTTP_TEST_THREADS": "2"
+      },
+      "pid": 10129,
+      "starttime": "22556219",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-smoke-2.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/release-smoke-2.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.6420804630033672
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+        "-B",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DBUILD_TESTING=ON",
+        "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer",
+        "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 3,
+      "starttime": "22557336",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-configure.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-configure.stderr",
+      "children": {
+        "13": "22557596",
+        "14": "22557596",
+        "17": "22557656",
+        "18": "22557656",
+        "35": "22557750",
+        "36": "22557751",
+        "37": "22557751",
+        "45": "22557756",
+        "46": "22557756",
+        "47": "22557756",
+        "48": "22557786"
+      },
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 7.326374316995498
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan",
+        "-j2"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 56,
+      "starttime": "22558069",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-build.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-build.stderr",
+      "children": {
+        "57": "22558071",
+        "60": "22558073",
+        "67": "22558074",
+        "73": "22558075",
+        "76": "22558075",
+        "68": "22558074",
+        "80": "22558143",
+        "81": "22558143",
+        "87": "22558242",
+        "85": "22558227",
+        "86": "22558227",
+        "107": "22558308",
+        "108": "22558308",
+        "99": "22558291",
+        "102": "22558292",
+        "103": "22558292",
+        "117": "22558403",
+        "118": "22558403",
+        "122": "22558552",
+        "123": "22558552",
+        "124": "22558553",
+        "144": "22558630",
+        "145": "22558630",
+        "136": "22558589",
+        "139": "22558590",
+        "140": "22558590",
+        "149": "22558707",
+        "150": "22558707",
+        "154": "22558789",
+        "155": "22558789",
+        "159": "22558887",
+        "160": "22558887",
+        "161": "22558887",
+        "165": "22558924",
+        "166": "22558925",
+        "172": "22558935",
+        "173": "22558935",
+        "177": "22558993",
+        "178": "22558993",
+        "182": "22559078",
+        "183": "22559078",
+        "187": "22559111",
+        "188": "22559111",
+        "192": "22559279",
+        "193": "22559280",
+        "197": "22559308",
+        "198": "22559308",
+        "202": "22559447",
+        "203": "22559447",
+        "213": "22559538",
+        "214": "22559538",
+        "219": "22559734",
+        "220": "22559734",
+        "230": "22559749",
+        "237": "22559750",
+        "238": "22559750",
+        "231": "22559749",
+        "236": "22559750",
+        "239": "22559750",
+        "244": "22559961",
+        "245": "22559961",
+        "248": "22559972",
+        "249": "22559972",
+        "250": "22559972",
+        "251": "22560003",
+        "257": "22560012",
+        "260": "22560013",
+        "261": "22560013",
+        "279": "22560098",
+        "282": "22560099",
+        "283": "22560099",
+        "287": "22560175",
+        "288": "22560175",
+        "289": "22560175",
+        "302": "22560216",
+        "305": "22560217",
+        "306": "22560217",
+        "313": "22560261",
+        "316": "22560262",
+        "317": "22560262",
+        "328": "22560470",
+        "329": "22560471",
+        "330": "22560471",
+        "336": "22560482",
+        "339": "22560483",
+        "340": "22560483"
+      },
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 27.52657272599754
+    },
+    {
+      "argv": [
+        "ctest",
+        "--test-dir",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan",
+        "--show-only=json-v1"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 354,
+      "starttime": "22560822",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-registration.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-registration.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.8003548750129994
+    },
+    {
+      "argv": [
+        "ldd",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan/hp_http_server"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 355,
+      "starttime": "22560903",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-ldd.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-ldd.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.7667881959932856
+    },
+    {
+      "argv": [
+        "ctest",
+        "--test-dir",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-asan",
+        "--output-on-failure",
+        "-j1",
+        "-R",
+        "^(async_logger_batch_tests|r6_callbacks_tests|tcp_nodelay_tests|server_metrics_tests|http_observability_tests)$"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      },
+      "pid": 10623,
+      "starttime": "22563925",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-ctest.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/asan-ctest.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 0.9634363020013552
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+        "--port",
+        "0",
+        "--root",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/smoke-M2",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--metrics-on-exit"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 10816,
+      "starttime": "22566478",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/smoke-M2-server.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/smoke-M2-server.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+        "-t",
+        "2",
+        "-c",
+        "32",
+        "--timeout",
+        "2s",
+        "--latency",
+        "-d",
+        "1s",
+        "-s",
+        "<repository>/benchmark/matrix/Summary.lua",
+        "http://127.0.0.1:34981/payload.bin"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "LD_LIBRARY_PATH": "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu",
+        "HP_MATRIX_MODE": "keepalive",
+        "HP_MATRIX_CONNECTIONS": "32"
+      },
+      "pid": 10832,
+      "starttime": "22566745",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/smoke-M2-warmup.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/smoke-M2-warmup.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 1.3876395059924107
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+        "-t",
+        "2",
+        "-c",
+        "32",
+        "--timeout",
+        "2s",
+        "--latency",
+        "-d",
+        "1s",
+        "-s",
+        "<repository>/benchmark/matrix/Summary.lua",
+        "http://127.0.0.1:34981/payload.bin"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "LD_LIBRARY_PATH": "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu",
+        "HP_MATRIX_MODE": "keepalive",
+        "HP_MATRIX_CONNECTIONS": "32"
+      },
+      "pid": 10836,
+      "starttime": "22566884",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/smoke-M2-measurement.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/smoke-M2-measurement.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 1.3333157320157625
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+        "--port",
+        "0",
+        "--root",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/r1-M2",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--metrics-on-exit"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 10840,
+      "starttime": "22567246",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M2-server.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M2-server.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+        "-t",
+        "2",
+        "-c",
+        "32",
+        "--timeout",
+        "2s",
+        "--latency",
+        "-d",
+        "2s",
+        "-s",
+        "<repository>/benchmark/matrix/Summary.lua",
+        "http://127.0.0.1:35493/payload.bin"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "LD_LIBRARY_PATH": "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu",
+        "HP_MATRIX_MODE": "keepalive",
+        "HP_MATRIX_CONNECTIONS": "32"
+      },
+      "pid": 10844,
+      "starttime": "22567528",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M2-warmup.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M2-warmup.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 2.6631264199968427
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+        "-t",
+        "2",
+        "-c",
+        "32",
+        "--timeout",
+        "2s",
+        "--latency",
+        "-d",
+        "10s",
+        "-s",
+        "<repository>/benchmark/matrix/Summary.lua",
+        "http://127.0.0.1:35493/payload.bin"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "LD_LIBRARY_PATH": "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu",
+        "HP_MATRIX_MODE": "keepalive",
+        "HP_MATRIX_CONNECTIONS": "32"
+      },
+      "pid": 10854,
+      "starttime": "22567795",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M2-measurement.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M2-measurement.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 10.119671357009793
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+        "--port",
+        "0",
+        "--root",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/r1-M3",
+        "--threads",
+        "4",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--metrics-on-exit"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 10862,
+      "starttime": "22569012",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M3-server.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M3-server.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+        "-t",
+        "4",
+        "-c",
+        "128",
+        "--timeout",
+        "2s",
+        "--latency",
+        "-d",
+        "2s",
+        "-s",
+        "<repository>/benchmark/matrix/Summary.lua",
+        "http://127.0.0.1:35007/payload.bin"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "LD_LIBRARY_PATH": "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu",
+        "HP_MATRIX_MODE": "keepalive",
+        "HP_MATRIX_CONNECTIONS": "128"
+      },
+      "pid": 10878,
+      "starttime": "22569297",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M3-warmup.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M3-warmup.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 2.7516808520013
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+        "-t",
+        "4",
+        "-c",
+        "128",
+        "--timeout",
+        "2s",
+        "--latency",
+        "-d",
+        "10s",
+        "-s",
+        "<repository>/benchmark/matrix/Summary.lua",
+        "http://127.0.0.1:35007/payload.bin"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "LD_LIBRARY_PATH": "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu",
+        "HP_MATRIX_MODE": "keepalive",
+        "HP_MATRIX_CONNECTIONS": "128"
+      },
+      "pid": 10884,
+      "starttime": "22569572",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M3-measurement.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M3-measurement.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 10.333585156011395
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+        "--port",
+        "0",
+        "--root",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/r1-M6",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--metrics-on-exit"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 10904,
+      "starttime": "22570837",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M6-server.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M6-server.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+        "-t",
+        "2",
+        "-c",
+        "32",
+        "--timeout",
+        "2s",
+        "--latency",
+        "-d",
+        "2s",
+        "-s",
+        "<repository>/benchmark/matrix/Summary.lua",
+        "http://127.0.0.1:34011/payload.bin"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "LD_LIBRARY_PATH": "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu",
+        "HP_MATRIX_MODE": "keepalive",
+        "HP_MATRIX_CONNECTIONS": "32"
+      },
+      "pid": 10998,
+      "starttime": "22574695",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M6-warmup.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M6-warmup.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 2.8444074940052815
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk",
+        "-t",
+        "2",
+        "-c",
+        "32",
+        "--timeout",
+        "2s",
+        "--latency",
+        "-d",
+        "10s",
+        "-s",
+        "<repository>/benchmark/matrix/Summary.lua",
+        "http://127.0.0.1:34011/payload.bin"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost",
+        "LD_LIBRARY_PATH": "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu",
+        "HP_MATRIX_MODE": "keepalive",
+        "HP_MATRIX_CONNECTIONS": "32"
+      },
+      "pid": 11001,
+      "starttime": "22574980",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M6-measurement.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r1-M6-measurement.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0,
+      "elapsed_s": 10.866231201012852
+    },
+    {
+      "argv": [
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/build-release/hp_http_server",
+        "--port",
+        "0",
+        "--root",
+        "<repository>/.cache/v1.0-s3/builder/rework-001/source/.validation/r2-M6",
+        "--threads",
+        "2",
+        "--idle-timeout-ms",
+        "30000",
+        "--keep-alive-timeout-ms",
+        "15000",
+        "--shutdown-timeout-ms",
+        "5000",
+        "--metrics-on-exit"
+      ],
+      "cwd": "<repository>/.cache/v1.0-s3/builder/rework-001/source",
+      "env": {
+        "TMPDIR": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "TEMP": "<repository>/.cache/v1.0-s3/builder/rework-001/tmp",
+        "XDG_CACHE_HOME": "<repository>/.cache/v1.0-s3/builder/rework-001/cache",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "NO_PROXY": "127.0.0.1,localhost",
+        "no_proxy": "127.0.0.1,localhost"
+      },
+      "pid": 11224,
+      "starttime": "22580324",
+      "stdout": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r2-M6-server.stdout",
+      "stderr": "<repository>/.cache/v1.0-s3/builder/rework-001/logs/r2-M6-server.stderr",
+      "children": {},
+      "returncode": 0,
+      "forced": false,
+      "reaped": true,
+      "descendant_survivors": 0
+    }
+  ],
+  "tools": {
+    "<repository>/.cache/v0.5-s4/tools/root/usr/bin/wrk": "b10e53769443c2bf3be2cdedec8ef6571aa5bfd1494796b247f3f9296e3af71d",
+    "<repository>/benchmark/matrix/Summary.lua": "0706c8defa1a759eda90185ca5c9f02d755bb3c5a7248367d5f0c3618111340e",
+    "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu/libluajit-5.1.so.2": "04c8976ae97b5e89ba27c008bb9d43c002bfc5b1f923c0598953df278ae14bfe",
+    "<repository>/.cache/v0.5-s4/tools/root/usr/lib/x86_64-linux-gnu/libluajit-5.1.so.2.1.1703358377": "04c8976ae97b5e89ba27c008bb9d43c002bfc5b1f923c0598953df278ae14bfe"
+  },
+  "tools_after_equal": true,
+  "source_transcription": {
+    "executed_script_sha256": "fba8c41dbf69498fe67862e5489f34e00368bbd56b1e844661c82076ae6800ba",
+    "public_script_sha256": "a456dbd7f383fb49eac9975012b24d1d6b6ce480dcb203fb9a1db4652471539b",
+    "only_change": "REPO locator uses current repository directory instead of private absolute path; public transcription not separately executed"
+  },
+  "intermediate_status_note": "During active samples the original script writes invalid as a pending placeholder; final failed state with header EOF is the actual first failure. Stale not_run fields during running phases are not final counts.",
+  "coverage": {
+    "current_ctest": 14,
+    "alias": "server_integration_tests repeats http_server_integration_tests",
+    "frozen_old_targets": 23,
+    "frozen_files": 31,
+    "historical_28_not_repeated": true
+  },
+  "risk_status": {
+    "RO_002": "Open",
+    "TD_001": "Open",
+    "TD_006": "Open"
+  }
+}

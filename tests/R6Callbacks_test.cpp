@@ -3,7 +3,6 @@
 #include <unistd.h>
 
 #include <atomic>
-#include <cassert>
 #include <cerrno>
 #include <future>
 #include <iostream>
@@ -13,6 +12,7 @@
 #include <thread>
 
 #include "HttpConnectionHandler.h"
+#include "TestCheck.h"
 #include "base/UniqueFd.h"
 #include "net/EventLoopThread.h"
 
@@ -35,12 +35,10 @@ extern "C" int __real_pthread_mutex_unlock(pthread_mutex_t* mutex);
 extern "C" int __wrap_pthread_mutex_unlock(pthread_mutex_t* mutex) {
   const auto result = __real_pthread_mutex_unlock(mutex);
   if (waitForDestruction) {
-    const auto deadline =
-        std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    while (!waitForDestruction->load() &&
-           std::chrono::steady_clock::now() < deadline)
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (!waitForDestruction->load() && std::chrono::steady_clock::now() < deadline)
       std::this_thread::yield();
-    assert(waitForDestruction->load());
+    requireTestCondition(waitForDestruction->load());
   }
   return result;
 }
@@ -100,7 +98,7 @@ struct RegistrationProbe {
 void testRegistration() {
   EventLoop loop;
   hp::base::UniqueFd fd(eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC));
-  assert(fd.get() >= 0);
+  requireTestCondition(fd.get() >= 0);
   hp::net::Channel channel(loop, fd.get());
   bool missing = false;
   try {
@@ -108,9 +106,8 @@ void testRegistration() {
   } catch (const std::logic_error&) {
     missing = true;
   }
-  assert(missing);
-  channel.registerEventCallback(
-      [](std::uint32_t events) { ignoreEvent(events); });
+  requireTestCondition(missing);
+  channel.registerEventCallback([](std::uint32_t events) { ignoreEvent(events); });
   channel.setInterest(EPOLLIN);
   bool active = false;
   try {
@@ -118,20 +115,19 @@ void testRegistration() {
   } catch (const std::logic_error&) {
     active = true;
   }
-  assert(active);
+  requireTestCondition(active);
   channel.removeChannel();
   channel.registerEventCallback({});
 
   RegistrationProbe probe{loop};
   std::thread wrongOwner(&RegistrationProbe::probeThread, &probe);
   wrongOwner.join();
-  assert(probe.threadControlRejected && probe.threadCleanupRejected);
-  loop.registerControlCallback([&probe](auto control, auto deadline) {
-    probe.probeDispatch(control, deadline);
-  });
+  requireTestCondition(probe.threadControlRejected && probe.threadCleanupRejected);
+  loop.registerControlCallback(
+      [&probe](auto control, auto deadline) { probe.probeDispatch(control, deadline); });
   loop.requestLoopDrain(EventLoop::Deadline::max());
   loop.pollOnce(0);
-  assert(probe.dispatchControlRejected && probe.dispatchCleanupRejected);
+  requireTestCondition(probe.dispatchControlRejected && probe.dispatchCleanupRejected);
   loop.registerControlCallback({});
   loop.registerCleanupCallback({});
 
@@ -144,7 +140,7 @@ void testRegistration() {
   } catch (const std::logic_error&) {
     ran = true;
   }
-  assert(ran);
+  requireTestCondition(ran);
 }
 
 struct SocketFixture {
@@ -154,22 +150,16 @@ struct SocketFixture {
 
   SocketFixture(EventLoop& owner, std::uint64_t id) : loop(owner) {
     int pair[2];
-    assert(socketpair(AF_UNIX,
-                      SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-                      0,
-                      pair) == 0);
+    requireTestCondition(socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, pair) ==
+                         0);
     peer.reset(pair[1]);
-    connection = std::make_unique<TcpConnection>(loop,
-                                                 hp::net::Socket(pair[0]),
-                                                 id,
-                                                 65536);
-    connection->setCloseCallback(
-        [](int fd, auto identity) { ignoreClose(fd, identity); });
+    connection = std::make_unique<TcpConnection>(loop, hp::net::Socket(pair[0]), id, 65536);
+    connection->setCloseCallback([](int fd, auto identity) { ignoreClose(fd, identity); });
   }
 
   void write(std::string_view text) {
-    assert(::send(peer.fd(), text.data(), text.size(), MSG_NOSIGNAL) ==
-           static_cast<ssize_t>(text.size()));
+    requireTestCondition(::send(peer.fd(), text.data(), text.size(), MSG_NOSIGNAL) ==
+                         static_cast<ssize_t>(text.size()));
     loop.pollOnce(0);
   }
 
@@ -181,7 +171,7 @@ struct SocketFixture {
       if (n > 0)
         result.append(buffer, static_cast<std::size_t>(n));
       else {
-        assert(n == 0 || errno == EAGAIN || errno == EWOULDBLOCK);
+        requireTestCondition(n == 0 || errno == EAGAIN || errno == EWOULDBLOCK);
         break;
       }
     }
@@ -195,7 +185,7 @@ void testEcho(bool clearCallback) {
   if (clearCallback) fixture.connection->setMessageCallback({});
   fixture.connection->activateConnection();
   fixture.write("echo-r6");
-  assert(fixture.readAll() == "echo-r6");
+  requireTestCondition(fixture.readAll() == "echo-r6");
 }
 
 struct Gate {
@@ -250,9 +240,7 @@ struct SuccessfulCapture {
   void run(EventLoop&) {}
 };
 
-void publishLoop(std::promise<EventLoop*>& ready, EventLoop& loop) {
-  ready.set_value(&loop);
-}
+void publishLoop(std::promise<EventLoop*>& ready, EventLoop& loop) { ready.set_value(&loop); }
 
 void testImmediateOwnerDestruction() {
   EventLoopThread worker;
@@ -260,38 +248,32 @@ void testImmediateOwnerDestruction() {
   worker.createWorkerThread([&ready](EventLoop& loop) { publishLoop(ready, loop); });
   auto* loop = ready.get_future().get();
   std::atomic<bool> started{false}, owner{false}, counted{false};
-  auto capture = std::make_shared<SuccessfulCapture>(worker,
-                                                     *loop,
-                                                     started,
-                                                     owner,
-                                                     counted);
-  EventLoopThread::TaskCallback task = [capture](EventLoop& ownerLoop) {
-    capture->run(ownerLoop);
-  };
+  auto capture = std::make_shared<SuccessfulCapture>(worker, *loop, started, owner, counted);
+  EventLoopThread::TaskCallback task = [capture](EventLoop& ownerLoop) { capture->run(ownerLoop); };
   capture.reset();
   waitForDestruction = &started;
-  assert(worker.postTaskToWorker(std::move(task)));
+  requireTestCondition(worker.postTaskToWorker(std::move(task)));
   waitForDestruction = nullptr;
   worker.joinWorkerThread();
-  assert(owner && counted);
+  requireTestCondition(owner && counted);
 }
 
 void testTaskSuccessAndStopped() {
   EventLoopThread worker;
   std::atomic<int> destroyed{0}, executed{0};
   worker.createWorkerThread();
-  assert(worker.postTaskToWorker(makeProbe(worker, destroyed, executed)));
+  requireTestCondition(worker.postTaskToWorker(makeProbe(worker, destroyed, executed)));
   worker.joinWorkerThread();
-  assert(executed == 1 && destroyed == 1);
-  assert(!worker.postTaskToWorker(makeProbe(worker, destroyed, executed)));
-  assert(executed == 1 && destroyed == 2);
+  requireTestCondition(executed == 1 && destroyed == 1);
+  requireTestCondition(!worker.postTaskToWorker(makeProbe(worker, destroyed, executed)));
+  requireTestCondition(executed == 1 && destroyed == 2);
 }
 
 void testTaskAllocation(int failAt) {
   EventLoopThread worker;
   Gate gate;
   worker.createWorkerThread();
-  assert(worker.postTaskToWorker([&gate](EventLoop& loop) { gate.wait(loop); }));
+  requireTestCondition(worker.postTaskToWorker([&gate](EventLoop& loop) { gate.wait(loop); }));
   gate.entered.get_future().wait();
   std::atomic<int> destroyed{0}, executed{0};
   bool failed = false;
@@ -302,31 +284,31 @@ void testTaskAllocation(int failAt) {
     auto task = makeProbe(worker, destroyed, executed);
     allocationCountdown = failAt;
     try {
-      assert(worker.postTaskToWorker(std::move(task)));
+      requireTestCondition(worker.postTaskToWorker(std::move(task)));
     } catch (const std::bad_alloc&) {
       failed = true;
     }
     allocationCountdown = -1;
   }
-  assert(failed && destroyed == 1 && executed == 0);
+  requireTestCondition(failed && destroyed == 1 && executed == 0);
   gate.release.set_value();
   worker.joinWorkerThread();
-  assert(destroyed == attempts);
+  requireTestCondition(destroyed == attempts);
   // Stop 可以丢弃或执行已排队任务；提交失败的任务不得执行。
-  assert(executed < attempts);
+  requireTestCondition(executed < attempts);
 }
 
 void testTaskCapacity() {
   EventLoopThread worker;
   Gate gate;
   worker.createWorkerThread();
-  assert(worker.postTaskToWorker([&gate](EventLoop& loop) { gate.wait(loop); }));
+  requireTestCondition(worker.postTaskToWorker([&gate](EventLoop& loop) { gate.wait(loop); }));
   gate.entered.get_future().wait();
   for (std::size_t i = 1; i < EventLoop::kTaskCapacity; ++i)
-    assert(worker.postTaskToWorker([](EventLoop& loop) { ignoreTask(loop); }));
+    requireTestCondition(worker.postTaskToWorker([](EventLoop& loop) { ignoreTask(loop); }));
   std::atomic<int> destroyed{0}, executed{0};
-  assert(!worker.postTaskToWorker(makeProbe(worker, destroyed, executed)));
-  assert(destroyed == 1 && executed == 0);
+  requireTestCondition(!worker.postTaskToWorker(makeProbe(worker, destroyed, executed)));
+  requireTestCondition(destroyed == 1 && executed == 0);
   gate.release.set_value();
   worker.joinWorkerThread();
 }
@@ -340,15 +322,13 @@ void observeSession(bool created, const void*) noexcept {
     ++sessionsDestroyed;
 }
 
-hp::http::ResponseResult respond(const hp::http::HttpRequest&,
-                                 hp::http::ConnectionPolicy policy) {
+hp::http::ResponseResult respond(const hp::http::HttpRequest&, hp::http::ConnectionPolicy policy) {
   const std::string body(512 * 1024, 'R');
-  return {hp::http::makeResponse(
-              hp::http::Status::kOk,
-              {reinterpret_cast<const std::byte*>(body.data()), body.size()},
-              "text/plain",
-              false,
-              policy),
+  return {hp::http::makeResponse(hp::http::Status::kOk,
+                                 {reinterpret_cast<const std::byte*>(body.data()), body.size()},
+                                 "text/plain",
+                                 false,
+                                 policy),
           policy,
           {}};
 }
@@ -360,9 +340,7 @@ void testHttpIsolationAndLifetime() {
     EventLoop loop;
     SocketFixture first(loop, 1), second(loop, 2);
     auto callback = hp::app::makeHttpCallback(
-        [](const auto& request, auto policy) {
-          return respond(request, policy);
-        },
+        [](const auto& request, auto policy) { return respond(request, policy); },
         &firstStats);
     // 首次调用前复制：每个闭包延迟拥有独立的
     // 处理器。
@@ -371,40 +349,39 @@ void testHttpIsolationAndLifetime() {
     second.connection->setMessageCallback(std::move(secondCallback));
     first.connection->activateConnection();
     second.connection->activateConnection();
-    assert(sessionsCreated == 0);
+    requireTestCondition(sessionsCreated == 0);
     first.write("GET /first HTTP/1.1\r\nHost: test\r\n");
-    assert(sessionsCreated == 1 && firstStats.responses == 0);
+    requireTestCondition(sessionsCreated == 1 && firstStats.responses == 0);
     second.write("GET /second HTTP/1.1\r\nHost: test\r\n\r\n");
-    assert(sessionsCreated == 2 && firstStats.responses == 1);
-    assert(second.connection->pendingBytes() > 0);
+    requireTestCondition(sessionsCreated == 2 && firstStats.responses == 1);
+    requireTestCondition(second.connection->pendingBytes() > 0);
     // 独立完成第一个请求，并在受阻的
     // IO 后排入另一个请求。
     first.write("\r\n");
-    assert(firstStats.responses == 2);
-    second.write(
-        "GET /third HTTP/1.1\r\nHost: test\r\nConnection: close\r\n\r\n");
+    requireTestCondition(firstStats.responses == 2);
+    second.write("GET /third HTTP/1.1\r\nHost: test\r\nConnection: close\r\n\r\n");
     std::string output;
     for (int i = 0; i < 1000 && firstStats.responses < 3; ++i) {
       output += second.readAll();
       first.readAll();
       loop.pollOnce(1);
     }
-    assert(firstStats.responses == 3);
+    requireTestCondition(firstStats.responses == 3);
     // 消息处理器可以先销毁，此时写完成回调仍持有其 Session。
     second.connection->setMessageCallback({});
-    assert(sessionsDestroyed == 0);
+    requireTestCondition(sessionsDestroyed == 0);
     for (int i = 0; i < 1000 && second.connection->pendingBytes(); ++i) {
       output += second.readAll();
       loop.pollOnce(1);
     }
     output += second.readAll();
-    assert(second.connection->pendingBytes() == 0);
-    assert(output.find("Connection: close") != std::string::npos);
-    assert(sessionsDestroyed == 0);
+    requireTestCondition(second.connection->pendingBytes() == 0);
+    requireTestCondition(output.find("Connection: close") != std::string::npos);
+    requireTestCondition(sessionsDestroyed == 0);
     second.connection.reset();
-    assert(sessionsDestroyed == 1);
+    requireTestCondition(sessionsDestroyed == 1);
   }
-  assert(sessionsCreated == 2 && sessionsDestroyed == 2);
+  requireTestCondition(sessionsCreated == 2 && sessionsDestroyed == 2);
   hp::app::setSessionEventCallback(nullptr);
 }
 }  // namespace
