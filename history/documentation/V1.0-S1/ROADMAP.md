@@ -1,0 +1,761 @@
+# HP HTTP Server 路线图
+
+## 当前停工状态
+
+2026-10-08：V0.5.1 **已搁置（未完成）**。这是用户决定的管理停工，不是验收通过。S1/S2已完成，TCP_NODELAY局部修复已验证；S3已终止且高并发P3验收FAIL，S4停工，长尾尝试修复/定位未果，RO-002仍开放；S5/S6未开始。V0.6/S1已按用户提前批准启动，设计与审查计划Approved，S1已完成，V0.6已完成；S1/S2/S3均已完成，S3按用户Approved R002有限三样本收口，无大文件syscall/函数profile/长尾根因结论；不再以V0.5.1验收完成为前置条件。
+
+[停工结论与有限验证](benchmark/results/V0.5.1/SHELVED.md)；[历史检查点](history/V0.5.1/ROADMAP-checkpoints.md)；[诊断资料边界](benchmark/README.md)。现有诊断候选归档保留，不是生产功能或可恢复执行入口。
+
+## 当前推进方向
+
+- 当前：V0.5.1已搁置（未完成）；S1/S2 PASS保留，S3终止/FAIL、S4停工。V0.6/S1已完成（2026-10-08 Reviewer002 PASS），V0.6已完成；S1/S2/S3均已完成，S3按用户Approved R002有限三样本收口，无大文件syscall/函数profile/长尾根因结论。
+- 新接收连接在交付前启用TCP_NODELAY，设置失败只关闭本连接；独立12样本1KiB QPS 716.522→37200.425（51.918倍），每轮P99中位48.399→2.024ms。1MiB吞吐比1.003842/P99比1.064837，均满足局部保护门槛。
+- 默认客户端正文等待从约42ms降至0.27–0.28ms；CPU代价、WSL2/热缓存限制及历史失败完整保留。RO-002保持开放；不继续旧长尾定位，不以S1观测功能替代原性能验收。
+- S1已合入PR #25并发布v0.5.1-s1；S2已合入PR #26（69424e6）并发布v0.5.1-s2，远程标签已核验。
+
+## 当前独立重构进度
+
+- 2026-09-26：R7 已完成；Approved revision 1、Builder001、独立 Reviewer001 PASS WITH DEBT 及 Leader003 收口齐备。仅语义改名及原有英文注释翻译，用户新增/修改注释保持原文；独立 Debug、6/6 CTest、HTTP smoke 通过。TD-006 延续，12 文件既有格式差异按批准例外保留；V0.6 范围不变，无新增功能或性能声明，未提交推送。
+
+- 2026-09-21：R6 已完成。用户已批准生产命名与回调接口迁移、双层注册保护及共享任务槽方案；旧测试源码与文件名冻结，不兼容目标暂退构建/注册，新增有限专项测试。R5 已由 PR #22 合并，R6 从远程 main 的 `d465995` 开始；Builder001、独立 Reviewer001 PASS WITH DEBT 与 Leader002 收口齐备；仅保留用户批准的 TD-006，V0.6 范围不变。
+
+- 当前覆盖状态（2026-09-19）：R2按Approved R006、Builder007/008、Reviewer005 PASS与Leader012完成验收；纠正2/2的停工记录及其后用户单问题恢复、六处绑定修复授权保留，不重置返工额度。R2已提交5317298、PR #19合并d7693da并发布refactor-r2。R3按Approved revision1、Builder001、独立Reviewer001 PASS和Leader003完成ConnectionIo迁移，返工0/2；R3已提交ffb20a6、合并9a49667并发布refactor-r3。R4按Approved revision1、Builder001、Reviewer001 PASS和Leader003完成CLI/信号辅助迁移，源码返工0、证据纠正2/2；R4已提交fdc1b14、合并5eeb859并发布refactor-r4。R5按Approved revision1、Builder001、Reviewer001 PASS及Leader003完成日志/限定一致性检查，源码返工0、路线纠正1/2，未提交推送。R1–R5批准的渐进范围及随后明确授权的全测试清理均已完成：全部29个测试文件与窄范围观察接口经Reviewer final-test-cleanup002 PASS，FS-01–04/FTC-01关闭；全75格式、独立28/28及sanitizer3/3通过，纠正2/2成功。历史fixture不再豁免，合法同步谓词/ABI等规范例外保留。R5及清理未提交推送；不自动新增阶段。下方R005记录仅属历史。
+
+- 2026-09-17：R1基础类型与协议契约已完成。REF-R1-DESIGN/review revision2 Approved及R001为基线，Builder001、独立Reviewer001 PASS、Leader005收口齐备；接口调用闭合、具名parser helper、显式结果、局部formatter/暂存范围hook已交付。独立Debug28/28、五项ASan/UBSan、13项hook、双smoke及反证通过。
+- 2026-09-19：R2按Approved R005完成，Builder004与独立Reviewer003 PASS、Leader007收口齐备。完整TCP/HTTP回调链的具名化已从原R3/R4提前完成；剩余R3运输层、R4其他应用辅助、R5日志与全局一致性尚未启动，整体重构未完成。R1已合并并发布refactor-r1；R2在codex/refactor-r2验收，未提交、未推送。当前安排以本地overall-plan及R005为准；V0.6顺序不变，无新性能声明。
+
+## 项目概览
+
+HP HTTP Server 是一个面向高性能网络岗秋招展示的 Linux C++ HTTP/1.1 服务器项目。项目目标不是实现完整 Web 框架，而是围绕 Linux 系统编程和网络编程能力，逐步构建一个可运行、可压测、可解释、可扩展的高性能 HTTP Server。
+
+项目最终希望展示以下能力：
+
+- 使用 C++20 和 Linux socket API 构建服务器。
+- 使用非阻塞 IO、`epoll` 和 Reactor 模型管理大量连接。
+- 正确处理 TCP 连接生命周期、短读短写、半关闭、超时和错误事件。
+- 实现 HTTP/1.1 请求解析、响应构造、静态资源服务和 keep-alive。
+- 通过线程池、主从 Reactor、定时器和背压机制治理资源。
+- 使用 `sendfile`、异步日志、Buffer 优化和压测分析支撑高性能叙事。
+- 在 HTTP Server 内核稳定后，扩展轻量 L7 Reverse Proxy / Gateway 能力，减少普通 WebServer 项目的同质化。
+
+当前项目已完成 V0.1 最小可运行 HTTP Server 和 V0.2 Reactor 抽象重构；V0.2 的 S1/S2/S3 均有 Approved、实现、独立 Reviewer PASS 与 Leader 收口证据。V0.3/S1增量HTTP Parser已完成并独立PASS；V0.3已完成，S1/S2/S3全部具备Approved、实现、独立Reviewer PASS及Leader收口；V0.4/S1已完成，S2已完成，S3已完成，S4已完成。
+
+总体技术方向：
+
+- 语言优先：C++20。
+- 平台优先：Linux / WSL2，后续性能数据可在原生 Linux 环境复测。
+- 构建优先：CMake，后续可使用 Ninja 或 Make 作为生成器。
+- 核心能力自研：socket、epoll、Reactor、HTTP 解析、连接管理、Buffer、定时器、异步日志。
+- 验证优先：单元测试、smoke test、wrk 压测、perf 或等价性能分析记录。
+
+## 范围边界
+
+### 长期覆盖范围
+
+项目长期覆盖以下能力：
+
+- HTTP/1.1 静态资源服务器。
+- Reactor 网络事件框架。
+- 非阻塞 TCP 连接管理。
+- HTTP 请求解析状态机。
+- keep-alive 与连接复用。
+- 定时器与空闲连接超时。
+- 主从 Reactor 与线程池。
+- 输出 Buffer、高水位和慢连接保护。
+- `sendfile` 零拷贝静态文件传输。
+- 同步日志到异步日志的演进。
+- 基础指标统计、访问日志和性能报告。
+- 轻量 L7 Reverse Proxy / Gateway 扩展。
+
+### 近期不做范围
+
+近期版本不实现以下内容：
+
+- HTTP/2。
+- HTTPS/TLS。
+- 完整 Web 框架或 Servlet 风格容器。
+- 数据库、ORM、业务系统和复杂前端页面。
+- 跨平台兼容。
+- L4LB、NAT、IPVS、XDP、DPDK 或内核旁路能力。
+- 基于 Boost.Asio、libevent、libev、muduo、workflow 等库替代核心网络模型。
+- 完整生产级网关治理能力，例如复杂服务发现、动态配置中心、灰度发布和分布式限流。
+
+### 不得随意删除或覆盖的内容
+
+- `docs/leader/designs/` 下的阶段设计文档。
+- `docs/builder/reports/` 下的实现报告。
+- `docs/reviewer/reports/` 下的审查报告。
+- `TECH-DEBT-TRACKER.md` 中已记录的技术债和关闭依据。
+- `benchmark/` 中已经用于性能对比的压测命令、环境说明和结果记录。
+- `CHANGELOG.md` 中已经记录的版本变化。
+
+历史文档即使过时，也应通过追加新文档、补充说明或标记状态处理，不应直接删除来“清理历史”。
+
+## 推进与完成规则
+
+- V0.1、V0.2 均已完成；V0.2/S3 于2026-09-08取得独立 Reviewer PASS并收口。V0.3/S1已完成，V0.3已完成，S1/S2/S3全部具备Approved、实现、独立Reviewer PASS及Leader收口；V0.4/S1已完成，S2已完成，S3已完成，S4已完成。
+- 阶段状态统一使用：`未开始`、`设计中`、`待实现`、`实现中`、`待审查`、`返工中`、`已完成`、`阻塞`。
+- 阶段设计和审查计划必须处于 `Approved`，Builder 才能开始实现。
+- 阶段只有在实现证据完整，且 Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT` 后，才能标记为 `已完成`。
+- 后续阶段以前一阶段 `已完成` 为前置条件；后续版本以前一版本全部阶段 `已完成` 为前置条件。
+- 版本完成还要求 README、CHANGELOG、技术债和对应报告与实际行为一致。
+- `V1.1` 是 `V1.0` 之后的可选扩展，不属于简历交付版的必需完成条件。
+
+## 版本路线
+
+### V0.1 最小可运行 HTTP Server
+
+状态：`已完成`；`S1`、`S2`、`S3` 均已完成。
+
+前置条件：
+
+- 项目准备文档完成。
+- `V0.1 / S1` 设计与审查计划已经批准。
+
+目标：
+
+构建项目最小可运行闭环。版本完成后，用户可以在 Linux / WSL2 中编译服务器，指定端口和静态资源目录，通过浏览器或 curl 访问静态文件，并看到基础 HTTP 错误响应。
+
+核心能力：
+
+- CMake 项目骨架和基本目录结构。
+- TCP listen socket、bind、listen、accept。
+- fd RAII 封装和非阻塞设置。
+- 单线程 `epoll` LT 事件循环。
+- 最小 HTTP 请求行和 Header 解析。
+- `GET` 静态文件响应。
+- 基础状态码：`200`、`400`、`403`、`404`、`405`、`500`。
+- 输出缓冲处理非阻塞短写。
+- 基础单元测试和 curl smoke test。
+
+禁止范围：
+
+- 不实现 keep-alive。
+- 不实现线程池。
+- 不实现主从 Reactor。
+- 不实现完整 HTTP 状态机。
+- 不实现 `sendfile`。
+- 不实现异步日志。
+- 不实现 L7 代理。
+- 不做 wrk 性能达标承诺。
+
+阶段划分：
+
+- `S1 项目骨架与基础资源封装`（`已完成`）：建立 CMake、目录结构、基础类型、日志、socket RAII 和最小启动入口。设计文档：`docs/leader/designs/V0.1/S1-design.md`。
+- `S2 单线程 epoll 与连接读写`（`已完成`）：实现单线程 epoll LT、非阻塞连接读写、临时 TCP echo、短写续传、半关闭和 fd 生命周期；Reviewer 复审 CTest `6/6`，唯一结论 `PASS`。设计文档：`docs/leader/designs/V0.1/S2-design.md`。
+- `S3 最小 HTTP 静态文件服务`（`已完成`）：design/review revision 1 于 `2026-09-03` 获 PM 批准；Builder 按基线实现，Reviewer 在全新 `build-review-s3/` 中完成 CTest `9/9` 及 RV-01..10，唯一结论 `PASS`。已交付有界最小 HTTP 解析、fd-relative 路径安全、静态文件响应、错误码和真实 smoke test。设计文档：`docs/leader/designs/V0.1/S3-design.md`。
+
+完成标准：
+
+- 可以通过 CMake 完成配置和构建。
+- 服务器可以监听指定端口并响应静态文件请求。
+- curl 验证 `/`、存在文件、不存在文件、非法方法、路径穿越均有预期状态码。
+- 单元测试和 smoke test 通过。
+- `README.md` 包含最小构建、运行和验证命令。
+- Builder 报告和 Reviewer 审查报告已生成。
+- `V0.1 / S3` Reviewer 给出 `PASS` 或允许关闭的 `PASS WITH DEBT`。
+
+相关文档：
+
+- 设计文档：`docs/leader/designs/V0.1/`
+- 实现报告：`docs/builder/reports/V0.1/`
+- 审查报告：`docs/reviewer/reports/V0.1/`
+
+### V0.2 Reactor 抽象重构
+
+状态：`已完成`；`S1/S2/S3 已完成 / Completed`。
+
+前置条件：
+
+- `V0.1` 已完成。
+
+目标：
+
+把 V0.1 中集中在服务器主循环里的 socket、epoll、连接、回调和缓冲职责拆分为清晰的 Reactor 组件。版本完成后，项目应具备可讲解的 `EventLoop`、`Channel`、`Acceptor`、`TcpConnection` 协作模型。
+
+核心能力：
+
+- `EventLoop` 封装单个事件循环。
+- `Channel` 绑定 fd、关注事件和事件回调。
+- `Acceptor` 专门负责监听 fd 和新连接接收。
+- `TcpConnection` 管理单个连接的读写 Buffer、关闭状态和回调。
+- 网络层与 HTTP 层解耦。
+- 重构后保持 V0.1 用户可见行为不回退。
+
+禁止范围：
+
+- 不引入多线程。
+- 不实现 keep-alive。
+- 不引入复杂生命周期框架。
+- 不改变 HTTP 功能范围。
+- 不为了抽象完整性提前实现未来版本能力。
+
+阶段划分：
+
+- `S1 EventLoop 与 Channel`（`已完成`）：生产入口已使用单线程 EventLoop/Channel；Approved revision 1 已实现，Reviewer CTest `10/10` 与 RV-01..10 全通过，唯一结论 `PASS`。设计文档：`docs/leader/designs/V0.2/S1-design.md`。
+- `S2 Acceptor 与 TcpConnection`（`已完成`）：拆分监听连接和普通连接生命周期，明确输入输出 Buffer 边界；Approved revision 1 已实现，Reviewer 全新 Debug CTest `11/11`、RV-01..10 全通过，唯一结论 `PASS`。设计文档：`docs/leader/designs/V0.2/S2-design.md`。
+- `S3 HTTP 链路重接与回归验证`（`已完成`）：已将 HTTP 处理接入新的连接回调模型，补充回归测试；Approved revision1 已实现，Reviewer全新 Debug告警0、CTest12/12和全部RV通过，唯一PASS。设计文档：`docs/leader/designs/V0.2/S3-design.md`。
+
+完成标准：
+
+- `net` 模块不再由单个服务器类同时承担所有事件职责。
+- HTTP 模块不依赖 `epoll` 或连接 fd。
+- V0.1 smoke test 全部通过。
+- 新增 Reactor 关键组件的单元或集成验证。
+- 架构文档中对应模块边界仍然成立。
+- Builder 报告和 Reviewer 审查报告已生成。
+
+相关文档：
+
+- 设计文档：`docs/leader/designs/V0.2/`
+- 实现报告：`docs/builder/reports/V0.2/`
+- 审查报告：`docs/reviewer/reports/V0.2/`
+
+### V0.3 HTTP 状态机与连接复用
+
+状态：`已完成`；S1/S2/S3均已完成，Approved基线、Builder证据、独立Reviewer PASS及Leader收口齐备；2026-09-09完成版本验收，不表示已发布。
+
+前置条件：
+
+- `V0.2` 已完成。
+
+目标：
+
+让服务器从“读取一次请求并关闭连接”升级为支持 HTTP/1.1 请求边界和 keep-alive 的连接复用服务器。版本完成后，服务器能够在同一 TCP 连接上处理多个顺序请求，并正确处理半包、粘包、Header 上限和非法请求。
+
+核心能力：
+
+- HTTP 解析状态机。
+- 请求行、Header、请求边界和错误状态管理。
+- Header 总大小限制。
+- keep-alive 与 `Connection: close` 语义。
+- 同连接多请求顺序处理。
+- 连接复用下的 Buffer 消费和响应队列策略。
+- 更完整的 HTTP 错误响应。
+
+禁止范围：
+
+- 不实现 HTTP request body 大规模处理。
+- 不实现 POST 业务接口。
+- 不实现 chunked body。
+- 不实现 pipelining 并发乱序响应。
+- 不实现线程池和主从 Reactor。
+- 不实现代理转发。
+
+阶段划分：
+
+- `S1 HTTP Parser 状态机`（`已完成`）：Approved revision 1 已交付增量解析、半包、粘包首边界和 Header 上限，并接入每连接适配器；该S1交付时生产单响应关闭（S2已扩展复用），已于2026-09-08通过独立Reviewer验收。设计文档：`docs/leader/designs/V0.3/S1-design.md`。
+- `S2 Keep-Alive 连接复用`（`已完成`）：Approved revision1及S2-rework-001交付零body framing、默认保活/显式close、单响应有界串行与缓存排空恢复；独立Reviewer PASS、Debug告警0、CTest15/15，8REQ/12AC/12RV/RW01..04全部通过。涉及 `http`、`app`、`net`；设计 `docs/leader/designs/V0.3/S2-design.md`，关闭报告 `docs/leader/reports/V0.3/S2-report-004.md`。
+- `S3 协议边界与异常用例`（`已完成`，Approved revision1、Reviewer001 PASS及Leader004齐备）：补充非法请求、超大 Header、异常关闭和回归测试。设计文档：`docs/leader/designs/V0.3/S3-design.md`。
+
+完成标准：
+
+- 单连接连续多个 GET 请求可以得到正确响应。
+- 非法请求不会破坏连接状态或导致进程异常退出。
+- Header 超限、方法不支持、路径非法均有明确行为。
+- V0.1、V0.2 行为不回退。
+- Builder 报告和 Reviewer 审查报告已生成。
+
+相关文档：
+
+- 设计文档：`docs/leader/designs/V0.3/`
+- 实现报告：`docs/builder/reports/V0.3/`
+- 审查报告：`docs/reviewer/reports/V0.3/`
+
+### V0.4 并发模型与资源治理
+
+状态：`已完成`；六项版本完成标准核对见 `docs/leader/reports/V0.4/S4-report-003.md`。S1 Approved revision 1 已实现并经独立 Reviewer PASS、Leader003 收口；S2 已完成，S3已完成，S4已完成。
+
+前置条件：
+
+- `V0.3` 已完成。
+
+目标：
+
+引入多线程并发模型和连接资源治理。版本完成后，服务器应具备主从 Reactor、事件循环线程池、定时器、空闲连接超时、优雅关闭和基础背压能力，可以解释高并发连接下如何避免资源失控。
+
+核心能力：
+
+- 主从 Reactor 模型。
+- `EventLoopThread` 或等价事件循环线程封装。
+- 固定大小的 `EventLoopThreadPool` 和跨线程投递边界。
+- 定时器与空闲连接超时。
+- 响应 `SIGINT`、`SIGTERM` 的优雅关闭流程。
+- 输出 Buffer 高水位和慢连接保护。
+- 跨线程任务投递和唤醒机制。
+
+禁止范围：
+
+- 不承诺极限性能指标。
+- 不实现复杂动态扩缩容线程池。
+- 不引入协程框架。
+- 不实现代理转发。
+- 不实现复杂限流系统。
+- 不把业务处理和 IO 线程边界混在一起。
+
+阶段划分：
+
+- `S1 EventLoop 线程化`（`已完成`，Approved revision 1）：建立事件循环线程封装和跨线程唤醒机制。设计文档：`docs/leader/designs/V0.4/S1-design.md`。
+- `S2 主从 Reactor`（`已完成`，Approved revision 1）：实现由 `EventLoopThreadPool` 持有 sub reactor，main reactor 接收连接并按固定策略分配。设计文档：`docs/leader/designs/V0.4/S2-design.md`。
+- `S3 定时器与连接超时`（`已完成`，Approved revision1）：实现空闲连接超时、keep-alive 超时和定时清理。设计文档：`docs/leader/designs/V0.4/S3-design.md`。
+- `S4 资源上限与优雅关闭`（`已完成`，Approved revision1）：加入输出高水位、跨线程任务上限、信号停止通知和关闭流程验证。设计文档：`docs/leader/designs/V0.4/S4-design.md`。
+
+完成标准：
+
+- 服务器可以使用多个事件循环线程处理连接。
+- 空闲连接会按策略关闭。
+- 慢连接不会无限占用输出缓冲内存。
+- 关闭流程不会遗留 fd、悬空回调或重复关闭。
+- 并发相关测试和 smoke test 通过。
+- Builder 报告和 Reviewer 审查报告已生成。
+
+相关文档：
+
+- 设计文档：`docs/leader/designs/V0.4/`
+- 实现报告：`docs/builder/reports/V0.4/`
+- 审查报告：`docs/reviewer/reports/V0.4/`
+
+### V0.5 性能优化与静态文件传输增强
+
+状态：S1已完成（Approved revision1），S2已完成（Approved revision1，Reviewer001 PASS及Leader003收口），S3已完成（Approved revision1，Reviewer002 PASS及Leader003收口），S4已完成（原设计及R001 Approved、Reviewer002 PASS、Leader005五项条件收口），V0.5已完成，未合并/发布。
+
+前置条件：
+
+- `V0.4` 已完成。
+
+目标：
+
+围绕静态文件服务性能建立优化闭环。版本完成后，服务器应支持 `sendfile` 零拷贝传输、异步日志、Buffer 优化和基础压测基线，让“高性能”具备可验证证据。
+
+核心能力：
+
+- `sendfile` 零拷贝静态文件传输。
+- 文件 fd 生命周期管理。
+- 大文件短写和续写处理。
+- 异步日志或明确日志方案升级。
+- Buffer 减少拷贝和内存占用治理。
+- wrk 基础压测脚本和结果记录。
+- 性能优化前后对比记录。
+
+禁止范围：
+
+- 不引入生产级 CDN 缓存系统。
+- 不实现复杂 HTTP 缓存协商全集。
+- 不为了压测数字牺牲协议正确性。
+- 不用不可复现环境中的单次结果作为最终性能结论。
+- 不将性能测试替代功能测试。
+
+阶段划分：
+
+- `S1 sendfile 文件传输`（`已完成`，Approved revision1）：实现静态文件零拷贝传输和短写续传。设计文档：`docs/leader/designs/V0.5/S1-design.md`。
+- `S2 异步日志与 IO 路径减负`（`已完成`，Approved revision1）：已交付固定有界队列、单消费者与过载/关闭契约，独立25/25及8AC/RV通过；不承诺吞吐增益或阻塞stderr下整个进程限时退出。设计文档：`docs/leader/designs/V0.5/S2-design.md`。
+- `S3 Buffer 与背压优化`（`已完成`，Approved revision1）：已交付连续游标Buffer、直接接收、>64KiB空闲输出释放及原背压/慢连接机制验证，独立27/27和最终8AC/RV通过。设计文档：`docs/leader/designs/V0.5/S3-design.md`。
+- `S4 压测基线`（`已完成`，Approved revision1及R001、Reviewer002 PASS）：已交付固定两版本/两文件基本wrk对比、环境与错误/回收规则及五项版本退出核对。设计文档：`docs/leader/designs/V0.5/S4-design.md`。
+
+完成标准：
+
+- 静态文件传输路径支持 `sendfile` 或有明确降级策略。
+- 日志不会在高并发请求热路径上造成明显阻塞。
+- wrk 压测命令、环境、参数和结果可复现。
+- 性能优化不会破坏 V0.1 到 V0.4 的正确性测试。
+- Builder 报告和 Reviewer 审查报告已生成。
+
+相关文档：
+
+- 设计文档：`docs/leader/designs/V0.5/`
+- 实现报告：`docs/builder/reports/V0.5/`
+- 审查报告：`docs/reviewer/reports/V0.5/`
+- 压测记录：`benchmark/`
+
+### V0.5.1 性能回退诊断与修复
+
+状态：**已搁置（未完成）**（2026-10-08用户管理停工）。S1/S2已完成；S3终止且独立性能验收FAIL；S4停工，RO-002开放；S5/S6未开始。历史计划与报告保留，不作为恢复授权。
+
+背景与目标：
+
+- V0.5/S4 的历史独立基准发现 1KiB 中位 QPS 从 21373.88 降到 713.56，每轮 P99 中位数从 3.499ms 升到 48.437ms；基线存在噪声，根因未确定。这是历史观测，不是当前重构代码的实测结论。
+- 优先查清退化是否仍存在及其机制，按证据实施最小修复，形成独立的修复前后验证与防退化入口。
+- 当前重构后的基线需单独固定与测量；保留原固定 A/B 基准、失败记录和用户学习注释。
+
+阶段划分：
+
+- `S1 复现与根因定位`（`已完成`，Reviewer002 PASS）：历史 A/B 与当前 C 分开测量；有限阶段隔离和机制反证，输出原因证据、剩余不确定性及 S2 决策依据。设计：[S1-design.md](docs/leader/designs/V0.5.1/S1-design.md)。
+- `S2 针对性修复与回归`（`已完成`，Approved revision1、Reviewer001 PASS）：根据 S1 证据制定并批准修复设计，修复已确认问题，补足受影响行为的回归覆盖。
+- `S3 独立性能验收与收口`（活动已终止，验收`阻塞`/历史FAIL）：[原Approved设计](docs/leader/designs/V0.5.1/S3-design.md)与历史记录保留。R005候选E完整30样本有效，仅P3 corrected P99 E/C=3.2446未达≤0.25，其余场景和全部QPS跨度通过；后续诊断尚未闭合原因。[终止交付记录](docs/leader/reports/V0.5.1/S3-report-033.md)。接续提交acda3f9已保存；不把终止或拆分记成验收已完成。
+
+延伸路线保持S4→S5→S6；责任承接[R020](docs/leader/reworks/V0.5.1/S3-rework-020.md)及[S4 design](docs/leader/designs/V0.5.1/S4-design.md)/[S4 review](docs/reviewer/reviews/V0.5.1/S4-review.md)已Approved。当前待批的是[R008分层启动恢复](docs/leader/reworks/V0.5.1/S4-rework-008.md)及[审查补充001](docs/reviewer/reviews/V0.5.1/S4-review-amendment-001.md)；S5/S6仍需各自详细设计，不能因工具失败跳过S4。
+
+- `S4 高并发长尾分层定位`（`返工中`，Reviewer005 FAIL）：固定S3封存候选E，目标仍是负载分层与至少一次真实慢请求的完整关联。M2工具启动失败，原两次smoke已耗尽，M3停止；拟按R008先2连接单次/连续请求、再8连接线程映射、最后128连接恢复工具链。新增样本须R008获批，恢复通过不等于阶段通过。退出仍须原阶梯/ABBA、≥50ms真实请求等待区间、扰动检查和独立核验；不增加stage、不降低门槛、不直接进入S5。
+- `S5 长尾机制确认与最小修复`（`未开始`）：以S4独立通过的时间线和未决假设为输入，先制定可区分候选机制的对照，再实施有证据支持的最小修复并做正确性/目标场景回归。进入前另行批准具体design/review、改动范围和额度；不预设Logger、TCP或WSL为根因。退出须有机制反证、候选身份及独立验证；若指向环境/客户端或证据不足，先提交有界环境对照/处理方案，不制造无依据的产品补丁、不自动更换平台或豁免门槛。
+- `S6 独立性能验收与版本收口`（`未开始`）：在S5形成可验收候选及处理结论后，另行批准固定候选和执行预算。按原五场景、每角色30样本及原有效性/数值门槛独立验证；诊断结果不能代替正式无诊断候选性能数据。逐项承接原S3未满足的REQ-06/AC-06及其他未决验收，核对正确性、资源代价和RO-002，独立通过后由Leader新报告关闭承接自S3的性能遗留项及V0.5.1；历史FAIL不改写。验收失败保留并返回具体缺口，不循环重复全套。
+
+范围与约束：
+
+- S1 不交付生产优化；诊断实验必须与正式测量、产品候选区分。S2/S3 的数值验收门槛依据 S1 可重复数据制定并在执行前批准，不能事后调整门槛迎合结果。
+- 不扩入完整指标平台、访问日志体系、全场景调优、Gateway、全局配额或全面旧测试迁移。V0.6 保留其后续能力范围。
+- TD-006 按需补足本次覆盖，冻结旧测试不擅自改写；TD-001 环境限定和 TD-005 文档同步继续适用。
+- 当前不预设 sendfile、logger、Buffer 或 TCP 策略为根因，不承诺固定 QPS 或普适收益。
+
+完成标准：
+
+- 诊断与独立验证有可追溯源码/工具身份、命令、完整样本和失败记录；无法复现不等于问题解决。
+- 经批准的修复满足性能门槛及正确性、连接复用、背压、关闭和资源保护要求；后续交付阶段取得独立 Reviewer PASS 或获准关闭的 PASS WITH DEBT；已终止S3的历史FAIL保留，其未满足条件由S6逐项承接。
+- 更新 RO-002、公开结果和运行入口；没有证据时不得关闭异常观察或发布性能改善声明。
+- 后续路线获批后，S4诊断完成不等于S3性能通过；S6须明确覆盖原S3全部剩余条件后才能关闭遗留问题及版本，不能绕过历史失败或事后降低门槛。
+
+- 2026-10-05：R009–R011隔离观测已结束。私有tracefs与实际线程PID映射可用，但两个真实负载观测样本均大量丢事件；修正采集器递归容量检查后，最后高频微型仍丢48185事件，未满足完整观测准入。三次HTTP尝试仅A1有效，原ABBA未成立，A4未执行。服务器具体根因仍未知，正式S3仍返工中/FAIL，无新生产修复或门槛调整。见[Builder013](benchmark/results/V0.5.1/S3/S3-builder-013.md)与[Reviewer012](benchmark/results/V0.5.1/S3/S3-reviewer-012.md)。
+
+- 2026-10-06：获批R012精简采集已预审，唯一微型在约60.672ms突发、实际258KiB/CPU缓冲下丢21284事件，按停止条件两个HTTP样本均未启动。小缓冲突发不代表约4MiB的计划真实观测，不能据此判断P3必败或服务器根因。独立Reviewer013维持FAIL；原R005有效30样本及P3未达标保留。见[Builder014](benchmark/results/V0.5.1/S3/S3-builder-014.md)与[Reviewer013](benchmark/results/V0.5.1/S3/S3-reviewer-013.md)。
+
+- 2026-10-06：R017盘点超时、R018自动解析缺陷保留invalid；独立离线核验确认Hyper-V-Hypervisor注册与自有资源正常回收，尚未取得目标WSL宿主调度事件。正式FAIL保持，R019同步观测范围及新增额度Draft待批准。见[Builder020](benchmark/results/V0.5.1/S3/S3-builder-020.md)与[Reviewer019](benchmark/results/V0.5.1/S3/S3-reviewer-019.md)。
+- 2026-10-06：R016零丢失同期观察及独立核验完成，67021对sendto与221条内核样本完整。R014的240.784ms未复现，本轮最长7.058ms近返回采到TCP发送路径；70.166ms间隙一次快照确认epoll_wait，均不足以闭合根因。正式P3仍FAIL，S3返工中，未做生产修复或性能改善声明。见[Builder018](benchmark/results/V0.5.1/S3/S3-builder-018.md)与[Reviewer017](benchmark/results/V0.5.1/S3/S3-reviewer-017.md)。
+- 2026-10-06：R014单serverworker观察零丢失/完整排空，独立确认sendto240.784ms（105B成功）、futex7.868ms及等待地址。根因与锁对象未知，无完整调度切出不等于纯CPU；Reviewer015维持正式FAIL。见[Builder016](benchmark/results/V0.5.1/S3/S3-builder-016.md)与[Reviewer015](benchmark/results/V0.5.1/S3/S3-reviewer-015.md)。
+- 2026-10-06：R013校正准入通过各90000对独立核验，两个短样本已完成，选定两worker时间线零丢失/无残留。server相邻发送间隙137.954ms主要阻塞至唤醒，另123.350ms仅0.057ms offCPU，具体调用/锁地址及运行残差原因仍未知。控制/观测P99差72.44%超扰动阈值，不能外推收益；独立Reviewer014保持正式FAIL。见[Builder015](benchmark/results/V0.5.1/S3/S3-builder-015.md)与[Reviewer014](benchmark/results/V0.5.1/S3/S3-reviewer-014.md)。
+
+### V0.6 可观测性与性能分析
+
+状态：V0.6 `已完成`；S1/S2/S3均`已完成`。S3按用户Approved R002有限三样本范围、Builder003与Reviewer001独立PASS收口；返工2/2历史保留。大文件syscall未知，未得到函数profile/长尾根因或性能恢复证明。
+
+前置条件：
+
+- 2026-10-08用户明确允许V0.5.1已搁置（未完成）后直接推进V0.6，覆盖原完成前提；历史FAIL和RO-002保留。已有局部修复证据仅按其实际边界使用。
+
+目标：
+
+补齐项目作为简历项目所需的可观测和性能分析材料。版本完成后，项目不仅能运行和压测，还能解释吞吐、延迟、错误、连接数、CPU 热点和优化方向。
+
+核心能力：
+
+- 结构化访问日志。
+- 基础指标统计。
+- 内部指标接口或指标导出文本。
+- wrk 多场景压测报告。
+- perf 或等价工具的热点分析记录。
+- 不同线程数、连接数、文件大小下的结果对比。
+- 性能结论与技术债记录。
+
+禁止范围：
+
+- 不搭建完整 Prometheus / Grafana 系统。
+- 不为了展示而引入复杂监控平台。
+- 不编造性能数据。
+- 不把 WSL2 数据直接包装成生产服务器性能结论。
+- 不在未记录环境的情况下比较性能结果。
+
+阶段划分：
+
+- `S1 指标统计与访问日志`：记录请求数、状态码、连接数、延迟和错误计数。设计文档：`docs/leader/designs/V0.6/S1-design.md`。
+- `S2 压测场景矩阵`：整理小文件、大文件、短连接、keep-alive、多线程等压测场景。设计文档：`docs/leader/designs/V0.6/S2-design.md`。
+- `S3 性能分析报告`（`已完成`）：记录有限线程CPU分布、小文件系统调用汇总、强跟踪扰动及未证实瓶颈假设/后续方向；原四套失败不改。用户Approved R002将新增分析限定为M2 untraced/traced和M6 untraced，Reviewer独立同三条PASS；不重启长尾定位。设计文档：`docs/leader/designs/V0.6/S3-design.md`，调整基线：`docs/leader/reworks/V0.6/S3-rework-002.md`。
+
+完成标准：
+
+- 每组压测结果包含环境、命令、参数、QPS、平均延迟、P95/P99 和错误率。
+- 至少形成一份可放入 README 或简历讲解的性能结论。
+- 可观测能力不破坏核心 IO 路径。
+- 技术债和风险已同步到 `TECH-DEBT-TRACKER.md`。
+- Builder 报告和 Reviewer 审查报告已生成。
+
+相关文档：
+
+- 设计文档：`docs/leader/designs/V0.6/`
+- 实现报告：`docs/builder/reports/V0.6/`
+- 审查报告：`docs/reviewer/reports/V0.6/`
+- 压测记录：`benchmark/`
+
+### V1.0 简历交付版
+
+状态：整体未完成；S1 `待实现`（2026-10-09用户明确授权限定文档整理，设计/审查Approved）；S2/S3 `未开始`。
+
+前置条件：
+
+- `V0.6` 已完成。
+
+目标：
+
+将项目整理为可展示、可运行、可讲解的秋招简历项目。版本完成后，面试官可以通过 README 快速理解项目价值，通过架构文档深入查看设计，通过压测报告验证性能叙事。
+
+核心能力：
+
+- README 项目介绍、快速开始、核心亮点和压测摘要。
+- 架构图或文字化模块关系说明。
+- 完整构建、运行、测试、压测命令。
+- 关键设计取舍说明。
+- 已知限制和技术债说明。
+- 简历表述建议和面试讲解主线。
+
+禁止范围：
+
+- 不在 V1.0 临时加入大功能。
+- 不为了展示修改未经验证的性能数字。
+- 不删除历史报告。
+- 不把未完成能力写成已完成能力。
+
+阶段划分：
+
+- `S1 文档整理与入口完善`（`待实现`）：整理 README、ARCHITECTURE、ROADMAP、CHANGELOG 和文档索引；保留现有include/src布局，不改代码或执行最终回归。设计文档：`docs/leader/designs/V1.0/S1-design.md`。
+- `S2 展示材料与结果固化`：固化压测摘要、架构说明、简历亮点和面试问答主线。设计文档：`docs/leader/designs/V1.0/S2-design.md`。
+- `S3 最终回归与发布检查`：执行完整测试、smoke test、关键压测和文档一致性审查。设计文档：`docs/leader/designs/V1.0/S3-design.md`。
+
+完成标准：
+
+- 新用户可以按 README 在干净环境中构建、运行和验证。
+- README 明确展示项目亮点、技术栈、能力范围和压测摘要。
+- 所有已完成版本的设计、报告和审查文档可追踪。
+- `TECH-DEBT-TRACKER.md` 记录未完成能力和已接受风险。
+- 最终 Reviewer 审查报告确认项目达到简历展示标准。
+
+相关文档：
+
+- 设计文档：`docs/leader/designs/V1.0/`
+- 实现报告：`docs/builder/reports/V1.0/`
+- 审查报告：`docs/reviewer/reports/V1.0/`
+
+### V1.1 轻量 L7 Gateway 扩展
+
+状态：计划中。
+
+前置条件：
+
+- `V1.0` 已完成。
+- 用户明确批准继续扩展代理能力。
+
+目标：
+
+在 HTTP Server 内核稳定后，加入轻量 L7 Reverse Proxy / Gateway 能力。该版本用于降低项目同质化，让项目从“静态 HTTP Server”扩展为“具备应用层转发能力的高性能 HTTP 服务端内核”。
+
+核心能力：
+
+- 基于路径前缀或 Host 的路由规则。
+- upstream 配置与选择。
+- 简单负载均衡策略。
+- upstream 连接建立、复用或明确关闭策略。
+- 转发超时、失败响应和错误日志。
+- 代理访问日志和基础指标。
+
+禁止范围：
+
+- 不实现 L4LB。
+- 不实现服务发现系统。
+- 不实现复杂动态配置中心。
+- 不实现完整 API Gateway 治理能力。
+- 不实现 TLS 终止。
+- 不实现分布式限流、熔断和灰度发布全集。
+
+阶段划分：
+
+- `S1 代理配置与路由规则`：定义 upstream 和路由匹配边界。设计文档：`docs/leader/designs/V1.1/S1-design.md`。
+- `S2 HTTP 转发链路`：实现请求转发、响应回传、超时和错误处理。设计文档：`docs/leader/designs/V1.1/S2-design.md`。
+- `S3 代理压测与观测`：验证代理链路性能、日志和指标。设计文档：`docs/leader/designs/V1.1/S3-design.md`。
+
+完成标准：
+
+- 可以将指定路径请求转发到配置的 upstream。
+- upstream 不可用、超时或响应异常时有明确错误响应。
+- 代理能力复用现有 `net`、`http`、`timer`、`metrics` 模块边界。
+- 静态文件服务能力不回退。
+- 代理场景有 smoke test 和基础压测记录。
+- Builder 报告和 Reviewer 审查报告已生成。
+
+相关文档：
+
+- 设计文档：`docs/leader/designs/V1.1/`
+- 实现报告：`docs/builder/reports/V1.1/`
+- 审查报告：`docs/reviewer/reports/V1.1/`
+- 压测记录：`benchmark/`
+
+## 阶段设计摘要
+
+### V0.1 阶段摘要
+- `S1 项目骨架与基础资源封装`（`已完成`）：产出可构建项目、基础 RAII 工具、socket 封装和最小启动入口；Reviewer 独立 CTest `3/3` 通过，结论为 `PASS`；涉及 `app`、`base`、`net`。
+- `S2 单线程 epoll 与连接读写`（`已完成`）：已产出非阻塞监听、单线程 epoll LT、连接读写、输出缓冲和临时 echo；Reviewer 复审 `PASS`；涉及 `net`、`tests`。
+- `S3 最小 HTTP 静态文件服务`（`已完成`）：已产出 GET 静态文件、错误响应、路径安全和 smoke test；Reviewer 独立 CTest `9/9`、RV-01..10 全部通过，唯一结论 `PASS`；涉及 `http`、`net`、`app`、`tests`。
+
+### V0.2 阶段摘要
+
+- `S1 EventLoop 与 Channel`（`已完成`）：已交付生产路径实际使用的单线程事件循环和非 fd owner Channel；涉及 `net`、`tests`。
+- `S2 Acceptor 与 TcpConnection`（`已完成`）：已交付监听连接和普通连接生命周期抽象；涉及 `net`、`base`。
+- `S3 HTTP 链路重接与回归验证`（`已完成`）：已交付重构后的 HTTP 服务链路和回归测试；涉及 `net`、`http`、`tests`。
+
+### V0.3 阶段摘要
+
+- `S1 HTTP Parser 状态机`（`已完成`）：Approved revision 1，独立PASS、CTest13/13，已于2026-09-08通过独立Reviewer验收；已交付增量解析、粘包边界和限额，涉及 `http`、`app`、`tests`，服务复用留给 S2。
+- `S2 Keep-Alive 连接复用`（`已完成`）：Approved revision1及S2-rework-001交付零body framing、默认保活/显式close、单响应有界串行与缓存排空恢复；独立Reviewer PASS、Debug告警0、CTest15/15，8REQ/12AC/12RV/RW01..04全部通过。涉及 `http`、`app`、`net`；设计 `docs/leader/designs/V0.3/S2-design.md`，关闭报告 `docs/leader/reports/V0.3/S2-report-004.md`。
+- `S3 协议边界与异常用例`（`已完成`，Approved revision1、Reviewer001 PASS及Leader004齐备）：产出异常输入测试和错误语义验证；涉及 `http`、`tests`。
+
+### V0.4 阶段摘要
+
+- `S1 EventLoop 线程化`（`已完成`，Approved revision 1）：产出事件循环线程和跨线程唤醒机制；涉及 `net`、`base`.
+- `S2 主从 Reactor`（`已完成`，Approved revision 1）：产出由固定 `EventLoopThreadPool` 持有 sub reactor 的连接分发模型；涉及 `net`。
+- `S3 定时器与连接超时`（`已完成`，Approved revision1）：产出空闲连接清理和超时策略；涉及 `timer`、`net`。
+- `S4 资源上限与优雅关闭`（`已完成`，Approved revision1）：产出高水位、跨线程任务上限、信号停止通知和关闭流程验证；涉及 `net`、`base`。
+
+### V0.5 阶段摘要
+
+- `S1 sendfile 文件传输`（`已完成`，Approved revision1）：产出零拷贝静态文件路径；涉及 `http`、`net`。
+- `S2 异步日志与 IO 路径减负`（`已完成`，Approved revision1）：交付有界异步日志及生产RAII，8REQ/8AC/RV通过；涉及 `base`、`app`、`tests`。
+- `S3 Buffer 与背压优化`（`已完成`，Approved revision1）：交付Buffer减少拷贝/容量保留及现有背压验证；涉及 `base`、`net`。
+- `S4 压测基线`（`已完成`，Approved revision1及R001、Reviewer002 PASS）：已交付固定版本wrk脚本、环境/结果与版本退出核对；涉及 `benchmark`。
+
+### V0.5.1 阶段摘要
+
+- `S1 复现与根因定位`（`已完成`，Reviewer002 PASS）：可复现基线、有限定位、S2 决策依据。
+- `S2 针对性修复与回归`（`已完成`，Approved revision1、Reviewer001 PASS）：按已证实原因修复并补齐必要验证。
+- `S3 独立性能验收与收口`（`阻塞`）：R002完整30样本已执行但P1稳定性及P3尾延迟失败，Reviewer006 FAIL；Reviewer完整矩阵按失败即停未执行，版本未完成。
+
+### V0.6 阶段摘要
+
+- `S1 指标统计与访问日志`：已完成，Reviewer002独立PASS；产出基础计数、opt-in结构化日志和退出文本导出；涉及 `metrics`、`app`、`net`、`http`，复用 `base` 日志。
+- `S2 压测场景矩阵`：已完成，Reviewer002独立PASS；首次工具失败/CPU缺口及两轮返工历史保留；产出多场景压测命令和结果记录；涉及 `benchmark`。
+- `S3 性能分析报告`：产出热点分析、瓶颈判断和技术债记录；涉及 `benchmark`、`docs`。
+
+### V1.0 阶段摘要
+
+- `S1 文档整理与入口完善`：产出完整 README 和文档索引；涉及 `docs`。
+- `S2 展示材料与结果固化`：产出压测摘要、架构说明和简历讲解主线；涉及 `docs`、`benchmark`。
+- `S3 最终回归与发布检查`：产出最终审查报告和发布检查结果；涉及 `tests`、`docs`。
+
+### V1.1 阶段摘要
+
+- `S1 代理配置与路由规则`：产出 upstream 和路由规则边界；涉及 `proxy`、`config`。
+- `S2 HTTP 转发链路`：产出代理请求转发和响应回传；涉及 `proxy`、`http`、`net`。
+- `S3 代理压测与观测`：产出代理场景测试和性能记录；涉及 `proxy`、`metrics`、`benchmark`。
+
+## 长期演进方向
+
+以下方向属于远期候选，不代表当前版本必须实现：
+
+- 更完整的 L7 Gateway 能力，例如健康检查、连接池、基础熔断和限流。
+- 更细的 HTTP 协议兼容能力，例如 Range、ETag、If-Modified-Since、chunked body。
+- 在原生 Linux 环境中复测 WSL2 开发阶段的关键性能结论。
+- 更完善的异步日志和日志落盘策略。
+- 更系统的 perf、火焰图和系统调用热点分析。
+- 可选部署能力，例如 systemd 服务文件、默认配置示例和运行目录约定。
+
+进入更远期版本前，必须先满足以下条件：
+
+- V1.0 已经形成可运行、可测试、可压测、可讲解的简历交付版。
+- 已完成能力的测试和文档闭环稳定。
+- `TECH-DEBT-TRACKER.md` 中不存在阻塞后续演进的高风险技术债。
+- 用户明确希望继续扩展，而不是优先准备简历材料或面试讲解。
+
+## 变更记录
+
+- 2026-10-05：用户批准R002，恢复每角色一次完整验收，历史失败保留，原门槛和预算保持。
+
+- 2026-10-05：执行Approved R001限定诊断，Reviewer005确认本次未复现；历史根因未知，阶段BLOCKED；R002完整验收恢复Draft未执行。
+
+- 2026-09-28：S3两次正式套超时并出现计时差异，完整性能验收阻塞；原门槛不变，R001有限诊断为Draft，未关闭RO-002。
+
+- 2026-09-28：用户批准S3设计/审查revision1，进入实施，门槛与预算不变；暂无S3验收结论。
+
+- 2026-09-28：S2经PR #26合并69424e6，v0.5.1-s2标签已推送核验；S3 Draft设计/审查就绪，未实施、未关闭RO-002。
+
+- 2026-09-28：S2 TCP_NODELAY最小修复及独立局部性能/正确性验收完成；S3未开始，RO-002仍待最终验收。
+
+- 2026-09-28：S1已合并并发布v0.5.1-s1；S2修复设计/审查Draft revision1就绪，尚未实施。
+
+
+- 2026-09-28：按用户授权插入 V0.5.1 三阶段，优先处理 RO-002；S1 Draft 就绪，V0.6 后移，无新增实测或性能结论。
+
+- `2026-09-09`：确认 S1 PR #10 合并提交 fb09f1d，发布并核对 v0.4-s1 标签；准备 S2 Draft revision 1 设计、审查与Leader001。S2设计中，S3/S4未开始，未实现主从Reactor。
+
+
+- `2026-09-09`：准备 V0.4/S1 Draft revision 1 设计、审查计划及 Leader001；S1 设计中，S2/S3/S4 未开始。生产仍单线程，未实现新能力。
+
+
+- `2026-09-09`：依据S3 Builder001、独立Reviewer001 PASS及Leader004关闭S3、V0.3与P3-01；TD-003按退出条件Closed，TD-005当前检查点完成并持续Open；V0.4未开始。
+
+- `2026-09-09`：依据PM“批准，开始工作”及Leader V0.3/S3-report-002登记S3 revision1 Approved、待实现；范围及既有架构不变，未新增验收或债务关闭声明。
+
+- `2026-09-08`：准备V0.3/S3 Draft revision1设计、审查与Leader001；S3设计中待批准，S1/S2已完成，V0.3尚未完成。
+
+- `2026-09-08`：依据V0.3/S2 Builder001、Reviewer001 PASS和Leader004关闭S2及P3-01，TD-003/005当前检查点完成但持续Open；V0.3进行中、S3未开始。
+
+- `2026-09-08`：依据PM原话“批准，进行开发”及Leader V0.3/S2-report-002，将S2 design/review revision1登记Approved，当前待实现 / Ready for Builder；无功能验收或新增债务。
+
+- `2026-09-08`：从已合并并标记v0.3-s1的主线准备V0.3/S2 Draft revision1设计/审查计划及Leader001；S2设计中待批准，S3未开始，功能未修改。
+
+- `2026-09-08`：依据V0.3/S1 Builder001、Reviewer001 PASS及Leader003关闭S1/P3-01和TD003/005当前检查点；V0.3整体进行中，S2设计中、S3未开始，无新债务。
+
+- `2026-09-08`：依据PM批准及Leader V0.3/S1-report-002，design/review revision1登记Approved，当前待实现；V0.3/S2设计中、S3未开始，无新增债务。
+
+- `2026-09-08`：形成 V0.3/S1 Draft revision 1 设计、审查和决策包，S1 设计中等待批准，S2/S3 未开始。
+
+- `2026-09-08`：依据S3 Builder001、Reviewer001唯一PASS与Leader003，关闭S3和整个V0.2、P3-01/P3-02及TD-005检查点；V0.3未开始，无新增债务。
+
+- `2026-09-08`：依据 PM 当前批准和 Leader S3-report-002，V0.2/S3 revision1 登记 Approved，当前待实现；V0.2整体进行中，无新增债务。
+
+- `2026-09-08`：形成V0.2/S3 Draft revision1设计、审查与决策包，S3设计中等待批准，V0.2尚未整体完成。
+
+- `2026-09-08`：依据 S2 Builder 001、Reviewer 001 唯一 PASS 与 Leader 003，关闭 V0.2/S2、P3-01 和 TD-005 阶段检查点；V0.2 进行中，S3 未开始，无新增债务。
+
+- `2026-09-08`：依据 PM 明确批准与 Leader S2-report-002，V0.2/S2 revision 1 登记 Approved，当前待实现；S1 已完成，S3 未开始，无新增债务。
+
+- `2026-09-08`：S2设计与审查Draft revision 1形成，等待PM决定；S1已完成，S3未开始。
+
+- `2026-09-07`：依据 V0.2/S1 Builder 001 与 Reviewer 001 唯一 `PASS`，Leader report-003 关闭 S1 和 P3-01；V0.2 整体进行中、S2/S3 未开始，无新增债务。
+
+- `2026-09-07`：登记 PM 批准 V0.2/S1 revision 1，状态同步为`待实现 / Ready for Builder`；批准依据见 Leader S1-report-002，尚未实现或验收。
+
+- `2026-09-03`：形成 V0.2/S1 Draft revision 1，活动规划进入`设计中 / Awaiting PM Decision`；保持既有 S1/S2/S3 边界，批准前不实现，并修正 V0.1/S3 阶段摘要的状态漂移。
+- `2026-09-03`：依据 S3 Builder 报告 001 与 Reviewer 报告 001 的唯一 `PASS`，将 S3 与 V0.1 标记为`已完成`；下一步由 Leader 设计 V0.2/S1，不直接实现。
+- `2026-09-03`：PM 明确批准 S3 Draft revision 1；design/review 同步为 `Approved`，活动阶段推进到 `待实现 / Ready for Builder`，尚未开始实现。
+- `2026-09-03`：形成 S3 Draft design/review revision 1 与 PM 决策包；活动阶段同步为 `设计中 / Awaiting PM Decision`，批准前不启动 Builder/Reviewer。
+- `2026-09-01`：依据 Builder 报告 001/002 与 Reviewer 复审报告 002 的 `PASS`，将 S2 标记为 `已完成`；下一步由 Leader 设计 S3，S3 批准前不实现。
+- `2026-08-27`：S2 Draft 设计与审查计划已形成；将活动阶段同步为 S2 `设计中` / `Awaiting PM Decision`，批准前不交给 Builder。
+- `2026-08-25`：依据 S1 Builder 报告 002 和 Reviewer 报告 001 的 `PASS` 结论，将 S1 标记为已完成，并明确下一步由 Leader 设计 S2。
+- `2026-08-24`：补充版本前置条件、统一阶段完成门槛，明确 `V0.4` 的事件循环线程池边界及 `V1.1` 的可选扩展属性。
+- `2026-05-21`：初始化项目路线图，确定从最小 HTTP Server 到 Reactor、HTTP 状态机、并发治理、性能优化、可观测性、简历交付版和 L7 Gateway 的版本路线。
+
+- `2026-09-09`：依据 PM 批准与 Leader V0.4/S1-report-002 登记 S1 Approved revision 1，待实现 / Ready for Builder；范围与后续阶段边界不变。
+
+- `2026-09-09`：依据 V0.4/S1 Builder001、Reviewer001 PASS 与 Leader003 关闭 S1 和 P3-01；V0.4 整体尚未完成，S2/S3/S4 未开始。
+
+- `2026-09-09`：依据 PM“批准，工作吧”及 Leader V0.4/S2-report-002 登记 S2 Approved revision 1，待实现；S1已完成，S3/S4未开始。
+
+- `2026-09-09`：依据 V0.4/S2 Builder001、Reviewer001 PASS 与 Leader003 关闭 S2/P3-01；S1/S2已完成，V0.4尚未完成，S3/S4未开始。
+
+- `2026-09-09`：S2合并提交cfca3bb已发布v0.4-s2；在codex/v0.4-s3-timers-timeouts准备S3 Draft设计/审查及Leader001，S3设计中待批准，S4未开始。
+
+- `2026-09-09`：依据PM批准与Leader V0.4/S3-report-002登记S3 Approved revision1，待实现；S4未开始，V0.4尚未完成。
+
+- `2026-09-09`：依据V0.4/S3 Builder001、Reviewer001 PASS及Leader003关闭S3/P3-01，S1/S2/S3已完成；S4未开始，V0.4未完成。
+
+- 2026-09-09：依据PM批准及Leader V0.4/S4-report-002登记S4 Approved、待实现；V0.4尚未完成。
+
+- 2026-09-09：依据S4 Reviewer002 PASS与Leader003关闭S4和V0.4；ROADMAP实际六项完成条件均有证据，历史“七项”为计数勘误；V0.5未开始。
+
+- 2026-09-10：依据PM批准与Leader V0.5/S1-report-002登记S1 Approved、待实现；M0→M3顺序执行，后续阶段未开始。
+
+- 2026-09-10：依据V0.5/S1 Reviewer002 PASS与Leader003关闭S1；V0.5未完成，S2/S3/S4未开始，sendfile机制不替代性能基线。
+
+- 2026-09-10：在codex/v0.5-s2-async-logging准备S2 Draft revision1设计、审查及Leader001；S2设计中，S3/S4未开始，未实现异步日志；远程连接失败，分支基于本地S1及格式化提交4c628e5。
+
+- 2026-09-10：依据PM“批准，完成后提交并推送”及Leader V0.5/S2-report-002登记S2 design/review Approved revision1、待实现 / Ready for Builder；包含阻塞stderr最终join不保证限时的整体设计边界。S3/S4未开始，尚无S2实现或验收结论。
+
+- 2026-09-10：依据V0.5/S2 Reviewer001 PASS和Leader003关闭S2/P3-01及TD-002；TD-005本阶段检查点完成、持续Open，TD-001留S4。S1/S2已完成，S3/S4未开始，V0.5未完成；S2尚未提交推送。
+
+- 2026-09-10：S2经PR #15合并至0146a75，annotated v0.5-s2已推送且peeled核对一致；新分支codex/v0.5-s3-buffer-backpressure准备S3 Draft revision1设计/审查和Leader001。S3设计中待批准，S4未开始，未实现S3或新增性能结论。
+
+- 2026-09-10：依据PM“批准，完成后提交并推送”及Leader S3-report-002登记S3 Approved revision1、待实现 / Ready for Builder，含64KiB空闲输出保留门槛；S4未开始，尚无S3实现或验收。
+
+- 2026-09-10：依据S3 Reviewer002最终PASS与Leader003收口关闭S3/P2-01/P3-01及TD-005本检查点；精确两换行复审继承001完整动态证据。S1/S2/S3已完成，S4未开始，V0.5未完成；S3尚未提交推送。
+
+- 2026-09-10：S3经PR #16合并至89514bd，annotated v0.5-s3已推送且peeled核对一致；新分支codex/v0.5-s4-benchmark-baseline准备S4 Draft revision1设计/审查及Leader001。S4待整体批准，wrk未安装，本阶段未实现/压测；V0.5未完成。
+
+- 2026-09-10：PM在完整S4决策包及更新角色规则后回复“批准”，见Leader S4-report-002；design/review登记Approved revision1、待实现。复用当前分支，无版本启动清理；验收收口后由Leader提交推送，用户合并。V0.5尚未完成。
+
+- 2026-09-10：PM批准日志预算R001/审查补充，见Leader S4-report-004；每套累计2GiB日志/启动前4GiB可用磁盘，待Builder002完成正式12测量。原formal-001 invalid0/12保留；原产品/负载及五项版本条件不变。
+
+- 2026-09-10：S4 Reviewer002 PASS与Leader005核对VC01–05后关闭S4及V0.5；P2-01尾字节审计缺陷关闭。固定基准有效，不代表吞吐提升；1KiB明显下降及未知根因记录RO-002，TD-001/TD-005持续Open，无新增债务豁免。V0.6未开始，未合并或标签发布。
+
+- 2026-10-05：R002执行结束，Builder007及Reviewer006静态独立复算确认FAIL；Leader011记录P1波动/P3长尾，S3阻塞，RO-002保持开放，未发布。
+
+- 2026-10-05：用户授权R003有限定位，原预算内六样本观察P3客户端线程数影响和P1首尾波动；诊断返工中，正式验收仍FAIL，不恢复完整矩阵。
+
+- 2026-10-05：R003/R004有限定位结束：客户端线程增加未稳定改善；file/null/null/file日志sink对照P99约121/32/57/133ms，支持输出成本参与。原累计1670.759s，停止动态；S3仍阻塞，生产未改，原因尚未完全闭环。见Leader013。
+
+- 2026-10-06：按用户规划请求新增V0.5.1/S4–S6 Draft路线、S4 design/review及S3 R020承接草案；S3正式FAIL保持，未执行新增实验或产品修改。决策包见`docs/leader/reports/V0.5.1/S4-report-001.md`。
+
+- 2026-10-06：依据Reviewer005 FAIL新增S4 R008 Draft及补充审查，修订M2分层恢复计划；同步S4返工状态，保留S5/S6边界、旧失败和全部性能门槛，未执行新增样本。
