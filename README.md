@@ -2,10 +2,6 @@
 
 Linux C++20 静态 HTTP 服务器学习项目：提供受限 HTTP/1.1 GET、Keep-Alive、顺序流水线请求、非阻塞 sendfile、连接超时与优雅关闭。网络层采用 epoll Reactor；默认主线程监听、两个 worker 处理连接，支持单 Reactor 模式。
 
-## 当前状态
-
-V1.0 已完成阶段验收，待合并发布；S1 文档整理、S2 展示材料和S3最终回归均已完成。S3独立验证通过Debug/Release各14项测试、四次HTTP冒烟、五个sanitizer专项及九个正式压测样本；命令、证据和覆盖限制见[发布检查](documentation/RELEASE-CHECK.md)。V0.6 已完成并发布。V0.5.1 **已搁置（未完成）**：局部 TCP_NODELAY 修复证据有效，高并发长尾仍未解决，停工不等于验收。
-
 ## 环境要求
 
 Linux / WSL2，支持 C++20 的 GCC 或 Clang、CMake ≥3.20、线程库；默认 `BUILD_TESTING=ON` 还需要 Python 3。curl 用于手工请求，Bash 用于 smoke。核心服务不依赖数据库、Web框架或第三方HTTP运行时。当前CMake项目版本仍为 `0.1.0`，CLI启动文字仍保留 `V0.1 / S3`，不表示发布版本退回。wrk、strace与固定运行库仅属于 [性能工具](benchmark/README.md) 的独立前提。
