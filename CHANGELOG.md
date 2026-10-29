@@ -5,6 +5,13 @@
 <a id="unreleased"></a>
 ## V1.2 — 开发中（未发布）
 
+### 2026-10-29 — S2 请求目标与参数
+
+- 新增拥有型RequestTarget与一次percent解码，原始path/query及参数先拆分；查询最多2048原始字节、64对，key/value与聚合分别有界，plus保留字面值、重复参数顺序保留。
+- 路由与静态访问共用已验证目标；编码分隔符/双编码拒绝，目标语法400与结构403对全部方法关闭且不处理后缀；合法目标的文件symlink403仍可保活。静态文件继续逐级openat/O_NOFOLLOW，Expect早拒绝不发100，HEAD不发错误正文。
+- 独立Reviewer PASS：Debug/Release各24/24、指定sanitizer12/12、11文件格式、负对照-6/-6/1；128条服务端主动关闭及2条symlink保活对照通过。111条HTTP与17份fixture摘要正常回收。首轮22/24失败及精确补充批准保留。
+- 三份冻结测试仅批准literal/预期及必要格式调整，其余28份不变。S1/S2已完成、S3未开始，V1.2整体未完成；无新债，不关闭TD-006/旧性能/EOF风险，无缓存Range或数据库。
+
 ### 2026-10-29 — S1 chunked请求与Expect
 
 - 新增有界增量chunked解码：单块/解码总量1MiB、块行1KiB、总元数据64KiB、trailer8KiB；合法扩展校验后丢弃，trailer仅X-Checksum/X-Trace-Id且不修改业务字段。保留TE/CL及非法定界400关闭，合法不支持编码链501、不支持Expect417。

@@ -443,7 +443,7 @@ void TestErrorsAndPaths(std::uint16_t port) {
       {"/./index.html", 403},
       {"//index.html", 403},
       {"/assets\\unknown.blob", 403},
-      {"/%2e%2e/sibling-secret.txt", 400},
+      {"/%2e%2e/sibling-secret.txt", 403},
       {"/escape.txt", 403},
       {"/oversized.bin", 403},
   };

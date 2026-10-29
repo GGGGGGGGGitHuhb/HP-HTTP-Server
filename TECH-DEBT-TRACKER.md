@@ -45,6 +45,8 @@ V0.6/S3独立有限三条PASS只说明Approved R002范围：M2 syscall全生命�
 - R7 检查点（2026-09-26）：Reviewer001 PASS WITH DEBT、Leader003 收口；仍为原 23 个停用目标、31 个冻结文件，6 项活跃 CTest 独立通过，无新增停用或延期。沿用下述原责任角色、目标检查点和退出标准；12 文件既有格式差异属于批准的内容保护例外，不新增债务。
 - R6 当前清单：23 个旧接口耦合 CTest 目标暂退，5 个兼容旧 CTest 保留，新增 1 个专项目标；精确名单与 include 依赖原因见 [测试覆盖说明](documentation/DEVELOPMENT.md#冻结旧测试与覆盖限制)。31 个旧测试路径及内容保持冻结，独立 Reviewer R6-report-001 为 PASS WITH DEBT：6/6 CTest、专项 sanitizer 1/1、HTTP smoke 和47文件格式检查通过，31个旧文件逐一校验一致。Leader R6-report-002 接受此已批准延期并关闭 R6，TD-006 保持 Open。
 
+V1.2/S2检查点（2026-10-29）：独立Reviewer PASS，当前24项Debug/Release及12项指定sanitizer通过；新增目标/查询一致性及主动关闭覆盖，128非法目标与2合法symlink保活对照通过。三份冻结仅批准精确例外，其余28份不变，23停用目标未恢复；TD-006整体仍Open，无新债，旧性能/EOF限制保持。
+
 ### TD-001 WSL2 性能数据代表性有限
 
 - 类型：`Risk`

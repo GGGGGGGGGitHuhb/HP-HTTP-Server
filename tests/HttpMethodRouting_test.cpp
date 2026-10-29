@@ -176,7 +176,7 @@ void testRouterAndHead(const hp::http::RequestRouter& router) {
   }
   for (const auto method : {"POST", "HEAD", "FROB"}) {
     auto result =
-        router.onResponse({method, "/api/echo?q=%20", false, {}}, ConnectionPolicy::kKeepAlive);
+        router.onResponse({method, "/api/echo?q=%2G", false, {}}, ConnectionPolicy::kKeepAlive);
     checkResponse(result,
                   Status::kBadRequest,
                   hp::http::errorContentBytes(Status::kBadRequest),

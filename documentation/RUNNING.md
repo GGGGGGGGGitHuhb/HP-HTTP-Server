@@ -74,7 +74,7 @@ curl --http1.1 -I http://127.0.0.1:8080/
 curl --http1.1 --data-binary 'abc' http://127.0.0.1:8080/api/echo
 ```
 
-POST回显不依赖Content-Type，不添加换行；无CL或CL0为零字节。`/api/echo?tag=plain`匹配同一路由，query不解析且不记录；包含percent的query也400。只精确匹配/api/echo，尾斜杠保留原静态路径规则；GET未知文件404而POST未知路径405，不探测静态文件存在性。HEAD的错误400/403/404/405/413/受控500也不发正文，只有完整合法HEAD请求行可信时才适用于解析错误。所有终止响应丢弃pipeline后缀，provider异常/放宽close策略500关闭。尚无JSON、URL解码、响应chunked、数据库或运行期路由注册。
+POST回显不依赖Content-Type，不添加换行；无CL或CL0为零字节。`/api/echo?tag=plain`匹配同一路由，query经有界解析但业务不使用且不记录；合法percent query可接受。只精确匹配/api/echo，尾斜杠由公共目标结构校验对全部方法403关闭；GET未知文件404而POST未知路径405，不探测静态文件存在性。HEAD的错误400/403/404/405/413/受控500也不发正文，只有完整合法HEAD请求行可信时才适用于解析错误。所有终止响应丢弃pipeline后缀，provider异常/放宽close策略500关闭。尚无JSON、Unicode规范化、响应chunked、数据库或运行期路由注册。
 
 ### V1.2/S1 chunked与Expect已验收
 
@@ -86,6 +86,21 @@ curl --http1.1 -H 'Transfer-Encoding: chunked' -H 'Expect: 100-continue' --data-
 
 解码正文和单块各≤1MiB；每size行含CRLF≤1024字节，全部chunk元数据≤65536字节（size行/data后CRLF/trailer/终止空行），trailer区≤8192字节。超数据限额413，语法/元数据超限400，关闭且丢弃后缀。合法未知扩展解析后忽略。可选唯一Trailer头只允许不重复的X-Checksum、X-Trace-Id名称列表；实际trailer允许这两字段重复或未声明，值丢弃且不校验checksum；其他字段400，绝不覆盖Host/Connection等语义。
 
-只有有效Expect且CL>0或chunked才发一次`HTTP/1.1 100 Continue`空响应，不带CL/TE/body；CL0或无正文直接final。完整头后percent400、方法405可以早拒绝，不等body；静态文件存在性仍在完整请求后检查。故Expect GET /api/echo早405，无Expect同请求的非法chunk先400。coalesced头/body也允许先100，final及下一请求严格有序。可信HEAD的417/501等错误仍零正文且保留表示长度。
+只有有效Expect且CL>0或chunked才发一次`HTTP/1.1 100 Continue`空响应，不带CL/TE/body；CL0或无正文直接final。完整头后目标400/403、方法405可以早拒绝，不等body；静态文件存在性仍在完整请求后检查。故Expect GET /api/echo早405，无Expect同请求的非法chunk先400。coalesced头/body也允许先100，final及下一请求严格有序。可信HEAD的417/501等错误仍零正文且保留表示长度。
 
 100排队和剩余body/trailer共用原绝对读取期限，不重新计时；0禁用不等于无限资源保障。100不增加响应/状态桶/access计数；后续超时/RST/drain可没有final，只记一次aborted/unknown、正文0。只有最终响应记表示的实际正文，417/501计parseErrors，早405不计。仍不记录body/扩展/trailer/query，不新增CLI或全局内存配额。
+
+### V1.2/S2 请求目标与参数已验收
+
+```bash
+curl --http1.1 -i 'http://127.0.0.1:8080/space%20name.txt?q=%20'
+curl --http1.1 --data-binary 'abc' 'http://127.0.0.1:8080/%61pi/echo?tag=one&tag=two'
+```
+
+第一例需root中存在`space name.txt`；第二例与/api/echo选同一业务。先按原始?分path/query再一次解码，strict hex允许大小写；残缺/非法编码、解码NUL/control为400。path编码得到/、反斜杠、?、#、%均400，因此双重编码路径拒绝；普通编码空格/高字节按Linux字节文件名访问。原始fragment、空白/控制禁止，原始或解码的点段/空内部段/重复slash/非根尾slash/反斜杠为403，不折叠。
+
+query按原始&、每段首个=切分；flag/a=可空值，空key/空段拒绝，分号和value余下=是普通数据。+保留plus，%20为空格；%26/%3D/%3F不再拆分，%2526只得到%26，query的slash/反斜杠/编码#只为数据。保留重复key全部值与输入顺序，不last-wins，不转数字/布尔，不再解码。echo只回显body，参数不会拼入响应或路径。
+
+raw target≤4096字节（生产仍受整请求行4KiB约束），raw query≤2048、最多64对、单decoded key≤128/value≤1024、decoded总量≤2048。超限400；完整目标语法/限额错误400优先结构403。目标验证早于方法，所有目标400/403 close并拒绝pipeline后缀；合法目标后的文件权限/symlink403或404仍沿原保活策略。因此POST /api/echo/现在403，合法POST /missing仍405；GET /missing仍404。
+
+有效Expect在目标合法时100后继续CL/chunked；目标错误早final不发100，HEAD保持零正文和正确表示CL。无Expect仍先正文分帧，目标错误不增加parseErrors/providerErrors；日志仍只raw path去query，不打印参数。无新CLI、URL表单规则、Unicode规范化、Range/缓存、数据库或业务端点。

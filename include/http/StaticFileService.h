@@ -7,6 +7,7 @@
 #include "base/NonCopyable.h"
 #include "http/HttpRequest.h"
 #include "http/HttpResponse.h"
+#include "http/RequestTarget.h"
 
 namespace hp::http {
 
@@ -25,9 +26,12 @@ class StaticFileService final : private base::NonCopyable {
       const HttpRequest& request,
       ConnectionPolicy policy = ConnectionPolicy::kClose) const;
 
-  [[nodiscard]] ResponseResult onResponse(
-      const HttpRequest& request,
-      ConnectionPolicy policy = ConnectionPolicy::kClose) const;
+  [[nodiscard]] ResponseResult onResponse(const HttpRequest& request,
+                                          ConnectionPolicy policy = ConnectionPolicy::kClose) const;
+
+  [[nodiscard]] ResponseResult onValidatedTarget(const RequestTarget& target,
+                                                 bool omitBody,
+                                                 ConnectionPolicy policy) const;
 
  private:
   friend struct StaticFileServiceTestAccess;

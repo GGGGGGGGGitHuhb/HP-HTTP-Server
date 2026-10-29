@@ -14,6 +14,9 @@ class RequestRouter final {
                                                                ConnectionPolicy policy) const;
 
  private:
+  [[nodiscard]] std::optional<ResponseResult> admitTarget(const RequestTarget& target,
+                                                          std::string_view method) const;
+
   [[nodiscard]] ResponseResult echoResponse(const HttpRequest& request,
                                             ConnectionPolicy policy) const;
 

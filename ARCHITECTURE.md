@@ -33,16 +33,16 @@ LoggerSession在服务对象前启动，唯一日志consumer与IO workers分离�
 
 1. epoll就绪→Channel→TcpConnection→ConnectionIo非阻塞recv，写入连续Buffer；消息span只在回调期间借用，consume后旧view失效。
 2. Session在Reading阶段增量feed parser，只consume本次acceptedBytes；首次非空feed开始请求统计。半包继续等输入，不复制/解析流水线后缀为当前请求。
-3. 完整请求→StaticFileService校验路径，以root目录fd逐级打开，拒绝symlink与越界；onResponse返回响应头及独占FileRegion。错误或自定义响应使用内存bytes；显式buildResponseBytes/handleResponse兼容入口会物化文件。
+3. 完整请求→RequestRouter调用公共parseRequestTarget并向StaticFileService传已验证目标，以root目录fd逐级打开，拒绝symlink与越界；onResponse返回响应头及独占FileRegion。错误或自定义响应使用内存bytes；显式buildResponseBytes/handleResponse兼容入口会物化文件。
 4. Session进入Writing并pause读取，先写定状态；TcpConnection发送内存头，再sendfile正文。EAGAIN保留pending并关注可写，输出逻辑上限按内存+文件remaining计。
 5. 全部输出被kernel接收后writeComplete一次终结请求，计completed；保活时reset parser并处理已缓存后缀，一次只生成一个响应。close或draining时直接closeAfterFlush，不推进新请求/provider。
 6. 初始空FIN沿用400但无请求计数；开始后未排空即关闭计aborted。registry连接统计包含空连接。完成不证明peer完整收到，服务端延迟不是客户端RTT。
 
 ## 错误处理与安全边界
 
-受限HTTP/1.1合法method token在正文完整后交只读RequestRouter。精确POST /api/echo回显拥有型二进制正文；其他路径GET/HEAD进入静态服务。echo路径其他方法405 Allow: POST，静态fallback其他方法405 Allow: GET, HEAD并关闭；未知静态路径GET/HEAD为404，POST仍405且不探测文件。解析错误400关闭。CL缺省为0，唯一十进制CL允许OWS/前导零；重复/列表/符号/溢出、TE/CL共存、重复/畸形TE及重复/空Expect均400。合法数值超1MiB在完整头校验后413，后续非法头优先400，不分配或等待超限正文。Connection token大小写无关合并、close优先；非法token400。普通403/404及服务有界500可复用，provider异常或放宽terminal policy生成500并关闭。
+受限HTTP/1.1合法method token在正文完整后交只读RequestRouter。精确POST /api/echo回显拥有型二进制正文；其他路径GET/HEAD进入静态服务。echo路径其他方法405 Allow: POST，静态fallback其他方法405 Allow: GET, HEAD并关闭；未知静态路径GET/HEAD为404，POST仍405且不探测文件。解析错误400关闭。CL缺省为0，唯一十进制CL允许OWS/前导零；重复/列表/符号/溢出、TE/CL共存、重复/畸形TE及重复/空Expect均400。合法数值超1MiB在完整头校验后413，后续非法头优先400，不分配或等待超限正文。Connection token大小写无关合并、close优先；非法token400。合法目标的文件访问403/404及服务有界500可复用；目标语法400/结构403均关闭，provider异常或放宽terminal policy生成500并关闭。
 
-请求头总量16KiB、请求行4KiB、正文1MiB、文件8MiB；不做URL decode，任何percent编码400，歧义路径/反斜杠/symlink403。无Range、压缩、缓存协商、目录列表、TLS、HTTP/2或代理。文件只读，root必须启动前成功打开为目录。
+请求头总量16KiB、请求行4KiB、正文1MiB、文件8MiB；目标先切原始path/query再各组件一次percent解码；非法编码/编码分隔符400，点段/重复斜杠/反斜杠等结构403，symlink仍403。无Range、压缩、缓存协商、目录列表、TLS、HTTP/2或代理。文件只读，root必须启动前成功打开为目录。
 
 生产输入最多16KiB；库maxInputBytes=0无硬上限。输出上限9MiB，Writing暂停读取，文件未排空不推进pipeline。Buffer consume仅移动游标，尾空间不足才整理/增长；输出空闲容量>64KiB释放，否则保留。此门槛不是响应拒绝或RSS上限。单次增长旧+新暂存、parser/provider与其他资源需另计。
 
@@ -68,7 +68,7 @@ V1.1/S3独立Reviewer PASS：Debug/Release各20/20、规定ASan+UBSan/LSan 8/8�
 
 V1.1/S2当前增加正文与期限两项测试，Builder自测及Reviewer独立PASS：Debug/Release各18/18、六项sanitizer 6/6。413状态桶附加在旧0/200/400/403/404/405/500之后，输出responses_status_413_total，计parseErrors/errors；日志不记录body。
 
-当前22个注册CTest与历史23个冻结停用目标分别说明于 [开发说明](documentation/DEVELOPMENT.md)。当前接口专项补充生命周期与观测/工具失败覆盖，不恢复全部历史穷举。V1.1/S1新增当前parser接口与真实HTTP套件，覆盖与边界见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)；2026-10-29独立Reviewer PASS，Debug/Release各16/16及新增两项ASan+UBSan/LSan 2/2通过。历史28/28和12/12仍只代表各自时点；S1当时未迁移全部冻结目标且未改产品；S2在保留覆盖边界基础上增加正文和读取期限，不能沿用S1验收结论。
+当前24个注册CTest与历史23个冻结停用目标分别说明于 [开发说明](documentation/DEVELOPMENT.md)。当前接口专项补充生命周期与观测/工具失败覆盖，不恢复全部历史穷举。V1.1/S1新增当前parser接口与真实HTTP套件，覆盖与边界见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)；2026-10-29独立Reviewer PASS，Debug/Release各16/16及新增两项ASan+UBSan/LSan 2/2通过。历史28/28和12/12仍只代表各自时点；S1当时未迁移全部冻结目标且未改产品；S2在保留覆盖边界基础上增加正文和读取期限，不能沿用S1验收结论。
 
 ## 性能材料的系统边界
 
@@ -169,14 +169,24 @@ main在启动前构造StaticFileService和RequestRouter，factory保存router引
 
 parser仅在完整合法请求行后记录精确HEAD；错误头/正文/FIN仍可生成无正文400/413，未验证行不猜测HEAD。HEAD静态成功只取fd元数据并RAII关闭，不读取整个文件或提交FileRegion；成功和错误均保留表示Content-Length，contentBytes为0。Session catch的HEAD500也无正文。GET静态忽略请求body，echo复制原始body，不保留借用Buffer视图；常数倍临时正文/响应不代表全局内存配额。同步处理器不能被读取deadline抢占。
 
-路由只切离第一个问号后的query，不解码；target任何位置percent均400且优先于方法判断。同名静态/api/echo不覆盖动态精确路由，/api/echo/仍走原静态校验（当前403），没有隐式/api命名空间。405计errors而不计parseErrors；分帧400/413仍计parseErrors。无运行期路由注册/JSON/数据库/线程池/网关。
+V1.1历史percent一律拒绝已由S2已验收实现替代：公共目标模块先切原始组件再一次解码，完整目标校验优先方法判断。同名静态/api/echo不覆盖动态精确路由，/api/echo/由公共目标结构校验对全部方法返回403并关闭，没有隐式/api命名空间。405计errors而不计parseErrors；分帧400/413仍计parseErrors。无运行期路由注册/JSON/数据库/线程池/网关。
 
 ## V1.2/S1 chunked与临时响应（已独立验收）
 
-Reviewer独立PASS：最终候选Debug/Release各22/22、十项ASan+UBSan/LSan10/10；三条真实EAGAIN/pending25和30条约300ms滴流证据有效，97条HTTP与13份fixture正常清理。仅S1完成，S2/S3未开始；不关闭历史覆盖/性能风险。
+Reviewer独立PASS：最终候选Debug/Release各22/22、十项ASan+UBSan/LSan10/10；三条真实EAGAIN/pending25和30条约300ms滴流证据有效，97条HTTP与13份fixture正常清理。该S1验收时点仅S1完成；当前S2也已验收、S3未开始；不关闭历史覆盖/性能风险。
 
 RequestParser新增chunk-size/data/data-CRLF/trailer状态，仅数据进入拥有型body；wire计数含元数据，终止空行后停止。1MiB单块/解码总量、1KiB size行、64KiB总元数据与8KiB trailer分别限制，不预分配声明大小。扩展按token/quoted-string/BWS解析后丢弃，trailer只允许X-Checksum与X-Trace-Id且不改变请求语义；RequestHead拥有method/target/closeRequested，不保留Buffer借用。
 
 Expect正文请求在完整头边界一次性返回kHeadersComplete，即使同送body也先停。Session检查原绝对期限，再经RequestHeadersCallback→RequestRouter::onRequestHeaders纯头准入；该入口复用最终路由规则，禁止调用业务或提前打开静态文件。拒绝输出唯一final；允许则先进入kInterimWriting再排队固定100。writeComplete在同owner同步执行，interim分支不reset parser、不清deadline、不completed或记日志，恢复Reading处理缓存body；最终Writing才沿旧流程终结。两回调捕获同一长寿命/ownedRouter，setter仅保存，net/static无需改动。
 
-100排队/EAGAIN期间读取期限仍从首字节计，100不续期；drain只排空100后关闭并将请求一次aborted/unknown，不生成final。417/501附加到原413之后的状态桶且计parseErrors/errors，100无桶。纯头早405与未读非法body的优先级只适用于有效Expect；没有Expect时必须完整校验正文再路由。无响应chunked、通用trailer、解压、URL解码或业务范围扩展。
+100排队/EAGAIN期间读取期限仍从首字节计，100不续期；drain只排空100后关闭并将请求一次aborted/unknown，不生成final。417/501附加到原413之后的状态桶且计parseErrors/errors，100无桶。纯头早405与未读非法body的优先级只适用于有效Expect；没有Expect时必须完整校验正文再路由。无响应chunked、通用trailer、解压或业务范围扩展；目标一次解码由S2独立模块承担。
+
+## V1.2/S2 目标与参数（已独立验收）
+
+RequestTarget由parseRequestTarget唯一创建，私有构造、只读path/components/queryParameters访问器，QueryParameter拥有key/value，TargetParseResult明确状态且错误无部分对象。raw target仍由HttpRequest/RequestHead拥有且不改写；先按原始?切path/query，再按原始&和首个=切参数，逐组件只解码一次。query中的%26/%3D不再拆分、%2526只成字面%26，+保留plus；path解码后出现分隔符或%拒绝，不允许重复解码。完整语法/查询限额400优先路径结构403。
+
+RequestRouter头准入和最终处理分别从未变raw解析一次，再共用admitTarget（接收已验证对象）；onResponse不调用会再解析的头入口。允许的静态请求传onValidatedTarget，该入口只用已验证components逐级openat/O_NOFOLLOW，不重新剥query/percent解码。StaticFileService三个旧入口通过同一parseRequestTarget适配；旧validatePath已删除，不存在第二套解释。根components映射index.html而path仍/；查询不参与文件定位或echo内容。
+
+目标raw≤4096（不扩大生产4KiB请求行），raw query≤2048、64对、decoded key≤128/value≤1024/合计≤2048；追加前检查，不reserve未验证大小。解码不扩张且分隔符占raw预算，所以聚合超界已被raw限额隐含阻止，但实现仍显式计数检查。字节文件名允许空格/高字节，不做UTF8校验、Unicode规范化或大小写折叠。
+
+所有目标400/403关闭，包括Expect头准入且不发100；无Expect仍先完整正文，旧parser400/413/417/501优先。合法目标的文件权限/symlink403仍沿原策略保活，不能把整个403状态码统一关连接。Session/net/metrics/interim未改，目标错误不增加parseErrors/providerErrors；访问日志保持转义/截断后的raw path去query，不记录参数。

@@ -94,7 +94,7 @@ def check_headers(server):
     reject(server, CHUNK + EXPECT, 405, b"GET")
     reject(server, CHUNK + EXPECT, 405, b"HEAD")
     reject(server, CHUNK + EXPECT, 405, b"POST", b"/missing")
-    reject(server, CHUNK + EXPECT, 400, b"POST", b"/api/echo?q=%20")
+    reject(server, CHUNK + EXPECT, 400, b"POST", b"/api/echo?q=%2G")
     # 没有Expect时必须先消费并检查body；同一路由的非法chunk优先400。
     with contextlib.closing(Client(server.port)) as client:
         client.send(request(b"/api/echo", CHUNK, b"GET") + b"!\r\n" + request())
