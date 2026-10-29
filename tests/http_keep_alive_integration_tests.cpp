@@ -8,11 +8,8 @@
 namespace {
 // Leader S3-report-003: only a fully checked oversized response may end in
 // reset.
-bool LimitTerminationOk(std::string_view pending_,
-                        ssize_t received,
-                        int error) {
-  return pending_.empty() &&
-         (received == 0 || (received == -1 && error == ECONNRESET));
+bool LimitTerminationOk(std::string_view pending_, ssize_t received, int error) {
+  return pending_.empty() && (received == 0 || (received == -1 && error == ECONNRESET));
 }
 
 class Client {
@@ -39,20 +36,17 @@ class Client {
     char buffer[32768];
     auto n = ::recv(fd_, buffer, sizeof(buffer), 0);
     if (n <= 0)
-      throw std::runtime_error(
-          "response ended or timed out before Content-Length boundary");
+      throw std::runtime_error("response ended or timed out before Content-Length boundary");
     pending_.append(buffer, static_cast<std::size_t>(n));
   }
 
   Message ReadResponse() {
-    while (pending_.find("\r\n\r\n") == std::string::npos)
-      ReadMoreResponseBytes();
+    while (pending_.find("\r\n\r\n") == std::string::npos) ReadMoreResponseBytes();
     const auto boundary = pending_.find("\r\n\r\n") + 4;
     const auto header = pending_.substr(0, boundary);
     const std::string key = "Content-Length: ";
     const auto pos = header.find(key);
-    Expect(pos != std::string::npos &&
-               header.find(key, pos + 1) == std::string::npos,
+    Expect(pos != std::string::npos && header.find(key, pos + 1) == std::string::npos,
            "unique Content-Length");
     const auto length = std::stoull(header.substr(pos + key.size()));
     while (pending_.size() < boundary + length) ReadMoreResponseBytes();
@@ -81,31 +75,24 @@ class Client {
   void ExpectEof() {
     Expect(pending_.empty(), "no extra pipeline response");
     char b;
-    Expect(::recv(fd_, &b, 1, 0) == 0,
-           "terminal response followed by real EOF");
+    Expect(::recv(fd_, &b, 1, 0) == 0, "terminal response followed by real EOF");
   }
 };
 
 std::string Get(std::string_view target, std::string_view headers = "") {
-  return "GET " + std::string(target) + " HTTP/1.1\r\nHost: localhost\r\n" +
-         std::string(headers) + "\r\n";
+  return "GET " + std::string(target) + " HTTP/1.1\r\nHost: localhost\r\n" + std::string(headers) +
+         "\r\n";
 }
 
-void Check(const Client::Message& m,
-           int status,
-           std::string_view body,
-           bool close) {
+void Check(const Client::Message& m, int status, std::string_view body, bool close) {
   Expect(m.status == status && m.body == body, "ordered exact status and body");
-  Expect(
-      m.header.find(close ? "Connection: close\r\n"
-                          : "Connection: keep-alive\r\n") != std::string::npos,
-      "wire connection policy");
+  Expect(m.header.find(close ? "Connection: close\r\n" : "Connection: keep-alive\r\n") !=
+             std::string::npos,
+         "wire connection policy");
 }
 
 void Reuse(std::uint16_t port) {
-  const std::vector<std::string> targets = {"/",
-                                            "/note.txt",
-                                            "/assets/unknown.blob"};
+  const std::vector<std::string> targets = {"/", "/note.txt", "/assets/unknown.blob"};
   const std::vector<std::string> bodies = {"<h1>integration index</h1>\n",
                                            "hello from S3\n",
                                            "unknown mime\n"};
@@ -116,25 +103,19 @@ void Reuse(std::uint16_t port) {
       Check(c.ReadResponse(), 200, bodies[i], i == 2);
     }
     c.ExpectEof();
-    std::cout << "sequential: client_fd=" << c.fd_
-              << " connection=1 responses=3 reconnect=0\n";
+    std::cout << "sequential: client_fd=" << c.fd_ << " connection=1 responses=3 reconnect=0\n";
   }
   {
     Client c(port);
-    SendAll(c.fd_,
-            Get(targets[0]) + Get(targets[1]) +
-                Get(targets[2], "Connection: close\r\n"));
-    for (std::size_t i = 0; i < 3; ++i)
-      Check(c.ReadResponse(), 200, bodies[i], i == 2);
+    SendAll(c.fd_, Get(targets[0]) + Get(targets[1]) + Get(targets[2], "Connection: close\r\n"));
+    for (std::size_t i = 0; i < 3; ++i) Check(c.ReadResponse(), 200, bodies[i], i == 2);
     c.ExpectEof();
     std::cout << "pipeline: connection=1 single_write=1 responses=3 "
                  "order=index,note,unknown\n";
   }
   {
     Client c(port);
-    SendAll(c.fd_,
-            Get(targets[0]) + Get(targets[1]) +
-                "GET /assets/unknown.blob HTTP/1.1\r\nHo");
+    SendAll(c.fd_, Get(targets[0]) + Get(targets[1]) + "GET /assets/unknown.blob HTTP/1.1\r\nHo");
     Check(c.ReadResponse(), 200, bodies[0], false);
     Check(c.ReadResponse(), 200, bodies[1], false);
     Expect(c.pending_.empty(), "incomplete third has no response");
@@ -146,8 +127,7 @@ void Reuse(std::uint16_t port) {
     Client c(port);
     SendAll(c.fd_, Get("/") + Get("/note.txt") + Get("/assets/unknown.blob"));
     ::shutdown(c.fd_, SHUT_WR);
-    for (std::size_t i = 0; i < 3; ++i)
-      Check(c.ReadResponse(), 200, bodies[i], false);
+    for (std::size_t i = 0; i < 3; ++i) Check(c.ReadResponse(), 200, bodies[i], false);
     c.ExpectEof();
   }
   {
@@ -167,8 +147,7 @@ void Reuse(std::uint16_t port) {
   }
   for (bool prefix : {false, true}) {
     Client c(port);
-    SendAll(c.fd_,
-            (prefix ? Get("/") : "") + Get("/bad%20target") + Get("/note.txt"));
+    SendAll(c.fd_, (prefix ? Get("/") : "") + Get("/bad%20target") + Get("/note.txt"));
     if (prefix) Check(c.ReadResponse(), 200, bodies[0], false);
     Check(c.ReadResponse(), 400, "400 Bad Request\n", true);
     c.ExpectEof();
@@ -183,18 +162,14 @@ void Reuse(std::uint16_t port) {
     Check(c.ReadResponse(), 200, bodies[1], true);
     c.ExpectEof();
   }
-  for (const auto& header :
-       {"Connection: ClOsE, keep-alive\r\nConnection: keep-alive\r\n",
-        "Content-Length: 9\r\n",
-        "Transfer-Encoding: chunked\r\n",
-        "Expect: 100-continue\r\n"}) {
+  for (const auto& header : {"Connection: ClOsE, keep-alive\r\nConnection: keep-alive\r\n",
+                             "Content-Length: +9\r\n",
+                             "Transfer-Encoding: chunked\r\n",
+                             "Expect: 100-continue\r\n"}) {
     Client c(port);
     SendAll(c.fd_, Get("/note.txt", header) + Get("/"));
     const bool normal = std::string_view(header).starts_with("Connection");
-    Check(c.ReadResponse(),
-          normal ? 200 : 400,
-          normal ? bodies[1] : "400 Bad Request\n",
-          true);
+    Check(c.ReadResponse(), normal ? 200 : 400, normal ? bodies[1] : "400 Bad Request\n", true);
     c.ExpectEof();
   }
   std::cout << "production: partial_third=1 FIN_pipeline=3 idle_EOF=1 "
@@ -208,8 +183,7 @@ void TerminationGuardTests() {
   Expect(!LimitTerminationOk("x", 0, 0) && !LimitTerminationOk("", 1, 0),
          "extra pending or newly received byte rejected");
   for (int error : {EAGAIN, EWOULDBLOCK, EIO, ETIMEDOUT, EINTR})
-    Expect(!LimitTerminationOk("", -1, error),
-           "other errors never accepted as reset");
+    Expect(!LimitTerminationOk("", -1, error), "other errors never accepted as reset");
   for (bool short_body : {true, false}) {
     int fds[2];
     if (::socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds) != 0)
@@ -220,13 +194,11 @@ void TerminationGuardTests() {
             std::string("HTTP/1.1 400 Bad Request\r\nContent-Length: "
                         "5\r\nConnection: close\r\n\r\n") +
                 (short_body ? "er" : "errorx"));
-    Expect(::shutdown(writer.fd_, SHUT_WR) == 0,
-           "termination fixture shutdown");
+    Expect(::shutdown(writer.fd_, SHUT_WR) == 0, "termination fixture shutdown");
     bool rejected = false;
     try {
       (void)client.ReadResponse();
-      if (short_body)
-        throw std::logic_error("short response incorrectly parsed");
+      if (short_body) throw std::logic_error("short response incorrectly parsed");
       (void)client.LimitEnd();
     } catch (const std::logic_error&) {
       throw;
@@ -247,29 +219,23 @@ void RejectionPositions(ServerProcess& server) {
     for (bool prefix : {false, true}) {
       const int before = failures;
       Client c(server.port());
-      SendAll(c.fd_,
-              (prefix ? Get("/note.txt") : "") + sample.wire +
-                  Get("/assets/unknown.blob"));
+      SendAll(c.fd_, (prefix ? Get("/note.txt") : "") + sample.wire + Get("/assets/unknown.blob"));
       if (prefix) Check(c.ReadResponse(), 200, "hello from S3\n", false);
       const auto message = c.ReadResponse();
       Check(message,
             sample.status,
-            sample.status == 405 ? "405 Method Not Allowed\n"
-                                 : "400 Bad Request\n",
+            sample.status == 405 ? "405 Method Not Allowed\n" : "400 Bad Request\n",
             true);
       if (sample.status == 405)
-        Expect(message.header.find("Allow: GET\r\n") != std::string::npos,
-               "405 Allow GET");
+        Expect(message.header.find("Allow: GET\r\n") != std::string::npos, "405 Allow GET");
       std::string ending = "EOF";
       if (sample.permits_reset_after_complete_response)
         ending = c.LimitEnd();
       else
         c.ExpectEof();
-      std::cout << "S3 reject id=" << sample.id
-                << " position=" << (prefix ? 2 : 1)
+      std::cout << "S3 reject id=" << sample.id << " position=" << (prefix ? 2 : 1)
                 << " responses=" << (prefix ? 2 : 1) << " ending=" << ending
-                << " extra_bytes=0 suffix=0 failures=" << failures - before
-                << '\n';
+                << " extra_bytes=0 suffix=0 failures=" << failures - before << '\n';
       server.DrainOutput(std::chrono::milliseconds(1));
     }
 }
@@ -277,22 +243,19 @@ void RejectionPositions(ServerProcess& server) {
 void FinPrefixes(ServerProcess& server) {
   std::size_t cases{};
   for (bool reused : {false, true})
-    for (std::size_t cut = 1; cut < protocol_cases::kShortRequest.size();
-         ++cut) {
+    for (std::size_t cut = 1; cut < protocol_cases::kShortRequest.size(); ++cut) {
       const int before = failures;
       Client c(server.port());
       if (reused) {
         SendAll(c.fd_, Get("/note.txt"));
         Check(c.ReadResponse(), 200, "hello from S3\n", false);
       }
-      SendAll(c.fd_,
-              std::string_view(protocol_cases::kShortRequest).substr(0, cut));
+      SendAll(c.fd_, std::string_view(protocol_cases::kShortRequest).substr(0, cut));
       Expect(::shutdown(c.fd_, SHUT_WR) == 0, "prefix FIN sent");
       Check(c.ReadResponse(), 400, "400 Bad Request\n", true);
       c.ExpectEof();
       ++cases;
-      std::cout << "S3 FIN cut=" << cut
-                << " state=" << protocol_cases::PrefixState(cut)
+      std::cout << "S3 FIN cut=" << cut << " state=" << protocol_cases::PrefixState(cut)
                 << " reused=" << reused << " responses=" << (reused ? 2 : 1)
                 << " eof=1 failures=" << failures - before << '\n';
       server.DrainOutput(std::chrono::milliseconds(1));
@@ -330,14 +293,9 @@ void ResetIncomplete(ServerProcess& server, std::size_t baseline) {
     Expect(WaitFdBaseline(server, baseline + 1),
            "incomplete request remains the sole active connection");
     pollfd descriptor{incomplete.fd_, POLLIN, 0};
-    Expect(::poll(&descriptor, 1, 0) == 0,
-           "incomplete request has no premature response");
+    Expect(::poll(&descriptor, 1, 0) == 0, "incomplete request has no premature response");
     linger reset{1, 0};
-    Expect(::setsockopt(incomplete.fd_,
-                        SOL_SOCKET,
-                        SO_LINGER,
-                        &reset,
-                        sizeof(reset)) == 0,
+    Expect(::setsockopt(incomplete.fd_, SOL_SOCKET, SO_LINGER, &reset, sizeof(reset)) == 0,
            "incomplete RST enabled");
   }
   for (int i = 0; i < 20; ++i) {
@@ -346,8 +304,7 @@ void ResetIncomplete(ServerProcess& server, std::size_t baseline) {
     Check(c.ReadResponse(), 200, "hello from S3\n", true);
     c.ExpectEof();
   }
-  Expect(WaitFdBaseline(server, baseline),
-         "incomplete RST fd recovery by deadline");
+  Expect(WaitFdBaseline(server, baseline), "incomplete RST fd recovery by deadline");
   std::cout << "S3 RST state=incomplete survivors=20 fd_before=" << baseline
             << " fd_after=" << server.fd_count() << '\n';
 }
@@ -372,20 +329,15 @@ int main(int argc, char** argv) {
       Client c(server.port());
       const auto start = server.output().size();
       SendAll(c.fd_, Get("/large.bin") + Get("/note.txt"));
-      const auto until =
-          std::chrono::steady_clock::now() + std::chrono::seconds(5);
-      while (server.output().find("write reached EAGAIN", start) ==
-                 std::string::npos &&
+      const auto until = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+      while (server.output().find("write reached EAGAIN", start) == std::string::npos &&
              std::chrono::steady_clock::now() < until)
         server.DrainOutput(std::chrono::milliseconds(20));
-      Expect(server.output().find("write reached EAGAIN", start) !=
-                 std::string::npos,
+      Expect(server.output().find("write reached EAGAIN", start) != std::string::npos,
              "fresh EAGAIN before large-response RST");
       linger reset{1, 0};
-      Expect(
-          ::setsockopt(c.fd_, SOL_SOCKET, SO_LINGER, &reset, sizeof(reset)) ==
-              0,
-          "large response RST enabled");
+      Expect(::setsockopt(c.fd_, SOL_SOCKET, SO_LINGER, &reset, sizeof(reset)) == 0,
+             "large response RST enabled");
     }
     for (int i = 0; i < 20; ++i) {
       Client c(server.port());
@@ -395,8 +347,7 @@ int main(int argc, char** argv) {
     }
     Expect(WaitFdBaseline(server, before), "large RST deadline fd recovery");
     const auto after = server.fd_count();
-    Expect(before == after,
-           "production fd baseline restored after reset and 20 survivors");
+    Expect(before == after, "production fd baseline restored after reset and 20 survivors");
     Expect(server.output().find("write reached EAGAIN") != std::string::npos,
            "reset targeted genuinely blocked large output");
     std::cout << "reset: blocked_EAGAIN=1 survivors=20 fd_before=" << before

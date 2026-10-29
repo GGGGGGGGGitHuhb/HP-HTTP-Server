@@ -10,7 +10,7 @@ ctest --test-dir build --output-on-failure
 NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost bash tests/http_smoke_test.sh build/hp_http_server
 ```
 
-CMake当前注册16项：cli_tests、http_server_integration_tests、http_keep_alive_integration_tests、server_integration_tests（HTTP黑盒历史别名）、benchmark_runner_tests、async_logger_batch_tests、r6_callbacks_tests、tcp_nodelay_tests、tcp_nodelay_http_tests、server_metrics_tests、http_observability_tests、observability_http_tests、matrix_benchmark_tests、performance_analysis_tests、http_protocol_baseline_tests、http_protocol_baseline_http_tests。Python专项含synthetic夹具与子进程/HTTP失败路径，不自动启动正式wrk套。真实socket/HTTP须环境允许；本地Agent另遵守未随Git分发的协作资料及受控执行路线。
+CMake当前注册18项：cli_tests、http_server_integration_tests、http_keep_alive_integration_tests、server_integration_tests（HTTP黑盒历史别名）、benchmark_runner_tests、async_logger_batch_tests、r6_callbacks_tests、tcp_nodelay_tests、tcp_nodelay_http_tests、server_metrics_tests、http_observability_tests、observability_http_tests、matrix_benchmark_tests、performance_analysis_tests、http_protocol_baseline_tests、http_protocol_baseline_http_tests、http_request_body_tests、http_request_body_http_tests。Python专项含synthetic夹具与子进程/HTTP失败路径，不自动启动正式wrk套。真实socket/HTTP须环境允许；本地Agent另遵守未随Git分发的协作资料及受控执行路线。
 
 历史S1独立12/12和专项ASan+UBSan/LSan2/2属于当时验收，当前新增两项工具测试不能倒写为历史14/14。V1.0/S1只核CMake/命令，不执行CTest、smoke或sanitizer；最终回归属于V1.0/S3。
 
@@ -21,6 +21,16 @@ CMake当前注册16项：cli_tests、http_server_integration_tests、http_keep_a
 ```bash
 ctest --test-dir build -R '^http_protocol_baseline(_http)?_tests$' --output-on-failure
 ```
+
+## V1.1/S2 正文与读取期限
+
+新增两项测试验证Content-Length有界正文、拥有关系/分帧、413、provider、绝对读取期限、身份/取消与观测。Builder已执行Debug/Release各18/18、规定六项ASan+UBSan/LSan及C++/HTTP负对照，Reviewer独立PASS，Debug/Release各18/18、规定六项sanitizer 6/6，负对照及失败清理有效。Debug首次make出现一条时钟偏差警告，后续依赖新鲜度检查通过；不能描述为首次全构建零告警。
+
+```bash
+ctest --test-dir build -R '^http_request_body(_http)?_tests$' --output-on-failure
+```
+
+本次精确冻结例外仅把http_keep_alive_integration_tests.cpp的CL9、http_protocol_boundary_cases.h的G03 CL1改为非法+9/+1，并执行受影响文件必要格式化。S1两套测试相应拒绝语料改为非法带符号CL，新合法非零正文由S2套件验证；不删除拒绝后缀断言，原16项注册保持。其余29份冻结文件字节不变，23停用目标不恢复。
 
 ## 冻结旧测试与覆盖限制
 

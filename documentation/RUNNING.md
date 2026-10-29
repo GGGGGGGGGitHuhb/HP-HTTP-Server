@@ -1,6 +1,6 @@
 # 运行配置与观测
 
-从仓库根目录运行；通用构建入口见 [README](../README.md#快速开始)。本页按当前源码静态核对，V1.0/S1未重跑动态命令。
+从仓库根目录运行；通用构建入口见 [README](../README.md#快速开始)。V1.1/S2新增正文与读取期限已由Builder自测并经Reviewer独立PASS；旧版本验证记录不倒写。
 
 ## 配置说明
 
@@ -10,7 +10,8 @@
 - `--shutdown-timeout-ms <0-60000>`：默认5000。SIGINT/SIGTERM触发停止监听和当前输出排空，0立即关闭；再次观察到信号强关，不延长第一次观察时确定的steady_clock绝对截止。参数重复、缺值、符号、非数字或越界退出2；正常信号退出（含期限截断）退出0，资源/worker异常退出1。
 - `--idle-timeout-ms <0-86400000>`：默认30000。从 owner 注册连接开始，只按实际 recv/send 正数字节刷新；EAGAIN、伪事件和只入缓冲均不刷新。
 - `--keep-alive-timeout-ms <0-86400000>`：默认15000。一个响应实际排空、无缓存后缀且 parser 无部分下一请求时开始等待；新输入退出等待，重复等待通知不延长截止。
-- 两项0分别禁用对应策略，两项都0恢复无超时；同时适用取较早截止。严格无符号十进制；符号、空值、重复、缺值、溢出/越界退出2。到期静默关闭，不发送408，未排空响应可能截断。C++ `TcpServer` 末尾 `ConnectionTimeouts` 默认0/0，app明确传入上述CLI默认值。
+- `--request-read-timeout-ms <0-86400000>`：默认10000，0禁用。Session首次观察当前请求非空输入起绝对计时，后续进度不刷新；头+正文完整或拒绝后清除。pipeline后缀在前一响应排空后进入Reading时独立起算，不计前一响应Writing时间。
+- 三项0分别禁用对应策略，全部为0时没有连接/读取期限；同时适用取较早截止。严格无符号十进制；符号、空值、重复、缺值、溢出/越界退出2。到期静默关闭，不发送408，未排空响应可能截断。C++ `TcpServer` 末尾 `ConnectionTimeouts` 默认0/0，app明确传入上述CLI默认值。
 
 - `--port 8080 --root ./www`：监听显式端口并从 `./www` 只读提供文件。
 - `--port 0 --root ./www`：由内核分配临时端口，启动输出报告实际非零端口。
@@ -19,6 +20,20 @@
 - 普通错误不会回显 root 的绝对路径。
 
 每个参数只有在实现、测试和 README 命令同时成立时，才视为可用接口。
+
+### 固定长度正文
+
+请求头（含请求行与CRLF）最多16KiB，行内容最多4KiB；正文独立最多1MiB。CL缺省为0，单个十进制Content-Length支持前导零/外围OWS；重复、列表、正负号、非数字、uint64溢出、TE和Expect均400并关闭。合法值超1MiB在完整头验证后413 Content Too Large，不读取声明正文；后续非法头仍优先400。413/400/405不处理pipeline后缀。
+
+GET正文完整消费但不解释，仍按路径返回静态文件；POST/HEAD等合法非GET在完整请求后仍405，尚无业务路由或echo接口。正文不足而FIN为400；到读取截止则静默关闭，不发408。生产输入窗口仍16KiB，边消费边读，可接收超过窗口的有界正文；未完成结果不复制累计body，完成后返回拥有型body，reset释放正文容量。该逻辑上限不是全局内存/RSS配额。
+
+例如固定长度GET正文仍得到首页：
+
+```bash
+curl --http1.1 -X GET --data-binary 'abc' http://127.0.0.1:8080/
+```
+
+时间边界只约束当前请求的应用层读取窗口，不是业务执行期限或网卡首字节起算；阻塞owner的provider不能被timer抢占，HTTP关闭期限也不保证整个进程退出上限。
 
 ### 异步日志
 
@@ -46,6 +61,8 @@ Writing暂停读取、一次只生成一个响应、文件未排空时不推进p
 
 `--metrics-on-exit` 默认关闭。正常或受控关闭时，在所有worker join、registry/Session销毁、异步日志排空后，stdout的唯一 `HP_METRICS_BEGIN`/`HP_METRICS_END` 段导出文本 `key integer`。没有自动写文件或监控HTTP路由；stdout写失败返回非零。CLI参数错误不导出。关闭后 `requests_started_total=responses_completed_total+requests_aborted_total`、`latency_count=requests_started_total`、`connections_active=logger_pending=0`。
 
-请求从首次非空parser feed计起；初始空FIN仍保留旧400协议，但不产生请求计数或访问记录。completed表示内存/sendfile输出已被kernel接收，不证明peer完整接收；aborted表示开始后尚未排空即关闭。`responses_status_<200/400/403/404/405/500/unknown>_total` 是已构造响应的状态（也含aborted），未构造响应用unknown；`content_bytes` 是计划正文长度。`errors_total` 每请求至多一次，表示aborted或status>=400；parse/provider原因分项可能重叠，不能相加。steady_clock整数微秒延迟包含该请求解析/provider/输出排队到终结，completed和aborted都入count/sum/max，不是RTT/P99。runtime逐原子快照非事务一致；uint64增量与sum饱和，超出范围不回绕，饱和后总账等式不再保证精确数量。
+请求从首次非空parser feed计起；初始空FIN仍保留旧400协议，但不产生请求计数或访问记录。completed表示内存/sendfile输出已被kernel接收，不证明peer完整接收；aborted表示开始后尚未排空即关闭。`responses_status_<200/400/403/404/405/500/413/unknown>_total` 是已构造响应的状态（也含aborted），未构造响应用unknown；`content_bytes` 是计划正文长度。`errors_total` 每请求至多一次，表示aborted或status>=400；parse/provider原因分项可能重叠，不能相加。steady_clock整数微秒延迟包含该请求解析/provider/输出排队到终结，completed和aborted都入count/sum/max，不是RTT/P99。runtime逐原子快照非事务一致；uint64增量与sum饱和，超出范围不回绕，饱和后总账等式不再保证精确数量。
 
 最终 `logger_submitted/accepted/dropped_full/rejected_stopped/truncated/written/failed/pending` 属于全部共享日志；它们不是精确访问记录丢失数。`access_log_failures_total` 只记录格式化/提交异常；默认关闭无访问记录格式化或提交。HTTP关闭截止不限制阻塞stderr造成的日志join等待，沿用原日志限制。
+
+V1.1/S2的413新增尾部状态桶，不移动旧索引；413计parse_errors_total和errors_total。读取超时只终结一次aborted，未形成响应时状态为unknown，body不进入访问日志。

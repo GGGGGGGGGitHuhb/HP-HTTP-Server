@@ -2,18 +2,21 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 
 namespace hp::http {
 
-inline constexpr std::size_t kMaxRequestBytes = 16U * 1024U;
+inline constexpr std::size_t kMaxHeaderBytes = 16U * 1024U;
+inline constexpr std::size_t kMaxBodyBytes = 1024U * 1024U;
 inline constexpr std::size_t kMaxRequestLineBytes = 4U * 1024U;
 
 struct HttpRequest {
   std::string method;
   std::string target;
   bool closeRequested{false};
+  std::string body;
 };
 
 // 当前请求解析完后的结果
@@ -21,6 +24,7 @@ enum class ParseStatus {
   kNeedMore,
   kComplete,
   kBadRequest,
+  kPayloadTooLarge,
   kMethodNotAllowed,
 };
 
@@ -31,7 +35,7 @@ struct ParseResult {
 };
 
 // 当前请求被解析到的位置状态
-enum class ParserState { kRequestLine, kHeaders, kComplete, kError };
+enum class ParserState { kRequestLine, kHeaders, kBody, kComplete, kError };
 
 struct FeedResult {
   ParseStatus status{ParseStatus::kNeedMore};
@@ -53,6 +57,7 @@ class RequestParser final {
   // 显式统计消息定界与完整行校验循环中的字节访问次数。
   [[nodiscard]] std::size_t scanSteps() const noexcept { return scanSteps_; }
 
+  // 仅统计头解析存储，不含正文或整个进程内存。
   [[nodiscard]] std::size_t bufferedBytes() const noexcept { return lineStart_ + lineSize_; }
 
   [[nodiscard]] std::size_t peakBufferedBytes() const noexcept { return peakBuffered_; }
@@ -63,6 +68,8 @@ class RequestParser final {
   bool validateRequestLine();
   bool validateHeader();
   void finishLine();
+  void finishRequest();
+  std::size_t appendBody(std::string_view bytes);
   [[nodiscard]] FeedResult buildFeedResult(std::size_t accepted) const;
 
   // 仅在本次调用中借用输入；每个检查过的字符都会更新
@@ -74,7 +81,7 @@ class RequestParser final {
   // 请求行只保留一次；后续 Header 行复用剩余空间。不得
   // 保留指向调用方内存的视图，也不得把流水线后续请求复制到此
   // 数组中。
-  std::array<char, kMaxRequestBytes> storage_{};
+  std::array<char, kMaxHeaderBytes> storage_{};
 
   ParserState state_{ParserState::kRequestLine};  // 当前请求被解析到的位置状态
   ParseStatus status_{ParseStatus::kNeedMore};    // 当前请求解析完后的结果
@@ -88,6 +95,9 @@ class RequestParser final {
   std::size_t methodSize_{0}, targetStart_{0}, targetSize_{0};
 
   std::size_t scanSteps_{0}, peakBuffered_{0};
+  std::size_t headerBytes_{0};
+  std::uint64_t contentLength_{0};
+  std::string body_;
 };
 
 [[nodiscard]] ParseResult parseRequest(std::string_view bytes);

@@ -102,7 +102,7 @@ std::vector<ProtocolCase> makeShortCases() {
                                                "BadWithoutColon",
                                                "X: \x01",
                                                "Connection: bad(token)",
-                                               "Content-Length: 1",
+                                               "Content-Length: +1",
                                                "Content-Length: -1",
                                                "Content-Length: +0",
                                                "Content-Length: 0,0",
@@ -123,7 +123,7 @@ std::vector<ProtocolCase> makeShortCases() {
              "GET / HTTP/1.1\r\nHost: x\r\nContent-Length: 0\r\nTransfer-Encoding: chunked\r\n");
   addBadCase(cases,
              "P02-post-framing-first",
-             "POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 1\r\n");
+             "POST / HTTP/1.1\r\nHost: x\r\nContent-Length: +1\r\n");
   addBadCase(cases, "P03-bare-lf", "GET / HTTP/1.1\n");
   addBadCase(cases, "P03-cr-not-lf", "GET / HTTP/1.1\rX");
   addBadCase(cases, "P03-nul", std::string("GET /\0", 6));
@@ -207,12 +207,12 @@ void verifyLongCases() {
                    {},
                    false});
   const std::string prefix = "GET / HTTP/1.1\r\nHost: x\r\nX: ";
-  const auto padding = hp::http::kMaxRequestBytes - prefix.size() - 4;
+  const auto padding = hp::http::kMaxHeaderBytes - prefix.size() - 4;
   addCompleteCase(cases, "P03-total-equal", prefix + std::string(padding, 'a') + "\r\n\r\n");
   cases.push_back({"P03-total-over",
                    prefix + std::string(padding + 1, 'a') + "\r\n\r\n",
                    ParseStatus::kBadRequest,
-                   hp::http::kMaxRequestBytes,
+                   hp::http::kMaxHeaderBytes,
                    {},
                    {},
                    false});

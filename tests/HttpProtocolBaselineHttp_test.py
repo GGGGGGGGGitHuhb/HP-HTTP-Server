@@ -199,7 +199,7 @@ def check_protocol(server):
         client.eof()
     print("CASE P04-valid-invalid-second", flush=True)
     with contextlib.closing(Client(server.port)) as client:
-        client.send(request() + request(headers=b"Content-Length: 1\r\n") + request())
+        client.send(request() + request(headers=b"Content-Length: +1\r\n") + request())
         client.response(200, b"home\n")
         client.response(400, ERRORS[400], True)
         client.eof()
@@ -209,8 +209,8 @@ def check_protocol(server):
         ("P01-method-invalid", request(method=b"G(ET"), 400),
         ("P01-post", request(method=b"POST"), 405),
         ("P01-head", request(method=b"HEAD"), 405),
-        ("P02-post-bad-body", request(method=b"POST", headers=b"Content-Length: 1\r\n"), 400),
-        ("P02-nonzero", request(headers=b"Content-Length: 1\r\n"), 400),
+        ("P02-post-bad-body", request(method=b"POST", headers=b"Content-Length: +1\r\n"), 400),
+        ("P02-nonzero", request(headers=b"Content-Length: +1\r\n"), 400),
         ("P02-duplicate", request(headers=b"Content-Length: 0\r\nContent-Length: 0\r\n"), 400),
         ("P02-list", request(headers=b"Content-Length: 0,0\r\n"), 400),
         ("P02-negative", request(headers=b"Content-Length: -1\r\n"), 400),

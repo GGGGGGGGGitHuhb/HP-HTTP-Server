@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <limits>
 
 namespace hp::http {
 namespace {
@@ -101,10 +102,13 @@ bool RequestParser::validateHeader() {
   } else if (equalsAsciiCaseInsensitive(name, "content-length")) {
     if (contentLengthSeen_ || value.empty()) return false;
     contentLengthSeen_ = true;
-    // 只支持十进制零：不做算术运算，因此不会溢出。
+    // 在乘加前检查溢出，合法超限值留到全部头校验完后拒绝。
     for (char c : value) {
       ++scanSteps_;
-      if (c != '0') return false;
+      if (c < '0' || c > '9') return false;
+      const auto digit = static_cast<std::uint64_t>(c - '0');
+      if (contentLength_ > (std::numeric_limits<std::uint64_t>::max() - digit) / 10) return false;
+      contentLength_ = contentLength_ * 10 + digit;
     }
   } else if (equalsAsciiCaseInsensitive(name, "transfer-encoding") ||
              equalsAsciiCaseInsensitive(name, "expect")) {
@@ -140,19 +144,41 @@ void RequestParser::finishLine() {
       state_ = ParserState::kError;
       return;
     }
-    state_ = ParserState::kComplete;
-    const std::string_view method(storage_.data(), methodSize_);
-    status_ = method == "GET" ? ParseStatus::kComplete : ParseStatus::kMethodNotAllowed;
+    if (contentLength_ > kMaxBodyBytes) {
+      state_ = ParserState::kError;
+      status_ = ParseStatus::kPayloadTooLarge;
+    } else if (contentLength_ != 0) {
+      state_ = ParserState::kBody;
+    } else {
+      finishRequest();
+    }
   } else if (!validateHeader()) {
     state_ = ParserState::kError;
   }
   lineSize_ = 0;
 }
 
+void RequestParser::finishRequest() {
+  state_ = ParserState::kComplete;
+  const std::string_view method(storage_.data(), methodSize_);
+  status_ = method == "GET" ? ParseStatus::kComplete : ParseStatus::kMethodNotAllowed;
+}
+
+std::size_t RequestParser::appendBody(std::string_view bytes) {
+  const auto count =
+      std::min(bytes.size(), static_cast<std::size_t>(contentLength_) - body_.size());
+  body_.append(bytes.data(), count);
+  requestBytes_ += count;
+  scanSteps_ += count;
+  if (body_.size() == contentLength_) finishRequest();
+  return count;
+}
+
 FeedResult RequestParser::buildFeedResult(std::size_t accepted) const {
   FeedResult result{status_, {}, accepted, requestBytes_};
   if (state_ == ParserState::kComplete) {
     result.request.closeRequested = closeRequested_;
+    result.request.body = body_;
     result.request.method.assign(storage_.data(), methodSize_);
     result.request.target.assign(storage_.data() + targetStart_, targetSize_);
   }
@@ -166,7 +192,12 @@ FeedResult RequestParser::feedRequestBytes(std::string_view bytes) {
   // kComplete, kError 是终态
   while (accepted < bytes.size() && state_ != ParserState::kComplete &&
          state_ != ParserState::kError) {
+    if (state_ == ParserState::kBody) {
+      accepted += appendBody(bytes.substr(accepted));
+      continue;
+    }
     const char c = bytes[accepted];
+    ++headerBytes_;
     ++accepted;       // 局部变量，每次调用从 0 开始
     ++requestBytes_;  // RequestParser 的成员，跨调用保存
     ++scanSteps_;
@@ -187,9 +218,11 @@ FeedResult RequestParser::feedRequestBytes(std::string_view bytes) {
       storage_[lineStart_ + lineSize_++] = c;
       peakBuffered_ = std::max(peakBuffered_, bufferedBytes());
     }
-    if (requestBytes_ == kMaxRequestBytes && state_ != ParserState::kComplete)
+    if (headerBytes_ == kMaxHeaderBytes &&
+        (state_ == ParserState::kRequestLine || state_ == ParserState::kHeaders))
       state_ = ParserState::kError;
-    if (state_ == ParserState::kError) status_ = ParseStatus::kBadRequest;
+    if (state_ == ParserState::kError && status_ != ParseStatus::kPayloadTooLarge)
+      status_ = ParseStatus::kBadRequest;
   }
   return buildFeedResult(accepted);
 }
@@ -198,7 +231,9 @@ void RequestParser::resetRequestParser() noexcept {
   state_ = ParserState::kRequestLine;
   status_ = ParseStatus::kNeedMore;
   pendingCr_ = hostSeen_ = contentLengthSeen_ = closeRequested_ = false;
-  lineStart_ = lineSize_ = requestBytes_ = 0;
+  lineStart_ = lineSize_ = requestBytes_ = headerBytes_ = 0;
+  contentLength_ = 0;
+  std::string{}.swap(body_);
   methodSize_ = targetStart_ = targetSize_ = 0;
   scanSteps_ = peakBuffered_ = 0;
 }

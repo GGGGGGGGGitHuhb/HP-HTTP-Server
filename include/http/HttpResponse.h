@@ -19,6 +19,7 @@ enum class Status {
   kForbidden = 403,
   kNotFound = 404,
   kMethodNotAllowed = 405,
+  kContentTooLarge = 413,
   kInternalServerError = 500,
 };
 

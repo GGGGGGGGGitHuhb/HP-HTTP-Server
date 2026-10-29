@@ -41,10 +41,13 @@ struct Session {
   bool requestPending{};
   AccessRecord accessRecord;
   std::chrono::steady_clock::time_point requestStarted;
+  std::chrono::milliseconds requestReadTimeout{0};
+  std::optional<std::chrono::steady_clock::time_point> readDeadline;
 
   explicit Session(HttpCallbackStats* callbackStats,
                    metrics::ServerMetrics* serverMetrics = nullptr,
-                   bool enableAccessLog = false);
+                   bool enableAccessLog = false,
+                   std::chrono::milliseconds readTimeout = std::chrono::milliseconds{0});
   ~Session();
   void setResponseCallback(ResponseCallback responseCallback) {
     this->responseCallback = std::move(responseCallback);
@@ -53,6 +56,8 @@ struct Session {
   void onMessage(net::TcpConnection& connection);
   void onWriteComplete(net::TcpConnection& connection);
   void finishPendingRequest(bool aborted) noexcept;
+  bool closeExpiredRequest(net::TcpConnection& connection);
+  void clearReadDeadline(net::TcpConnection& connection);
 };
 
 struct HttpMessageHandler {
@@ -61,6 +66,7 @@ struct HttpMessageHandler {
   metrics::ServerMetrics* metrics{};
   bool accessLogEnabled{};
   std::shared_ptr<Session> session;
+  std::chrono::milliseconds requestReadTimeout{0};
 
   void setResponseCallback(ResponseCallback responseCallback) {
     this->responseCallback = std::move(responseCallback);
@@ -74,6 +80,7 @@ struct HttpMessageFactory {
   const http::StaticFileService& service;
   metrics::ServerMetrics* metrics{};
   bool accessLogEnabled{};
+  std::chrono::milliseconds requestReadTimeout{0};
   // “为新连接创建 HTTP 消息回调”的工厂
   net::TcpConnection::MessageCallback onMessageFactory() const;
 };
@@ -81,9 +88,13 @@ struct HttpMessageFactory {
 // 每个回调在连接所属线程上延迟创建自己的 Session。共享的
 // 自定义提供方和统计数据需要调用方同步；service 的生命周期须覆盖所有
 // 工作线程。
-net::TcpConnection::MessageCallback makeHttpCallback(ResponseCallback responseCallback,
-                                                     HttpCallbackStats* stats = nullptr,
-                                                     metrics::ServerMetrics* metrics = nullptr,
-                                                     bool accessLogEnabled = false);
-net::TcpServer::MessageFactoryCallback makeHttpFactory(const http::StaticFileService& service);
+net::TcpConnection::MessageCallback makeHttpCallback(
+    ResponseCallback responseCallback,
+    HttpCallbackStats* stats = nullptr,
+    metrics::ServerMetrics* metrics = nullptr,
+    bool accessLogEnabled = false,
+    std::chrono::milliseconds requestReadTimeout = std::chrono::milliseconds{0});
+net::TcpServer::MessageFactoryCallback makeHttpFactory(
+    const http::StaticFileService& service,
+    std::chrono::milliseconds requestReadTimeout = std::chrono::milliseconds{0});
 }  // namespace hp::app

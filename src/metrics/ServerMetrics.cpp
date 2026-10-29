@@ -5,7 +5,7 @@
 
 namespace hp::metrics {
 namespace {
-constexpr std::array<int, 7> kStatusCodes{0, 200, 400, 403, 404, 405, 500};
+constexpr std::array<int, 8> kStatusCodes{0, 200, 400, 403, 404, 405, 500, 413};
 }
 
 void ServerMetrics::addSaturated(std::atomic<std::uint64_t>& counter,
