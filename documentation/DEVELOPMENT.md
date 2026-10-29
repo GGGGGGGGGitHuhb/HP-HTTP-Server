@@ -114,3 +114,16 @@ ctest --test-dir build -R '^http_static_semantics(_http)?_tests$' --output-on-fa
 Debug/Release均全26项；ASan+UBSan/LSan规定14项为原12加新2。新负对照仅环境`HP_STATIC_SEMANTICS_NEGATIVE=1`显式启用：C++在资源创建前错区间起点，HTTP实际206错body且finally回收，不用于常规CI。31冻结源码本阶段全部保持，23停用目标不恢复；唯一旧测试适配为S2 C++/HTTP各自校验合法唯一Date后只排除动态Date值。
 
 S3独立初审FAIL定位RFC850完整timestamp的50年阈值，最小修复与13个确定性回归后Reviewer002 PASS，正式返工1/2。最终Debug/Release26/26、规定sanitizer14/14、三负对照-6/-6/1、13文件格式通过；原反例exit1→0，127条HTTP及19份fixture正常回收。31冻结不变，原失败/首次构建失败保留，无新债。
+
+
+## V1.3/S1 任务验证（已独立验收）
+
+当前28项CTest保留旧26身份，新增http_task_api_tests/http_task_api_http_tests。Debug/Release各28，规定ASan+UBSan/LSan原14加新2共16。两个新suite覆盖有界SAX/schema/media、容量/ID、8线程固定操作量/8客户端barrier并发、factory共享和真实threads0/2、Expect阶段差异、JSON/no-store与16桶计数。socket场景5秒绝对截止、suite120秒，JSON额外256KiB上限；无性能/TSan结论。
+
+```bash
+ctest --test-dir build -R '^http_task_api(_http)?_tests$' --output-on-failure --timeout 120
+```
+
+固定third_party/nlohmann/json.hpp 3.12.0及MIT见[来源清单](../third_party/nlohmann/README.md)；CMake只本地PRIVATE SYSTEM include，不下载/安装，第三方原文件不格式化。新负对照只显式设置HP_TASK_API_NEGATIVE=1：C++资源创建前错误TaskInput，HTTP实际POST201后错误title，必须非零且finally回收。原全部旧测试仅一个已批例外：静态S06总桶13→16，旧i<13/索引/计数及其他字节保持；31冻结/23停用目标不变。
+
+S1独立Reviewer PASS：Debug/Release各28/28、规定sanitizer16/16，三负对照-6/-6/1、14项目文件格式通过；151条HTTP及22份fixture清理正常。25项候选/导出同字节且HEAD+patch独立重建一致，52旧测试SHA不变，唯一S06总数13→16机械重建通过，31冻结不变。累计纠正3/3和协调停止记录保留，原缩进warning已修正但不删除历史；官方MIT行尾空格保留，不为格式变更vendor。

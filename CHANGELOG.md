@@ -3,6 +3,15 @@
 本文档记录 HP HTTP Server 已经完成并得到适当验证的重要变化。未来计划写入 `ROADMAP.md`，长期架构写入 `ARCHITECTURE.md`，技术债写入 `TECH-DEBT-TRACKER.md`，实现与审查证据写入对应报告。
 
 <a id="unreleased"></a>
+## V1.3 — 开发中（未发布）
+
+### 2026-10-29 — S1 JSON与内存任务资源
+
+- 新增GET/POST /api/tasks与GET/PUT/DELETE /api/tasks/{id}，PUT完整替换，128条内存记录、标题256 UTF-8字节、JSON输入8KiB、列表256KiB；共享mutex保证单操作原子性，拥有型列表快照在锁外序列化，重启清空。
+- 固定nlohmann/json3.12.0官方SHA与MIT随源码保存，构建离线；严格SAX/媒体类型与统一任务JSON错误/no-store。Expect头阶段400/404强制关闭，完整请求同类业务错误可保活，HEAD任务拒绝无正文；原静态/echo/Session/net保持。
+- 独立Reviewer PASS：Debug/Release28/28、指定sanitizer16/16、14文件格式、三负对照；151条HTTP及22份fixture正常回收。52旧测试保持，唯一S06总数literal13→16精确许可、31冻结不变。原两补充、硬停/恢复、Builder缩进warning及累计纠正3/3保留。
+- 仅S1完成，S2/S3未开始、V1.3整体未完成；无数据库/鉴权/持久化/线程池，无新债，不关闭TD-006或旧性能/EOF风险。
+
 ## V1.2 — 验收完成，待合并发布
 
 ### 2026-10-29 — S3 条件请求与单区间下载

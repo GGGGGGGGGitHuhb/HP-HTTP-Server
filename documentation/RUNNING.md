@@ -74,7 +74,7 @@ curl --http1.1 -I http://127.0.0.1:8080/
 curl --http1.1 --data-binary 'abc' http://127.0.0.1:8080/api/echo
 ```
 
-POST回显不依赖Content-Type，不添加换行；无CL或CL0为零字节。`/api/echo?tag=plain`匹配同一路由，query经有界解析但业务不使用且不记录；合法percent query可接受。只精确匹配/api/echo，尾斜杠由公共目标结构校验对全部方法403关闭；GET未知文件404而POST未知路径405，不探测静态文件存在性。HEAD的错误400/403/404/405/413/受控500也不发正文，只有完整合法HEAD请求行可信时才适用于解析错误。所有终止响应丢弃pipeline后缀，provider异常/放宽close策略500关闭。尚无JSON、Unicode规范化、响应chunked、数据库或运行期路由注册。
+POST回显不依赖Content-Type，不添加换行；无CL或CL0为零字节。`/api/echo?tag=plain`匹配同一路由，query经有界解析但业务不使用且不记录；合法percent query可接受。只精确匹配/api/echo，尾斜杠由公共目标结构校验对全部方法403关闭；GET未知文件404而POST未知路径405，不探测静态文件存在性。HEAD的错误400/403/404/405/413/受控500也不发正文，只有完整合法HEAD请求行可信时才适用于解析错误。所有终止响应丢弃pipeline后缀，provider异常/放宽close策略500关闭。该阶段未引入JSON（当前任务API见末节），仍无Unicode规范化、响应chunked、数据库或运行期路由注册。
 
 ### V1.2/S1 chunked与Expect已验收
 
@@ -120,3 +120,26 @@ curl -I -H 'Range: bytes=1-3' http://127.0.0.1:8080/note.txt
 首个响应含弱ETag/Last-Modified/Date/Accept-Ranges；第二个对存在文件返回304且无Content-Length/body；第三个返回206和实际单区间，文件不足则按单区间规则截断或416；HEAD仍为全表示200头无body。`bytes=-N`表示尾N字节，`bytes=N-`为开尾；suffix0/空文件/起点越界416并可保活；多区间、重复/畸形/溢出Range忽略回200。
 
 If-None-Match支持弱列表和单独*，最多128条；存在但无效也抑制If-Modified-Since。唯一合法IMS支持三HTTP-date格式。任何If-Range（包括匹配标签、伪强标签、日期或空值）都保守回完整200，条件304优先；这不是安全断点拼接。echo忽略这些条件头，文件错误优先，Expect仍先100和完整body。没有文件内容缓存或快照，不改变8MiB限制。新metrics在原桶末尾增加responses_status_206_total/304_total/416_total，416不是parse/provider错误。
+
+
+## V1.3/S1 内存任务API（已独立验收）
+
+无需新CLI。启动服务器后：
+
+```bash
+curl -i -H 'Content-Type: application/json' -d '{"title":"demo","completed":false}' http://127.0.0.1:8080/api/tasks
+curl -i http://127.0.0.1:8080/api/tasks
+curl -i http://127.0.0.1:8080/api/tasks/1
+curl -i -X PUT -H 'Content-Type: application/json; charset=utf-8' -d '{"title":"done","completed":true}' http://127.0.0.1:8080/api/tasks/1
+curl -i -X DELETE http://127.0.0.1:8080/api/tasks/1
+```
+
+POST201、GET/PUT200返回`{"id":"1","title":"demo","completed":false}`形状；collection为`{"tasks":[...]}`按数值ID升序；DELETE200为`{"id":"1","deleted":true}`，再次删除404。属性顺序不承诺，body无额外换行。GET/list只读，PUT必须两字段完整替换且不upsert，重启空集合。路径ID只接受1..UINT64_MAX十进制、无前导零，编码数字可用。非空query400，空?可用；任务命名空间覆盖同名静态文件，/api/tasksX仍静态fallback。
+
+请求体为UTF-8 JSON，title解码后1..256字节，无ASCII控制、但空格标题合法；completed必须JSON布尔。未知/重复字段、数组/嵌套、额外顶层值、非法UTF8/surrogate、raw NUL/BOM均400。POST/PUT要求唯一application/json，可唯一charset=utf-8（大小写无关/可quoted），其他415。任务body最多8192解码字节，超限413close；通用HTTP parser仍1MiB，chunked/CL一致，不承诺8KiB前停止网络读取。GET/DELETE不得带非空body。
+
+最多128条任务，满容量503 capacity_exhausted；删除释放名额但ID不复用，ID耗尽503 id_exhausted。成功任务响应与预期API错误均为application/json及唯一no-store、最大256KiB；错误形状`{"error":{"code":"固定代码","message":"固定英文说明"}}`，不反射输入。HEAD均不支持，返回405（Allow collection为GET, POST，item为GET, PUT, DELETE）且无正文、CL保留错误表示长度。
+
+完整请求后的业务400/404/415/503可保活，405/应用413/受控500close；仅Expect头阶段提前路径/ID/query400/404因body尚未消费而强制close，无100/副作用。合法Expect先100，完整body才检查媒体/JSON/存储；完整后invalid_json400仍保活。公共target/framing错误保留原格式/关闭规则，所有静态条件/Range对任务无效。
+
+多worker共享同一进程内mutex存储，单次操作原子、list为拥有快照；同步锁不承诺公平或无阻塞。已提交写入在响应编码/发送失败后可能已生效，POST重试可能重复；无幂等键、事务、持久化、鉴权或业务线程池。日志不记录title/body/Content-Type/query，新增metrics末尾201/415/503；业务错误不算parse/provider错误。

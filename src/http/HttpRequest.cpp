@@ -112,6 +112,12 @@ bool RequestParser::validateHeader() {
   if (state_ == ParserState::kTrailers)
     return equalsAsciiCaseInsensitive(name, "x-checksum") ||
            equalsAsciiCaseInsensitive(name, "x-trace-id");
+  if (equalsAsciiCaseInsensitive(name, "content-type")) {
+    contentType_.duplicate = contentType_.present;
+    if (!contentType_.present) contentType_.value.assign(value);
+    contentType_.present = true;
+    return true;
+  }
   if (equalsAsciiCaseInsensitive(name, "if-none-match"))
     return collectStaticField(staticFields_.ifNoneMatch, value, true);
   if (equalsAsciiCaseInsensitive(name, "if-modified-since"))
@@ -373,6 +379,7 @@ FeedResult RequestParser::buildFeedResult(std::size_t accepted) const {
     result.request.closeRequested = closeRequested_;
     result.request.body = body_;
     result.request.staticFields = staticFields_;
+    result.request.contentType = contentType_;
     result.request.method.assign(storage_.data(), methodSize_);
     result.request.target.assign(storage_.data() + targetStart_, targetSize_);
   }
@@ -460,6 +467,7 @@ void RequestParser::resetRequestParser() noexcept {
   contentLength_ = 0;
   std::string{}.swap(body_);
   staticFields_ = {};
+  contentType_ = {};
   staticFieldBytes_ = 0;
   methodSize_ = targetStart_ = targetSize_ = 0;
   scanSteps_ = peakBuffered_ = 0;

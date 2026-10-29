@@ -12,7 +12,7 @@ ctest --test-dir build -R '^http_protocol_baseline(_http)?_tests$' --output-on-f
 
 - `http_protocol_baseline_tests`：直接使用当前 `RequestParser::feedRequestBytes/resetRequestParser`；短语料每个切分点及逐字节、长边界整包/逐字节/127字节块。每次核acceptedBytes、累计requestBytes、终态及reset，不访问私有状态。
 - `http_protocol_baseline_http_tests`：真实启动服务器，分别threads=0/2，解析完整响应及正文；同一socket验证连续请求，正常SIGTERM回收；只使用Python标准库。
-- CMake共26项，S3前24项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
+- CMake共28项，S3前24项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
 - 新HTTP测试在`HP_S3_TEST_TMP_ROOT`（CTest设为构建目录的test-tmp）下建立唯一运行目录，删除业务fixture，保留有界服务器日志、每进程JSON回收记录及summary.json。失败亦保留证据。每次socket操作服从同一场景5秒绝对截止，套件120秒，每响应最多9MiB；不依赖短sleep确认事件。
 
 ## 支持/拒绝及覆盖映射
@@ -117,3 +117,21 @@ S2 Builder最终自测Debug/Release各24/24、规定12项ASan+UBSan/LSan 12/12�
 不提供内容缓存、强ETag或文件一致快照；If-Range不支持校验器驱动安全续传，所有存在值均回完整200（304条件优先）。无新性能结论，不关闭TD-006或历史EOF风险。
 
 Builder最终自测：Debug26/26（22.13秒）、Release26/26（21.95秒）、指定sanitizer14/14（15.19秒）；三个负对照非零且清理有效。以上为首轮Builder证据；独立初审发现RFC850完整timestamp的50年边界缺陷并给出FAIL，修复及13条回归后独立复审PASS：Debug26/26（22.56秒）、Release26/26（22.21秒）、sanitizer14/14（15.41秒），原反例exit1→0、负对照-6/-6/1、13文件格式通过，127条HTTP及19份fixture清理正常。S3及V1.2阶段验收完成，尚未合并发布。
+
+
+## V1.3/S1 任务API（已独立验收）
+
+| 契约 | 验证 |
+| --- | --- |
+| CRUD、完整PUT、ID字符串/规范十进制、query拒绝、两种Allow、HEAD错误无body、路径优先与静态兼容 | A03/A05、B01/B02 |
+| strict SAX、root深度1、两必填字段、重复/escaped key、UTF-8/控制/NUL/BOM、8192/8193、title256/257、Content-Type | A01/A02、B03 |
+| 容量128/129、释放后ID递增、UINT64_MAX耗尽、无副作用、8线程整对象写/读/快照 | A03/A04、B05/B06 |
+| 实际factory连接共享/独立、多worker和重启空状态，失败清理 | A06、B04/B05 |
+| no-store唯一、JSON不反射输入、16桶、精确body字节/HEAD0、无敏感日志 | A05/A07、B06/B07 |
+| Expect非零CL头-only拒绝400/404关闭，无100/副作用；完整同错误及合法100后JSON400仍保活 | A05、B07 |
+
+任务错误统一JSON仅限任务适配层，公共target/framing/静态/echo不改格式。HEAD任务接口不支持，405close且表示CL正确；任务413/500close，完整请求400/404/415/503沿policy保活。所有任务成功/预期错误和受控500含唯一Cache-Control: no-store，任意条件/Range不改变任务结果。
+
+新增http_task_api_tests/http_task_api_http_tests，原26身份保留。31冻结源码不变；旧活跃HttpStaticSemantics_test.cpp仅批准总桶size==13→16一个literal，原13桶循环/计数和其余旧测试字节保持。源码随附固定nlohmann/json3.12.0，离线构建，不格式化第三方原文件；原风险不因任务功能关闭。
+
+Builder本候选自测Debug28/28（24.03秒）、Release28/28（22.83秒）、规定sanitizer16/16（17.17秒）；三个负对照非零且清理有效。独立Reviewer PASS：Debug28/28（22.53秒）、Release28/28（22.48秒）、sanitizer16/16（16.26秒），负对照-6/-6/1、14文件格式通过，151条HTTP及22份fixture正常回收。两个批准补充均验证，累计纠正3/3，历史停止和Builder早期warning保留；仅S1已完成。

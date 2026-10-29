@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(hp_http_core STATIC
+    src/business/TaskService.cpp
+    src/http/TaskApiHandler.cpp
     src/metrics/ServerMetrics.cpp
     src/base/Logger.cpp
     src/base/AsyncLogger.cpp
@@ -202,5 +204,18 @@ if(BUILD_TESTING)
     add_test(NAME http_static_semantics_http_tests
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpStaticSemanticsHttp_test.py $<TARGET_FILE:hp_http_server>)
     set_tests_properties(http_static_semantics_tests http_static_semantics_http_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
+
+target_include_directories(hp_http_core SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
+
+if(BUILD_TESTING)
+    add_executable(http_task_api_tests tests/HttpTaskApi_test.cpp)
+    target_link_libraries(http_task_api_tests PRIVATE hp_http_app)
+    enable_debug_warnings(http_task_api_tests)
+    add_test(NAME http_task_api_tests COMMAND http_task_api_tests)
+    add_test(NAME http_task_api_http_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpTaskApiHttp_test.py $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(http_task_api_tests http_task_api_http_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()
