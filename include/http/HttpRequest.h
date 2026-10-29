@@ -62,6 +62,8 @@ class RequestParser final {
 
   [[nodiscard]] std::size_t peakBufferedBytes() const noexcept { return peakBuffered_; }
 
+  [[nodiscard]] bool isHeadRequest() const noexcept { return headRequest_; }
+
   [[nodiscard]] bool pendingCr() const noexcept { return pendingCr_; }
 
  private:
@@ -86,6 +88,7 @@ class RequestParser final {
   ParserState state_{ParserState::kRequestLine};  // 当前请求被解析到的位置状态
   ParseStatus status_{ParseStatus::kNeedMore};    // 当前请求解析完后的结果
   bool pendingCr_{false};  // true 表示已收到 CR('\r')，正在等待 LF('\n')
+  bool headRequest_{false};
   bool hostSeen_{false};
   bool contentLengthSeen_{false};
   bool closeRequested_{false};

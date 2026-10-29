@@ -17,14 +17,14 @@ namespace {
 
 using base::UniqueFd;
 
-ResponseResult errorResponse(Status status, ConnectionPolicy policy) {
+ResponseResult errorResponse(Status status, ConnectionPolicy policy, bool omitBody) {
   if (status == Status::kBadRequest || status == Status::kMethodNotAllowed)
     policy = ConnectionPolicy::kClose;
-  return {makeErrorResponse(status, policy),
+  return {makeErrorResponse(status, policy, omitBody),
           policy,
           std::nullopt,
           status,
-          errorContentBytes(status)};
+          omitBody ? 0 : errorContentBytes(status)};
 }
 
 bool isSymlinkAt(int parentFd, const std::string& component) {
@@ -91,24 +91,26 @@ PathResult validatePath(std::string_view target) {
 ResponseResult prepareFileResponse(UniqueFd file,
                                    std::string_view relativePath,
                                    const struct stat& metadata,
-                                   ConnectionPolicy policy) {
+                                   ConnectionPolicy policy,
+                                   bool omitBody) {
   if (!S_ISREG(metadata.st_mode)) {
-    return errorResponse(Status::kNotFound, policy);
+    return errorResponse(Status::kNotFound, policy, omitBody);
   }
   if (metadata.st_size < 0) {
-    return errorResponse(Status::kInternalServerError, policy);
+    return errorResponse(Status::kInternalServerError, policy, omitBody);
   }
   const auto size = static_cast<std::uintmax_t>(metadata.st_size);
   if (size > kMaxFileBytes) {
-    return errorResponse(Status::kForbidden, policy);
+    return errorResponse(Status::kForbidden, policy, omitBody);
   }
 
   const auto length = static_cast<std::size_t>(size);
   return {makeResponseHeader(Status::kOk, length, contentTypeForPath(relativePath), false, policy),
           policy,
-          base::FileRegion(std::move(file), 0, length),
+          omitBody ? std::nullopt
+                   : std::optional<base::FileRegion>(std::in_place, std::move(file), 0, length),
           Status::kOk,
-          length};
+          omitBody ? 0 : length};
 }
 
 }  // namespace
@@ -142,6 +144,7 @@ std::vector<std::byte> StaticFileService::buildResponseBytes(const HttpRequest& 
 
 ResponseResult StaticFileService::handleResponse(const HttpRequest& request,
                                                  ConnectionPolicy policy) const {
+  const bool omitBody = request.method == "HEAD";
   auto result = onResponse(request, policy);
   if (!result.file) return result;
   try {
@@ -156,21 +159,22 @@ ResponseResult StaticFileService::handleResponse(const HttpRequest& request,
         continue;
       }
       if (count < 0 && errno == EINTR) continue;
-      return errorResponse(Status::kInternalServerError, policy);
+      return errorResponse(Status::kInternalServerError, policy, omitBody);
     }
     result.file.reset();
     return result;
   } catch (...) {
-    return errorResponse(Status::kInternalServerError, policy);
+    return errorResponse(Status::kInternalServerError, policy, omitBody);
   }
 }
 
 ResponseResult StaticFileService::onResponse(const HttpRequest& request,
                                              ConnectionPolicy policy) const {
+  const bool omitBody = request.method == "HEAD";
   try {
     const PathResult validated = validatePath(request.target);
     if (validated.status != Status::kOk) {
-      return errorResponse(validated.status, policy);
+      return errorResponse(validated.status, policy, omitBody);
     }
 
     int parentFd = rootFd_;
@@ -180,7 +184,7 @@ ResponseResult StaticFileService::onResponse(const HttpRequest& request,
       const int opened =
           ::openat(parentFd, component.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
       if (opened == -1) {
-        return errorResponse(classifyOpenError(parentFd, component, errno), policy);
+        return errorResponse(classifyOpenError(parentFd, component, errno), policy, omitBody);
       }
       currentDirectory = UniqueFd(opened);
       parentFd = currentDirectory.get();
@@ -189,17 +193,17 @@ ResponseResult StaticFileService::onResponse(const HttpRequest& request,
     const std::string& filename = validated.components.back();
     UniqueFd file(::openat(parentFd, filename.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC));
     if (file.get() == -1) {
-      return errorResponse(classifyOpenError(parentFd, filename, errno), policy);
+      return errorResponse(classifyOpenError(parentFd, filename, errno), policy, omitBody);
     }
 
     struct stat metadata {};
 
     if (::fstat(file.get(), &metadata) == -1) {
-      return errorResponse(Status::kInternalServerError, policy);
+      return errorResponse(Status::kInternalServerError, policy, omitBody);
     }
-    return prepareFileResponse(std::move(file), validated.path, metadata, policy);
+    return prepareFileResponse(std::move(file), validated.path, metadata, policy, omitBody);
   } catch (...) {
-    return errorResponse(Status::kInternalServerError, policy);
+    return errorResponse(Status::kInternalServerError, policy, omitBody);
   }
 }
 

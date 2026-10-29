@@ -59,7 +59,7 @@ class Client:
         self.pending += block
         require(len(self.pending) <= MAX_RESPONSE, "response exceeds limit")
 
-    def response(self, status, expected_body, close=False):
+    def response(self, status, expected_body, close=False, method=b"GET", allow=b"GET, HEAD"):
         while b"\r\n\r\n" not in self.pending:
             self.receive()
             require(len(self.pending) <= MAX_RESPONSE, "missing header boundary")
@@ -77,11 +77,17 @@ class Client:
         require(length == len(expected_body) and length <= MAX_RESPONSE, "wrong body length")
         require(headers[b"connection"] == (b"close" if close else b"keep-alive"), "wrong connection policy")
         if status == 405:
-            require(headers.get(b"allow") == b"GET", "wrong Allow")
+            require(headers.get(b"allow") == allow, "wrong Allow")
+        else:
+            require(b"allow" not in headers, "unexpected Allow")
+        if method == b"HEAD":
+            length = 0
+            expected_body = b""
         while len(self.pending) < length:
             self.receive()
         body, self.pending = self.pending[:length], self.pending[length:]
         require(hashlib.sha256(body).digest() == hashlib.sha256(expected_body).digest(), "body mismatch")
+        return headers
 
     def eof(self):
         require(not self.pending, "extra response suffix")
@@ -203,12 +209,17 @@ def check_protocol(server):
         client.response(200, b"home\n")
         client.response(400, ERRORS[400], True)
         client.eof()
+    print("CASE P01-head migrated-to-static-HEAD", flush=True)
+    with contextlib.closing(Client(server.port)) as client:
+        client.send(request(method=b"HEAD") + request(headers=b"Connection: close\r\n"))
+        client.response(200, b"home\n", method=b"HEAD")
+        client.response(200, b"home\n", True)
+        client.eof()
     rejects = [
         ("P01-host-missing", b"GET / HTTP/1.1\r\n\r\n", 400),
         ("P01-host-duplicate", request(headers=b"Host: again\r\n"), 400),
         ("P01-method-invalid", request(method=b"G(ET"), 400),
         ("P01-post", request(method=b"POST"), 405),
-        ("P01-head", request(method=b"HEAD"), 405),
         ("P02-post-bad-body", request(method=b"POST", headers=b"Content-Length: +1\r\n"), 400),
         ("P02-nonzero", request(headers=b"Content-Length: +1\r\n"), 400),
         ("P02-duplicate", request(headers=b"Content-Length: 0\r\nContent-Length: 0\r\n"), 400),

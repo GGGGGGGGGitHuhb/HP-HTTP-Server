@@ -66,8 +66,9 @@ def check_body_pipeline(server):
             client.eof()
     for method in [b"POST", b"HEAD"]:
         with contextlib.closing(Client(server.port)) as client:
-            client.send(body_request(b"abc", method=method))
-            client.response(405, ERRORS[405], True)
+            client.send(body_request(b"abc", method=method, close=True))
+            client.response(200 if method == b"HEAD" else 405,
+                            b"home\n" if method == b"HEAD" else ERRORS[405], True, method=method)
             client.eof()
     print("CASE H01-methods-no-business PASS", flush=True)
 

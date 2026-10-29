@@ -3,7 +3,7 @@
 #include <chrono>
 
 #include "AccessLog.h"
-#include "http/StaticFileService.h"
+#include "http/RequestRouter.h"
 #include "net/TcpServer.h"
 
 namespace hp::app {
@@ -77,10 +77,11 @@ struct HttpMessageHandler {
 };
 
 struct HttpMessageFactory {
-  const http::StaticFileService& service;
+  const http::RequestRouter& router;
   metrics::ServerMetrics* metrics{};
   bool accessLogEnabled{};
   std::chrono::milliseconds requestReadTimeout{0};
+  std::shared_ptr<const http::RequestRouter> ownedRouter{};
   // “为新连接创建 HTTP 消息回调”的工厂
   net::TcpConnection::MessageCallback onMessageFactory() const;
 };
