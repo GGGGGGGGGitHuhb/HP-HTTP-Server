@@ -5,6 +5,13 @@
 <a id="unreleased"></a>
 ## V1.1 — 开发中（未发布）
 
+### 2026-10-29 — S2 Content-Length正文与读取期限
+
+- 增量接收最多1MiB拥有型二进制正文，头部独立16KiB；准确消费与后续请求粘连，拒绝歧义CL、TE和Expect，合法超限返回413并关闭。GET消费正文但不回显，POST/HEAD仍405。
+- 新增默认10秒完整请求绝对读取期限，可用`--request-read-timeout-ms`配置或0禁用；读取进展不续期，超时静默关闭并计aborted/unknown；复用owner定时器及身份保护。新增413尾部指标桶。
+- Builder自测及Reviewer独立PASS：Debug/Release各18/18、规定ASan+UBSan/LSan六项6/6；18次滴流302–306ms、负对照有效、51条服务器正常回收。Builder首次Debug有make时钟偏差告警，后续新鲜度检查通过；Reviewer构建无告警。
+- 两份冻结旧测试仅按批准例外更新非法CL语料及必要格式，其余29份不变。S2已完成，S3未开始，V1.1未整体完成/发布；TD-006及性能/EOF风险保留，无新债，无路由/数据库/chunked。
+
 ### 2026-10-29 — S1 协议与回归基线
 
 - 新增当前RequestParser接口与真实HTTP进程两套测试，覆盖增量解析、请求边界、拒绝framing、保活/顺序pipeline、静态完整正文、FIN/RST/超时及正常停机；新增[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，明确支持、拒绝和冻结覆盖缺口。

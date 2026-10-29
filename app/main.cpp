@@ -53,6 +53,8 @@ void printUsage(std::ostream& output) {
          << "--threads defaults to 2 workers; 0 selects a single Reactor.\n"
          << "--idle-timeout-ms <0-86400000> defaults to 30000; "
             "--keep-alive-timeout-ms <0-86400000> defaults to 15000.\n"
+         << "--request-read-timeout-ms <0-86400000> defaults to 10000; 0 disables; "
+            "absolute request reading expiry closes silently.\n"
          << "--shutdown-timeout-ms <0-60000> defaults to 5000; 0 closes "
             "immediately.\n"
          << "SIGINT/SIGTERM drain current output; another observed signal "
@@ -103,6 +105,7 @@ struct ServerOptions {
   std::size_t threads{2};
   bool accessLog{false}, metricsOnExit{false};
   std::chrono::milliseconds shutdownTimeout{5000};
+  std::chrono::milliseconds requestReadTimeout{10000};
   hp::net::ConnectionTimeouts timeouts{std::chrono::milliseconds(30000),
                                        std::chrono::milliseconds(15000)};
 };
@@ -112,6 +115,7 @@ struct ServerOptions {
   bool hasRoot = false;
   bool hasThreads = false;
   bool hasIdleTimeout = false, hasKeepAliveTimeout = false, hasShutdownTimeout = false;
+  bool hasRequestReadTimeout = false;
   ServerOptions options;
   for (int index = 1; index < argc; ++index) {
     const std::string_view option = argv[index];
@@ -123,7 +127,7 @@ struct ServerOptions {
     }
     if (option == "--port" || option == "--root" || option == "--threads" ||
         option == "--idle-timeout-ms" || option == "--keep-alive-timeout-ms" ||
-        option == "--shutdown-timeout-ms") {
+        option == "--shutdown-timeout-ms" || option == "--request-read-timeout-ms") {
       if (index + 1 >= argc) {
         throw std::invalid_argument("option value is missing");
       }
@@ -138,6 +142,11 @@ struct ServerOptions {
         if (hasThreads) throw std::invalid_argument("--threads appears more than once");
         options.threads = parseWorkerCount(value);
         hasThreads = true;
+      } else if (option == "--request-read-timeout-ms") {
+        if (hasRequestReadTimeout)
+          throw std::invalid_argument("request read timeout appears more than once");
+        options.requestReadTimeout = parseConnectionTimeout(value);
+        hasRequestReadTimeout = true;
       } else if (option == "--shutdown-timeout-ms") {
         if (hasShutdownTimeout)
           throw std::invalid_argument("shutdown timeout appears more than once");
@@ -214,12 +223,15 @@ int runServer(int argc, char* argv[]) {
     hp::http::StaticFileService service(options.root);
     hp::app::SignalWatcher signals;
     hp::net::TcpServer server(options.port,
-                              hp::http::kMaxRequestBytes,
+                              hp::http::kMaxHeaderBytes,
                               options.threads,
                               options.timeouts,
                               &metrics);
     server.registerMessageFactoryCallback(
-        [target = hp::app::HttpMessageFactory{service, &metrics, options.accessLog}]() {
+        [target = hp::app::HttpMessageFactory{service,
+                                              &metrics,
+                                              options.accessLog,
+                                              options.requestReadTimeout}]() {
           return target.onMessageFactory();
         });
     ShutdownSignalHandler shutdownSignals{signals, server, options.shutdownTimeout};

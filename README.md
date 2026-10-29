@@ -1,10 +1,10 @@
 # HP HTTP Server
 
-Linux C++20 静态 HTTP 服务器学习项目：提供受限 HTTP/1.1 GET、Keep-Alive、顺序流水线请求、非阻塞 sendfile、连接超时与优雅关闭。网络层采用 epoll Reactor；默认主线程监听、两个 worker 处理连接，支持单 Reactor 模式。
+Linux C++20 静态 HTTP 服务器学习项目：提供受限 HTTP/1.1 GET、有界Content-Length请求正文、完整请求读取期限、Keep-Alive、顺序流水线请求、非阻塞 sendfile、连接超时与优雅关闭。网络层采用 epoll Reactor；默认主线程监听、两个 worker 处理连接，支持单 Reactor 模式。
 
 ## 后续方向
 
-2026-10-29调整：取消本仓库原L7网关扩展，后续依次规划V1.1请求正文与基础路由、V1.2 HTTP兼容与静态资源语义、V1.3无数据库动态接口、V1.4运行保障。V1.1/S1协议与回归基线已完成独立验收，S2/S3及其余版本阶段未开始；当前仍是受限静态HTTP服务，详见[路线图](ROADMAP.md#后续路线与共同门槛)。数据库、代理及推理网关不在本轮范围。
+2026-10-29调整：取消本仓库原L7网关扩展，后续依次规划V1.1请求正文与基础路由、V1.2 HTTP兼容与静态资源语义、V1.3无数据库动态接口、V1.4运行保障。V1.1/S1协议与回归基线已完成独立验收并合并，S2正文与读取期限已完成独立验收，S3及其余版本阶段未开始；当前仍是受限静态HTTP服务，详见[路线图](ROADMAP.md#后续路线与共同门槛)。数据库、代理及推理网关不在本轮范围。
 
 ## 环境要求
 
@@ -28,7 +28,7 @@ cmake --build build -j2
 
 ## 配置说明
 
-必须显式提供 `--port <0-65535>` 和 `--root <directory>`；0端口由内核分配并在stdout报告。无配置文件；worker默认2、idle默认30000ms、keep-alive默认15000ms。`--access-log` 与 `--metrics-on-exit` 默认关闭；前者写有界JSON到stderr，后者退出时导出stdout文本快照，无监控HTTP路由。
+必须显式提供 `--port <0-65535>` 和 `--root <directory>`；0端口由内核分配并在stdout报告。无配置文件；worker默认2、idle默认30000ms、keep-alive默认15000ms；`--request-read-timeout-ms`默认10000ms，0禁用，当前请求首个非空输入起绝对计时，进度不续期，到期静默关闭。`--access-log` 与 `--metrics-on-exit` 默认关闭；前者写有界JSON到stderr，后者退出时导出stdout文本快照，无监控HTTP路由。
 
 完整CLI约束、Buffer/背压与观测计数口径见 [运行说明](documentation/RUNNING.md)。
 
@@ -39,7 +39,7 @@ ctest --test-dir build -N
 ctest --test-dir build --output-on-failure
 ```
 
-当前CMake注册16项，含历史别名和synthetic工具测试；V1.1/S1新增当前parser与真实HTTP协议基线两项，支持/拒绝及覆盖缺口见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)。2026-10-29 Builder自测及Reviewer独立验证均通过：Debug/Release各16/16，新两项ASan+UBSan/LSan 2/2，错误预期负对照与失败回收检查有效；S1只补测试与文档，产品协议不变。历史S1的12/12、旧重构28/28均只代表各自时点，23个旧接口耦合目标仍冻结停用，不能充当当前全量回归。详见 [测试、smoke与格式化](documentation/DEVELOPMENT.md)。
+当前CMake注册18项，含历史别名和synthetic工具测试；V1.1/S2在S1的16项基础上新增正文/期限C++与真实HTTP两套。Builder自测及Reviewer独立PASS：Debug/Release各18/18及规定六项ASan+UBSan/LSan 6/6；正文/期限负对照与失败清理通过。当前行为见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，测试入口与冻结覆盖边界见[开发说明](documentation/DEVELOPMENT.md)。23个旧目标仍停用；本次仅定向调整两份旧文件的过时非法CL语料，其他冻结约束保持。
 
 ## 项目结构
 
@@ -50,7 +50,7 @@ ctest --test-dir build --output-on-failure
 
 ## 已知限制
 
-只支持无请求体GET；不支持body/chunked、Range、URL decode、TLS、HTTP/2、目录列表或代理。请求16KiB、请求行4KiB、文件8MiB上限。已有连接与输出边界，但无全局连接/内存配额或总请求时限，owner上的阻塞provider不能被定时器抢占。协议及资源边界见 [架构](ARCHITECTURE.md)。
+当前GET完整消费固定长度正文但不解释其业务含义，文件响应仍由路径决定；合法POST/HEAD完整请求仍405。请求头16KiB、行4KiB、正文1MiB、文件8MiB独立上限，合法正文超限413，非法framing400；不支持chunked/Expect、Range、URL decode、TLS、HTTP/2、目录列表或代理。生产输入窗口仍16KiB，不是正文总上限。无全局连接/内存配额或业务执行期限，owner上的阻塞provider不能被定时器抢占。协议及资源边界见 [架构](ARCHITECTURE.md)。
 
 性能数据限定WSL2同机loopback、closed-loop与热缓存。V0.6/S2矩阵提供条件化基线；S3只有M2小文件跟踪配对与M6未跟踪CPU，大文件syscall未知。strace单次QPS变化-95.85%为巨大观测扰动，不证明稳定瓶颈、恢复或长尾根因。RO-002、TD-001、TD-006保持开放；详见 [风险](TECH-DEBT-TRACKER.md) 与 [公开性能结果](benchmark/README.md)。
 

@@ -82,7 +82,8 @@ void ConnectionRegistry::cancelTimeout(TcpConnection& connection) noexcept {
 }
 
 void ConnectionRegistry::onTimeoutActivity(TcpConnection& connection, bool progress) {
-  if (draining_ || connection.state() == TcpConnection::State::kClosing) {
+  if (draining_ || connection.isDraining() ||
+      connection.state() == TcpConnection::State::kClosing) {
     cancelTimeout(connection);
     return;
   }
@@ -98,6 +99,8 @@ void ConnectionRegistry::onTimeoutActivity(TcpConnection& connection, bool progr
     const auto keepDeadline = *connection.waitSince_ + timeouts_.keepAlive;
     if (!deadline || keepDeadline < *deadline) deadline = keepDeadline;
   }
+  if (connection.readDeadline_ && (!deadline || *connection.readDeadline_ < *deadline))
+    deadline = connection.readDeadline_;
   if (!deadline) {
     cancelTimeout(connection);
     return;

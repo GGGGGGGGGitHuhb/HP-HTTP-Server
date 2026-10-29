@@ -12,8 +12,12 @@
 namespace hp::app {
 Session::Session(HttpCallbackStats* callbackStats,
                  metrics::ServerMetrics* serverMetrics,
-                 bool enableAccessLog)
-    : stats(callbackStats), metrics(serverMetrics), accessLogEnabled(enableAccessLog) {
+                 bool enableAccessLog,
+                 std::chrono::milliseconds readTimeout)
+    : stats(callbackStats),
+      metrics(serverMetrics),
+      accessLogEnabled(enableAccessLog),
+      requestReadTimeout(readTimeout) {
   if (auto observer = sessionEventCallback.load()) observer(true, this);
 }
 
@@ -34,8 +38,22 @@ void Session::finishPendingRequest(bool aborted) noexcept {
   if (accessLogEnabled) submitAccessRecord(accessRecord, metrics);
 }
 
+bool Session::closeExpiredRequest(net::TcpConnection& connection) {
+  if (!readDeadline || std::chrono::steady_clock::now() < *readDeadline) return false;
+  phase = Phase::kClosing;
+  clearReadDeadline(connection);
+  connection.requestClose();
+  return true;
+}
+
+void Session::clearReadDeadline(net::TcpConnection& connection) {
+  readDeadline.reset();
+  connection.setReadDeadline(std::nullopt);
+}
+
 void Session::onMessage(net::TcpConnection& connection) {
   if (phase != Phase::kReading || connection.isDraining()) return;
+  if (closeExpiredRequest(connection)) return;
   const auto input = connection.inputView();
   const bool eof = connection.peerClosed();
   if (!requestPending && !input.empty()) {
@@ -43,6 +61,10 @@ void Session::onMessage(net::TcpConnection& connection) {
     requestStarted = std::chrono::steady_clock::now();
     accessRecord = {};
     if (metrics) metrics->beginRequest();
+    if (requestReadTimeout.count() > 0) {
+      readDeadline = requestStarted + requestReadTimeout;
+      connection.setReadDeadline(readDeadline);
+    }
   }
   if (stats) {
     ++stats->parses;
@@ -69,6 +91,8 @@ void Session::onMessage(net::TcpConnection& connection) {
     connection.closeAfterFlush();
     return;
   }
+  if (closeExpiredRequest(connection)) return;
+  clearReadDeadline(connection);
   // 可能设置 kClose，后续构造 400 响应
   close = parsed.status != http::ParseStatus::kComplete || parsed.request.closeRequested;
   const auto policy = close ? http::ConnectionPolicy::kClose : http::ConnectionPolicy::kKeepAlive;
@@ -86,6 +110,12 @@ void Session::onMessage(net::TcpConnection& connection) {
         accessRecord.contentBytes = http::errorContentBytes(http::Status::kBadRequest);
         if (metrics && requestPending) metrics->recordParseError();
         response = http::makeErrorResponse(http::Status::kBadRequest, policy);
+        break;
+      case http::ParseStatus::kPayloadTooLarge:
+        accessRecord.status = static_cast<int>(http::Status::kContentTooLarge);
+        accessRecord.contentBytes = http::errorContentBytes(http::Status::kContentTooLarge);
+        if (metrics && requestPending) metrics->recordParseError();
+        response = http::makeErrorResponse(http::Status::kContentTooLarge, policy);
         break;
       case http::ParseStatus::kMethodNotAllowed:
         accessRecord.status = static_cast<int>(http::Status::kMethodNotAllowed);
@@ -142,7 +172,7 @@ void HttpMessageHandler::onMessage(net::TcpConnection& connection,
                                    std::span<const std::byte>,
                                    bool) {
   if (!session) {
-    session = std::make_shared<Session>(stats, metrics, accessLogEnabled);
+    session = std::make_shared<Session>(stats, metrics, accessLogEnabled, requestReadTimeout);
     session->setResponseCallback(std::move(responseCallback));
     connection.setWriteCompleteCallback([session = session](net::TcpConnection& connection) {
       session->onWriteComplete(connection);
@@ -156,6 +186,7 @@ net::TcpConnection::MessageCallback HttpMessageFactory::onMessageFactory() const
   HttpMessageHandler handler;
   handler.metrics = metrics;
   handler.accessLogEnabled = accessLogEnabled;
+  handler.requestReadTimeout = requestReadTimeout;
   handler.setResponseCallback(
       [target = &service](const http::HttpRequest& request, http::ConnectionPolicy policy) {
         return target->onResponse(request, policy);
@@ -169,12 +200,14 @@ net::TcpConnection::MessageCallback HttpMessageFactory::onMessageFactory() const
 net::TcpConnection::MessageCallback makeHttpCallback(ResponseCallback responseCallback,
                                                      HttpCallbackStats* stats,
                                                      metrics::ServerMetrics* metrics,
-                                                     bool accessLogEnabled) {
+                                                     bool accessLogEnabled,
+                                                     std::chrono::milliseconds requestReadTimeout) {
   // 可变的 Session 仍延迟创建：创建发生在连接所属的 IO 线程。
   HttpMessageHandler handler;
   handler.stats = stats;
   handler.metrics = metrics;
   handler.accessLogEnabled = accessLogEnabled;
+  handler.requestReadTimeout = requestReadTimeout;
   handler.setResponseCallback(std::move(responseCallback));
   return
       [target = std::move(handler)](net::TcpConnection& connection,
@@ -182,8 +215,12 @@ net::TcpConnection::MessageCallback makeHttpCallback(ResponseCallback responseCa
                                     bool eof) mutable { target.onMessage(connection, input, eof); };
 }
 
-net::TcpServer::MessageFactoryCallback makeHttpFactory(const http::StaticFileService& service) {
-  return [target = HttpMessageFactory{service}]() { return target.onMessageFactory(); };
+net::TcpServer::MessageFactoryCallback makeHttpFactory(
+    const http::StaticFileService& service,
+    std::chrono::milliseconds requestReadTimeout) {
+  return [target = HttpMessageFactory{service, nullptr, false, requestReadTimeout}]() {
+    return target.onMessageFactory();
+  };
 }
 
 }  // namespace hp::app

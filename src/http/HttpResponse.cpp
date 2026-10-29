@@ -21,6 +21,8 @@ std::string_view reasonPhrase(Status status) {
       return "Not Found";
     case Status::kMethodNotAllowed:
       return "Method Not Allowed";
+    case Status::kContentTooLarge:
+      return "Content Too Large";
     case Status::kInternalServerError:
       return "Internal Server Error";
   }
@@ -37,6 +39,8 @@ std::string_view errorBody(Status status) {
       return "404 Not Found\n";
     case Status::kMethodNotAllowed:
       return "405 Method Not Allowed\n";
+    case Status::kContentTooLarge:
+      return "413 Content Too Large\n";
     case Status::kInternalServerError:
       return "500 Internal Server Error\n";
     case Status::kOk:

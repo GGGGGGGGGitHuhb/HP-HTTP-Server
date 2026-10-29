@@ -2,7 +2,7 @@
 
 ## 当前概况
 
-V1.0主线阶段验收已完成，S3 Reviewer006独立PASS，待用户合并发布；不新增放行债务或关闭原条目。当前16项CTest含HTTP黑盒别名，23旧目标/31源码冻结限制保持；条件化压测不证明高并发长尾修复或物理机容量，历史EOF根因未知，见[发布检查](documentation/RELEASE-CHECK.md)。V0.6按有限范围已完成；V0.5.1搁置未完成，长尾仍未解决，旧诊断入口仅归档，不能直接恢复。TD-001/005/006及RO-002保持Open，TD-004与RO-003因网关范围取消转为Superseded，TD-002/003保持Closed。完整原检查点见 [归档](history/documentation/V1.0-S1/TECH-DEBT-TRACKER.md) 与 [停工记录](benchmark/results/V0.5.1/SHELVED.md)。
+V1.0主线阶段验收已完成，S3 Reviewer006独立PASS，待用户合并发布；不新增放行债务或关闭原条目。当前18项CTest含HTTP黑盒别名，23旧目标仍停用；31份冻结源码仅S2批准两份拒绝语料及必要格式例外，其余29份保持；条件化压测不证明高并发长尾修复或物理机容量，历史EOF根因未知，见[发布检查](documentation/RELEASE-CHECK.md)。V0.6按有限范围已完成；V0.5.1搁置未完成，长尾仍未解决，旧诊断入口仅归档，不能直接恢复。TD-001/005/006及RO-002保持Open，TD-004与RO-003因网关范围取消转为Superseded，TD-002/003保持Closed。完整原检查点见 [归档](history/documentation/V1.0-S1/TECH-DEBT-TRACKER.md) 与 [停工记录](benchmark/results/V0.5.1/SHELVED.md)。
 
 V0.6/S3独立有限三条PASS只说明Approved R002范围：M2 syscall全生命周期粗粒度证据及M6未跟踪CPU；M6 traced缺证仍invalid，旧raw不补造。strace巨大扰动不能解释为稳定瓶颈或长尾根因；S2矩阵也不证明恢复、物理机容量或多核线性扩展。无新债务豁免。
 
@@ -38,6 +38,7 @@ V0.6/S3独立有限三条PASS只说明Approved R002范围：M2 syscall全生命�
 - 责任角色：后续阶段 Leader 决定所需覆盖，Builder 按获批范围迁移，Reviewer 独立验证。
 - 目标检查点：后续阶段需要相应模块回归覆盖时，或用户主动要求恢复旧测试时；没有强制全量重写日期。
 - 退出标准：需恢复的测试完成独立适配、重新注册且通过当前代码验证；全条目关闭须所有停用测试恢复或获得明确永久替代决定。
+- V1.1/S2检查点（2026-10-29）：Approved revision 1及用户两文件定向例外已实现，Reviewer001独立PASS、Leader003收口；Debug/Release各18/18、六项ASan+UBSan/LSan 6/6，正文/期限/观测及失败清理通过。仅两份旧测试CL9/CL1替换为非法+9/+1及必要格式，其余29份字节不变，23目标不恢复。TD-006仍Open，既有内部IO注入、竞态与穷举覆盖缺口保留；无新债。固定长度正文现已批准验收，不扩展chunked授权或关闭历史性能风险。
 - V1.1/S1检查点（2026-10-29）：新增当前parser与真实HTTP两套测试，独立Debug/Release各16/16、新套件ASan+UBSan/LSan 2/2，错误预期及失败清理反证有效；Reviewer001 PASS，Leader003收口，无新债。原23目标/31源码未迁移；内部sendfile/EAGAIN注入、背压/定时器/线程穷举及强制排空竞态仍有缺口，不能关闭TD-006整条。覆盖详见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)。
 - R7 检查点（2026-09-26）：Reviewer001 PASS WITH DEBT、Leader003 收口；仍为原 23 个停用目标、31 个冻结文件，6 项活跃 CTest 独立通过，无新增停用或延期。沿用下述原责任角色、目标检查点和退出标准；12 文件既有格式差异属于批准的内容保护例外，不新增债务。
 - R6 当前清单：23 个旧接口耦合 CTest 目标暂退，5 个兼容旧 CTest 保留，新增 1 个专项目标；精确名单与 include 依赖原因见 [测试覆盖说明](documentation/DEVELOPMENT.md#冻结旧测试与覆盖限制)。31 个旧测试路径及内容保持冻结，独立 Reviewer R6-report-001 为 PASS WITH DEBT：6/6 CTest、专项 sanitizer 1/1、HTTP smoke 和47文件格式检查通过，31个旧文件逐一校验一致。Leader R6-report-002 接受此已批准延期并关闭 R6，TD-006 保持 Open。

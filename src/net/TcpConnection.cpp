@@ -55,6 +55,7 @@ void TcpConnection::activateConnection() {
 
 void TcpConnection::deactivateConnection() noexcept {
   state_ = State::kClosing;
+  readDeadline_.reset();
   connectionChannel_.removeChannel();
   if (timeoutActivityCallback_) timeoutActivityCallback_(*this, false);
 }
@@ -102,6 +103,7 @@ void TcpConnection::consumeInputBytes(std::size_t count) { io_.consumeInputBytes
 void TcpConnection::beginConnectionDrain() {
   if (state_ == State::kClosing || draining_) return;
   draining_ = true;
+  readDeadline_.reset();
   inputStopped_ = true;
   readPaused_ = true;
   idleWaiting_ = false;
@@ -144,6 +146,13 @@ void TcpConnection::resumeReading() {
 void TcpConnection::setIdleWait(bool waiting) {
   if (idleWaiting_ == waiting) return;
   idleWaiting_ = waiting;
+  if (timeoutActivityCallback_) timeoutActivityCallback_(*this, false);
+}
+
+void TcpConnection::setReadDeadline(std::optional<std::chrono::steady_clock::time_point> deadline) {
+  if (state_ == State::kClosing || draining_) return;
+  if (readDeadline_ == deadline) return;
+  readDeadline_ = deadline;
   if (timeoutActivityCallback_) timeoutActivityCallback_(*this, false);
 }
 

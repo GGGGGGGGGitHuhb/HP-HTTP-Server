@@ -52,6 +52,7 @@ class TcpConnection final : private base::NonCopyable {
   void resumeReading();
 
   void setIdleWait(bool waiting);
+  void setReadDeadline(std::optional<std::chrono::steady_clock::time_point> deadline);
 
   using WriteCompleteCallback = std::function<void(TcpConnection&)>;
 
@@ -98,6 +99,7 @@ class TcpConnection final : private base::NonCopyable {
   std::chrono::steady_clock::time_point lastProgress_{};
   std::optional<std::chrono::steady_clock::time_point> waitSince_;
   std::uint64_t timeoutId_{0};
+  std::optional<std::chrono::steady_clock::time_point> readDeadline_;
 
   ConnectionIo io_;
   MessageCallback messageCallback_;  // 绑定 `HttpMessageHandler::onMessage()`
