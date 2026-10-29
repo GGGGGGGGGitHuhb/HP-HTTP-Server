@@ -100,6 +100,7 @@ void Session::onMessage(net::TcpConnection& connection) {
   // 会话进入响应阶段，暂停连接读取输入缓冲区
   phase = Phase::kWriting;
   connection.pauseReading();
+  const bool omitBody = parser.isHeadRequest();
   std::vector<std::byte> response;
   std::optional<base::FileRegion> file;
   try {
@@ -107,22 +108,20 @@ void Session::onMessage(net::TcpConnection& connection) {
       case http::ParseStatus::kNeedMore:
       case http::ParseStatus::kBadRequest:
         accessRecord.status = static_cast<int>(http::Status::kBadRequest);
-        accessRecord.contentBytes = http::errorContentBytes(http::Status::kBadRequest);
+        accessRecord.contentBytes =
+            omitBody ? 0 : http::errorContentBytes(http::Status::kBadRequest);
         if (metrics && requestPending) metrics->recordParseError();
-        response = http::makeErrorResponse(http::Status::kBadRequest, policy);
+        response = http::makeErrorResponse(http::Status::kBadRequest, policy, omitBody);
         break;
       case http::ParseStatus::kPayloadTooLarge:
         accessRecord.status = static_cast<int>(http::Status::kContentTooLarge);
-        accessRecord.contentBytes = http::errorContentBytes(http::Status::kContentTooLarge);
+        accessRecord.contentBytes =
+            omitBody ? 0 : http::errorContentBytes(http::Status::kContentTooLarge);
         if (metrics && requestPending) metrics->recordParseError();
-        response = http::makeErrorResponse(http::Status::kContentTooLarge, policy);
+        response = http::makeErrorResponse(http::Status::kContentTooLarge, policy, omitBody);
         break;
       case http::ParseStatus::kMethodNotAllowed:
-        accessRecord.status = static_cast<int>(http::Status::kMethodNotAllowed);
-        accessRecord.contentBytes = http::errorContentBytes(http::Status::kMethodNotAllowed);
-        if (metrics && requestPending) metrics->recordParseError();
-        response = http::makeErrorResponse(http::Status::kMethodNotAllowed, policy);
-        break;
+        throw std::logic_error("parser returned obsolete method status");
       case http::ParseStatus::kComplete: {
         // 调用响应回调 responseCallback()
         auto result = responseCallback(parsed.request, policy);
@@ -139,11 +138,13 @@ void Session::onMessage(net::TcpConnection& connection) {
   } catch (...) {
     if (metrics) metrics->recordProviderError();
     accessRecord.status = static_cast<int>(http::Status::kInternalServerError);
-    accessRecord.contentBytes = http::errorContentBytes(http::Status::kInternalServerError);
+    accessRecord.contentBytes =
+        omitBody ? 0 : http::errorContentBytes(http::Status::kInternalServerError);
     close = true;
     file.reset();
-    response =
-        http::makeErrorResponse(http::Status::kInternalServerError, http::ConnectionPolicy::kClose);
+    response = http::makeErrorResponse(http::Status::kInternalServerError,
+                                       http::ConnectionPolicy::kClose,
+                                       omitBody);
   }
   // send 可同步触发完成并递归处理pipeline，所有状态须先写定。
   completed = true;
@@ -188,7 +189,8 @@ net::TcpConnection::MessageCallback HttpMessageFactory::onMessageFactory() const
   handler.accessLogEnabled = accessLogEnabled;
   handler.requestReadTimeout = requestReadTimeout;
   handler.setResponseCallback(
-      [target = &service](const http::HttpRequest& request, http::ConnectionPolicy policy) {
+      [target = &router, owner = ownedRouter](const http::HttpRequest& request,
+                                              http::ConnectionPolicy policy) {
         return target->onResponse(request, policy);
       });
   return
@@ -218,7 +220,9 @@ net::TcpConnection::MessageCallback makeHttpCallback(ResponseCallback responseCa
 net::TcpServer::MessageFactoryCallback makeHttpFactory(
     const http::StaticFileService& service,
     std::chrono::milliseconds requestReadTimeout) {
-  return [target = HttpMessageFactory{service, nullptr, false, requestReadTimeout}]() {
+  // 兼容静态入口：工厂拥有 router，service 仍须覆盖所有 worker 的生命周期。
+  auto router = std::make_shared<http::RequestRouter>(service);
+  return [target = HttpMessageFactory{*router, nullptr, false, requestReadTimeout, router}]() {
     return target.onMessageFactory();
   };
 }

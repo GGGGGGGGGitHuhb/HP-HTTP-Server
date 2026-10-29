@@ -108,10 +108,7 @@ void testBodyFraming() {
   verifyBodySchedule("GET / HTTP/1.1\r\nHost: x\r\nContent-Length: \t0003 \t\r\n\r\nabc",
                      "abc",
                      {1, 17, 19, 3});
-  verifyBodySchedule(makeBodyRequest("post", "POST"),
-                     "post",
-                     {1, 20, 15},
-                     ParseStatus::kMethodNotAllowed);
+  verifyBodySchedule(makeBodyRequest("post", "POST"), "post", {1, 20, 15}, ParseStatus::kComplete);
   const std::string prefix = "GET / HTTP/1.1\r\nHost: x\r\nContent-Length: 1\r\nX: ";
   verifyBodySchedule(
       prefix + std::string(hp::http::kMaxHeaderBytes - prefix.size() - 4, 'a') + "\r\n\r\nx",
@@ -287,9 +284,10 @@ void testIncompleteAndMethods() {
   for (const auto method : {"POST", "HEAD"}) {
     SessionFixture fixture;
     fixture.sendInput(makeBodyRequest("abc", method));
-    requireTestCondition(fixture.readResponse().find("405 Method Not Allowed") !=
-                         std::string::npos);
-    requireTestCondition(fixture.provider.requests.empty());
+    requireTestCondition(fixture.readResponse().find("200 OK") != std::string::npos);
+    requireTestCondition(fixture.provider.requests.size() == 1 &&
+                         fixture.provider.requests.front().method == method &&
+                         fixture.provider.requests.front().body == "abc");
   }
   SessionFixture fixture;
   fixture.sendInput("GET / HTTP/1.1\r\nHost: x\r\nContent-Length: 2\r\n\r\nx");

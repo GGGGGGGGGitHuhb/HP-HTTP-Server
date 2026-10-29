@@ -33,7 +33,7 @@ void addCompleteCase(std::vector<ProtocolCase>& cases,
                      std::string method = "GET",
                      std::string target = "/",
                      bool closeRequested = false) {
-  const auto status = method == "GET" ? ParseStatus::kComplete : ParseStatus::kMethodNotAllowed;
+  const auto status = ParseStatus::kComplete;
   const auto size = wire.size();
   cases.push_back({std::move(id),
                    std::move(wire),

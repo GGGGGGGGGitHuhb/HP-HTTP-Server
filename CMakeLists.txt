@@ -16,6 +16,7 @@ add_library(hp_http_core STATIC
     src/http/HttpRequest.cpp
     src/http/HttpResponse.cpp
     src/http/StaticFileService.cpp
+    src/http/RequestRouter.cpp
     src/net/Acceptor.cpp
     src/net/TcpConnection.cpp
     src/net/ConnectionIo.cpp
@@ -155,5 +156,16 @@ if(BUILD_TESTING)
     add_test(NAME http_request_body_http_tests
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpRequestBodyHttp_test.py $<TARGET_FILE:hp_http_server>)
     set_tests_properties(http_request_body_tests http_request_body_http_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(http_method_routing_tests tests/HttpMethodRouting_test.cpp)
+    target_link_libraries(http_method_routing_tests PRIVATE hp_http_app)
+    enable_debug_warnings(http_method_routing_tests)
+    add_test(NAME http_method_routing_tests COMMAND http_method_routing_tests)
+    add_test(NAME http_method_routing_http_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpMethodRoutingHttp_test.py $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(http_method_routing_tests http_method_routing_http_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()

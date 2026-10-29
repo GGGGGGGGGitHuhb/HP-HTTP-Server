@@ -227,7 +227,8 @@ void RejectionPositions(ServerProcess& server) {
             sample.status == 405 ? "405 Method Not Allowed\n" : "400 Bad Request\n",
             true);
       if (sample.status == 405)
-        Expect(message.header.find("Allow: GET\r\n") != std::string::npos, "405 Allow GET");
+        Expect(message.header.find("Allow: GET, HEAD\r\n") != std::string::npos,
+               "405 Allow GET, HEAD");
       std::string ending = "EOF";
       if (sample.permits_reset_after_complete_response)
         ending = c.LimitEnd();

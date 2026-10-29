@@ -31,6 +31,17 @@ struct ResponseResult {
   std::size_t contentBytes{0};
 };
 
+[[nodiscard]] std::vector<std::byte> makeResponseHeader(Status status,
+                                                        std::size_t contentLength,
+                                                        std::string_view contentType,
+                                                        std::string_view allowedMethods,
+                                                        ConnectionPolicy policy);
+[[nodiscard]] std::vector<std::byte> makeResponse(Status status,
+                                                  std::span<const std::byte> body,
+                                                  std::string_view contentType,
+                                                  std::string_view allowedMethods,
+                                                  ConnectionPolicy policy);
+
 [[nodiscard]] std::vector<std::byte> makeResponseHeader(
     Status status,
     std::size_t contentLength,
@@ -46,7 +57,9 @@ struct ResponseResult {
     ConnectionPolicy policy = ConnectionPolicy::kClose);
 [[nodiscard]] std::vector<std::byte> makeErrorResponse(
     Status status,
-    ConnectionPolicy policy = ConnectionPolicy::kClose);
+    ConnectionPolicy policy = ConnectionPolicy::kClose,
+    bool omitBody = false,
+    std::string_view allowedMethods = "GET");
 
 [[nodiscard]] std::size_t errorContentBytes(Status status);
 

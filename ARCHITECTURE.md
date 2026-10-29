@@ -1,6 +1,6 @@
 # HP HTTP Server 架构文档
 
-本文描述当前实现（含V1.1/S2已独立验收的正文与读取期限），按现有源码静态核对；版本计划见 [ROADMAP](ROADMAP.md)，性能证据见 [benchmark](benchmark/README.md)。2026-10-29已取消本仓库L7代理规划，当前没有proxy模块或upstream转发。
+本文描述当前实现（含V1.1/S2正文/期限及S3方法路由，均已独立验收），按现有源码静态核对；版本计划见 [ROADMAP](ROADMAP.md)，性能证据见 [benchmark](benchmark/README.md)。2026-10-29已取消本仓库L7代理规划，当前没有proxy模块或upstream转发。
 
 ## 模块职责
 
@@ -9,7 +9,7 @@
 | app | CLI装配；SignalWatcher持有signalfd；每连接Session拥有parser、响应阶段与请求观测状态 | [main](app/main.cpp)、[HTTP适配](app/HttpConnectionHandler.cpp)、[信号](app/SignalWatcher.cpp)、[访问记录](app/AccessLog.cpp) |
 | base | UniqueFd/Socket相关资源基础、FileRegion独占正文fd与偏移；Buffer读写游标；LoggerSession管理AsyncLogger消费者 | [Buffer](src/base/Buffer.cpp)、[FileRegion](include/base/FileRegion.h)、[异步日志](src/base/AsyncLogger.cpp) |
 | net | TcpServer装配监听、线程池与registry；EventLoop/Epoller/Channel分离轮询、事件分发和fd所有权；TcpConnection管理单连接状态，ConnectionIo管理字节与文件发送 | [服务器](src/net/TcpServer.cpp)、[注册表](src/net/ConnectionRegistry.cpp)、[连接](src/net/TcpConnection.cpp)、[传输](src/net/ConnectionIo.cpp) |
-| http | 增量请求解析、显式ResponseResult、响应序列化、fd-relative静态文件服务；不管理连接或epoll | [parser](src/http/HttpRequest.cpp)、[response](src/http/HttpResponse.cpp)、[文件服务](src/http/StaticFileService.cpp) |
+| http | 增量请求解析、显式ResponseResult、响应序列化、只读方法路由/echo、fd-relative静态文件服务；不管理连接或epoll | [parser](src/http/HttpRequest.cpp)、[response](src/http/HttpResponse.cpp)、[文件服务](src/http/StaticFileService.cpp) |
 | timer | owner线程的定时队列；EventLoop控制计时和到期分发 | [TimerQueue](src/timer/TimerQueue.cpp) |
 | metrics | 固定容量原子计数与延迟count/sum/max，退出序列化 | [ServerMetrics](src/metrics/ServerMetrics.cpp) |
 
@@ -40,7 +40,7 @@ LoggerSession在服务对象前启动，唯一日志consumer与IO workers分离�
 
 ## 错误处理与安全边界
 
-受限HTTP/1.1 GET支持有界固定长度正文，完整消费但不解释业务内容；合法非GET在完整请求后为405+Allow并关闭，解析错误400关闭。CL缺省为0，唯一十进制CL允许OWS/前导零；重复/列表/符号/溢出、Transfer-Encoding、Expect均400。合法数值超1MiB在完整头校验后413，后续非法头优先400，不分配或等待超限正文。Connection token大小写无关合并、close优先；非法token400。普通403/404及服务有界500可复用，provider异常或放宽terminal policy生成500并关闭。
+受限HTTP/1.1合法method token在正文完整后交只读RequestRouter。精确POST /api/echo回显拥有型二进制正文；其他路径GET/HEAD进入静态服务。echo路径其他方法405 Allow: POST，静态fallback其他方法405 Allow: GET, HEAD并关闭；未知静态路径GET/HEAD为404，POST仍405且不探测文件。解析错误400关闭。CL缺省为0，唯一十进制CL允许OWS/前导零；重复/列表/符号/溢出、Transfer-Encoding、Expect均400。合法数值超1MiB在完整头校验后413，后续非法头优先400，不分配或等待超限正文。Connection token大小写无关合并、close优先；非法token400。普通403/404及服务有界500可复用，provider异常或放宽terminal policy生成500并关闭。
 
 请求头总量16KiB、请求行4KiB、正文1MiB、文件8MiB；不做URL decode，任何percent编码400，歧义路径/反斜杠/symlink403。无Range、压缩、缓存协商、目录列表、TLS、HTTP/2或代理。文件只读，root必须启动前成功打开为目录。
 
@@ -64,9 +64,11 @@ AccessLog默认off，有界owning记录去query/fragment，完整JSON payload≤
 
 ## 测试架构
 
+V1.1/S3独立Reviewer PASS：Debug/Release各20/20、规定ASan+UBSan/LSan 8/8，新套件错误预期反证有效，73条HTTP进程与10份fixture正常清理。S1–S3版本验收完成，合并发布另行进行；保留历史测试覆盖限制。
+
 V1.1/S2当前增加正文与期限两项测试，Builder自测及Reviewer独立PASS：Debug/Release各18/18、六项sanitizer 6/6。413状态桶附加在旧0/200/400/403/404/405/500之后，输出responses_status_413_total，计parseErrors/errors；日志不记录body。
 
-当前18个注册CTest与历史23个冻结停用目标分别说明于 [开发说明](documentation/DEVELOPMENT.md)。当前接口专项补充生命周期与观测/工具失败覆盖，不恢复全部历史穷举。V1.1/S1新增当前parser接口与真实HTTP套件，覆盖与边界见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)；2026-10-29独立Reviewer PASS，Debug/Release各16/16及新增两项ASan+UBSan/LSan 2/2通过。历史28/28和12/12仍只代表各自时点；S1当时未迁移全部冻结目标且未改产品；S2在保留覆盖边界基础上增加正文和读取期限，不能沿用S1验收结论。
+当前20个注册CTest与历史23个冻结停用目标分别说明于 [开发说明](documentation/DEVELOPMENT.md)。当前接口专项补充生命周期与观测/工具失败覆盖，不恢复全部历史穷举。V1.1/S1新增当前parser接口与真实HTTP套件，覆盖与边界见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)；2026-10-29独立Reviewer PASS，Debug/Release各16/16及新增两项ASan+UBSan/LSan 2/2通过。历史28/28和12/12仍只代表各自时点；S1当时未迁移全部冻结目标且未改产品；S2在保留覆盖边界基础上增加正文和读取期限，不能沿用S1验收结论。
 
 ## 性能材料的系统边界
 
@@ -160,3 +162,11 @@ V1.1/S2当前增加正文与期限两项测试，Builder自测及Reviewer独立P
 - [独立矩阵测量边界](history/documentation/V1.0-S1/ARCHITECTURE.md#独立矩阵测量边界)
 
 </details>
+
+## V1.1/S3 方法路由候选（待独立审查）
+
+main在启动前构造StaticFileService和RequestRouter，factory保存router引用；服务与router寿命覆盖worker停止。兼容makeHttpFactory(service)拥有router并让每连接回调保留共享所有权，service仍由调用者保证寿命。Session在完整解析并清读取deadline后同步调用ResponseCallback→RequestRouter::onResponse→echoResponse/StaticFileService::onResponse，返回拥有型bytes或独占FileRegion，再由owner发送；WriteComplete重置解析器后才推进后缀。net层没有路由规则。
+
+parser仅在完整合法请求行后记录精确HEAD；错误头/正文/FIN仍可生成无正文400/413，未验证行不猜测HEAD。HEAD静态成功只取fd元数据并RAII关闭，不读取整个文件或提交FileRegion；成功和错误均保留表示Content-Length，contentBytes为0。Session catch的HEAD500也无正文。GET静态忽略请求body，echo复制原始body，不保留借用Buffer视图；常数倍临时正文/响应不代表全局内存配额。同步处理器不能被读取deadline抢占。
+
+路由只切离第一个问号后的query，不解码；target任何位置percent均400且优先于方法判断。同名静态/api/echo不覆盖动态精确路由，/api/echo/仍走原静态校验（当前403），没有隐式/api命名空间。405计errors而不计parseErrors；分帧400/413仍计parseErrors。无运行期路由注册/JSON/数据库/线程池/网关。

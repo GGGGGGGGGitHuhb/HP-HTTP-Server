@@ -46,6 +46,7 @@ bool RequestParser::validateRequestLine() {
   methodSize_ = first;
   targetStart_ = first + 1;
   targetSize_ = second - first - 1;
+  headRequest_ = std::string_view(storage_.data(), first) == "HEAD";
   return true;
 }
 
@@ -160,8 +161,7 @@ void RequestParser::finishLine() {
 
 void RequestParser::finishRequest() {
   state_ = ParserState::kComplete;
-  const std::string_view method(storage_.data(), methodSize_);
-  status_ = method == "GET" ? ParseStatus::kComplete : ParseStatus::kMethodNotAllowed;
+  status_ = ParseStatus::kComplete;
 }
 
 std::size_t RequestParser::appendBody(std::string_view bytes) {
@@ -230,6 +230,7 @@ FeedResult RequestParser::feedRequestBytes(std::string_view bytes) {
 void RequestParser::resetRequestParser() noexcept {
   state_ = ParserState::kRequestLine;
   status_ = ParseStatus::kNeedMore;
+  headRequest_ = false;
   pendingCr_ = hostSeen_ = contentLengthSeen_ = closeRequested_ = false;
   lineStart_ = lineSize_ = requestBytes_ = headerBytes_ = 0;
   contentLength_ = 0;
@@ -243,8 +244,6 @@ ParseResult parseRequest(std::string_view bytes) {
   const auto parsed = parser.feedRequestBytes(bytes);
   return {parsed.status,
           parsed.request,
-          parsed.status == ParseStatus::kComplete || parsed.status == ParseStatus::kMethodNotAllowed
-              ? parsed.requestBytes
-              : 0};
+          parsed.status == ParseStatus::kComplete ? parsed.requestBytes : 0};
 }
 }  // namespace hp::http

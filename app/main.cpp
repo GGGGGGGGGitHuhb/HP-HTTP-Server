@@ -221,6 +221,7 @@ int runServer(int argc, char* argv[]) {
   int exitCode = 0;
   try {
     hp::http::StaticFileService service(options.root);
+    hp::http::RequestRouter router(service);
     hp::app::SignalWatcher signals;
     hp::net::TcpServer server(options.port,
                               hp::http::kMaxHeaderBytes,
@@ -228,7 +229,7 @@ int runServer(int argc, char* argv[]) {
                               options.timeouts,
                               &metrics);
     server.registerMessageFactoryCallback(
-        [target = hp::app::HttpMessageFactory{service,
+        [target = hp::app::HttpMessageFactory{router,
                                               &metrics,
                                               options.accessLog,
                                               options.requestReadTimeout}]() {

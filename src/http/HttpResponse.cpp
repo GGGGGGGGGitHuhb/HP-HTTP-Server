@@ -58,7 +58,7 @@ std::span<const std::byte> asBytes(std::string_view text) {
 std::vector<std::byte> makeResponseHeader(Status status,
                                           std::size_t contentLength,
                                           std::string_view contentType,
-                                          bool includeAllowGet,
+                                          std::string_view allowedMethods,
                                           ConnectionPolicy policy) {
   std::string header = "HTTP/1.1 " + std::to_string(static_cast<int>(status)) + " " +
                        std::string(reasonPhrase(status)) + "\r\n";
@@ -66,8 +66,8 @@ std::vector<std::byte> makeResponseHeader(Status status,
   header += "Content-Type: " + std::string(contentType) + "\r\n";
   header +=
       policy == ConnectionPolicy::kClose ? "Connection: close\r\n" : "Connection: keep-alive\r\n";
-  if (includeAllowGet) {
-    header += "Allow: GET\r\n";
+  if (status == Status::kMethodNotAllowed && !allowedMethods.empty()) {
+    header += "Allow: " + std::string(allowedMethods) + "\r\n";
   }
   header += "\r\n";
 
@@ -78,9 +78,9 @@ std::vector<std::byte> makeResponseHeader(Status status,
 std::vector<std::byte> makeResponse(Status status,
                                     std::span<const std::byte> body,
                                     std::string_view contentType,
-                                    bool includeAllowGet,
+                                    std::string_view allowedMethods,
                                     ConnectionPolicy policy) {
-  auto response = makeResponseHeader(status, body.size(), contentType, includeAllowGet, policy);
+  auto response = makeResponseHeader(status, body.size(), contentType, allowedMethods, policy);
   response.reserve(response.size() + body.size());
   response.insert(response.end(), body.begin(), body.end());
   return response;
@@ -88,13 +88,42 @@ std::vector<std::byte> makeResponse(Status status,
 
 std::size_t errorContentBytes(Status status) { return errorBody(status).size(); }
 
-std::vector<std::byte> makeErrorResponse(Status status, ConnectionPolicy policy) {
-  const std::string_view body = errorBody(status);
+std::vector<std::byte> makeResponseHeader(Status status,
+                                          std::size_t contentLength,
+                                          std::string_view contentType,
+                                          bool includeAllowGet,
+                                          ConnectionPolicy policy) {
+  return makeResponseHeader(status,
+                            contentLength,
+                            contentType,
+                            std::string_view(includeAllowGet ? "GET" : ""),
+                            policy);
+}
+
+std::vector<std::byte> makeResponse(Status status,
+                                    std::span<const std::byte> body,
+                                    std::string_view contentType,
+                                    bool includeAllowGet,
+                                    ConnectionPolicy policy) {
   return makeResponse(status,
-                      asBytes(body),
-                      "text/plain; charset=utf-8",
-                      status == Status::kMethodNotAllowed,
+                      body,
+                      contentType,
+                      std::string_view(includeAllowGet ? "GET" : ""),
                       policy);
+}
+
+std::vector<std::byte> makeErrorResponse(Status status,
+                                         ConnectionPolicy policy,
+                                         bool omitBody,
+                                         std::string_view allowedMethods) {
+  const std::string_view body = errorBody(status);
+  if (omitBody)
+    return makeResponseHeader(status,
+                              body.size(),
+                              "text/plain; charset=utf-8",
+                              allowedMethods,
+                              policy);
+  return makeResponse(status, asBytes(body), "text/plain; charset=utf-8", allowedMethods, policy);
 }
 
 std::string contentTypeForPath(std::string_view path) {

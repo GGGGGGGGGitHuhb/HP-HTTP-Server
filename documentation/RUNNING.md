@@ -1,6 +1,6 @@
 # 运行配置与观测
 
-从仓库根目录运行；通用构建入口见 [README](../README.md#快速开始)。V1.1/S2新增正文与读取期限已由Builder自测并经Reviewer独立PASS；旧版本验证记录不倒写。
+从仓库根目录运行；通用构建入口见 [README](../README.md#快速开始)。V1.1/S2新增正文与读取期限已由Builder自测并经Reviewer独立PASS；S3方法路由已独立验收PASS；旧版本验证记录不倒写。
 
 ## 配置说明
 
@@ -25,7 +25,7 @@
 
 请求头（含请求行与CRLF）最多16KiB，行内容最多4KiB；正文独立最多1MiB。CL缺省为0，单个十进制Content-Length支持前导零/外围OWS；重复、列表、正负号、非数字、uint64溢出、TE和Expect均400并关闭。合法值超1MiB在完整头验证后413 Content Too Large，不读取声明正文；后续非法头仍优先400。413/400/405不处理pipeline后缀。
 
-GET正文完整消费但不解释，仍按路径返回静态文件；POST/HEAD等合法非GET在完整请求后仍405，尚无业务路由或echo接口。正文不足而FIN为400；到读取截止则静默关闭，不发408。生产输入窗口仍16KiB，边消费边读，可接收超过窗口的有界正文；未完成结果不复制累计body，完成后返回拥有型body，reset释放正文容量。该逻辑上限不是全局内存/RSS配额。
+GET正文完整消费但不解释，仍按路径返回静态文件；HEAD返回对应GET的状态/类型/表示长度但完全不发送正文；POST /api/echo回显原始二进制正文。echo路径其他方法405 Allow: POST，其他路径非GET/HEAD为405 Allow: GET, HEAD，均关闭。正文不足而FIN为400；到读取截止则静默关闭，不发408。生产输入窗口仍16KiB，边消费边读，可接收超过窗口的有界正文；未完成结果不复制累计body，完成后返回拥有型body，reset释放正文容量。该逻辑上限不是全局内存/RSS配额。
 
 例如固定长度GET正文仍得到首页：
 
@@ -61,8 +61,17 @@ Writing暂停读取、一次只生成一个响应、文件未排空时不推进p
 
 `--metrics-on-exit` 默认关闭。正常或受控关闭时，在所有worker join、registry/Session销毁、异步日志排空后，stdout的唯一 `HP_METRICS_BEGIN`/`HP_METRICS_END` 段导出文本 `key integer`。没有自动写文件或监控HTTP路由；stdout写失败返回非零。CLI参数错误不导出。关闭后 `requests_started_total=responses_completed_total+requests_aborted_total`、`latency_count=requests_started_total`、`connections_active=logger_pending=0`。
 
-请求从首次非空parser feed计起；初始空FIN仍保留旧400协议，但不产生请求计数或访问记录。completed表示内存/sendfile输出已被kernel接收，不证明peer完整接收；aborted表示开始后尚未排空即关闭。`responses_status_<200/400/403/404/405/500/413/unknown>_total` 是已构造响应的状态（也含aborted），未构造响应用unknown；`content_bytes` 是计划正文长度。`errors_total` 每请求至多一次，表示aborted或status>=400；parse/provider原因分项可能重叠，不能相加。steady_clock整数微秒延迟包含该请求解析/provider/输出排队到终结，completed和aborted都入count/sum/max，不是RTT/P99。runtime逐原子快照非事务一致；uint64增量与sum饱和，超出范围不回绕，饱和后总账等式不再保证精确数量。
+请求从首次非空parser feed计起；初始空FIN仍保留旧400协议，但不产生请求计数或访问记录。completed表示内存/sendfile输出已被kernel接收，不证明peer完整接收；aborted表示开始后尚未排空即关闭。`responses_status_<200/400/403/404/405/500/413/unknown>_total` 是已构造响应的状态（也含aborted），未构造响应用unknown；`content_bytes` 是实际计划发送的正文长度，HEAD为0但响应Content-Length仍为表示长度。405不计parseErrors，分帧400/413仍计；不记录body/query。`errors_total` 每请求至多一次，表示aborted或status>=400；parse/provider原因分项可能重叠，不能相加。steady_clock整数微秒延迟包含该请求解析/provider/输出排队到终结，completed和aborted都入count/sum/max，不是RTT/P99。runtime逐原子快照非事务一致；uint64增量与sum饱和，超出范围不回绕，饱和后总账等式不再保证精确数量。
 
 最终 `logger_submitted/accepted/dropped_full/rejected_stopped/truncated/written/failed/pending` 属于全部共享日志；它们不是精确访问记录丢失数。`access_log_failures_total` 只记录格式化/提交异常；默认关闭无访问记录格式化或提交。HTTP关闭截止不限制阻塞stderr造成的日志join等待，沿用原日志限制。
 
 V1.1/S2的413新增尾部状态桶，不移动旧索引；413计parse_errors_total和errors_total。读取超时只终结一次aborted，未形成响应时状态为unknown，body不进入访问日志。
+
+### 方法路由与回显（V1.1/S3已验收）
+
+```bash
+curl --http1.1 -I http://127.0.0.1:8080/
+curl --http1.1 --data-binary 'abc' http://127.0.0.1:8080/api/echo
+```
+
+POST回显不依赖Content-Type，不添加换行；无CL或CL0为零字节。`/api/echo?tag=plain`匹配同一路由，query不解析且不记录；包含percent的query也400。只精确匹配/api/echo，尾斜杠保留原静态路径规则；GET未知文件404而POST未知路径405，不探测静态文件存在性。HEAD的错误400/403/404/405/413/受控500也不发正文，只有完整合法HEAD请求行可信时才适用于解析错误。所有终止响应丢弃pipeline后缀，provider异常/放宽close策略500关闭。尚无JSON、URL解码、chunked、数据库或运行期路由注册。

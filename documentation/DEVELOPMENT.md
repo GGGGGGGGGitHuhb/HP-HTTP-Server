@@ -10,7 +10,7 @@ ctest --test-dir build --output-on-failure
 NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost bash tests/http_smoke_test.sh build/hp_http_server
 ```
 
-CMake当前注册18项：cli_tests、http_server_integration_tests、http_keep_alive_integration_tests、server_integration_tests（HTTP黑盒历史别名）、benchmark_runner_tests、async_logger_batch_tests、r6_callbacks_tests、tcp_nodelay_tests、tcp_nodelay_http_tests、server_metrics_tests、http_observability_tests、observability_http_tests、matrix_benchmark_tests、performance_analysis_tests、http_protocol_baseline_tests、http_protocol_baseline_http_tests、http_request_body_tests、http_request_body_http_tests。Python专项含synthetic夹具与子进程/HTTP失败路径，不自动启动正式wrk套。真实socket/HTTP须环境允许；本地Agent另遵守未随Git分发的协作资料及受控执行路线。
+CMake当前注册20项：cli_tests、http_server_integration_tests、http_keep_alive_integration_tests、server_integration_tests（HTTP黑盒历史别名）、benchmark_runner_tests、async_logger_batch_tests、r6_callbacks_tests、tcp_nodelay_tests、tcp_nodelay_http_tests、server_metrics_tests、http_observability_tests、observability_http_tests、matrix_benchmark_tests、performance_analysis_tests、http_protocol_baseline_tests、http_protocol_baseline_http_tests、http_request_body_tests、http_request_body_http_tests、http_method_routing_tests、http_method_routing_http_tests。Python专项含synthetic夹具与子进程/HTTP失败路径，不自动启动正式wrk套。真实socket/HTTP须环境允许；本地Agent另遵守未随Git分发的协作资料及受控执行路线。
 
 历史S1独立12/12和专项ASan+UBSan/LSan2/2属于当时验收，当前新增两项工具测试不能倒写为历史14/14。V1.0/S1只核CMake/命令，不执行CTest、smoke或sanitizer；最终回归属于V1.0/S3。
 
@@ -30,7 +30,7 @@ ctest --test-dir build -R '^http_protocol_baseline(_http)?_tests$' --output-on-f
 ctest --test-dir build -R '^http_request_body(_http)?_tests$' --output-on-failure
 ```
 
-本次精确冻结例外仅把http_keep_alive_integration_tests.cpp的CL9、http_protocol_boundary_cases.h的G03 CL1改为非法+9/+1，并执行受影响文件必要格式化。S1两套测试相应拒绝语料改为非法带符号CL，新合法非零正文由S2套件验证；不删除拒绝后缀断言，原16项注册保持。其余29份冻结文件字节不变，23停用目标不恢复。
+S2历史精确冻结例外仅把http_keep_alive_integration_tests.cpp的CL9、http_protocol_boundary_cases.h的G03 CL1改为非法+9/+1，并执行受影响文件必要格式化。S1两套测试相应拒绝语料改为非法带符号CL，新合法非零正文由S2套件验证；不删除拒绝后缀断言，原16项注册保持。其余29份冻结文件字节不变，23停用目标不恢复。
 
 ## 冻结旧测试与覆盖限制
 
@@ -71,3 +71,15 @@ python3 scripts/format_cpp.py --check --files-from affected-cpp.txt
 
 格式配置以Google为基础、80列，保留用户的参数/实参不合并、不整体挪到下一行及括号后对齐覆盖项。配置暂存变化不授权hook改动提交范围外文件；历史重构曾分轮迁移；既有用户注释及批准的TD-006格式例外须保护，不据全仓模式扩大编辑范围。
 接口职责分组和函数内部逻辑分段仍须人工复核。本地钩子可以被绕过，不能替代服务端 CI 检查。
+
+## V1.1/S3 方法路由与HEAD
+
+新增http_method_routing_tests和http_method_routing_http_tests，保留全部18项原注册；按已批准语义迁移活跃S1/S2方法预期及HEAD读取器，不删除原编号或分帧/终止断言。合法token不再由parser产生405；S2的测试provider现在接收完整POST/HEAD，生产方法限制由router决定。
+
+本阶段冻结例外仅http_keep_alive_integration_tests.cpp和http_server_integration_tests.cpp的静态405 Allow GET→GET, HEAD、对应标签及必要格式；其余29份冻结源码不变，23旧目标不恢复。S2例外不自动延续为本阶段可修改许可。15个受影响C++文件使用clang-format18.1.3格式化和检查。
+
+C++/HTTP负对照显式设置`HP_METHOD_ROUTING_NEGATIVE=1`：仅把真实结果的期望改错，默认不启用；分别运行当前构建的http_method_routing_tests及`python3 tests/HttpMethodRoutingHttp_test.py <server>`。先设置HP_S3_TEST_TMP_ROOT为独立已授权目录；HTTP失败仍回收server、join读取线程、删除业务fixture、保留日志JSON。C++负对照发生在创建fixture/socket之前。Release检查用requireTestCondition而非assert副作用。
+
+S3已获独立Reviewer PASS，测试证据不代表完整HTTP合规、全局内存配额或IO/竞态穷举。TD-006整体仍开放，历史性能限制不变。
+
+S3 Builder最终候选Debug/Release各20/20，规定8项sanitizer 8/8。ASan首次构建有8条Clock skew警告，同候选依赖新鲜度构建通过且无告警；早期C++拼写编译失败和nodiscard警告已修正并保留证据，不描述为首构建零失败。独立Reviewer Debug/Release各20/20、规定sanitizer 8/8，三个构建无告警；新C++双配置负对照-6/-6、HTTP负对照1，73条HTTP记录与10份fixture均正常清理。首次独立Debug未另传--timeout120，套件CTest/Python定义的120秒上界仍适用，无超时或失败；没有据此扩测。

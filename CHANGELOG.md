@@ -3,7 +3,14 @@
 本文档记录 HP HTTP Server 已经完成并得到适当验证的重要变化。未来计划写入 `ROADMAP.md`，长期架构写入 `ARCHITECTURE.md`，技术债写入 `TECH-DEBT-TRACKER.md`，实现与审查证据写入对应报告。
 
 <a id="unreleased"></a>
-## V1.1 — 开发中（未发布）
+## V1.1 — 验收完成，待合并发布
+
+### 2026-10-29 — S3 方法路由与动态响应
+
+- 合法方法token与路由决策解耦；精确POST /api/echo回显最多1MiB原始二进制正文，其余路径保留静态GET/HEAD。405分别返回Allow: POST或GET, HEAD并关闭；query不参与匹配，任意percent仍拒绝。
+- HEAD成功及可信请求行后的错误响应不发送正文，Content-Length保留对应表示长度；静态HEAD不读完整文件或提交sendfile。405不再计parseErrors，HEAD观测正文为0，异常受控500与每连接响应顺序保持。
+- Builder及独立Reviewer Debug/Release各20/20、规定ASan+UBSan/LSan 8/8，负对照-6/-6/1有效；独立73条HTTP回收及10份fixture清理正常，15文件格式通过。Reviewer三个构建无告警；Builder早期编译失败/nodiscard与ASan clock-skew及后续修正记录保留。
+- 两份冻结测试仅按批准调整静态Allow与必要格式，其余29份本阶段不变。S1–S3及V1.1版本验收完成，合并发布另行进行；不关闭TD-006/旧性能/EOF风险，无新债，无JSON/URL解码/chunked/数据库/网关。
 
 ### 2026-10-29 — S2 Content-Length正文与读取期限
 
