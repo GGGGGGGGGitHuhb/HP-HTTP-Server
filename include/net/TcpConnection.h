@@ -18,6 +18,8 @@ class TcpConnection final : private base::NonCopyable {
   using MessageCallback = std::function<void(TcpConnection&, std::span<const std::byte>, bool)>;
   using Identity = std::uint64_t;
   using TimeoutActivityCallback = std::function<void(TcpConnection&, bool)>;
+  using ContinuationCallback = std::function<void(TcpConnection&)>;
+  using ContinuationActivityCallback = std::function<void(TcpConnection&)>;
   using CloseCallback = std::function<void(int, Identity)>;
   // 一条 TCP 连接的状态
   enum class State { kUnregistered, kActive, kClosing };
@@ -35,6 +37,14 @@ class TcpConnection final : private base::NonCopyable {
   void setTimeoutActivityCallback(TimeoutActivityCallback timeoutActivityCallback) {
     timeoutActivityCallback_ = std::move(timeoutActivityCallback);
   }
+
+  void setContinuationActivityCallback(ContinuationActivityCallback callback) {
+    continuationActivityCallback_ = std::move(callback);
+  }
+
+  void scheduleContinuation(std::chrono::steady_clock::time_point deadline,
+                            ContinuationCallback callback);
+  void cancelContinuation() noexcept;
 
   ~TcpConnection() noexcept;
 
@@ -93,6 +103,11 @@ class TcpConnection final : private base::NonCopyable {
 
   void readMessages();
   void flushOutput();
+
+  ContinuationActivityCallback continuationActivityCallback_;
+  ContinuationCallback continuationCallback_;
+  std::optional<std::chrono::steady_clock::time_point> continuationDeadline_;
+  std::uint64_t continuationTimerId_{0};
 
   TimeoutActivityCallback timeoutActivityCallback_;
   bool idleWaiting_{false};

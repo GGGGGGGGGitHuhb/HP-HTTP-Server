@@ -54,6 +54,8 @@ void ConnectionRegistry::onAccepted(Socket socket, TcpConnection::MessageCallbac
   connection->setTimeoutActivityCallback([this](TcpConnection& connection, bool progress) {
     onTimeoutActivity(connection, progress);
   });
+  connection->setContinuationActivityCallback(
+      [this](TcpConnection& connection) { onContinuationActivity(connection); });
   // 连接注册表保存连接对象
   auto [position, inserted] = connections_.try_emplace(fd, std::move(connection));
   if (!inserted) throw std::logic_error("duplicate connection fd");
@@ -72,6 +74,34 @@ void ConnectionRegistry::onAccepted(Socket socket, TcpConnection::MessageCallbac
   }
   registeringIdentity_ = 0;
   if (metrics_) metrics_->registerConnection();
+}
+
+void ConnectionRegistry::onContinuationActivity(TcpConnection& connection) {
+  if (connection.continuationTimerId_) {
+    ownerEventLoop_.cancelTimer(connection.continuationTimerId_);
+    connection.continuationTimerId_ = 0;
+  }
+  if (!connection.continuationCallback_ || !connection.continuationDeadline_ || draining_ ||
+      connection.isDraining() || connection.state() != TcpConnection::State::kActive)
+    return;
+  connection.continuationTimerId_ =
+      ownerEventLoop_.addTimer(*connection.continuationDeadline_,
+                               [this, fd = connection.fd(), identity = connection.identity()]() {
+                                 deliverContinuation(fd, identity);
+                               });
+}
+
+void ConnectionRegistry::deliverContinuation(int fd, TcpConnection::Identity identity) {
+  const auto found = connections_.find(fd);
+  if (found == connections_.end() || found->second->identity() != identity) return;
+  auto& connection = *found->second;
+  connection.continuationTimerId_ = 0;
+  connection.continuationDeadline_.reset();
+  auto callback = std::move(connection.continuationCallback_);
+  connection.continuationCallback_ = {};
+  if (draining_ || connection.isDraining() || connection.state() != TcpConnection::State::kActive)
+    return;
+  if (callback) callback(connection);
 }
 
 void ConnectionRegistry::cancelTimeout(TcpConnection& connection) noexcept {

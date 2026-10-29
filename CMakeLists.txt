@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(hp_http_core STATIC
     src/business/TaskService.cpp
+    src/business/BoundedTaskExecutor.cpp
     src/http/TaskApiHandler.cpp
     src/metrics/ServerMetrics.cpp
     src/base/Logger.cpp
@@ -37,7 +38,7 @@ target_include_directories(hp_http_core PUBLIC include)
 find_package(Threads REQUIRED)
 target_link_libraries(hp_http_core PUBLIC Threads::Threads)
 
-add_library(hp_http_app STATIC app/HttpConnectionHandler.cpp app/AccessLog.cpp app/SignalWatcher.cpp)
+add_library(hp_http_app STATIC app/AsyncTaskHandler.cpp app/HttpConnectionHandler.cpp app/AccessLog.cpp app/SignalWatcher.cpp)
 target_include_directories(hp_http_app PUBLIC app)
 target_link_libraries(hp_http_app PUBLIC hp_http_core)
 
@@ -217,5 +218,19 @@ if(BUILD_TESTING)
     add_test(NAME http_task_api_http_tests
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpTaskApiHttp_test.py $<TARGET_FILE:hp_http_server>)
     set_tests_properties(http_task_api_tests http_task_api_http_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(bounded_task_executor_tests tests/BoundedTaskExecutor_test.cpp)
+    target_link_libraries(bounded_task_executor_tests PRIVATE hp_http_app)
+    enable_debug_warnings(bounded_task_executor_tests)
+    add_executable(async_task_test_server tests/AsyncTaskServer.cpp)
+    target_link_libraries(async_task_test_server PRIVATE hp_http_app)
+    enable_debug_warnings(async_task_test_server)
+    add_test(NAME bounded_task_executor_tests COMMAND bounded_task_executor_tests)
+    add_test(NAME http_async_task_http_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpAsyncTaskHttp_test.py $<TARGET_FILE:hp_http_server> $<TARGET_FILE:async_task_test_server>)
+    set_tests_properties(bounded_task_executor_tests http_async_task_http_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()

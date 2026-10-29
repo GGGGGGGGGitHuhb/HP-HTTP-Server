@@ -34,6 +34,10 @@ class TaskApiHandler final {
                                               const HttpRequest& request,
                                               ConnectionPolicy policy) const;
 
+  [[nodiscard]] std::optional<ResponseResult> prevalidateTask(TaskRoute route,
+                                                              const HttpRequest& request,
+                                                              ConnectionPolicy policy) const;
+
  private:
   [[nodiscard]] std::optional<ResponseResult> validateTaskRequest(TaskRoute route,
                                                                   std::string_view method,

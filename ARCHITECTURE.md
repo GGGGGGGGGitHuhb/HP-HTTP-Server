@@ -213,4 +213,18 @@ TaskService不依赖HTTP/net/JSON，mutex保护map、nextId/exhausted；128条�
 
 原13个metrics桶不变，末尾201/415/503；业务错误不计parse/provider，受控JSON500close不泄漏异常。store内部异常边界继续有原Session兜底。任务忽略静态条件与Range，不产生206/304。无DB/持久化/鉴权/分页/异步业务，原技术债仍保留。
 
-V1.3/S1已获独立Reviewer PASS，28/28/16及任务并发/Expect阶段策略/失败清理验证完成；S2/S3未开始，V1.3整体未完成。累计纠正3/3与历史停止保留，无新债，不据功能验证宣称同步provider可抢占或全局资源配额已解决。
+V1.3/S1已获独立Reviewer PASS，28/28/16及任务并发/Expect阶段策略/失败清理验证完成；S2候选待独立审查、S3未开始，V1.3整体未完成。累计纠正3/3与历史停止保留，无新债，不据功能验证宣称同步provider可抢占或全局资源配额已解决。
+
+## V1.3/S2 有界任务执行候选
+
+`main`按TaskService/router→BoundedTaskExecutor/AsyncTaskHandler→TcpServer顺序构造。owner完成目标、ID、query、方法、正文大小/media等廉价校验，再由AsyncTaskHandler创建拥有请求与共享TaskApiHandler的TaskWork；worker执行JSON、store、编码，不持连接、Session或EventLoop。队列和Queued/Running/Ready/Retired状态由执行器mutex保护，用户工作在锁外。ready结果仍占槽；queued取消立即释放，running取消到真正返回才释放。
+
+Session进入kAwaitingTask并暂停读取，每连接仅一个job。独立connection continuation timer按5ms轮询且不超过job期限；Registry用fd+identity重新查表，取走callback后调用weak Session续接。owner领取前后检查绝对期限，先解除job/timer，再经同步共享sendFinalResponse发送，避免同步回调重入污染后续请求。100写完仍回到原parser及读取绝对期限；仅完整body后开始执行期限。
+
+首次停止信号先停止业务准入并取消job，再网络drain；连接关闭/析构撤销续接timer并取消Session job。runTcpServer返回已完成网络owner停止/join，随后业务join，再销毁router/store。第二信号只强制网络关闭，不强杀工作线程。运行中的已提交操作不能回滚；不合作工作可延长join，不能将HTTP 1秒期限解释成线程终止或事务期限。
+
+### V1.3/S2 验收检查点
+
+V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30（28.76秒）、规定ASan+UBSan/LSan18/18（22.85秒）；三负对照-6/-6/1、16文件格式通过。55旧测试及31冻结保持；启动异常夹具自清理缺陷已修复，原FAIL与初URL失败保留，累计纠正2/2，无新债。S2已完成，S3未开始，V1.3整体未完成；验收不表示合并或标签发布。
+
+23文件导出由HEAD+stage.patch独立重建验证；20文件与被测候选同字节，3重叠文件仅8处原用户注释差异并人工行为等价审计。export未另编译。5ms非硬实时、逻辑容量非RSS硬限、运行取消不提前释放槽及旧性能/EOF边界保持。

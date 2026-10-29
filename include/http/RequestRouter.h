@@ -15,6 +15,8 @@ class RequestRouter final {
   [[nodiscard]] std::optional<ResponseResult> onRequestHeaders(const RequestHead& head,
                                                                ConnectionPolicy policy) const;
 
+  [[nodiscard]] const TaskApiHandler& taskHandler() const { return tasks_; }
+
  private:
   [[nodiscard]] std::optional<ResponseResult> admitTarget(const RequestTarget& target,
                                                           std::string_view method) const;

@@ -30,6 +30,21 @@ TcpConnection::TcpConnection(EventLoop& ownerEventLoop,
 
 TcpConnection::~TcpConnection() noexcept { deactivateConnection(); }
 
+void TcpConnection::scheduleContinuation(std::chrono::steady_clock::time_point deadline,
+                                         ContinuationCallback callback) {
+  if (state_ != State::kActive || draining_ || !continuationActivityCallback_)
+    throw std::logic_error("continuation requires active registered connection");
+  continuationCallback_ = std::move(callback);
+  continuationDeadline_ = deadline;
+  continuationActivityCallback_(*this);
+}
+
+void TcpConnection::cancelContinuation() noexcept {
+  continuationCallback_ = {};
+  continuationDeadline_.reset();
+  if (continuationActivityCallback_) continuationActivityCallback_(*this);
+}
+
 void TcpConnection::dispatchMessage(std::span<const std::byte> input, bool eof) {
   if (messageCallback_)
     messageCallback_(*this, input, eof);
@@ -54,6 +69,7 @@ void TcpConnection::activateConnection() {
 }
 
 void TcpConnection::deactivateConnection() noexcept {
+  cancelContinuation();
   state_ = State::kClosing;
   readDeadline_.reset();
   connectionChannel_.removeChannel();
@@ -103,6 +119,7 @@ void TcpConnection::consumeInputBytes(std::size_t count) { io_.consumeInputBytes
 void TcpConnection::beginConnectionDrain() {
   if (state_ == State::kClosing || draining_) return;
   draining_ = true;
+  cancelContinuation();
   readDeadline_.reset();
   inputStopped_ = true;
   readPaused_ = true;

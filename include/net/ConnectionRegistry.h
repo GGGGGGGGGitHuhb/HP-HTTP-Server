@@ -36,6 +36,9 @@ class ConnectionRegistry final : private base::NonCopyable {
   friend struct ConnectionTimeoutTestAccess;
   friend struct TcpServerTestAccess;
 
+  void onContinuationActivity(TcpConnection& connection);
+  void deliverContinuation(int fd, TcpConnection::Identity identity);
+
   void onTimeoutActivity(TcpConnection& connection, bool progress);
   void cancelTimeout(TcpConnection& connection) noexcept;
   void expireConnection(int fd, TcpConnection::Identity identity);

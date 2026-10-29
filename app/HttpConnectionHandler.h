@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "AccessLog.h"
+#include "AsyncTaskHandler.h"
 #include "http/RequestRouter.h"
 #include "net/TcpServer.h"
 
@@ -30,8 +31,8 @@ inline void setSessionEventCallback(SessionEventCallback newSessionEventCallback
 // 显式注册响应策略；Session 保持延迟创建，并绑定
 // 原来的 IO 所属线程。首次分发前创建的副本保持独立
 // 状态。
-struct Session {
-  enum class Phase { kReading, kInterimWriting, kWriting, kClosing };
+struct Session : std::enable_shared_from_this<Session> {
+  enum class Phase { kReading, kInterimWriting, kAwaitingTask, kWriting, kClosing };
   RequestHeadersCallback requestHeadersCallback;
   ResponseCallback responseCallback;  // 绑定 `StaticFileService::onResponse()`
   HttpCallbackStats* stats;
@@ -48,6 +49,13 @@ struct Session {
   std::chrono::steady_clock::time_point requestStarted;
   std::chrono::milliseconds requestReadTimeout{0};
   std::optional<std::chrono::steady_clock::time_point> readDeadline;
+
+  std::shared_ptr<const AsyncTaskHandler> asyncHandler;
+  std::shared_ptr<business::TaskJob> pendingJob;
+  std::uint64_t taskGeneration{};
+  void armTaskContinuation(net::TcpConnection& connection);
+  void onTaskContinuation(net::TcpConnection& connection, std::uint64_t generation);
+  void sendFinalResponse(net::TcpConnection& connection, http::ResponseResult result);
 
   explicit Session(HttpCallbackStats* callbackStats,
                    metrics::ServerMetrics* serverMetrics = nullptr,
@@ -79,6 +87,8 @@ struct HttpMessageHandler {
   std::shared_ptr<Session> session;
   std::chrono::milliseconds requestReadTimeout{0};
 
+  std::shared_ptr<const AsyncTaskHandler> asyncHandler{};
+
   void setRequestHeadersCallback(RequestHeadersCallback requestHeadersCallback) {
     this->requestHeadersCallback = std::move(requestHeadersCallback);
   }
@@ -97,6 +107,7 @@ struct HttpMessageFactory {
   bool accessLogEnabled{};
   std::chrono::milliseconds requestReadTimeout{0};
   std::shared_ptr<const http::RequestRouter> ownedRouter{};
+  std::shared_ptr<const AsyncTaskHandler> asyncHandler{};
   // “为新连接创建 HTTP 消息回调”的工厂
   net::TcpConnection::MessageCallback onMessageFactory() const;
 };

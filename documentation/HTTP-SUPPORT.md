@@ -12,7 +12,7 @@ ctest --test-dir build -R '^http_protocol_baseline(_http)?_tests$' --output-on-f
 
 - `http_protocol_baseline_tests`：直接使用当前 `RequestParser::feedRequestBytes/resetRequestParser`；短语料每个切分点及逐字节、长边界整包/逐字节/127字节块。每次核acceptedBytes、累计requestBytes、终态及reset，不访问私有状态。
 - `http_protocol_baseline_http_tests`：真实启动服务器，分别threads=0/2，解析完整响应及正文；同一socket验证连续请求，正常SIGTERM回收；只使用Python标准库。
-- CMake共28项，S3前24项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
+- CMake共30项，S2前28项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
 - 新HTTP测试在`HP_S3_TEST_TMP_ROOT`（CTest设为构建目录的test-tmp）下建立唯一运行目录，删除业务fixture，保留有界服务器日志、每进程JSON回收记录及summary.json。失败亦保留证据。每次socket操作服从同一场景5秒绝对截止，套件120秒，每响应最多9MiB；不依赖短sleep确认事件。
 
 ## 支持/拒绝及覆盖映射
@@ -135,3 +135,17 @@ Builder最终自测：Debug26/26（22.13秒）、Release26/26（21.95秒）、�
 新增http_task_api_tests/http_task_api_http_tests，原26身份保留。31冻结源码不变；旧活跃HttpStaticSemantics_test.cpp仅批准总桶size==13→16一个literal，原13桶循环/计数和其余旧测试字节保持。源码随附固定nlohmann/json3.12.0，离线构建，不格式化第三方原文件；原风险不因任务功能关闭。
 
 Builder本候选自测Debug28/28（24.03秒）、Release28/28（22.83秒）、规定sanitizer16/16（17.17秒）；三个负对照非零且清理有效。独立Reviewer PASS：Debug28/28（22.53秒）、Release28/28（22.48秒）、sanitizer16/16（16.26秒），负对照-6/-6/1、14文件格式通过，151条HTTP及22份fixture正常回收。两个批准补充均验证，累计纠正3/3，历史停止和Builder早期warning保留；仅S1已完成。
+
+## V1.3/S2 异步任务覆盖（已独立验收）
+
+- E01–E04：2/32/34与ready占槽、取消守恒、100/1000ms排队过期、异常及取消/领取竞争。
+- E05：真实Registry一次性timer/回调重入、关闭取消、同fd新identity拒绝旧回调、drain零timer。
+- A01：threads0/2门闩确认worker阻塞时其他连接静态/echo可用、同连接pipeline顺序、100后完整FIN响应。
+- A02：运行已提交再超时与排队取消无副作用；A03：34槽边界/35次503；A04：关闭后新连接、网络drain先于业务join、门闩放行后槽守恒。
+- 真实main复用CRUD检查，原28项身份/所有旧测试字节和16状态桶不改；新增2项，总30，sanitizer规定18项。无性能、TSan、线程抢占或全局内存配额结论。
+
+### V1.3/S2 验收检查点
+
+V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30（28.76秒）、规定ASan+UBSan/LSan18/18（22.85秒）；三负对照-6/-6/1、16文件格式通过。55旧测试及31冻结保持；启动异常夹具自清理缺陷已修复，原FAIL与初URL失败保留，累计纠正2/2，无新债。S2已完成，S3未开始，V1.3整体未完成；验收不表示合并或标签发布。
+
+23文件导出由HEAD+stage.patch独立重建验证；20文件与被测候选同字节，3重叠文件仅8处原用户注释差异并人工行为等价审计。export未另编译。5ms非硬实时、逻辑容量非RSS硬限、运行取消不提前释放槽及旧性能/EOF边界保持。
