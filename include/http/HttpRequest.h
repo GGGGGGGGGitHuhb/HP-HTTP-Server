@@ -36,12 +36,19 @@ struct StaticRequestFields {
   StaticField ifRange;
 };
 
+struct ContentTypeField {
+  std::string value;
+  bool present{false};
+  bool duplicate{false};
+};
+
 struct HttpRequest {
   std::string method;
   std::string target;
   bool closeRequested{false};
   std::string body;
   StaticRequestFields staticFields{};
+  ContentTypeField contentType{};
 };
 
 // 当前请求解析完后的结果
@@ -147,6 +154,7 @@ class RequestParser final {
   std::uint64_t contentLength_{0};
   std::string body_;
   StaticRequestFields staticFields_;
+  ContentTypeField contentType_;
   std::size_t staticFieldBytes_{0};
 
   bool transferEncodingSeen_{false}, unsupportedCoding_{false};

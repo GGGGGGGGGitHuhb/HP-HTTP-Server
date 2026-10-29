@@ -68,7 +68,7 @@ V1.1/S3独立Reviewer PASS：Debug/Release各20/20、规定ASan+UBSan/LSan 8/8�
 
 V1.1/S2当前增加正文与期限两项测试，Builder自测及Reviewer独立PASS：Debug/Release各18/18、六项sanitizer 6/6。413状态桶附加在旧0/200/400/403/404/405/500之后，输出responses_status_413_total，计parseErrors/errors；日志不记录body。
 
-当前26个注册CTest与历史23个冻结停用目标分别说明于 [开发说明](documentation/DEVELOPMENT.md)。当前接口专项补充生命周期与观测/工具失败覆盖，不恢复全部历史穷举。V1.1/S1新增当前parser接口与真实HTTP套件，覆盖与边界见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)；2026-10-29独立Reviewer PASS，Debug/Release各16/16及新增两项ASan+UBSan/LSan 2/2通过。历史28/28和12/12仍只代表各自时点；S1当时未迁移全部冻结目标且未改产品；S2在保留覆盖边界基础上增加正文和读取期限，不能沿用S1验收结论。
+当前28个注册CTest与历史23个冻结停用目标分别说明于 [开发说明](documentation/DEVELOPMENT.md)。当前接口专项补充生命周期与观测/工具失败覆盖，不恢复全部历史穷举。V1.1/S1新增当前parser接口与真实HTTP套件，覆盖与边界见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)；2026-10-29独立Reviewer PASS，Debug/Release各16/16及新增两项ASan+UBSan/LSan 2/2通过。历史28/28和12/12仍只代表各自时点；S1当时未迁移全部冻结目标且未改产品；S2在保留覆盖边界基础上增加正文和读取期限，不能沿用S1验收结论。
 
 ## 性能材料的系统边界
 
@@ -169,7 +169,7 @@ main在启动前构造StaticFileService和RequestRouter，factory保存router引
 
 parser仅在完整合法请求行后记录精确HEAD；错误头/正文/FIN仍可生成无正文400/413，未验证行不猜测HEAD。HEAD静态成功只取fd元数据并RAII关闭，不读取整个文件或提交FileRegion；成功和错误均保留表示Content-Length，contentBytes为0。Session catch的HEAD500也无正文。GET静态忽略请求body，echo复制原始body，不保留借用Buffer视图；常数倍临时正文/响应不代表全局内存配额。同步处理器不能被读取deadline抢占。
 
-V1.1历史percent一律拒绝已由S2已验收实现替代：公共目标模块先切原始组件再一次解码，完整目标校验优先方法判断。同名静态/api/echo不覆盖动态精确路由，/api/echo/由公共目标结构校验对全部方法返回403并关闭，没有隐式/api命名空间。405计errors而不计parseErrors；分帧400/413仍计parseErrors。无运行期路由注册/JSON/数据库/线程池/网关。
+V1.1历史percent一律拒绝已由S2已验收实现替代：公共目标模块先切原始组件再一次解码，完整目标校验优先方法判断。同名静态/api/echo不覆盖动态精确路由，/api/echo/由公共目标结构校验对全部方法返回403并关闭，没有隐式/api命名空间。405计errors而不计parseErrors；分帧400/413仍计parseErrors。该阶段未引入JSON；当前任务JSON适配见V1.3/S1节，仍无运行期路由注册/数据库/业务线程池/网关。
 
 ## V1.2/S1 chunked与临时响应（已独立验收）
 
@@ -199,3 +199,18 @@ RequestParser拥有四种必要条件头，Complete复制到HttpRequest，Reques
 弱ETag含设备/inode/size/mtime/ctime的秒/纳秒无符号hex；只支持弱缓存验证。INM存在就抑制IMS，即使无效或超过128标签；未来mtime截到Date，不可表示日期省略Last-Modified。HEAD忽略Range；任何If-Range阻止206，条件304优先。304无CL/Content-Type/body/FileRegion，HEAD200全表示CL但contentBytes0，416固定错误表示且原保活policy。206持有原FileRegion的offset/length，sendfile不改；兼容handleResponse以pread局部偏移读同一区间，失败沿RAII回收。
 
 新状态metrics追加在原10桶后，206/304非errors，416只计errors；Session/net/期限/回调绑定不变，条件原值不进日志。实时文件访问非一致快照；强校验器、安全断点拼接、multipart及内容缓存均不在当前范围。S3独立复审PASS，V1.2阶段验收完成，合并发布另行处理。
+
+
+## V1.3/S1 任务资源（已独立验收）
+
+main在worker启动前创建共享TaskService并注入RequestRouter；TaskApiHandler保存shared_ptr。兼容单参router构造独立store，makeHttpFactory(service)的ownedRouter只创建一次，多个连接共享，独立factory不共享。server停止/join连接后才销毁router/store，不新增全局单例/线程/timer。Session/net不变。
+
+Parser只增加拥有型ContentTypeField（唯一/重复标记，业务媒体错误不改变framing）；完整target校验后，classifyTaskRoute判断tasks占用、路径/ID/query，再validateTaskRequest判断方法。Expect头入口以close校验；完整请求入口使用请求policy，随后应用8KiB、media、strict SAX/schema、存储。头拒绝无100和任务副作用；完整请求的400/404/415/503可保活，405/413/500强制关闭。HEAD错误保留JSON表示CL但无body。公共目标/framing错误仍原格式。
+
+JSON库只在TaskApiHandler.cpp使用，官方固定single-header/MIT随源码；SAX根对象深度1、仅两个字段、重复/转义同名拒绝，预拒绝raw NUL/BOM，strict消费输入。8KiB应用限制在通用parser消费完整1MiB以内正文后判定，不是提前网络读取限制。解码title 1..256 UTF-8字节、无ASCII控制，JSON序列化在锁外，响应最大256KiB且no-store。
+
+TaskService不依赖HTTP/net/JSON，mutex保护map、nextId/exhausted；128条、ID从1递增不复用，UINT64_MAX后耗尽。create在返回值准备和插入成功后才推进ID，PUT先准备完整值再锁内替换两字段。GET/list复制拥有快照，锁外编码/日志/socket；锁内有界不等于无阻塞或公平。失败输入/未知PUT/容量拒绝不修改记录，已提交动作不因后续序列化或断连自动回滚，重试POST可能重复。
+
+原13个metrics桶不变，末尾201/415/503；业务错误不计parse/provider，受控JSON500close不泄漏异常。store内部异常边界继续有原Session兜底。任务忽略静态条件与Range，不产生206/304。无DB/持久化/鉴权/分页/异步业务，原技术债仍保留。
+
+V1.3/S1已获独立Reviewer PASS，28/28/16及任务并发/Expect阶段策略/失败清理验证完成；S2/S3未开始，V1.3整体未完成。累计纠正3/3与历史停止保留，无新债，不据功能验证宣称同步provider可抢占或全局资源配额已解决。

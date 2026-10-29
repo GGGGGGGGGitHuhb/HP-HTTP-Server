@@ -4,11 +4,11 @@ Linux C++20 HTTP 服务器学习项目：提供受限 HTTP/1.1 GET/HEAD 静态�
 
 ## 后续方向
 
-2026-10-29调整：取消本仓库原L7网关扩展，后续依次规划V1.1请求正文与基础路由、V1.2 HTTP兼容与静态资源语义、V1.3无数据库动态接口、V1.4运行保障。V1.1/S1协议与回归基线已完成独立验收并合并，S2正文与读取期限已完成独立验收，S3方法路由已完成独立验收，V1.1三个阶段均已验收完成，S3已合并origin/main（标签发布未核实）；V1.2/S1已完成独立验收并合并，S2目标解析已独立验收（Approved revision1及补充，Reviewer001 PASS），S3条件请求与单区间下载已独立复审PASS，V1.2三个阶段均已验收完成；S3尚未合并或打发布标签，后续版本未开始；当前仍是受限HTTP服务，详见[路线图](ROADMAP.md#后续路线与共同门槛)。数据库、代理及推理网关不在本轮范围。
+2026-10-29调整：取消本仓库原L7网关扩展，后续依次规划V1.1请求正文与基础路由、V1.2 HTTP兼容与静态资源语义、V1.3无数据库动态接口、V1.4运行保障。V1.1/S1协议与回归基线已完成独立验收并合并，S2正文与读取期限已完成独立验收，S3方法路由已完成独立验收，V1.1三个阶段均已验收完成，S3已合并origin/main（标签发布未核实）；V1.2/S1已完成独立验收并合并，S2目标解析已独立验收（Approved revision1及补充，Reviewer001 PASS），S3条件请求与单区间下载已独立复审PASS，V1.2三个阶段均已验收完成；S3已合并（本阶段起点PR40），发布标签未核实；V1.3/S1内存任务API已独立验收PASS，S2/S3未开始，V1.3整体未完成；当前仍是受限HTTP服务，详见[路线图](ROADMAP.md#后续路线与共同门槛)。数据库、代理及推理网关不在本轮范围。
 
 ## 环境要求
 
-Linux / WSL2，支持 C++20 的 GCC 或 Clang、CMake ≥3.20、线程库；默认 `BUILD_TESTING=ON` 还需要 Python 3。curl 用于手工请求，Bash 用于 smoke。核心服务不依赖数据库、Web框架或第三方HTTP运行时。当前CMake项目版本仍为 `0.1.0`，CLI启动文字仍保留 `V0.1 / S3`，不表示发布版本退回。wrk、strace与固定运行库仅属于 [性能工具](benchmark/README.md) 的独立前提。
+Linux / WSL2，支持 C++20 的 GCC 或 Clang、CMake ≥3.20、线程库；默认 `BUILD_TESTING=ON` 还需要 Python 3。curl 用于手工请求，Bash 用于 smoke。核心服务不依赖数据库、Web框架或第三方HTTP运行时；任务JSON使用随源码保存的nlohmann/json v3.12.0（MIT），无需安装、构建不联网。当前CMake项目版本仍为 `0.1.0`，CLI启动文字仍保留 `V0.1 / S3`，不表示发布版本退回。wrk、strace与固定运行库仅属于 [性能工具](benchmark/README.md) 的独立前提。
 
 ## 快速开始
 
@@ -39,7 +39,7 @@ ctest --test-dir build -N
 ctest --test-dir build --output-on-failure
 ```
 
-当前CMake注册26项，含已验收S3静态语义两套及目标解析两套及已验收chunked/Expect两套、历史别名和synthetic工具测试；历史V1.1/S3增加方法路由C++与真实HTTP两套，Builder及Reviewer独立通过Debug/Release各20/20、规定sanitizer 8/8，Reviewer结论PASS；错误预期和失败清理反证有效。当前行为见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，测试入口与冻结覆盖边界见[开发说明](documentation/DEVELOPMENT.md)。23个旧目标仍停用；S3仅定向更新两份旧测试的静态405 Allow断言，其他冻结约束保持。
+当前CMake注册28项，含已验收S3静态语义两套及目标解析两套及已验收chunked/Expect两套、历史别名和synthetic工具测试；历史V1.1/S3增加方法路由C++与真实HTTP两套，Builder及Reviewer独立通过Debug/Release各20/20、规定sanitizer 8/8，Reviewer结论PASS；错误预期和失败清理反证有效。当前行为见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，测试入口与冻结覆盖边界见[开发说明](documentation/DEVELOPMENT.md)。23个旧目标仍停用；S3仅定向更新两份旧测试的静态405 Allow断言，其他冻结约束保持。
 
 ## 项目结构
 
@@ -114,3 +114,8 @@ V1.2/S2已验收统一目标一次percent解码：`/space%20name.txt`访问编�
 ### V1.2/S3 条件请求与单区间（已独立验收）
 
 静态GET/HEAD提供Date、元数据弱ETag与Last-Modified；If-None-Match优先If-Modified-Since，命中304无正文且无Content-Length。GET支持单bytes Range，206只发送指定区间；合法不可满足返回416且可保活。HEAD忽略Range，任意If-Range均保守回完整200，条件304仍优先；不宣称安全断点拼接。多Range/畸形Range忽略，未缓存文件内容或建立文件快照。细节及curl例见[运行说明](documentation/RUNNING.md#v12s3-条件请求与单区间已独立验收)，独立复审PASS：Debug/Release各26/26、规定sanitizer14/14；首次RFC850完整时间50年边界FAIL及修复记录保留。
+
+
+### V1.3/S1 内存任务API（已独立验收）
+
+新增`GET/POST /api/tasks`和`GET/PUT/DELETE /api/tasks/{id}`。POST/PUT必须提供JSON对象`{"title":"demo","completed":false}`及Content-Type: application/json；PUT完整替换，ID为字符串，最多128条，重启清空。任务命名空间优先同名静态文件，HEAD返回405无正文，其他/API路径和echo保持原规则。所有任务JSON响应带唯一no-store，错误与连接策略见[运行说明](documentation/RUNNING.md#v13s1-内存任务api已独立验收)。无数据库、鉴权、持久化、PATCH或异步业务线程池；V1.3未验收完成。

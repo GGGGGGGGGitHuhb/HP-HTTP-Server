@@ -21,6 +21,12 @@ std::string_view reasonPhrase(Status status) {
       return "Not Modified";
     case Status::kRangeNotSatisfiable:
       return "Range Not Satisfiable";
+    case Status::kCreated:
+      return "Created";
+    case Status::kUnsupportedMediaType:
+      return "Unsupported Media Type";
+    case Status::kServiceUnavailable:
+      return "Service Unavailable";
     case Status::kOk:
       return "OK";
     case Status::kBadRequest:
@@ -41,6 +47,12 @@ std::string_view reasonPhrase(Status status) {
 
 std::string_view errorBody(Status status) {
   switch (status) {
+    case Status::kUnsupportedMediaType:
+      return "415 Unsupported Media Type\n";
+    case Status::kServiceUnavailable:
+      return "503 Service Unavailable\n";
+    case Status::kCreated:
+      break;
     case Status::kBadRequest:
       return "400 Bad Request\n";
     case Status::kForbidden:
@@ -124,6 +136,21 @@ std::vector<std::byte> makeStaticResponseHeader(Status status,
   header += "\r\n";
   const auto bytes = asBytes(header);
   return {bytes.begin(), bytes.end()};
+}
+
+ResponseResult makeTaskJsonResponse(Status status,
+                                    std::string_view body,
+                                    ConnectionPolicy policy,
+                                    bool omitBody,
+                                    std::string_view allowedMethods) {
+  auto bytes = makeResponseHeader(status, body.size(), "application/json", allowedMethods, policy);
+  const auto cache = asBytes("Cache-Control: no-store\r\n");
+  bytes.insert(bytes.end() - 2, cache.begin(), cache.end());
+  if (!omitBody) {
+    const auto payload = asBytes(body);
+    bytes.insert(bytes.end(), payload.begin(), payload.end());
+  }
+  return {std::move(bytes), policy, std::nullopt, status, omitBody ? 0 : body.size()};
 }
 
 std::vector<std::byte> makeContinueResponse() {

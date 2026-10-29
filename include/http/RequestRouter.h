@@ -1,11 +1,13 @@
 #pragma once
 
 #include "http/StaticFileService.h"
+#include "http/TaskApiHandler.h"
 
 namespace hp::http {
 class RequestRouter final {
  public:
-  explicit RequestRouter(const StaticFileService& service) : service_(service) {}
+  explicit RequestRouter(const StaticFileService& service);
+  RequestRouter(const StaticFileService& service, std::shared_ptr<business::TaskService> tasks);
 
   [[nodiscard]] ResponseResult onResponse(const HttpRequest& request,
                                           ConnectionPolicy policy) const;
@@ -21,5 +23,6 @@ class RequestRouter final {
                                             ConnectionPolicy policy) const;
 
   const StaticFileService& service_;
+  TaskApiHandler tasks_;
 };
 }  // namespace hp::http

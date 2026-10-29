@@ -11,10 +11,20 @@ ResponseResult rejectRequest(Status status, bool omitBody, std::string_view allo
 }
 }  // namespace
 
+RequestRouter::RequestRouter(const StaticFileService& service)
+    : RequestRouter(service, std::make_shared<business::TaskService>()) {}
+
+RequestRouter::RequestRouter(const StaticFileService& service,
+                             std::shared_ptr<business::TaskService> tasks)
+    : service_(service), tasks_(std::move(tasks)) {}
+
 ResponseResult RequestRouter::onResponse(const HttpRequest& request,
                                          ConnectionPolicy policy) const {
   const auto parsed = parseRequestTarget(request.target);
   if (!parsed.target) return rejectRequest(parsed.status, request.method == "HEAD", {});
+  const auto taskRoute = classifyTaskRoute(*parsed.target);
+  if (taskRoute.kind != TaskRouteKind::kOther)
+    return tasks_.onTaskResponse(taskRoute, request, policy);
   if (auto rejected = admitTarget(*parsed.target, request.method)) return std::move(*rejected);
   if (request.method == "POST") return echoResponse(request, policy);
   return service_.onValidatedTarget(*parsed.target,
@@ -24,9 +34,12 @@ ResponseResult RequestRouter::onResponse(const HttpRequest& request,
 }
 
 std::optional<ResponseResult> RequestRouter::onRequestHeaders(const RequestHead& head,
-                                                              ConnectionPolicy) const {
+                                                              ConnectionPolicy policy) const {
   const auto parsed = parseRequestTarget(head.target);
   if (!parsed.target) return rejectRequest(parsed.status, head.method == "HEAD", {});
+  const auto taskRoute = classifyTaskRoute(*parsed.target);
+  if (taskRoute.kind != TaskRouteKind::kOther)
+    return tasks_.onTaskHeaders(taskRoute, head.method, policy);
   return admitTarget(*parsed.target, head.method);
 }
 

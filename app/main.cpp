@@ -221,7 +221,8 @@ int runServer(int argc, char* argv[]) {
   int exitCode = 0;
   try {
     hp::http::StaticFileService service(options.root);
-    hp::http::RequestRouter router(service);
+    auto tasks = std::make_shared<hp::business::TaskService>();
+    hp::http::RequestRouter router(service, tasks);
     hp::app::SignalWatcher signals;
     hp::net::TcpServer server(options.port,
                               hp::http::kMaxHeaderBytes,

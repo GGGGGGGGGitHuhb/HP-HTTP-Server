@@ -16,6 +16,9 @@ enum class ConnectionPolicy { kClose, kKeepAlive };
 
 enum class Status {
   kOk = 200,
+  kCreated = 201,
+  kUnsupportedMediaType = 415,
+  kServiceUnavailable = 503,
   kPartialContent = 206,
   kNotModified = 304,
   kRangeNotSatisfiable = 416,
@@ -73,6 +76,12 @@ struct ResponseResult {
     std::string_view contentType,
     ConnectionPolicy policy,
     const StaticResponseMetadata& metadata);
+
+[[nodiscard]] ResponseResult makeTaskJsonResponse(Status status,
+                                                  std::string_view body,
+                                                  ConnectionPolicy policy,
+                                                  bool omitBody = false,
+                                                  std::string_view allowedMethods = {});
 
 [[nodiscard]] std::vector<std::byte> makeContinueResponse();
 

@@ -356,7 +356,7 @@ void testMetrics() {
     metrics.finishRequest(false, status, 1);
   }
   const auto snapshot = metrics.snapshot();
-  requireTestCondition(snapshot.responseStatus.size() == 13 && snapshot.responseStatus[0] == 0);
+  requireTestCondition(snapshot.responseStatus.size() == 16 && snapshot.responseStatus[0] == 0);
   for (std::size_t i = 1; i < 13; ++i) requireTestCondition(snapshot.responseStatus[i] == 1);
   requireTestCondition(snapshot.responsesCompleted == 12 && snapshot.errors == 9 &&
                        snapshot.parseErrors == 0 && snapshot.providerErrors == 0);
