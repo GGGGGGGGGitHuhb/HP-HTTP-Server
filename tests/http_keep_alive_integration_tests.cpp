@@ -147,12 +147,12 @@ void Reuse(std::uint16_t port) {
   }
   for (bool prefix : {false, true}) {
     Client c(port);
-    SendAll(c.fd_, (prefix ? Get("/") : "") + Get("/bad%20target") + Get("/note.txt"));
+    SendAll(c.fd_, (prefix ? Get("/") : "") + Get("/bad%2Gtarget") + Get("/note.txt"));
     if (prefix) Check(c.ReadResponse(), 200, bodies[0], false);
     Check(c.ReadResponse(), 400, "400 Bad Request\n", true);
     c.ExpectEof();
   }
-  for (const auto& target : {"/../sibling-secret.txt", "/missing"}) {
+  for (const auto& target : {"/escape.txt", "/missing"}) {
     Client c(port);
     SendAll(c.fd_, Get(target) + Get("/note.txt", "Connection: close\r\n"));
     const auto m = c.ReadResponse();

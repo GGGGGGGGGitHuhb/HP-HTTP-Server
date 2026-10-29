@@ -23,7 +23,7 @@ inline std::vector<Rejection> Rejections() {
       {"G02-header-after-close", head + "Connection: close\r\nBad Header: x\r\n\r\n", 400},
       {"G03-framing-before-405", "POST / HTTP/1.1\r\nHost: a\r\nContent-Length: +1\r\n\r\n", 400},
       {"G01-method-405", "POST / HTTP/1.1\r\nHost: a\r\n\r\n", 405},
-      {"G06-service-400", "GET /bad%20target HTTP/1.1\r\nHost: a\r\n\r\n", 400, true},
+      {"G06-service-400", "GET /bad%2Gtarget HTTP/1.1\r\nHost: a\r\n\r\n", 400, true},
       {"G05-total-16385", std::move(over), 400, false, true}};
 }
 

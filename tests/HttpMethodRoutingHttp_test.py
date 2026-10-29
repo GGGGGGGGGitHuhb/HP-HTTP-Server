@@ -59,10 +59,10 @@ def check_routes(server):
             exchange(server, request(path, b"Connection: close\r\n", method) + request(),
                      status, b"" if status == 200 else ERRORS[405], method, b"POST")
         for path, static_status in [(b"/missing", 404), (b"/api/missing", 404), (b"/api/echo/", 403), (b"/", 200)]:
-            status = static_status if method in (b"GET", b"HEAD") else 405
+            status = static_status if method in (b"GET", b"HEAD") or path == b"/api/echo/" else 405
             exchange(server, request(path, b"Connection: close\r\n", method) + request(),
                      status, b"home\n" if status == 200 else ERRORS[status], method)
-        exchange(server, request(b"/api/echo?q=%20", method=method) + request(), 400, ERRORS[400], method)
+        exchange(server, request(b"/api/echo?q=%2G", method=method) + request(), 400, ERRORS[400], method)
     print("CASE E02-route-query-percent-shadow-tail-allow-close PASS", flush=True)
 
 

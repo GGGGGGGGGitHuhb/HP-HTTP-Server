@@ -47,47 +47,6 @@ Status classifyOpenError(int parentFd, const std::string& component, int errorNu
   return Status::kInternalServerError;
 }
 
-struct PathResult {
-  Status status{Status::kOk};
-  std::string path;
-  std::vector<std::string> components;
-};
-
-PathResult validatePath(std::string_view target) {
-  if (target.find('%') != std::string_view::npos) {
-    return {Status::kBadRequest, {}, {}};
-  }
-  const std::size_t query = target.find('?');
-  const std::string_view path = target.substr(0, query);
-  if (path.find('\\') != std::string_view::npos) {
-    return {Status::kForbidden, {}, {}};
-  }
-  if (path == "/") {
-    return {Status::kOk, "index.html", {"index.html"}};
-  }
-  if (path.size() < 2 || path.front() != '/' || path.back() == '/') {
-    return {Status::kForbidden, {}, {}};
-  }
-
-  PathResult result{Status::kOk, {}, {}};
-  result.path = std::string(path.substr(1));
-  std::size_t start = 1;
-  while (start <= path.size()) {
-    const std::size_t slash = path.find('/', start);
-    const std::size_t end = slash == std::string_view::npos ? path.size() : slash;
-    const std::string_view component = path.substr(start, end - start);
-    if (component.empty() || component == "." || component == "..") {
-      return {Status::kForbidden, {}, {}};
-    }
-    result.components.emplace_back(component);
-    if (slash == std::string_view::npos) {
-      break;
-    }
-    start = slash + 1;
-  }
-  return result;
-}
-
 ResponseResult prepareFileResponse(UniqueFd file,
                                    std::string_view relativePath,
                                    const struct stat& metadata,
@@ -172,15 +131,22 @@ ResponseResult StaticFileService::onResponse(const HttpRequest& request,
                                              ConnectionPolicy policy) const {
   const bool omitBody = request.method == "HEAD";
   try {
-    const PathResult validated = validatePath(request.target);
-    if (validated.status != Status::kOk) {
-      return errorResponse(validated.status, policy, omitBody);
-    }
+    const auto parsed = parseRequestTarget(request.target);
+    if (!parsed.target) return errorResponse(parsed.status, ConnectionPolicy::kClose, omitBody);
+    return onValidatedTarget(*parsed.target, omitBody, policy);
+  } catch (...) {
+    return errorResponse(Status::kInternalServerError, policy, omitBody);
+  }
+}
 
+ResponseResult StaticFileService::onValidatedTarget(const RequestTarget& target,
+                                                    bool omitBody,
+                                                    ConnectionPolicy policy) const {
+  try {
     int parentFd = rootFd_;
     UniqueFd currentDirectory;
-    for (std::size_t index = 0; index + 1 < validated.components.size(); ++index) {
-      const std::string& component = validated.components[index];
+    for (std::size_t index = 0; index + 1 < target.components().size(); ++index) {
+      const std::string& component = target.components()[index];
       const int opened =
           ::openat(parentFd, component.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
       if (opened == -1) {
@@ -190,7 +156,7 @@ ResponseResult StaticFileService::onResponse(const HttpRequest& request,
       parentFd = currentDirectory.get();
     }
 
-    const std::string& filename = validated.components.back();
+    const std::string& filename = target.components().back();
     UniqueFd file(::openat(parentFd, filename.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC));
     if (file.get() == -1) {
       return errorResponse(classifyOpenError(parentFd, filename, errno), policy, omitBody);
@@ -201,7 +167,11 @@ ResponseResult StaticFileService::onResponse(const HttpRequest& request,
     if (::fstat(file.get(), &metadata) == -1) {
       return errorResponse(Status::kInternalServerError, policy, omitBody);
     }
-    return prepareFileResponse(std::move(file), validated.path, metadata, policy, omitBody);
+    return prepareFileResponse(std::move(file),
+                               target.path() == "/" ? "index.html" : target.path(),
+                               metadata,
+                               policy,
+                               omitBody);
   } catch (...) {
     return errorResponse(Status::kInternalServerError, policy, omitBody);
   }

@@ -188,8 +188,8 @@ def check_static(server, binary_body, large_body):
                        (b"/small.txt?q=x", b"small\n")]:
         check_exchange(server, "P05-" + path.decode(), request(path, b"Connection: close\r\n"), 200, body)
     for path, status in [(b"/missing", 404), (b"/../outside", 403), (b"/a\\b", 403),
-                         (b"/link", 403), (b"/dirlink/file", 403), (b"/%2e", 400),
-                         (b"/small.txt?q=%20", 400), (b"/over.dat", 403)]:
+                         (b"/link", 403), (b"/dirlink/file", 403), (b"/%2e", 403),
+                         (b"/small.txt?q=%2G", 400), (b"/over.dat", 403)]:
         check_exchange(server, "P05-" + path.decode(), request(path, b"Connection: close\r\n"), status, ERRORS[status])
 
 

@@ -80,7 +80,7 @@ V1.0主线阶段验收已完成，待用户合并发布；S1/S2独立静态PASS�
 
 ### 后续路线与共同门槛
 
-2026-10-29 用户明确要求取消本仓库网关版本，暂不加入数据库，把 Server 做得更扎实完整。以下为本次制定的版本规划；V1.1/S1已于2026-10-29按Approved revision 1完成，Builder001及Reviewer001 PASS、Leader003收口；S2于2026-10-29设计/审查revision 1及两文件冻结例外获批，按Builder001及Reviewer001独立PASS完成，Leader003收口，状态 `已完成`，S3现为 `已完成`（Approved revision 1、Reviewer001 PASS、Leader003收口），V1.1验收完成且S3已合并（标签未核实），V1.2/S1已独立验收，V1.2/S2及后续阶段 `未开始`。后续按阶段形成设计、审查计划及批准记录，不一次展开所有实现细节。
+2026-10-29 用户明确要求取消本仓库网关版本，暂不加入数据库，把 Server 做得更扎实完整。以下为本次制定的版本规划；V1.1/S1已于2026-10-29按Approved revision 1完成，Builder001及Reviewer001 PASS、Leader003收口；S2于2026-10-29设计/审查revision 1及两文件冻结例外获批，按Builder001及Reviewer001独立PASS完成，Leader003收口，状态 `已完成`，S3现为 `已完成`（Approved revision 1、Reviewer001 PASS、Leader003收口），V1.1验收完成且S3已合并（标签未核实），V1.2/S1已独立验收，V1.2/S2 `已完成`（Approved revision1及补充、Reviewer001 PASS、Leader005收口），S3及后续阶段 `未开始`。后续按阶段形成设计、审查计划及批准记录，不一次展开所有实现细节。
 
 - 顺序：V1.1 → V1.2 → V1.3 → V1.4。每阶段依赖前一阶段完成，各版本依赖前一版本验收；V1.1启动前核实V1.0发布基线与现有工作区改动归属。
 - 每阶段必须给出支持/拒绝行为矩阵、当前接口测试、真实HTTP集成验证及静态服务回归；涉及生命周期、跨线程或资源变化时增加相应专项验证。
@@ -103,10 +103,10 @@ V1.0主线阶段验收已完成，待用户合并发布；S1/S2独立静态PASS�
 
 ### V1.2 HTTP兼容与静态资源语义
 
-状态：`实现中`（S1已完成、Approved revision1、Reviewer001 PASS，S2/S3未开始，V1.2整体未完成；前置V1.1/S3已合并origin/main，未核实标签发布）。目标：扩展明确的HTTP/1.1子集，支持常见编码请求与浏览器缓存/下载场景，不宣称完整协议实现。
+状态：`实现中`（S1已完成、Approved revision1、Reviewer001 PASS，S2已完成（Approved revision1及补充、Reviewer001 PASS）、S3未开始，V1.2整体未完成；前置V1.1/S3已合并origin/main，未核实标签发布）。目标：扩展明确的HTTP/1.1子集，支持常见编码请求与浏览器缓存/下载场景，不宣称完整协议实现。
 
 - **S1 chunked请求与Expect**（`已完成`，2026-10-29 Approved revision1、Reviewer001 PASS、Leader003收口）：有界增量chunk解码、终止块及trailer规则，支持受控100-continue；对块大小、解码总量、元数据与读取期限分别设边界。完成标准：任意拆分、非法块、截断、TE/CL冲突、过大正文和最终边界可验证；不会误发100后无限等待，不允许trailer覆盖framing/路由字段。已独立验证22/22 Debug、22/22 Release、10/10 sanitizer，真实100背压/期限/失败清理通过，累计返工0/2，无新债。
-- **S2 请求目标与参数**（`未开始`）：分离path/query，定义一次性percent解码、无效编码与编码分隔符策略，提供有界查询参数解析。完成标准：有效编码可用，双重编码、NUL、路径穿越及symlink不能越过静态根；路由与文件访问对同一请求目标解释一致。
+- **S2 请求目标与参数**（`已完成`，2026-10-29 Approved revision1及补充、Reviewer001 PASS、Leader005收口）：分离path/query，定义一次性percent解码、无效编码与编码分隔符策略，提供有界查询参数解析。完成标准：有效编码可用，双重编码、NUL、路径穿越及symlink不能越过静态根；路由与文件访问对同一请求目标解释一致。
 - **S3 条件请求与单区间下载**（`未开始`）：GET/HEAD的ETag与If-None-Match、Last-Modified与If-Modified-Since，明确优先级；单区间Range及If-Range。完成标准：200/206/304/416、正文长度、HEAD和文件偏移正确，多区间有明确策略，静态文件sendfile及大小上限不回退。
 
 版本完成标准：chunked POST、带编码路径/参数请求、条件GET和单区间下载可通过端到端用例复现；现有固定长度正文及保活矩阵不回退。

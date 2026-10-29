@@ -13,25 +13,28 @@ ResponseResult rejectRequest(Status status, bool omitBody, std::string_view allo
 
 ResponseResult RequestRouter::onResponse(const HttpRequest& request,
                                          ConnectionPolicy policy) const {
-  if (auto rejected =
-          onRequestHeaders({request.method, request.target, request.closeRequested}, policy))
-    return std::move(*rejected);
+  const auto parsed = parseRequestTarget(request.target);
+  if (!parsed.target) return rejectRequest(parsed.status, request.method == "HEAD", {});
+  if (auto rejected = admitTarget(*parsed.target, request.method)) return std::move(*rejected);
   if (request.method == "POST") return echoResponse(request, policy);
-  return service_.onResponse(request, policy);
+  return service_.onValidatedTarget(*parsed.target, request.method == "HEAD", policy);
 }
 
 std::optional<ResponseResult> RequestRouter::onRequestHeaders(const RequestHead& head,
                                                               ConnectionPolicy) const {
-  const bool omitBody = head.method == "HEAD";
-  if (head.target.find('%') != std::string::npos)
-    return rejectRequest(Status::kBadRequest, omitBody, {});
-  const std::string_view target(head.target);
-  const auto path = target.substr(0, target.find('?'));
-  if (path == "/api/echo") {
-    if (head.method == "POST") return std::nullopt;
+  const auto parsed = parseRequestTarget(head.target);
+  if (!parsed.target) return rejectRequest(parsed.status, head.method == "HEAD", {});
+  return admitTarget(*parsed.target, head.method);
+}
+
+std::optional<ResponseResult> RequestRouter::admitTarget(const RequestTarget& target,
+                                                         std::string_view method) const {
+  const bool omitBody = method == "HEAD";
+  if (target.path() == "/api/echo") {
+    if (method == "POST") return std::nullopt;
     return rejectRequest(Status::kMethodNotAllowed, omitBody, "POST");
   }
-  if (head.method == "GET" || omitBody) return std::nullopt;
+  if (method == "GET" || omitBody) return std::nullopt;
   return rejectRequest(Status::kMethodNotAllowed, false, "GET, HEAD");
 }
 
