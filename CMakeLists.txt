@@ -18,6 +18,7 @@ add_library(hp_http_core STATIC
     src/http/StaticFileService.cpp
     src/http/RequestRouter.cpp
     src/http/RequestTarget.cpp
+  src/http/StaticRepresentation.cpp
     src/net/Acceptor.cpp
     src/net/TcpConnection.cpp
     src/net/ConnectionIo.cpp
@@ -190,5 +191,16 @@ if(BUILD_TESTING)
     add_test(NAME http_request_target_http_tests
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpRequestTargetHttp_test.py $<TARGET_FILE:hp_http_server>)
     set_tests_properties(http_request_target_tests http_request_target_http_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(http_static_semantics_tests tests/HttpStaticSemantics_test.cpp)
+    target_link_libraries(http_static_semantics_tests PRIVATE hp_http_core)
+    enable_debug_warnings(http_static_semantics_tests)
+    add_test(NAME http_static_semantics_tests COMMAND http_static_semantics_tests)
+    add_test(NAME http_static_semantics_http_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpStaticSemanticsHttp_test.py $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(http_static_semantics_tests http_static_semantics_http_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()

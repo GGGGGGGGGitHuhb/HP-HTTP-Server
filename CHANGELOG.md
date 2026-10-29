@@ -3,7 +3,14 @@
 本文档记录 HP HTTP Server 已经完成并得到适当验证的重要变化。未来计划写入 `ROADMAP.md`，长期架构写入 `ARCHITECTURE.md`，技术债写入 `TECH-DEBT-TRACKER.md`，实现与审查证据写入对应报告。
 
 <a id="unreleased"></a>
-## V1.2 — 开发中（未发布）
+## V1.2 — 验收完成，待合并发布
+
+### 2026-10-29 — S3 条件请求与单区间下载
+
+- 静态GET/HEAD支持弱ETag/Last-Modified条件验证，If-None-Match优先，304无正文且省略Content-Length；GET单Range精确206或416，沿既有FileRegion/sendfile与8MiB上限，兼容读取入口按非零offset读取。
+- HEAD忽略Range；任意If-Range均保守回完整200（缓存304优先），不宣称安全断点拼接。多段或畸形Range忽略，不提供内容缓存/文件快照/强hash。新206/304/416状态桶追加，旧索引保持。
+- 首次独立审查FAIL定位RFC850完整日期时间50年边界；最小修复及13条确定性回归后Reviewer002 PASS，正式返工1/2。最终独立Debug/Release各26/26、指定sanitizer14/14、13文件格式与三负对照通过；原探针exit1→0，127条HTTP及19份fixture正常清理，旧FAIL及初次构建失败保留。
+- 两活跃目标测试仅Date动态比较适配，31冻结源码不变。S1–S3及V1.2阶段验收完成，合并发布另行处理；无新债，不关闭TD-006/旧性能/EOF风险，后续版本未开始。
 
 ### 2026-10-29 — S2 请求目标与参数
 

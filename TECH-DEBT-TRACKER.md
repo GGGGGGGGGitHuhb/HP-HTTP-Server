@@ -47,6 +47,8 @@ V0.6/S3独立有限三条PASS只说明Approved R002范围：M2 syscall全生命�
 
 V1.2/S2检查点（2026-10-29）：独立Reviewer PASS，当前24项Debug/Release及12项指定sanitizer通过；新增目标/查询一致性及主动关闭覆盖，128非法目标与2合法symlink保活对照通过。三份冻结仅批准精确例外，其余28份不变，23停用目标未恢复；TD-006整体仍Open，无新债，旧性能/EOF限制保持。
 
+V1.2/S3检查点（2026-10-29）：正式返工1/2后独立Reviewer002 PASS，26项Debug/Release与14项指定sanitizer通过，补RFC850完整50年阈值13条回归，初审FAIL原证据保留。31冻结源码不变、23停用目标未恢复；V1.2全部阶段验收完成不代表TD-006整体关闭。无新债，弱validator/非快照及旧性能/EOF边界保持。
+
 ### TD-001 WSL2 性能数据代表性有限
 
 - 类型：`Risk`

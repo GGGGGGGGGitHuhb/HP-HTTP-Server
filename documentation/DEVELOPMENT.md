@@ -101,3 +101,16 @@ S3 Builder最终候选Debug/Release各20/20，规定8项sanitizer 8/8。ASan首�
 首次Debug22/24暴露以上尾slash及旧穿越保活预期，原失败保留，获批补充后才修改；不是放宽目标安全关闭。负对照默认关闭，`HP_REQUEST_TARGET_NEGATIVE=1`分别运行Debug/Release http_request_target_tests与`python3 tests/HttpRequestTargetHttp_test.py <debug-server>`，先设HP_S3_TEST_TMP_ROOT为独立角色目录。C++资源创建前错误预期失败，HTTP失败仍stop/wait/join并删除root及root外fixture，保留日志JSON。Release不依赖assert副作用，使用固定clang-format18.1.3的11份受影响C++清单。
 
 独立Reviewer PASS：Debug/Release各24/24、规定12项sanitizer通过，三个构建无告警、11文件格式通过；反证-6/-6/1，128条无客户端close指令的非法目标与2条合法symlink保活对照通过。21项导出逐字节一致且独立HEAD+patch重建一致；28份冻结SHA及三份精确机械重建通过。111条HTTP与17份fixture摘要清理正常；初始22/24失败与批准过程保留。
+
+
+## V1.2/S3 静态语义验证（已独立验收）
+
+当前26项CTest含新增`http_static_semantics_tests`/`http_static_semantics_http_tests`，旧24身份保留。新HTTP客户端仅本suite按304状态无body定界；旧公共客户端不改。真实threads0/2、5秒场景绝对截止/120秒suite/9MiB响应限制，自有业务fixture删除而保留日志/JSON。日期用固定秒/utime，不依赖sleep跨秒或全局TZ修改；大区间逐字节比较不等于已观测EAGAIN。
+
+```bash
+ctest --test-dir build -R '^http_static_semantics(_http)?_tests$' --output-on-failure --timeout 120
+```
+
+Debug/Release均全26项；ASan+UBSan/LSan规定14项为原12加新2。新负对照仅环境`HP_STATIC_SEMANTICS_NEGATIVE=1`显式启用：C++在资源创建前错区间起点，HTTP实际206错body且finally回收，不用于常规CI。31冻结源码本阶段全部保持，23停用目标不恢复；唯一旧测试适配为S2 C++/HTTP各自校验合法唯一Date后只排除动态Date值。
+
+S3独立初审FAIL定位RFC850完整timestamp的50年阈值，最小修复与13个确定性回归后Reviewer002 PASS，正式返工1/2。最终Debug/Release26/26、规定sanitizer14/14、三负对照-6/-6/1、13文件格式通过；原反例exit1→0，127条HTTP及19份fixture正常回收。31冻结不变，原失败/首次构建失败保留，无新债。

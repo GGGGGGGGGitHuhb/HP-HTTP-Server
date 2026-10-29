@@ -17,7 +17,10 @@ ResponseResult RequestRouter::onResponse(const HttpRequest& request,
   if (!parsed.target) return rejectRequest(parsed.status, request.method == "HEAD", {});
   if (auto rejected = admitTarget(*parsed.target, request.method)) return std::move(*rejected);
   if (request.method == "POST") return echoResponse(request, policy);
-  return service_.onValidatedTarget(*parsed.target, request.method == "HEAD", policy);
+  return service_.onValidatedTarget(*parsed.target,
+                                    request.method == "HEAD",
+                                    policy,
+                                    request.staticFields);
 }
 
 std::optional<ResponseResult> RequestRouter::onRequestHeaders(const RequestHead& head,

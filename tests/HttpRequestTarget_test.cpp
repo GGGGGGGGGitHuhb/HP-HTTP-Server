@@ -173,6 +173,29 @@ std::string text(const std::vector<std::byte>& bytes) {
   return {reinterpret_cast<const char*>(bytes.data()), bytes.size()};
 }
 
+std::string withoutDynamicDate(const std::vector<std::byte>& bytes) {
+  auto response = text(bytes);
+  const auto boundary = response.find("\r\n\r\n");
+  requireTestCondition(boundary != std::string::npos);
+  std::size_t count = 0, position = 0;
+  while ((position = response.find("\r\nDate: ", position)) != std::string::npos &&
+         position < boundary) {
+    const auto end = response.find("\r\n", position + 2);
+    const auto date = response.substr(position + 8, end - position - 8);
+    const auto parsed = hp::http::parseHttpDate(date, 0);
+    requireTestCondition(parsed && hp::http::formatHttpDate(*parsed) == date);
+    ++count;
+    position = end;
+  }
+  if (response.starts_with("HTTP/1.1 200 "))
+    requireTestCondition(count == 1);
+  else
+    requireTestCondition(count == 0);
+  const auto dateStart = response.find("\r\nDate: ");
+  if (count) response.erase(dateStart + 8, response.find("\r\n", dateStart + 2) - dateStart - 8);
+  return response;
+}
+
 void testIntegration(const RootFixture& fixture) {
   hp::http::StaticFileService service(fixture.root.string());
   hp::http::RequestRouter router(service);
@@ -193,13 +216,15 @@ void testIntegration(const RootFixture& fixture) {
       auto routed = router.onResponse(request, ConnectionPolicy::kKeepAlive);
       requireTestCondition(request.target == before && direct.status == routed.status &&
                            direct.effectivePolicy == routed.effectivePolicy &&
-                           direct.bytes == routed.bytes);
+                           withoutDynamicDate(direct.bytes) == withoutDynamicDate(routed.bytes));
       const auto parsed = parseRequestTarget(path);
       if (parsed.target) {
         auto validated = service.onValidatedTarget(*parsed.target,
                                                    std::string_view(method) == "HEAD",
                                                    ConnectionPolicy::kKeepAlive);
-        requireTestCondition(validated.bytes == routed.bytes && validated.status == routed.status);
+        requireTestCondition(withoutDynamicDate(validated.bytes) ==
+                                 withoutDynamicDate(routed.bytes) &&
+                             validated.status == routed.status);
       } else
         requireTestCondition(routed.effectivePolicy == ConnectionPolicy::kClose);
       const auto full = service.buildResponseBytes(request, ConnectionPolicy::kKeepAlive);

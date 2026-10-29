@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "base/FileRegion.h"
+#include "http/StaticRepresentation.h"
 
 namespace hp::http {
 
@@ -15,6 +16,9 @@ enum class ConnectionPolicy { kClose, kKeepAlive };
 
 enum class Status {
   kOk = 200,
+  kPartialContent = 206,
+  kNotModified = 304,
+  kRangeNotSatisfiable = 416,
   kBadRequest = 400,
   kForbidden = 403,
   kNotFound = 404,
@@ -62,6 +66,13 @@ struct ResponseResult {
     ConnectionPolicy policy = ConnectionPolicy::kClose,
     bool omitBody = false,
     std::string_view allowedMethods = "GET");
+
+[[nodiscard]] std::vector<std::byte> makeStaticResponseHeader(
+    Status status,
+    std::size_t contentLength,
+    std::string_view contentType,
+    ConnectionPolicy policy,
+    const StaticResponseMetadata& metadata);
 
 [[nodiscard]] std::vector<std::byte> makeContinueResponse();
 

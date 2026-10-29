@@ -15,6 +15,12 @@ std::string_view reasonPhrase(Status status) {
       return "Expectation Failed";
     case Status::kNotImplemented:
       return "Not Implemented";
+    case Status::kPartialContent:
+      return "Partial Content";
+    case Status::kNotModified:
+      return "Not Modified";
+    case Status::kRangeNotSatisfiable:
+      return "Range Not Satisfiable";
     case Status::kOk:
       return "OK";
     case Status::kBadRequest:
@@ -51,6 +57,10 @@ std::string_view errorBody(Status status) {
       return "417 Expectation Failed\n";
     case Status::kNotImplemented:
       return "501 Not Implemented\n";
+    case Status::kRangeNotSatisfiable:
+      return "416 Range Not Satisfiable\n";
+    case Status::kPartialContent:
+    case Status::kNotModified:
     case Status::kOk:
       break;
   }
@@ -92,6 +102,28 @@ std::vector<std::byte> makeResponse(Status status,
   response.reserve(response.size() + body.size());
   response.insert(response.end(), body.begin(), body.end());
   return response;
+}
+
+std::vector<std::byte> makeStaticResponseHeader(Status status,
+                                                std::size_t contentLength,
+                                                std::string_view contentType,
+                                                ConnectionPolicy policy,
+                                                const StaticResponseMetadata& metadata) {
+  std::string header = "HTTP/1.1 " + std::to_string(static_cast<int>(status)) + " " +
+                       std::string(reasonPhrase(status)) + "\r\n";
+  if (status != Status::kNotModified) {
+    header += "Content-Length: " + std::to_string(contentLength) + "\r\n";
+    header += "Content-Type: " + std::string(contentType) + "\r\n";
+  }
+  header +=
+      policy == ConnectionPolicy::kClose ? "Connection: close\r\n" : "Connection: keep-alive\r\n";
+  header += "Date: " + metadata.date + "\r\nETag: " + metadata.entityTag + "\r\n";
+  if (metadata.lastModified) header += "Last-Modified: " + *metadata.lastModified + "\r\n";
+  header += "Accept-Ranges: bytes\r\n";
+  if (metadata.contentRange) header += "Content-Range: " + *metadata.contentRange + "\r\n";
+  header += "\r\n";
+  const auto bytes = asBytes(header);
+  return {bytes.begin(), bytes.end()};
 }
 
 std::vector<std::byte> makeContinueResponse() {

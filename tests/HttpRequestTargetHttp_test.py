@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """V1.2/S2 owned request targets, safe file resolution and query boundaries."""
 import contextlib
+from email.utils import parsedate_to_datetime, format_datetime
 import json
 import os
 from pathlib import Path
@@ -33,7 +34,13 @@ def check_files_and_splits(server):
                        (b"/?path=../outside/secret", b"home\n"), (b"/?q=a%26b%3Dc%3Fd&plus=+&q=%2526", b"home\n")]:
         get = exchange(server, path, 200, body)
         head = exchange(server, path, 200, body, b"HEAD")
-        require(get == head, "GET/HEAD representation headers differ")
+        for headers in (get, head):
+            require(b"date" in headers, "missing Date")
+            date = headers[b"date"].decode("ascii")
+            require(format_datetime(parsedate_to_datetime(date), usegmt=True) == date, "invalid Date")
+        require({key: value for key, value in get.items() if key != b"date"} ==
+                {key: value for key, value in head.items() if key != b"date"},
+                "GET/HEAD representation headers differ")
     wire = request(b"/space%20name.txt?q=%2526", b"Connection: close\r\n")
     # 覆盖请求行每个切分位置，不假定send边界等于recv边界。
     line_length = wire.index(b"\r\n") + 2

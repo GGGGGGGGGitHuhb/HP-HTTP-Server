@@ -23,11 +23,25 @@ struct RequestHead {
   bool closeRequested{false};
 };
 
+struct StaticField {
+  std::string value;
+  bool present{false};
+  bool duplicate{false};
+};
+
+struct StaticRequestFields {
+  StaticField ifNoneMatch;
+  StaticField ifModifiedSince;
+  StaticField range;
+  StaticField ifRange;
+};
+
 struct HttpRequest {
   std::string method;
   std::string target;
   bool closeRequested{false};
   std::string body;
+  StaticRequestFields staticFields{};
 };
 
 // 当前请求解析完后的结果
@@ -94,6 +108,7 @@ class RequestParser final {
  private:
   bool validateRequestLine();
   bool validateHeader();
+  bool collectStaticField(StaticField& field, std::string_view value, bool merge);
   bool validateTokenList(std::string_view value, bool trailerDeclaration);
   bool validateChunkSize();
   bool validateChunkExtensions(std::string_view line, std::size_t position);
@@ -131,6 +146,8 @@ class RequestParser final {
   std::size_t headerBytes_{0};
   std::uint64_t contentLength_{0};
   std::string body_;
+  StaticRequestFields staticFields_;
+  std::size_t staticFieldBytes_{0};
 
   bool transferEncodingSeen_{false}, unsupportedCoding_{false};
   bool expectSeen_{false}, expectContinue_{false}, trailerDeclarationSeen_{false};
