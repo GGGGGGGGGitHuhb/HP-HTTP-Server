@@ -2,6 +2,10 @@
 
 Linux C++20 静态 HTTP 服务器学习项目：提供受限 HTTP/1.1 GET、Keep-Alive、顺序流水线请求、非阻塞 sendfile、连接超时与优雅关闭。网络层采用 epoll Reactor；默认主线程监听、两个 worker 处理连接，支持单 Reactor 模式。
 
+## 后续方向
+
+2026-10-29调整：取消本仓库原L7网关扩展，后续依次规划V1.1请求正文与基础路由、V1.2 HTTP兼容与静态资源语义、V1.3无数据库动态接口、V1.4运行保障。V1.1/S1协议与回归基线已完成独立验收，S2/S3及其余版本阶段未开始；当前仍是受限静态HTTP服务，详见[路线图](ROADMAP.md#后续路线与共同门槛)。数据库、代理及推理网关不在本轮范围。
+
 ## 环境要求
 
 Linux / WSL2，支持 C++20 的 GCC 或 Clang、CMake ≥3.20、线程库；默认 `BUILD_TESTING=ON` 还需要 Python 3。curl 用于手工请求，Bash 用于 smoke。核心服务不依赖数据库、Web框架或第三方HTTP运行时。当前CMake项目版本仍为 `0.1.0`，CLI启动文字仍保留 `V0.1 / S3`，不表示发布版本退回。wrk、strace与固定运行库仅属于 [性能工具](benchmark/README.md) 的独立前提。
@@ -35,7 +39,7 @@ ctest --test-dir build -N
 ctest --test-dir build --output-on-failure
 ```
 
-当前CMake注册14项，含历史别名和synthetic工具测试；本轮未运行。历史S1的12/12、旧重构28/28均只代表各自时点，23个旧接口耦合目标仍冻结停用，不能充当当前全量回归。详见 [测试、smoke与格式化](documentation/DEVELOPMENT.md)。
+当前CMake注册16项，含历史别名和synthetic工具测试；V1.1/S1新增当前parser与真实HTTP协议基线两项，支持/拒绝及覆盖缺口见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)。2026-10-29 Builder自测及Reviewer独立验证均通过：Debug/Release各16/16，新两项ASan+UBSan/LSan 2/2，错误预期负对照与失败回收检查有效；S1只补测试与文档，产品协议不变。历史S1的12/12、旧重构28/28均只代表各自时点，23个旧接口耦合目标仍冻结停用，不能充当当前全量回归。详见 [测试、smoke与格式化](documentation/DEVELOPMENT.md)。
 
 ## 项目结构
 

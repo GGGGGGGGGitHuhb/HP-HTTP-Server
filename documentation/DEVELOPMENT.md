@@ -10,9 +10,17 @@ ctest --test-dir build --output-on-failure
 NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost bash tests/http_smoke_test.sh build/hp_http_server
 ```
 
-CMake当前注册14项：cli_tests、http_server_integration_tests、http_keep_alive_integration_tests、server_integration_tests（HTTP黑盒历史别名）、benchmark_runner_tests、async_logger_batch_tests、r6_callbacks_tests、tcp_nodelay_tests、tcp_nodelay_http_tests、server_metrics_tests、http_observability_tests、observability_http_tests、matrix_benchmark_tests、performance_analysis_tests。Python专项含synthetic夹具与子进程/HTTP失败路径，不自动启动正式wrk套。真实socket/HTTP须环境允许；本地Agent另遵守未随Git分发的协作资料及受控执行路线。
+CMake当前注册16项：cli_tests、http_server_integration_tests、http_keep_alive_integration_tests、server_integration_tests（HTTP黑盒历史别名）、benchmark_runner_tests、async_logger_batch_tests、r6_callbacks_tests、tcp_nodelay_tests、tcp_nodelay_http_tests、server_metrics_tests、http_observability_tests、observability_http_tests、matrix_benchmark_tests、performance_analysis_tests、http_protocol_baseline_tests、http_protocol_baseline_http_tests。Python专项含synthetic夹具与子进程/HTTP失败路径，不自动启动正式wrk套。真实socket/HTTP须环境允许；本地Agent另遵守未随Git分发的协作资料及受控执行路线。
 
 历史S1独立12/12和专项ASan+UBSan/LSan2/2属于当时验收，当前新增两项工具测试不能倒写为历史14/14。V1.0/S1只核CMake/命令，不执行CTest、smoke或sanitizer；最终回归属于V1.0/S3。
+
+## V1.1/S1 当前接口协议基线
+
+新增两套测试及[HTTP支持矩阵](HTTP-SUPPORT.md)，原14项保持。2026-10-29 Builder与Reviewer分别在独立构建/夹具目录完成Debug/Release各16/16及新两项ASan+UBSan/LSan 2/2，Reviewer给出PASS。新检查在Debug及NDEBUG Release下的错误预期负对照均有效，HTTP失败场景正常回收自有进程与fixture。Reviewer Debug构建曾出现一条make时钟偏差告警，无C++编译诊断，不描述为全构建零告警。协议、生产代码和冻结旧源码不变；新增测试不等于恢复全部历史覆盖。
+
+```bash
+ctest --test-dir build -R '^http_protocol_baseline(_http)?_tests$' --output-on-failure
+```
 
 ## 冻结旧测试与覆盖限制
 

@@ -3,6 +3,14 @@
 本文档记录 HP HTTP Server 已经完成并得到适当验证的重要变化。未来计划写入 `ROADMAP.md`，长期架构写入 `ARCHITECTURE.md`，技术债写入 `TECH-DEBT-TRACKER.md`，实现与审查证据写入对应报告。
 
 <a id="unreleased"></a>
+## V1.1 — 开发中（未发布）
+
+### 2026-10-29 — S1 协议与回归基线
+
+- 新增当前RequestParser接口与真实HTTP进程两套测试，覆盖增量解析、请求边界、拒绝framing、保活/顺序pipeline、静态完整正文、FIN/RST/超时及正常停机；新增[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，明确支持、拒绝和冻结覆盖缺口。
+- Builder自测与Reviewer独立PASS：Debug/Release各16/16、新两项ASan+UBSan/LSan 2/2；Debug/Release错误预期及HTTP失败清理反证有效，独立19条服务器记录正常回收。Reviewer Debug构建有一条make时钟偏差告警，无C++编译诊断。
+- 产品代码、协议行为和旧测试保持；TD-006仍Open，未恢复全部历史覆盖。无数据库/网关/新正文支持，无性能采集或长尾修复声明。仅S1已完成，S2/S3未开始，V1.1未整体完成或发布。
+
 ## V1.0 — 阶段验收完成，待合并发布
 
 以下阶段条目保留各自验收时点；当前阶段状态以README及发布检查为准。
