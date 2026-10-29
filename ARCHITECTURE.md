@@ -40,7 +40,7 @@ LoggerSession在服务对象前启动，唯一日志consumer与IO workers分离�
 
 ## 错误处理与安全边界
 
-受限HTTP/1.1合法method token在正文完整后交只读RequestRouter。精确POST /api/echo回显拥有型二进制正文；其他路径GET/HEAD进入静态服务。echo路径其他方法405 Allow: POST，静态fallback其他方法405 Allow: GET, HEAD并关闭；未知静态路径GET/HEAD为404，POST仍405且不探测文件。解析错误400关闭。CL缺省为0，唯一十进制CL允许OWS/前导零；重复/列表/符号/溢出、Transfer-Encoding、Expect均400。合法数值超1MiB在完整头校验后413，后续非法头优先400，不分配或等待超限正文。Connection token大小写无关合并、close优先；非法token400。普通403/404及服务有界500可复用，provider异常或放宽terminal policy生成500并关闭。
+受限HTTP/1.1合法method token在正文完整后交只读RequestRouter。精确POST /api/echo回显拥有型二进制正文；其他路径GET/HEAD进入静态服务。echo路径其他方法405 Allow: POST，静态fallback其他方法405 Allow: GET, HEAD并关闭；未知静态路径GET/HEAD为404，POST仍405且不探测文件。解析错误400关闭。CL缺省为0，唯一十进制CL允许OWS/前导零；重复/列表/符号/溢出、TE/CL共存、重复/畸形TE及重复/空Expect均400。合法数值超1MiB在完整头校验后413，后续非法头优先400，不分配或等待超限正文。Connection token大小写无关合并、close优先；非法token400。普通403/404及服务有界500可复用，provider异常或放宽terminal policy生成500并关闭。
 
 请求头总量16KiB、请求行4KiB、正文1MiB、文件8MiB；不做URL decode，任何percent编码400，歧义路径/反斜杠/symlink403。无Range、压缩、缓存协商、目录列表、TLS、HTTP/2或代理。文件只读，root必须启动前成功打开为目录。
 
@@ -68,7 +68,7 @@ V1.1/S3独立Reviewer PASS：Debug/Release各20/20、规定ASan+UBSan/LSan 8/8�
 
 V1.1/S2当前增加正文与期限两项测试，Builder自测及Reviewer独立PASS：Debug/Release各18/18、六项sanitizer 6/6。413状态桶附加在旧0/200/400/403/404/405/500之后，输出responses_status_413_total，计parseErrors/errors；日志不记录body。
 
-当前20个注册CTest与历史23个冻结停用目标分别说明于 [开发说明](documentation/DEVELOPMENT.md)。当前接口专项补充生命周期与观测/工具失败覆盖，不恢复全部历史穷举。V1.1/S1新增当前parser接口与真实HTTP套件，覆盖与边界见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)；2026-10-29独立Reviewer PASS，Debug/Release各16/16及新增两项ASan+UBSan/LSan 2/2通过。历史28/28和12/12仍只代表各自时点；S1当时未迁移全部冻结目标且未改产品；S2在保留覆盖边界基础上增加正文和读取期限，不能沿用S1验收结论。
+当前22个注册CTest与历史23个冻结停用目标分别说明于 [开发说明](documentation/DEVELOPMENT.md)。当前接口专项补充生命周期与观测/工具失败覆盖，不恢复全部历史穷举。V1.1/S1新增当前parser接口与真实HTTP套件，覆盖与边界见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)；2026-10-29独立Reviewer PASS，Debug/Release各16/16及新增两项ASan+UBSan/LSan 2/2通过。历史28/28和12/12仍只代表各自时点；S1当时未迁移全部冻结目标且未改产品；S2在保留覆盖边界基础上增加正文和读取期限，不能沿用S1验收结论。
 
 ## 性能材料的系统边界
 
@@ -163,10 +163,20 @@ V1.1/S2当前增加正文与期限两项测试，Builder自测及Reviewer独立P
 
 </details>
 
-## V1.1/S3 方法路由候选（待独立审查）
+## V1.1/S3 方法路由（已独立验收）
 
 main在启动前构造StaticFileService和RequestRouter，factory保存router引用；服务与router寿命覆盖worker停止。兼容makeHttpFactory(service)拥有router并让每连接回调保留共享所有权，service仍由调用者保证寿命。Session在完整解析并清读取deadline后同步调用ResponseCallback→RequestRouter::onResponse→echoResponse/StaticFileService::onResponse，返回拥有型bytes或独占FileRegion，再由owner发送；WriteComplete重置解析器后才推进后缀。net层没有路由规则。
 
 parser仅在完整合法请求行后记录精确HEAD；错误头/正文/FIN仍可生成无正文400/413，未验证行不猜测HEAD。HEAD静态成功只取fd元数据并RAII关闭，不读取整个文件或提交FileRegion；成功和错误均保留表示Content-Length，contentBytes为0。Session catch的HEAD500也无正文。GET静态忽略请求body，echo复制原始body，不保留借用Buffer视图；常数倍临时正文/响应不代表全局内存配额。同步处理器不能被读取deadline抢占。
 
 路由只切离第一个问号后的query，不解码；target任何位置percent均400且优先于方法判断。同名静态/api/echo不覆盖动态精确路由，/api/echo/仍走原静态校验（当前403），没有隐式/api命名空间。405计errors而不计parseErrors；分帧400/413仍计parseErrors。无运行期路由注册/JSON/数据库/线程池/网关。
+
+## V1.2/S1 chunked与临时响应（已独立验收）
+
+Reviewer独立PASS：最终候选Debug/Release各22/22、十项ASan+UBSan/LSan10/10；三条真实EAGAIN/pending25和30条约300ms滴流证据有效，97条HTTP与13份fixture正常清理。仅S1完成，S2/S3未开始；不关闭历史覆盖/性能风险。
+
+RequestParser新增chunk-size/data/data-CRLF/trailer状态，仅数据进入拥有型body；wire计数含元数据，终止空行后停止。1MiB单块/解码总量、1KiB size行、64KiB总元数据与8KiB trailer分别限制，不预分配声明大小。扩展按token/quoted-string/BWS解析后丢弃，trailer只允许X-Checksum与X-Trace-Id且不改变请求语义；RequestHead拥有method/target/closeRequested，不保留Buffer借用。
+
+Expect正文请求在完整头边界一次性返回kHeadersComplete，即使同送body也先停。Session检查原绝对期限，再经RequestHeadersCallback→RequestRouter::onRequestHeaders纯头准入；该入口复用最终路由规则，禁止调用业务或提前打开静态文件。拒绝输出唯一final；允许则先进入kInterimWriting再排队固定100。writeComplete在同owner同步执行，interim分支不reset parser、不清deadline、不completed或记日志，恢复Reading处理缓存body；最终Writing才沿旧流程终结。两回调捕获同一长寿命/ownedRouter，setter仅保存，net/static无需改动。
+
+100排队/EAGAIN期间读取期限仍从首字节计，100不续期；drain只排空100后关闭并将请求一次aborted/unknown，不生成final。417/501附加到原413之后的状态桶且计parseErrors/errors，100无桶。纯头早405与未读非法body的优先级只适用于有效Expect；没有Expect时必须完整校验正文再路由。无响应chunked、通用trailer、解压、URL解码或业务范围扩展。

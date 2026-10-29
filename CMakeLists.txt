@@ -169,3 +169,14 @@ if(BUILD_TESTING)
     set_tests_properties(http_method_routing_tests http_method_routing_http_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()
+
+if(BUILD_TESTING)
+    add_executable(http_chunked_expect_tests tests/HttpChunkedExpect_test.cpp)
+    target_link_libraries(http_chunked_expect_tests PRIVATE hp_http_app)
+    enable_debug_warnings(http_chunked_expect_tests)
+    add_test(NAME http_chunked_expect_tests COMMAND http_chunked_expect_tests)
+    add_test(NAME http_chunked_expect_http_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpChunkedExpectHttp_test.py $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(http_chunked_expect_tests http_chunked_expect_http_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()

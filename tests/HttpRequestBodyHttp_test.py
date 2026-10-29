@@ -78,7 +78,7 @@ def check_rejections(server):
              (b"Content-Length: 18446744073709551615\r\n", 413),
              (b"Content-Length: 18446744073709551616\r\n", 400),
              (b"Content-Length: 1048577\r\nTransfer-Encoding: chunked\r\n", 400),
-             (b"Content-Length: 1048577\r\nExpect: 100-continue\r\n", 400),
+             (b"Content-Length: 1048577\r\nExpect: 100-continue\r\nExpect: 100-continue\r\n", 400),
              (b"Content-Length: 1048577\r\nContent-Length: 0\r\n", 400),
              (b"Content-Length: +1\r\n", 400)]
     for headers, status in cases:

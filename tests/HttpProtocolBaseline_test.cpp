@@ -109,8 +109,8 @@ std::vector<ProtocolCase> makeShortCases() {
                                                "Content-Length: a",
                                                "Content-Length:",
                                                "Content-Length: 18446744073709551616",
-                                               "Transfer-Encoding: chunked",
-                                               "Expect: 100-continue"};
+                                               "Transfer-Encoding: chunked, chunked",
+                                               "Expect: 100-continue\r\nExpect: 100-continue"};
   for (std::size_t i = 0; i < badHeaders.size(); ++i)
     addBadCase(cases,
                "P01-P02-header-" + std::to_string(i),

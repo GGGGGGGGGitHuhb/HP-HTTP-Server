@@ -15,6 +15,10 @@ struct HttpCallbackStats {
 using ResponseCallback =
     std::function<http::ResponseResult(const http::HttpRequest&, http::ConnectionPolicy)>;
 
+using RequestHeadersCallback =
+    std::function<std::optional<http::ResponseResult>(const http::RequestHead&,
+                                                      http::ConnectionPolicy)>;
+
 // 测试观察钩子。在创建会话前安装；在所属执行线程停止后
 // 清除。
 using SessionEventCallback = void (*)(bool, const void*) noexcept;
@@ -27,7 +31,8 @@ inline void setSessionEventCallback(SessionEventCallback newSessionEventCallback
 // 原来的 IO 所属线程。首次分发前创建的副本保持独立
 // 状态。
 struct Session {
-  enum class Phase { kReading, kWriting, kClosing };
+  enum class Phase { kReading, kInterimWriting, kWriting, kClosing };
+  RequestHeadersCallback requestHeadersCallback;
   ResponseCallback responseCallback;  // 绑定 `StaticFileService::onResponse()`
   HttpCallbackStats* stats;
   http::RequestParser parser;    // 解析器
@@ -49,24 +54,34 @@ struct Session {
                    bool enableAccessLog = false,
                    std::chrono::milliseconds readTimeout = std::chrono::milliseconds{0});
   ~Session();
+  void setRequestHeadersCallback(RequestHeadersCallback requestHeadersCallback) {
+    this->requestHeadersCallback = std::move(requestHeadersCallback);
+  }
+
   void setResponseCallback(ResponseCallback responseCallback) {
     this->responseCallback = std::move(responseCallback);
   }
 
   void onMessage(net::TcpConnection& connection);
   void onWriteComplete(net::TcpConnection& connection);
+  void onRequestHeaders(net::TcpConnection& connection, const http::RequestHead& head);
   void finishPendingRequest(bool aborted) noexcept;
   bool closeExpiredRequest(net::TcpConnection& connection);
   void clearReadDeadline(net::TcpConnection& connection);
 };
 
 struct HttpMessageHandler {
+  RequestHeadersCallback requestHeadersCallback;
   ResponseCallback responseCallback;  // 绑定 `StaticFileService::onResponse()`
   HttpCallbackStats* stats{};
   metrics::ServerMetrics* metrics{};
   bool accessLogEnabled{};
   std::shared_ptr<Session> session;
   std::chrono::milliseconds requestReadTimeout{0};
+
+  void setRequestHeadersCallback(RequestHeadersCallback requestHeadersCallback) {
+    this->requestHeadersCallback = std::move(requestHeadersCallback);
+  }
 
   void setResponseCallback(ResponseCallback responseCallback) {
     this->responseCallback = std::move(responseCallback);

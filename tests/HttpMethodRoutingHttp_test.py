@@ -91,8 +91,8 @@ def check_rejections(server):
     for headers, status in [(b"Content-Length: 1048577\r\n", 413),
                             (b"Content-Length: +1\r\n", 400),
                             (b"Content-Length: 1\r\nContent-Length: 1\r\n", 400),
-                            (b"Transfer-Encoding: chunked\r\n", 400),
-                            (b"Expect: 100-continue\r\n", 400)]:
+                            (b"Transfer-Encoding: chunked, chunked\r\n", 400),
+                            (b"Expect: 100-continue\r\nExpect: 100-continue\r\n", 400)]:
         exchange(server, request(b"/api/echo", headers, b"POST") + request(), status, ERRORS[status])
     exchange(server, request(b"/api/echo", b"Content-Length: 2\r\n", b"POST") + b"x", 400, ERRORS[400], eof=True)
     with contextlib.closing(Client(server.port)) as client:

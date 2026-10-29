@@ -134,7 +134,8 @@ void testRejectionPriority() {
     const std::string header = "Content-Length: " + std::string(value) + "\r\n";
     expectRejectedHeaders(header, ParseStatus::kPayloadTooLarge);
     expectRejectedHeaders(header + "Transfer-Encoding: chunked\r\n", ParseStatus::kBadRequest);
-    expectRejectedHeaders(header + "Expect: 100-continue\r\n", ParseStatus::kBadRequest);
+    expectRejectedHeaders(header + "Expect: 100-continue\r\nExpect: 100-continue\r\n",
+                          ParseStatus::kBadRequest);
     expectRejectedHeaders(header + "Content-Length: 0\r\n", ParseStatus::kBadRequest);
     expectRejectedHeaders(header + "Bad Name: x\r\n", ParseStatus::kBadRequest);
   }

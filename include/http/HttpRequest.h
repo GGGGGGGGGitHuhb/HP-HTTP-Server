@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -11,6 +12,16 @@ namespace hp::http {
 inline constexpr std::size_t kMaxHeaderBytes = 16U * 1024U;
 inline constexpr std::size_t kMaxBodyBytes = 1024U * 1024U;
 inline constexpr std::size_t kMaxRequestLineBytes = 4U * 1024U;
+
+inline constexpr std::size_t kMaxChunkLineBytes = 1024;
+inline constexpr std::size_t kMaxChunkMetadataBytes = 64U * 1024U;
+inline constexpr std::size_t kMaxTrailerBytes = 8U * 1024U;
+
+struct RequestHead {
+  std::string method;
+  std::string target;
+  bool closeRequested{false};
+};
 
 struct HttpRequest {
   std::string method;
@@ -26,6 +37,9 @@ enum class ParseStatus {
   kBadRequest,
   kPayloadTooLarge,
   kMethodNotAllowed,
+  kHeadersComplete,
+  kExpectationFailed,
+  kNotImplemented,
 };
 
 struct ParseResult {
@@ -35,13 +49,24 @@ struct ParseResult {
 };
 
 // 当前请求被解析到的位置状态
-enum class ParserState { kRequestLine, kHeaders, kBody, kComplete, kError };
+enum class ParserState {
+  kRequestLine,
+  kHeaders,
+  kBody,
+  kChunkSize,
+  kChunkData,
+  kChunkDataCrlf,
+  kTrailers,
+  kComplete,
+  kError
+};
 
 struct FeedResult {
   ParseStatus status{ParseStatus::kNeedMore};
   HttpRequest request;           // 独立值；在 Reset 或调用方释放输入后仍安全。
   std::size_t acceptedBytes{0};  // 仅本次 feed 接受的字节数。
   std::size_t requestBytes{0};   // 累计字节数，发生错误时包含导致错误的字节。
+  std::optional<RequestHead> head{};
 };
 
 // 解析器
@@ -69,6 +94,11 @@ class RequestParser final {
  private:
   bool validateRequestLine();
   bool validateHeader();
+  bool validateTokenList(std::string_view value, bool trailerDeclaration);
+  bool validateChunkSize();
+  bool validateChunkExtensions(std::string_view line, std::size_t position);
+  void finishHeaders();
+  void feedChunkMetadata(char byte);
   void finishLine();
   void finishRequest();
   std::size_t appendBody(std::string_view bytes);
@@ -101,6 +131,11 @@ class RequestParser final {
   std::size_t headerBytes_{0};
   std::uint64_t contentLength_{0};
   std::string body_;
+
+  bool transferEncodingSeen_{false}, unsupportedCoding_{false};
+  bool expectSeen_{false}, expectContinue_{false}, trailerDeclarationSeen_{false};
+  std::size_t chunkRemaining_{0}, metadataBytes_{0}, trailerBytes_{0}, chunkLineBytes_{0};
+  unsigned dataCrlfBytes_{0};
 };
 
 [[nodiscard]] ParseResult parseRequest(std::string_view bytes);
