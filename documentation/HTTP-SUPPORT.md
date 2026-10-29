@@ -1,6 +1,6 @@
 # 当前 HTTP 支持与回归矩阵
 
-V1.1/S1已验收的是原零正文协议基线；V1.1/S2当前实现扩展有界Content-Length正文及读取期限，Builder自测及Reviewer独立PASS。S3方法路由已获独立Reviewer PASS；本文维护当前已验收行为，原S1设计/报告不改写。
+V1.1/S1已验收的是原零正文协议基线；V1.1/S2当前实现扩展有界Content-Length正文及读取期限，Builder自测及Reviewer独立PASS。S3方法路由已获独立Reviewer PASS；本文维护已验收行为，末节S3已获独立复审PASS，原S1设计/报告不改写。
 
 ## 运行入口与计数
 
@@ -12,7 +12,7 @@ ctest --test-dir build -R '^http_protocol_baseline(_http)?_tests$' --output-on-f
 
 - `http_protocol_baseline_tests`：直接使用当前 `RequestParser::feedRequestBytes/resetRequestParser`；短语料每个切分点及逐字节、长边界整包/逐字节/127字节块。每次核acceptedBytes、累计requestBytes、终态及reset，不访问私有状态。
 - `http_protocol_baseline_http_tests`：真实启动服务器，分别threads=0/2，解析完整响应及正文；同一socket验证连续请求，正常SIGTERM回收；只使用Python标准库。
-- CMake共24项，S2前22项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
+- CMake共26项，S3前24项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
 - 新HTTP测试在`HP_S3_TEST_TMP_ROOT`（CTest设为构建目录的test-tmp）下建立唯一运行目录，删除业务fixture，保留有界服务器日志、每进程JSON回收记录及summary.json。失败亦保留证据。每次socket操作服从同一场景5秒绝对截止，套件120秒，每响应最多9MiB；不依赖短sleep确认事件。
 
 ## 支持/拒绝及覆盖映射
@@ -50,7 +50,7 @@ S1历史验收：Builder执行Debug/Release全16项和新两项ASan+UBSan（LSan
 - parser覆盖针对当前子集，不是旧parser全部历史语料迁移；逐切分点是输入调度测试，不证明网络每个分段都按send边界到达。
 - 8MiB测试证明端到端字节完整，不保证每次运行都触发特定sendfile短写/EAGAIN分支；冻结的内部故障、背压穷举、定时器/线程竞态仍有覆盖缺口。
 - 当前新套件验证正常停机与失败fixture回收，不补全强制排空竞态，也不解决阻塞stderr可能拖延进程退出的限制。
-- 不实现响应chunked、运行期路由注册、JSON解析、Unicode规范化、Range、缓存协商、TLS或数据库。未来规划不能作为本阶段缺陷或当前功能。
+- 不实现响应chunked、运行期路由注册、JSON解析、Unicode规范化、multipart多Range、TLS或数据库。未来规划不能作为本阶段缺陷或当前功能。
 - TD-006、TD-001、RO-002及旧EOF未知根因保持；无新性能采集、容量或长尾修复结论。
 
 S2已验收：Debug/Release各18项，S1两项/正文两项/r6_callbacks/http_observability六项sanitizer通过；S2 C++错误body预期在Debug/Release非零，HTTP错误预期失败正常清理。Reviewer独立Debug/Release各18/18、规定sanitizer 6/6通过；18次滴流在302–306ms触发300ms绝对期限，51条服务器记录全部正常回收；10秒默认值经CLI/help/config核对，未运行10秒实等待。产品正文逻辑长度1MiB，parser及完整返回结果会有常数倍临时持有，不宣称RSS硬上限。
@@ -103,3 +103,17 @@ V1.2/S1 Builder自测最终Debug/Release各22/22，指定ASan+UBSan/LSan 10/10�
 资源政策与示例见[运行说明](RUNNING.md#v12s2-请求目标与参数已验收)。原始目标保留，头与最终可各从同一raw解析；已解码对象绝不再当raw解析，静态入口不再剥query。字节级文件名不保证Unicode规范化，未来业务不可再次解码query字面%。旧HTTP/资源/性能限制和TD-006整体继续保留。
 
 S2 Builder最终自测Debug/Release各24/24、规定12项ASan+UBSan/LSan 12/12，三个负对照有效且失败清理正常；首轮22/24旧语义冲突与批准后的定向4/4证据保留。独立Reviewer PASS：Debug24/24（19.59秒）、Release24/24（19.55秒）、sanitizer12/12（12.77秒），负对照-6/-6/1；另以128条未携带Connection: close的非法目标验证服务端主动关闭，2条合法symlink403保活对照通过。111条HTTP记录及17份fixture摘要均正常回收。
+
+
+## V1.2/S3 条件与单区间（已独立验收）
+
+- 四头拥有/重复策略、16KiB、逐字节/所有切分/reset/framing/trailer优先：S04。
+- 弱ETag、INM列表含quoted逗号/*/128上界、无效仍抑制IMS；三日期/星期/闰年/50年规则/未来截断：S02/S03、H01。
+- 单Range闭区间/开尾/suffix、零/空文件/超界/uint64溢出；重复/畸形/多段忽略，If-Range全部回200，HEAD忽略：S01/S03、H02。
+- 304无CL/Type/body，206实际offset/pread/sendfile字节、416保活，304→206→HEAD→416→GET，Expect/完整body/FIN/首字节绝对期限：S05、H03/H04/H06。
+- 原10桶索引不变，末尾206/304/416；准确content_bytes/错误归因/无敏感日志/active及pending归零：S06、H05。
+- 新两套`http_static_semantics_tests`和`http_static_semantics_http_tests`；当前26项目标身份保留，31份冻结源码本阶段全部不改。只按批准清单适配S2两测试的动态Date比较，保留唯一合法Date和其余全部预期。
+
+不提供内容缓存、强ETag或文件一致快照；If-Range不支持校验器驱动安全续传，所有存在值均回完整200（304条件优先）。无新性能结论，不关闭TD-006或历史EOF风险。
+
+Builder最终自测：Debug26/26（22.13秒）、Release26/26（21.95秒）、指定sanitizer14/14（15.19秒）；三个负对照非零且清理有效。以上为首轮Builder证据；独立初审发现RFC850完整timestamp的50年边界缺陷并给出FAIL，修复及13条回归后独立复审PASS：Debug26/26（22.56秒）、Release26/26（22.21秒）、sanitizer14/14（15.41秒），原反例exit1→0、负对照-6/-6/1、13文件格式通过，127条HTTP及19份fixture清理正常。S3及V1.2阶段验收完成，尚未合并发布。

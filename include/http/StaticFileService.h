@@ -31,7 +31,8 @@ class StaticFileService final : private base::NonCopyable {
 
   [[nodiscard]] ResponseResult onValidatedTarget(const RequestTarget& target,
                                                  bool omitBody,
-                                                 ConnectionPolicy policy) const;
+                                                 ConnectionPolicy policy,
+                                                 const StaticRequestFields& fields = {}) const;
 
  private:
   friend struct StaticFileServiceTestAccess;

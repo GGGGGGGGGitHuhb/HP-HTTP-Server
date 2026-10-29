@@ -104,3 +104,19 @@ query按原始&、每段首个=切分；flag/a=可空值，空key/空段拒绝�
 raw target≤4096字节（生产仍受整请求行4KiB约束），raw query≤2048、最多64对、单decoded key≤128/value≤1024、decoded总量≤2048。超限400；完整目标语法/限额错误400优先结构403。目标验证早于方法，所有目标400/403 close并拒绝pipeline后缀；合法目标后的文件权限/symlink403或404仍沿原保活策略。因此POST /api/echo/现在403，合法POST /missing仍405；GET /missing仍404。
 
 有效Expect在目标合法时100后继续CL/chunked；目标错误早final不发100，HEAD保持零正文和正确表示CL。无Expect仍先正文分帧，目标错误不增加parseErrors/providerErrors；日志仍只raw path去query，不打印参数。无新CLI、URL表单规则、Unicode规范化、Range/缓存、数据库或业务端点。
+
+
+## V1.2/S3 条件请求与单区间（已独立验收）
+
+无需新CLI。以现有静态文件`/note.txt`为例：
+
+```bash
+curl -i http://127.0.0.1:8080/note.txt
+curl -i -H 'If-None-Match: *' http://127.0.0.1:8080/note.txt
+curl -i -H 'Range: bytes=1-3' http://127.0.0.1:8080/note.txt
+curl -I -H 'Range: bytes=1-3' http://127.0.0.1:8080/note.txt
+```
+
+首个响应含弱ETag/Last-Modified/Date/Accept-Ranges；第二个对存在文件返回304且无Content-Length/body；第三个返回206和实际单区间，文件不足则按单区间规则截断或416；HEAD仍为全表示200头无body。`bytes=-N`表示尾N字节，`bytes=N-`为开尾；suffix0/空文件/起点越界416并可保活；多区间、重复/畸形/溢出Range忽略回200。
+
+If-None-Match支持弱列表和单独*，最多128条；存在但无效也抑制If-Modified-Since。唯一合法IMS支持三HTTP-date格式。任何If-Range（包括匹配标签、伪强标签、日期或空值）都保守回完整200，条件304优先；这不是安全断点拼接。echo忽略这些条件头，文件错误优先，Expect仍先100和完整body。没有文件内容缓存或快照，不改变8MiB限制。新metrics在原桶末尾增加responses_status_206_total/304_total/416_total，416不是parse/provider错误。

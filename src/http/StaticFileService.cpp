@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <chrono>
 #include <cstdint>
 #include <string_view>
 #include <system_error>
@@ -51,7 +52,8 @@ ResponseResult prepareFileResponse(UniqueFd file,
                                    std::string_view relativePath,
                                    const struct stat& metadata,
                                    ConnectionPolicy policy,
-                                   bool omitBody) {
+                                   bool omitBody,
+                                   const StaticRequestFields& fields) {
   if (!S_ISREG(metadata.st_mode)) {
     return errorResponse(Status::kNotFound, policy, omitBody);
   }
@@ -63,13 +65,48 @@ ResponseResult prepareFileResponse(UniqueFd file,
     return errorResponse(Status::kForbidden, policy, omitBody);
   }
 
-  const auto length = static_cast<std::size_t>(size);
-  return {makeResponseHeader(Status::kOk, length, contentTypeForPath(relativePath), false, policy),
+  const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now())
+                       .time_since_epoch()
+                       .count();
+  const StaticFileMetadata description{metadata.st_dev,
+                                       metadata.st_ino,
+                                       size,
+                                       metadata.st_mtim.tv_sec,
+                                       metadata.st_mtim.tv_nsec,
+                                       metadata.st_ctim.tv_sec,
+                                       metadata.st_ctim.tv_nsec};
+  const auto evaluated = evaluateStaticConditions(fields, description, now, omitBody);
+  const auto& range = evaluated.range;
+  Status status = Status::kOk;
+  if (range.selection == StaticSelection::kNotModified) status = Status::kNotModified;
+  if (range.selection == StaticSelection::kPartial) status = Status::kPartialContent;
+  if (range.selection == StaticSelection::kUnsatisfiable) status = Status::kRangeNotSatisfiable;
+  if (status == Status::kRangeNotSatisfiable) {
+    constexpr std::string_view body = "416 Range Not Satisfiable\n";
+    auto bytes = makeStaticResponseHeader(status,
+                                          body.size(),
+                                          "text/plain; charset=utf-8",
+                                          policy,
+                                          evaluated.metadata);
+    const auto bodyBytes = std::as_bytes(std::span(body));
+    bytes.insert(bytes.end(), bodyBytes.begin(), bodyBytes.end());
+    return {std::move(bytes), policy, std::nullopt, status, body.size()};
+  }
+  const auto length = static_cast<std::size_t>(range.length);
+  const bool noBody = omitBody || status == Status::kNotModified;
+  return {makeStaticResponseHeader(status,
+                                   length,
+                                   contentTypeForPath(relativePath),
+                                   policy,
+                                   evaluated.metadata),
           policy,
-          omitBody ? std::nullopt
-                   : std::optional<base::FileRegion>(std::in_place, std::move(file), 0, length),
-          Status::kOk,
-          omitBody ? 0 : length};
+          noBody ? std::nullopt
+                 : std::optional<base::FileRegion>(std::in_place,
+                                                   std::move(file),
+                                                   static_cast<off_t>(range.offset),
+                                                   length),
+          status,
+          noBody ? 0 : length};
 }
 
 }  // namespace
@@ -111,8 +148,10 @@ ResponseResult StaticFileService::handleResponse(const HttpRequest& request,
     result.bytes.resize(header + result.file->remaining());
     std::size_t offset = header;
     while (offset < result.bytes.size()) {
-      const auto count =
-          ::read(result.file->fd(), result.bytes.data() + offset, result.bytes.size() - offset);
+      const auto count = ::pread(result.file->fd(),
+                                 result.bytes.data() + offset,
+                                 result.bytes.size() - offset,
+                                 result.file->offset() + static_cast<off_t>(offset - header));
       if (count > 0) {
         offset += static_cast<std::size_t>(count);
         continue;
@@ -133,7 +172,7 @@ ResponseResult StaticFileService::onResponse(const HttpRequest& request,
   try {
     const auto parsed = parseRequestTarget(request.target);
     if (!parsed.target) return errorResponse(parsed.status, ConnectionPolicy::kClose, omitBody);
-    return onValidatedTarget(*parsed.target, omitBody, policy);
+    return onValidatedTarget(*parsed.target, omitBody, policy, request.staticFields);
   } catch (...) {
     return errorResponse(Status::kInternalServerError, policy, omitBody);
   }
@@ -141,7 +180,8 @@ ResponseResult StaticFileService::onResponse(const HttpRequest& request,
 
 ResponseResult StaticFileService::onValidatedTarget(const RequestTarget& target,
                                                     bool omitBody,
-                                                    ConnectionPolicy policy) const {
+                                                    ConnectionPolicy policy,
+                                                    const StaticRequestFields& fields) const {
   try {
     int parentFd = rootFd_;
     UniqueFd currentDirectory;
@@ -171,7 +211,8 @@ ResponseResult StaticFileService::onValidatedTarget(const RequestTarget& target,
                                target.path() == "/" ? "index.html" : target.path(),
                                metadata,
                                policy,
-                               omitBody);
+                               omitBody,
+                               fields);
   } catch (...) {
     return errorResponse(Status::kInternalServerError, policy, omitBody);
   }

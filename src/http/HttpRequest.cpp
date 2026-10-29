@@ -72,6 +72,19 @@ std::string_view RequestParser::trimHeaderWhitespace(std::string_view value) {
   return value;
 }
 
+bool RequestParser::collectStaticField(StaticField& field, std::string_view value, bool merge) {
+  const std::size_t separator = merge && field.present ? 1 : 0;
+  if (separator > kMaxHeaderBytes - staticFieldBytes_ ||
+      value.size() > kMaxHeaderBytes - staticFieldBytes_ - separator)
+    return false;
+  staticFieldBytes_ += value.size() + separator;
+  field.duplicate = field.present;
+  if (merge && field.present) field.value += ',';
+  if (merge || !field.present) field.value.append(value);
+  field.present = true;
+  return true;
+}
+
 bool RequestParser::validateHeader() {
   const std::string_view line(storage_.data() + lineStart_, lineSize_);
   if (line.front() == ' ' || line.front() == '\t') return false;
@@ -99,6 +112,14 @@ bool RequestParser::validateHeader() {
   if (state_ == ParserState::kTrailers)
     return equalsAsciiCaseInsensitive(name, "x-checksum") ||
            equalsAsciiCaseInsensitive(name, "x-trace-id");
+  if (equalsAsciiCaseInsensitive(name, "if-none-match"))
+    return collectStaticField(staticFields_.ifNoneMatch, value, true);
+  if (equalsAsciiCaseInsensitive(name, "if-modified-since"))
+    return collectStaticField(staticFields_.ifModifiedSince, value, false);
+  if (equalsAsciiCaseInsensitive(name, "range"))
+    return collectStaticField(staticFields_.range, value, false);
+  if (equalsAsciiCaseInsensitive(name, "if-range"))
+    return collectStaticField(staticFields_.ifRange, value, false);
   if (equalsAsciiCaseInsensitive(name, "host")) {
     // 若此前已有 Host 或值为空则校验失败
     if (hostSeen_ || !nonemptyValue) return false;
@@ -351,6 +372,7 @@ FeedResult RequestParser::buildFeedResult(std::size_t accepted) const {
   if (state_ == ParserState::kComplete) {
     result.request.closeRequested = closeRequested_;
     result.request.body = body_;
+    result.request.staticFields = staticFields_;
     result.request.method.assign(storage_.data(), methodSize_);
     result.request.target.assign(storage_.data() + targetStart_, targetSize_);
   }
@@ -437,6 +459,8 @@ void RequestParser::resetRequestParser() noexcept {
   lineStart_ = lineSize_ = requestBytes_ = headerBytes_ = 0;
   contentLength_ = 0;
   std::string{}.swap(body_);
+  staticFields_ = {};
+  staticFieldBytes_ = 0;
   methodSize_ = targetStart_ = targetSize_ = 0;
   scanSteps_ = peakBuffered_ = 0;
 }

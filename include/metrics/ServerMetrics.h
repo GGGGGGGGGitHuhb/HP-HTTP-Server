@@ -10,7 +10,7 @@ namespace hp::metrics {
 // runtime 快照逐字段采样；仅停止并销毁全部连接后的快照具终态一致性。
 struct MetricsSnapshot {
   std::uint64_t requestsStarted{}, responsesCompleted{}, requestsAborted{};
-  std::array<std::uint64_t, 10> responseStatus{};
+  std::array<std::uint64_t, 13> responseStatus{};
   std::uint64_t errors{}, parseErrors{}, providerErrors{}, accessLogFailures{};
   std::uint64_t latencyCount{}, latencySumUs{}, latencyMaxUs{};
   std::uint64_t connectionsTotal{}, connectionsActive{};
@@ -33,7 +33,7 @@ class ServerMetrics final {
 
  private:
   std::atomic<std::uint64_t> requestsStarted_{0}, responsesCompleted_{0}, requestsAborted_{0};
-  std::array<std::atomic<std::uint64_t>, 10> responseStatus_{};
+  std::array<std::atomic<std::uint64_t>, 13> responseStatus_{};
   std::atomic<std::uint64_t> errors_{0}, parseErrors_{0}, providerErrors_{0}, accessLogFailures_{0};
   std::atomic<std::uint64_t> latencyCount_{0}, latencySumUs_{0}, latencyMaxUs_{0};
   std::atomic<std::uint64_t> connectionsTotal_{0}, connectionsActive_{0};
