@@ -164,8 +164,8 @@ void Reuse(std::uint16_t port) {
   }
   for (const auto& header : {"Connection: ClOsE, keep-alive\r\nConnection: keep-alive\r\n",
                              "Content-Length: +9\r\n",
-                             "Transfer-Encoding: chunked\r\n",
-                             "Expect: 100-continue\r\n"}) {
+                             "Transfer-Encoding: chunked, chunked\r\n",
+                             "Expect: 100-continue\r\nExpect: 100-continue\r\n"}) {
     Client c(port);
     SendAll(c.fd_, Get("/note.txt", header) + Get("/"));
     const bool normal = std::string_view(header).starts_with("Connection");

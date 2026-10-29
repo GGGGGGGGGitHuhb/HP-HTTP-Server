@@ -3,6 +3,15 @@
 本文档记录 HP HTTP Server 已经完成并得到适当验证的重要变化。未来计划写入 `ROADMAP.md`，长期架构写入 `ARCHITECTURE.md`，技术债写入 `TECH-DEBT-TRACKER.md`，实现与审查证据写入对应报告。
 
 <a id="unreleased"></a>
+## V1.2 — 开发中（未发布）
+
+### 2026-10-29 — S1 chunked请求与Expect
+
+- 新增有界增量chunked解码：单块/解码总量1MiB、块行1KiB、总元数据64KiB、trailer8KiB；合法扩展校验后丢弃，trailer仅X-Checksum/X-Trace-Id且不修改业务字段。保留TE/CL及非法定界400关闭，合法不支持编码链501、不支持Expect417。
+- 支持受控100-continue及头部早拒绝，临时响应不重置绝对读取期限、不计final或推进下一请求；排队/EAGAIN、drain/RST及HEAD错误语义明确。417/501只追加状态桶，原索引保持。
+- 最终候选独立Reviewer PASS：Debug/Release各22/22、指定ASan+UBSan/LSan10/10、15文件格式，三项负对照有效；三条真实EAGAIN/pending25、30条滴流0.3006–0.3027秒、97条HTTP与13份fixture清理正常。Builder首轮21/22失败、TE/CL精确消费修正及最终布局定向复验原记录保留。
+- 唯一冻结例外为一份旧测试两TE/Expect拒绝literal及必要格式，其余30份本阶段不变。仅S1完成，S2/S3未开始、V1.2整体未完成；不加入响应chunked/解压/通用trailer/URL解码/缓存Range/数据库，无新债，TD-006及旧性能/EOF风险保持。
+
 ## V1.1 — 验收完成，待合并发布
 
 ### 2026-10-29 — S3 方法路由与动态响应

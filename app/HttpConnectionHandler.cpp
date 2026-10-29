@@ -92,6 +92,10 @@ void Session::onMessage(net::TcpConnection& connection) {
     return;
   }
   if (closeExpiredRequest(connection)) return;
+  if (parsed.status == http::ParseStatus::kHeadersComplete) {
+    onRequestHeaders(connection, *parsed.head);
+    return;
+  }
   clearReadDeadline(connection);
   // 可能设置 kClose，后续构造 400 响应
   close = parsed.status != http::ParseStatus::kComplete || parsed.request.closeRequested;
@@ -120,6 +124,18 @@ void Session::onMessage(net::TcpConnection& connection) {
         if (metrics && requestPending) metrics->recordParseError();
         response = http::makeErrorResponse(http::Status::kContentTooLarge, policy, omitBody);
         break;
+      case http::ParseStatus::kExpectationFailed:
+      case http::ParseStatus::kNotImplemented: {
+        const auto status = parsed.status == http::ParseStatus::kExpectationFailed
+                                ? http::Status::kExpectationFailed
+                                : http::Status::kNotImplemented;
+        accessRecord.status = static_cast<int>(status);
+        accessRecord.contentBytes = omitBody ? 0 : http::errorContentBytes(status);
+        if (metrics && requestPending) metrics->recordParseError();
+        response = http::makeErrorResponse(status, policy, omitBody);
+        break;
+      }
+      case http::ParseStatus::kHeadersComplete:
       case http::ParseStatus::kMethodNotAllowed:
         throw std::logic_error("parser returned obsolete method status");
       case http::ParseStatus::kComplete: {
@@ -155,7 +171,59 @@ void Session::onMessage(net::TcpConnection& connection) {
     connection.sendBytes(response);
 }
 
+void Session::onRequestHeaders(net::TcpConnection& connection, const http::RequestHead& head) {
+  if (accessLogEnabled) accessRecord.copyRequest(head.method, head.target);
+  std::optional<http::ResponseResult> rejected;
+  try {
+    const auto policy =
+        head.closeRequested ? http::ConnectionPolicy::kClose : http::ConnectionPolicy::kKeepAlive;
+    if (requestHeadersCallback) rejected = requestHeadersCallback(head, policy);
+    if (rejected && rejected->effectivePolicy != http::ConnectionPolicy::kClose)
+      throw std::logic_error("header rejection relaxed terminal connection policy");
+  } catch (...) {
+    if (metrics) metrics->recordProviderError();
+    const bool omitBody = parser.isHeadRequest();
+    rejected = http::ResponseResult{
+        http::makeErrorResponse(http::Status::kInternalServerError,
+                                http::ConnectionPolicy::kClose,
+                                omitBody),
+        http::ConnectionPolicy::kClose,
+        {},
+        http::Status::kInternalServerError,
+        omitBody ? 0 : http::errorContentBytes(http::Status::kInternalServerError)};
+  }
+  if (closeExpiredRequest(connection)) return;
+  connection.setIdleWait(false);
+  connection.pauseReading();
+  if (!rejected) {
+    phase = Phase::kInterimWriting;
+    connection.sendBytes(http::makeContinueResponse());
+    return;
+  }
+  clearReadDeadline(connection);
+  phase = Phase::kWriting;
+  close = true;
+  completed = true;
+  accessRecord.status = static_cast<int>(rejected->status);
+  accessRecord.contentBytes = rejected->contentBytes;
+  if (stats) ++stats->responses;
+  connection.sendBytes(rejected->bytes);
+}
+
 void Session::onWriteComplete(net::TcpConnection& connection) {
+  if (phase == Phase::kInterimWriting) {
+    if (connection.isDraining()) {
+      phase = Phase::kClosing;
+      clearReadDeadline(connection);
+      finishPendingRequest(true);
+      connection.closeAfterFlush();
+      return;
+    }
+    if (closeExpiredRequest(connection)) return;
+    phase = Phase::kReading;
+    onMessage(connection);
+    return;
+  }
   if (phase != Phase::kWriting) return;
   finishPendingRequest(false);
   if (close || connection.isDraining()) {
@@ -175,6 +243,7 @@ void HttpMessageHandler::onMessage(net::TcpConnection& connection,
   if (!session) {
     session = std::make_shared<Session>(stats, metrics, accessLogEnabled, requestReadTimeout);
     session->setResponseCallback(std::move(responseCallback));
+    session->setRequestHeadersCallback(std::move(requestHeadersCallback));
     connection.setWriteCompleteCallback([session = session](net::TcpConnection& connection) {
       session->onWriteComplete(connection);
     });
@@ -188,6 +257,11 @@ net::TcpConnection::MessageCallback HttpMessageFactory::onMessageFactory() const
   handler.metrics = metrics;
   handler.accessLogEnabled = accessLogEnabled;
   handler.requestReadTimeout = requestReadTimeout;
+  handler.setRequestHeadersCallback(
+      [target = &router, owner = ownedRouter](const http::RequestHead& head,
+                                              http::ConnectionPolicy policy) {
+        return target->onRequestHeaders(head, policy);
+      });
   handler.setResponseCallback(
       [target = &router, owner = ownedRouter](const http::HttpRequest& request,
                                               http::ConnectionPolicy policy) {

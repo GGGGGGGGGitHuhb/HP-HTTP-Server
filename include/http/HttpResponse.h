@@ -21,6 +21,8 @@ enum class Status {
   kMethodNotAllowed = 405,
   kContentTooLarge = 413,
   kInternalServerError = 500,
+  kExpectationFailed = 417,
+  kNotImplemented = 501,
 };
 
 struct ResponseResult {
@@ -60,6 +62,8 @@ struct ResponseResult {
     ConnectionPolicy policy = ConnectionPolicy::kClose,
     bool omitBody = false,
     std::string_view allowedMethods = "GET");
+
+[[nodiscard]] std::vector<std::byte> makeContinueResponse();
 
 [[nodiscard]] std::size_t errorContentBytes(Status status);
 

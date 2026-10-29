@@ -11,6 +11,10 @@ char lowerCharacter(unsigned char character) { return static_cast<char>(std::tol
 
 std::string_view reasonPhrase(Status status) {
   switch (status) {
+    case Status::kExpectationFailed:
+      return "Expectation Failed";
+    case Status::kNotImplemented:
+      return "Not Implemented";
     case Status::kOk:
       return "OK";
     case Status::kBadRequest:
@@ -43,6 +47,10 @@ std::string_view errorBody(Status status) {
       return "413 Content Too Large\n";
     case Status::kInternalServerError:
       return "500 Internal Server Error\n";
+    case Status::kExpectationFailed:
+      return "417 Expectation Failed\n";
+    case Status::kNotImplemented:
+      return "501 Not Implemented\n";
     case Status::kOk:
       break;
   }
@@ -84,6 +92,11 @@ std::vector<std::byte> makeResponse(Status status,
   response.reserve(response.size() + body.size());
   response.insert(response.end(), body.begin(), body.end());
   return response;
+}
+
+std::vector<std::byte> makeContinueResponse() {
+  const auto bytes = asBytes("HTTP/1.1 100 Continue\r\n\r\n");
+  return {bytes.begin(), bytes.end()};
 }
 
 std::size_t errorContentBytes(Status status) { return errorBody(status).size(); }

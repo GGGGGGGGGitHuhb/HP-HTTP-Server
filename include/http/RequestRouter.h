@@ -10,6 +10,9 @@ class RequestRouter final {
   [[nodiscard]] ResponseResult onResponse(const HttpRequest& request,
                                           ConnectionPolicy policy) const;
 
+  [[nodiscard]] std::optional<ResponseResult> onRequestHeaders(const RequestHead& head,
+                                                               ConnectionPolicy policy) const;
+
  private:
   [[nodiscard]] ResponseResult echoResponse(const HttpRequest& request,
                                             ConnectionPolicy policy) const;

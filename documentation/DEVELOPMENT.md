@@ -10,7 +10,7 @@ ctest --test-dir build --output-on-failure
 NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost bash tests/http_smoke_test.sh build/hp_http_server
 ```
 
-CMake当前注册20项：cli_tests、http_server_integration_tests、http_keep_alive_integration_tests、server_integration_tests（HTTP黑盒历史别名）、benchmark_runner_tests、async_logger_batch_tests、r6_callbacks_tests、tcp_nodelay_tests、tcp_nodelay_http_tests、server_metrics_tests、http_observability_tests、observability_http_tests、matrix_benchmark_tests、performance_analysis_tests、http_protocol_baseline_tests、http_protocol_baseline_http_tests、http_request_body_tests、http_request_body_http_tests、http_method_routing_tests、http_method_routing_http_tests。Python专项含synthetic夹具与子进程/HTTP失败路径，不自动启动正式wrk套。真实socket/HTTP须环境允许；本地Agent另遵守未随Git分发的协作资料及受控执行路线。
+CMake当前注册22项：cli_tests、http_server_integration_tests、http_keep_alive_integration_tests、server_integration_tests（HTTP黑盒历史别名）、benchmark_runner_tests、async_logger_batch_tests、r6_callbacks_tests、tcp_nodelay_tests、tcp_nodelay_http_tests、server_metrics_tests、http_observability_tests、observability_http_tests、matrix_benchmark_tests、performance_analysis_tests、http_protocol_baseline_tests、http_protocol_baseline_http_tests、http_request_body_tests、http_request_body_http_tests、http_method_routing_tests、http_method_routing_http_tests、http_chunked_expect_tests、http_chunked_expect_http_tests。Python专项含synthetic夹具与子进程/HTTP失败路径，不自动启动正式wrk套。真实socket/HTTP须环境允许；本地Agent另遵守未随Git分发的协作资料及受控执行路线。
 
 历史S1独立12/12和专项ASan+UBSan/LSan2/2属于当时验收，当前新增两项工具测试不能倒写为历史14/14。V1.0/S1只核CMake/命令，不执行CTest、smoke或sanitizer；最终回归属于V1.0/S3。
 
@@ -83,3 +83,11 @@ C++/HTTP负对照显式设置`HP_METHOD_ROUTING_NEGATIVE=1`：仅把真实结果
 S3已获独立Reviewer PASS，测试证据不代表完整HTTP合规、全局内存配额或IO/竞态穷举。TD-006整体仍开放，历史性能限制不变。
 
 S3 Builder最终候选Debug/Release各20/20，规定8项sanitizer 8/8。ASan首次构建有8条Clock skew警告，同候选依赖新鲜度构建通过且无告警；早期C++拼写编译失败和nodiscard警告已修正并保留证据，不描述为首构建零失败。独立Reviewer Debug/Release各20/20、规定sanitizer 8/8，三个构建无告警；新C++双配置负对照-6/-6、HTTP负对照1，73条HTTP记录与10份fixture均正常清理。首次独立Debug未另传--timeout120，套件CTest/Python定义的120秒上界仍适用，无超时或失败；没有据此扩测。
+
+## V1.2/S1 chunked与Expect专项
+
+新增HttpChunkedExpect_test.cpp与HttpChunkedExpectHttp_test.py，注册http_chunked_expect_tests/http_chunked_expect_http_tests，保留旧20身份及23停用目标。活跃P/B/H/M/E六套仅将过时单chunked/单Expect拒绝语料改重复chunked/重复Expect，TE+CL语料保持；原编号和错误/后缀断言不删除。唯一冻结例外为http_keep_alive_integration_tests.cpp的两个同类literal及必要格式，其余30份冻结资料保持；之前例外不续授权。
+
+新C++覆盖精确边界/切分/拥有、真实socketpair预填sndbuf造成EAGAIN和25字节100排队，再解除背压或触发原deadline/drain。HTTP线程0/2显式等待一次100后再发body，Client.continue_response只接受严格的状态行/空行，不吞重复100。场景5秒、套件120秒、响应9MiB及独立fixture/log回收规则沿用。
+
+反证默认关闭，`HP_CHUNKED_EXPECT_NEGATIVE=1`分别运行当前Debug/Release的http_chunked_expect_tests，以及`python3 tests/HttpChunkedExpectHttp_test.py <debug-server>`；设置HP_S3_TEST_TMP_ROOT为独立角色tmp。C++在资源创建前故意错期望，HTTP在实际握手后错body期望并正常stop/wait/join；不改产品。Release使用总执行检查。最终候选独立Reviewer PASS：Debug/Release各22/22、规定sanitizer10/10、15文件格式通过；负对照-6/-6/1，97条HTTP与13份fixture均正常清理。Builder首轮21/22精确消费位置失败及修正保留，末次布局后Reviewer全量通过；不把早期历史写成全过。TD-006整体和历史风险不关闭。

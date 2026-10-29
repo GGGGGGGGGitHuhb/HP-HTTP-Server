@@ -89,6 +89,12 @@ class Client:
         require(hashlib.sha256(body).digest() == hashlib.sha256(expected_body).digest(), "body mismatch")
         return headers
 
+    def continue_response(self):
+        while b"\r\n\r\n" not in self.pending:
+            self.receive()
+        interim, self.pending = self.pending.split(b"\r\n\r\n", 1)
+        require(interim == b"HTTP/1.1 100 Continue", "invalid or duplicate interim response")
+
     def eof(self):
         require(not self.pending, "extra response suffix")
         self.socket.settimeout(remaining(self.deadline))
@@ -225,9 +231,9 @@ def check_protocol(server):
         ("P02-duplicate", request(headers=b"Content-Length: 0\r\nContent-Length: 0\r\n"), 400),
         ("P02-list", request(headers=b"Content-Length: 0,0\r\n"), 400),
         ("P02-negative", request(headers=b"Content-Length: -1\r\n"), 400),
-        ("P02-te", request(headers=b"Transfer-Encoding: chunked\r\n"), 400),
+        ("P02-te", request(headers=b"Transfer-Encoding: chunked, chunked\r\n"), 400),
         ("P02-cl-te", request(headers=b"Content-Length: 0\r\nTransfer-Encoding: chunked\r\n"), 400),
-        ("P02-expect", request(headers=b"Expect: 100-continue\r\n"), 400),
+        ("P02-expect", request(headers=b"Expect: 100-continue\r\nExpect: 100-continue\r\n"), 400),
     ]
     for case_id, wire, status in rejects:
         check_exchange(server, case_id, wire + request(), status, ERRORS[status])
