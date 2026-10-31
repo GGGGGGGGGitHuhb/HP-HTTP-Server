@@ -11,14 +11,15 @@ TcpServer::TcpServer(std::uint16_t requestedPort,
                      std::size_t workerCount,
                      ConnectionTimeouts timeouts,
                      metrics::ServerMetrics* metrics,
-                     std::shared_ptr<base::ResourceBudget> resourceBudget)
+                     std::shared_ptr<base::ResourceBudget> resourceBudget,
+                     ListenAddress listenAddress)
     : resourceBudget_(std::move(resourceBudget)),
       metrics_(metrics),
       maxInputBytes_(maxInputBytes),
       workerCount_(workerCount),
       timeouts_(timeouts),
       workerRegistries_(workerCount <= 64 ? workerCount : 0),
-      acceptor_(mainEventLoop_, requestedPort) {
+      acceptor_(mainEventLoop_, requestedPort, listenAddress) {
   if (resourceBudget_ && maxInputBytes_ != base::kTransportInputBytes)
     throw std::invalid_argument("resource budget requires a 16KiB transport window");
   acceptor_.setAcceptedCallback([this](Socket socket) { onAccepted(std::move(socket)); });
@@ -139,7 +140,10 @@ void TcpServer::runTcpServer() {
   std::exception_ptr error;
   try {
     // 启动监听并运行主循环
-    if (!stopping_) acceptor_.enableAcceptEvents();
+    if (!stopping_) {
+      acceptor_.enableAcceptEvents();
+      if (startedCallback_) startedCallback_();
+    }
     mainEventLoop_.runEventLoop();
   } catch (...) {
     error = std::current_exception();

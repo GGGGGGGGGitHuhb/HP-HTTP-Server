@@ -207,3 +207,25 @@ setarch x86_64 --addr-no-randomize ctest --test-dir build-tsan \
 2026-10-31 V1.4/S1独立Reviewer002 PASS，累计纠正2/2，无新增债务。r3独立Debug34/34（34.38秒）、Release34/34（33.13秒）、ASan+UBSan/LSan22/22（27.66秒）、限定进程布局TSan4/4（1.36秒）及三负对照通过；r4只改新Python指标消费者，修后三配置HTTP各1/1（2.11/2.09/2.39秒）、同原真实管道反例及HTTP负对照通过，58进程正常清理。未声称r4重跑全量；Debug构建摘要有warning_present，未声称全零告警。原Release33/34与P2 FAIL保留。S1已完成，S2/S3未开始，V1.4整体未完成；验收不代表合并或标签发布。
 
 128连接、64MiB输入预留/待发输出逻辑预算及EOF/reset过载策略保持；文件剩余字节不是RSS，旧16桶/原指标含义不变。TD006、WSL2/长尾/EOF风险及原P3不关闭或顺手修改。
+
+## V1.4/S2 运维验证
+
+新增server_operations_tests与http_operations_http_tests，规定完整Debug/Release各36、ASan+UBSan/LSan24；旧34及旧测试/脚本/第三方文件不改。新测试真实验证配置增长边界、IPv4 loopback listener、独立预算/状态、stdout来源隔离及慢日志sink合作清理。测试临时根沿HP_S3_TEST_TMP_ROOT，HTTP在operations-evidence-*保存独立stdout、带来源stderr诊断与进程/清理JSON，不从混合日志解析指标。
+
+仅server_operations_tests定向导出pthread_create并dlsym(RTLD_NEXT)透传下一实现保留sanitizer链；测试目标链接包装epoll_create1/epoll_wait/fstat。管理故障只在一次armed调用线程创建的目标子线程TLS触发，固定上下文，正常线程透传；覆盖EAGAIN、真实初始化EMFILE、超过1秒握手期限的受控等待和运行EIO，随后清除并正常对照。fstat按完整dev/inode/预定调用线程/非写FD身份一次匹配，先真实stat，再同文件真实追加，生产真实read拒绝增长；不改生产返回值或加环境故障开关。
+
+TSan仅对独立构建执行一次既定进程级命令，不改系统ASLR：
+
+```sh
+setarch x86_64 --addr-no-randomize ctest --test-dir <tsan-build> -R '^(http_task_api|bounded_task_executor|task_application_concurrency|resource_budget|server_operations)_tests$' --output-on-failure --timeout 120
+```
+
+新反证：设置HP_OPERATIONS_NEGATIVE=1分别运行Debug/Release的server_operations_tests，及`python3 tests/HttpOperationsHttp_test.py <server>`；C++启用NDEBUG也执行总检查，HTTP在真实正常链路后故意失败且自身回收。suite120秒，门闩/socket5秒，外层600秒/16MiB。未独立审查前不宣称阶段完成或全进程硬退出保障。
+
+2026-10-31 Builder最终候选Debug36/36（36.57秒）、Release36/36（36.25秒）、ASan24/24（31.58秒）、限定setarch TSan5/5（3.53秒），负对照-6/-6/1。四配置真实注入/增长/慢sink CASE均到达，pthread下一实现分别为libc/libasan/libtsan，未绕过sanitizer链。首构建app缺JSON私有include路径及首次Debug35/36（旧help标识遗漏）、一次未匹配排版布局的替换导致定向cli仍失败均保留；精确补回标识后定向cli及最终矩阵通过。旧tests未改，现已独立PASS。
+
+### V1.4/S2 收口检查点
+
+2026-10-31 V1.4/S2独立Reviewer001 PASS：最终r2候选Debug36/36（35.36秒）、Release36/36（34.82秒）、ASan+UBSan/LSan24/24（31.13秒）、限定setarch进程布局TSan5/5（3.49秒）；负对照-6/-6/1、14份C++格式通过，32份长寿命fixture、12个故障和4个临时root正常清理。63旧tests及31冻结保持。当前纠正1/2，无新增债务；原JSON include/help失败历史保留。S2已完成、S3未开始，V1.4整体未完成；阶段验收不表示已合并或标签发布。
+
+管理默认关闭、实际回环绑定且无鉴权，readiness不保证容量；独立逻辑预算不等于全局RSS。日志由外部接收者轮转，网络drain期限不等于整个进程退出期限；不合作业务或sink仍可能延长join。TD006/WSL2/EOF/长尾及S1 warning/P3保持。

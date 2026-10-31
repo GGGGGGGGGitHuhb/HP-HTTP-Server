@@ -255,3 +255,19 @@ Session首input记录请求后获取1040KiB请求租约，失败在parser前静�
 2026-10-31 V1.4/S1独立Reviewer002 PASS，累计纠正2/2，无新增债务。r3独立Debug34/34（34.38秒）、Release34/34（33.13秒）、ASan+UBSan/LSan22/22（27.66秒）、限定进程布局TSan4/4（1.36秒）及三负对照通过；r4只改新Python指标消费者，修后三配置HTTP各1/1（2.11/2.09/2.39秒）、同原真实管道反例及HTTP负对照通过，58进程正常清理。未声称r4重跑全量；Debug构建摘要有warning_present，未声称全零告警。原Release33/34与P2 FAIL保留。S1已完成，S2/S3未开始，V1.4整体未完成；验收不代表合并或标签发布。
 
 128连接、64MiB输入预留/待发输出逻辑预算及EOF/reset过载策略保持；文件剩余字节不是RSS，旧16桶/原指标含义不变。TD006、WSL2/长尾/EOF风险及原P3不关闭或顺手修改。
+
+## V1.4/S2 启动配置与管理所有权
+
+ServerConfig在创建线程/listener/logger前读普通有界JSON并独立校验file/CLI，再按默认<file<CLI装配。配置解析仅app依赖现有固定JSON，不让net/business新增JSON依赖。
+
+ManagementServer在独立线程构造、运行和销毁单Reactor TcpServer，显式ListenAddress::kLoopback，管理预算8连接/16MiB输入/256KiB输出独立于业务。ManagementHandler仅读取原线程安全metrics/resource/logger快照和共享原子Starting/Ready/Stopping/Failed，不访问业务连接或跨owner读取EventLoop状态。TcpServer的started通知在accept事件启用后、进入loop前执行，主程序只转发状态。
+
+主线程先构造业务，再完成管理启动握手，随后注册信号/started与发布端口。管理control锁保护存活server指针，停止只调用thread-safe requestServerStop；清指针先于owner析构，join在锁外。运行异常先Failed，再通知仍存活的业务server停止。业务网络结束后join管理，再join业务executor/logger；异常栈展开同样先销毁管理拥有者。1秒握手期限不等于强制线程退出期限，超时仍合作停止和join。
+
+运行指标文本复用原序列化，跨模块快照不构成事务。stderr仍有界异步日志，外部接收者负责轮转；不会因日志队列有界而使不合作sink有界返回。管理口关闭不能作为进程退出证据。
+
+### V1.4/S2 收口检查点
+
+2026-10-31 V1.4/S2独立Reviewer001 PASS：最终r2候选Debug36/36（35.36秒）、Release36/36（34.82秒）、ASan+UBSan/LSan24/24（31.13秒）、限定setarch进程布局TSan5/5（3.49秒）；负对照-6/-6/1、14份C++格式通过，32份长寿命fixture、12个故障和4个临时root正常清理。63旧tests及31冻结保持。当前纠正1/2，无新增债务；原JSON include/help失败历史保留。S2已完成、S3未开始，V1.4整体未完成；阶段验收不表示已合并或标签发布。
+
+管理默认关闭、实际回环绑定且无鉴权，readiness不保证容量；独立逻辑预算不等于全局RSS。日志由外部接收者轮转，网络drain期限不等于整个进程退出期限；不合作业务或sink仍可能延长join。TD006/WSL2/EOF/长尾及S1 warning/P3保持。

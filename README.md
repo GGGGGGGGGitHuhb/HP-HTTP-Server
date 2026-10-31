@@ -154,3 +154,15 @@ S1首轮Builder验证中，Debug34/34、ASan+UBSan/LSan22/22、指定TSan4/4通�
 2026-10-31 V1.4/S1独立Reviewer002 PASS，累计纠正2/2，无新增债务。r3独立Debug34/34（34.38秒）、Release34/34（33.13秒）、ASan+UBSan/LSan22/22（27.66秒）、限定进程布局TSan4/4（1.36秒）及三负对照通过；r4只改新Python指标消费者，修后三配置HTTP各1/1（2.11/2.09/2.39秒）、同原真实管道反例及HTTP负对照通过，58进程正常清理。未声称r4重跑全量；Debug构建摘要有warning_present，未声称全零告警。原Release33/34与P2 FAIL保留。S1已完成，S2/S3未开始，V1.4整体未完成；验收不代表合并或标签发布。
 
 128连接、64MiB输入预留/待发输出逻辑预算及EOF/reset过载策略保持；文件剩余字节不是RSS，旧16桶/原指标含义不变。TD006、WSL2/长尾/EOF风险及原P3不关闭或顺手修改。
+
+## V1.4/S2 配置与独立管理（已验收）
+
+`--config examples/server-config.json`读取严格有界JSON；默认值<文件<CLI，各来源独立校验。现有CLI兼容，增加资源预算参数与布尔反向开关。`--admin-port 0`启用实际IPv4回环管理服务，stdout报告端口；提供healthz/readyz/metrics，独立owner/预算，不改变业务路由或计数。默认关闭、无鉴权，仅可信本机诊断；详细字段与命令见[配置说明](documentation/CONFIGURATION.md)。
+
+管理退出先于业务/logger最终join。日志仍异步stderr，轮转交外部接收者；rename不重开、copytruncate可能丢行/重复，网络期限不能保证阻塞sink的进程退出期限。当前新增运维两suite，CTest注册36项。Builder最终Debug/Release各36/36、ASan24/24、既定setarch TSan5/5及三负对照通过，现已独立PASS；首次help兼容标识遗漏导致Debug35/36及修正历史保留，不宣称V1.4整体完成。
+
+### V1.4/S2 收口检查点
+
+2026-10-31 V1.4/S2独立Reviewer001 PASS：最终r2候选Debug36/36（35.36秒）、Release36/36（34.82秒）、ASan+UBSan/LSan24/24（31.13秒）、限定setarch进程布局TSan5/5（3.49秒）；负对照-6/-6/1、14份C++格式通过，32份长寿命fixture、12个故障和4个临时root正常清理。63旧tests及31冻结保持。当前纠正1/2，无新增债务；原JSON include/help失败历史保留。S2已完成、S3未开始，V1.4整体未完成；阶段验收不表示已合并或标签发布。
+
+管理默认关闭、实际回环绑定且无鉴权，readiness不保证容量；独立逻辑预算不等于全局RSS。日志由外部接收者轮转，网络drain期限不等于整个进程退出期限；不合作业务或sink仍可能延长join。TD006/WSL2/EOF/长尾及S1 warning/P3保持。
