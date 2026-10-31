@@ -234,3 +234,16 @@ if(BUILD_TESTING)
     set_tests_properties(bounded_task_executor_tests http_async_task_http_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()
+
+if(BUILD_TESTING)
+    add_executable(task_application_concurrency_tests tests/TaskApplicationConcurrency_test.cpp)
+    target_link_libraries(task_application_concurrency_tests PRIVATE hp_http_app)
+    enable_debug_warnings(task_application_concurrency_tests)
+    add_test(NAME task_application_concurrency_tests COMMAND task_application_concurrency_tests)
+    add_test(NAME http_application_acceptance_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpApplicationAcceptance_test.py
+            $<TARGET_FILE:hp_http_server> $<TARGET_FILE:async_task_test_server>
+            ${CMAKE_CURRENT_SOURCE_DIR}/scripts/demo_task_application.py)
+    set_tests_properties(task_application_concurrency_tests http_application_acceptance_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
