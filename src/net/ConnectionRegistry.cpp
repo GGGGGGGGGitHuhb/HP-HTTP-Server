@@ -5,11 +5,19 @@
 #include <utility>
 
 namespace hp::net {
+namespace {
+struct AcceptedConnection {
+  base::ResourceLease lease;
+  Socket socket;
+};
+}  // namespace
 ConnectionRegistry::ConnectionRegistry(EventLoop& ownerEventLoop,
                                        std::size_t maxInputBytes,
                                        ConnectionTimeouts timeouts,
-                                       metrics::ServerMetrics* metrics)
-    : metrics_(metrics),
+                                       metrics::ServerMetrics* metrics,
+                                       std::shared_ptr<base::ResourceBudget> resourceBudget)
+    : resourceBudget_(std::move(resourceBudget)),
+      metrics_(metrics),
       timeouts_(timeouts),
       ownerEventLoop_(ownerEventLoop),
       maxInputBytes_(maxInputBytes) {
@@ -39,15 +47,22 @@ void ConnectionRegistry::beginConnectionsDrain(bool force) {
   onCleanup();
 }
 
-void ConnectionRegistry::onAccepted(Socket socket, TcpConnection::MessageCallback messageCallback) {
+void ConnectionRegistry::onAccepted(Socket socket,
+                                    TcpConnection::MessageCallback messageCallback,
+                                    base::ResourceLease connectionLease) {
+  AcceptedConnection accepted{std::move(connectionLease), std::move(socket)};
   if (draining_) return;
   if (nextIdentity_ == 0) throw std::overflow_error("connection identity exhausted");
   const auto identity = nextIdentity_;
   nextIdentity_ =
       identity == std::numeric_limits<TcpConnection::Identity>::max() ? 0 : identity + 1;
-  const int fd = socket.fd();
-  auto connection =
-      std::make_unique<TcpConnection>(ownerEventLoop_, std::move(socket), identity, maxInputBytes_);
+  const int fd = accepted.socket.fd();
+  auto connection = std::make_unique<TcpConnection>(ownerEventLoop_,
+                                                    std::move(accepted.socket),
+                                                    identity,
+                                                    maxInputBytes_,
+                                                    resourceBudget_,
+                                                    std::move(accepted.lease));
   connection->setMessageCallback(std::move(messageCallback));
   connection->setCloseCallback(
       [this](int fd, TcpConnection::Identity identity) { onClose(fd, identity); });

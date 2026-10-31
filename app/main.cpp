@@ -220,6 +220,7 @@ int runServer(int argc, char* argv[]) {
   ShutdownSignalMask mask;
   hp::base::LoggerSession logging;
   hp::metrics::ServerMetrics metrics;
+  auto resourceBudget = std::make_shared<hp::base::ResourceBudget>();
   int exitCode = 0;
   try {
     hp::http::StaticFileService service(options.root);
@@ -232,14 +233,16 @@ int runServer(int argc, char* argv[]) {
                               hp::http::kMaxHeaderBytes,
                               options.threads,
                               options.timeouts,
-                              &metrics);
+                              &metrics,
+                              resourceBudget);
     server.registerMessageFactoryCallback(
         [target = hp::app::HttpMessageFactory{router,
                                               &metrics,
                                               options.accessLog,
                                               options.requestReadTimeout,
                                               {},
-                                              asyncHandler}]() {
+                                              asyncHandler,
+                                              resourceBudget}]() {
           return target.onMessageFactory();
         });
     ShutdownSignalHandler shutdownSignals{signals, server, *executor, options.shutdownTimeout};
@@ -268,6 +271,7 @@ int runServer(int argc, char* argv[]) {
     const auto stats = logging.stats();
     std::cout << "HP_METRICS_BEGIN\n"
               << hp::metrics::ServerMetrics::serializeSnapshot(metrics.snapshot())
+              << hp::base::ResourceBudget::serializeSnapshot(resourceBudget->snapshot())
               << "logger_submitted " << stats.submitted << '\n'
               << "logger_accepted " << stats.accepted << '\n'
               << "logger_dropped_full " << stats.droppedFull << '\n'

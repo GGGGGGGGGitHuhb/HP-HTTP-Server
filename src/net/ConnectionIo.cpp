@@ -50,10 +50,34 @@ FileWriteResult sendFileWithoutSigpipe(int socket,
 }
 }  // namespace
 
-ConnectionIo::ConnectionIo(Socket socket, std::size_t maxInputBytes) noexcept
-    : socket_(std::move(socket)),
+ConnectionIo::ConnectionIo(Socket socket,
+                           std::size_t maxInputBytes,
+                           std::shared_ptr<base::ResourceBudget> resourceBudget,
+                           base::ResourceLease connectionLease)
+    : connectionLease_(std::move(connectionLease)),
+      resourceBudget_(std::move(resourceBudget)),
+      socket_(std::move(socket)),
       maxInputBytes_(maxInputBytes),
-      input_(maxInputBytes ? maxInputBytes : std::numeric_limits<std::size_t>::max()) {}
+      input_(maxInputBytes ? maxInputBytes : std::numeric_limits<std::size_t>::max()) {
+  if (resourceBudget_ && maxInputBytes != base::kTransportInputBytes)
+    throw std::invalid_argument("resource budget requires a 16KiB transport window");
+}
+
+ConnectionIo& ConnectionIo::operator=(ConnectionIo&& other) noexcept {
+  if (this != &other) {
+    ConnectionIo previous(std::move(*this));
+    connectionLease_ = std::move(other.connectionLease_);
+    outputLease_ = std::move(other.outputLease_);
+    resourceBudget_ = std::move(other.resourceBudget_);
+    socket_ = std::move(other.socket_);
+    maxInputBytes_ = other.maxInputBytes_;
+    input_ = std::move(other.input_);
+    output_ = std::move(other.output_);
+    file_ = std::move(other.file_);
+    peerHalfClosed_ = other.peerHalfClosed_;
+  }
+  return *this;
+}
 
 int ConnectionIo::fd() const noexcept { return socket_.fd(); }
 
@@ -128,6 +152,7 @@ WriteResult ConnectionIo::writeAvailable() {
     if (count > 0) {
       const auto byteCount = static_cast<std::size_t>(count);
       output_.consumeReadableBytes(byteCount);
+      if (resourceBudget_) outputLease_.releaseOutput(byteCount);
       result.bytesWritten += byteCount;
       continue;
     }
@@ -155,6 +180,7 @@ WriteResult ConnectionIo::writeAvailable() {
     if (written.count > 0) {
       const auto bytes = static_cast<std::size_t>(written.count);
       file_->advanceFileOffset(bytes);
+      if (resourceBudget_) outputLease_.releaseOutput(bytes);
       progress += bytes;
       result.bytesWritten += bytes;
     }
@@ -181,7 +207,13 @@ void ConnectionIo::queueOutput(std::span<const std::byte> bytes) {
   if (file_) throw std::logic_error("append while file output is pending");
   if (!outputFits(pendingBytes(), bytes.size()))
     throw std::length_error("connection output limit exceeded");
+  base::ResourceAcquisition acquired;
+  if (resourceBudget_) {
+    acquired = resourceBudget_->tryAcquireOutput(bytes.size());
+    if (!acquired.accepted()) throw base::ResourceLimitError{};
+  }
   output_.appendBytes(bytes);
+  outputLease_.absorb(std::move(acquired.lease));
 }
 
 void ConnectionIo::queueFile(std::span<const std::byte> header, base::FileRegion file) {
@@ -190,9 +222,15 @@ void ConnectionIo::queueFile(std::span<const std::byte> header, base::FileRegion
     throw std::logic_error("file submission while output is pending");
   if (!outputFits(header.size(), file.remaining()))
     throw std::length_error("connection output limit exceeded");
-  // 先分配，再接管文件区域；失败时销毁按值传入的所有权对象。
+  base::ResourceAcquisition acquired;
+  if (resourceBudget_) {
+    acquired = resourceBudget_->tryAcquireOutput(header.size() + file.remaining());
+    if (!acquired.accepted()) throw base::ResourceLimitError{};
+  }
+  // 先预留再分配/接管；异常时局部租约与按值文件所有权均自动回收。
   output_.appendBytes(header);
   file_.emplace(std::move(file));
+  outputLease_.absorb(std::move(acquired.lease));
   if (!file_->remaining()) file_.reset();
 }
 

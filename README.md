@@ -39,7 +39,7 @@ ctest --test-dir build -N
 ctest --test-dir build --output-on-failure
 ```
 
-当前CMake注册32项，含已验收S3静态语义两套及目标解析两套及已验收chunked/Expect两套、历史别名和synthetic工具测试；历史V1.1/S3增加方法路由C++与真实HTTP两套，Builder及Reviewer独立通过Debug/Release各20/20、规定sanitizer 8/8，Reviewer结论PASS；错误预期和失败清理反证有效。当前行为见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，测试入口与冻结覆盖边界见[开发说明](documentation/DEVELOPMENT.md)。23个旧目标仍停用；S3仅定向更新两份旧测试的静态405 Allow断言，其他冻结约束保持。
+当前CMake注册34项，含已验收S3静态语义两套及目标解析两套及已验收chunked/Expect两套、历史别名和synthetic工具测试；历史V1.1/S3增加方法路由C++与真实HTTP两套，Builder及Reviewer独立通过Debug/Release各20/20、规定sanitizer 8/8，Reviewer结论PASS；错误预期和失败清理反证有效。当前行为见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，测试入口与冻结覆盖边界见[开发说明](documentation/DEVELOPMENT.md)。23个旧目标仍停用；S3仅定向更新两份旧测试的静态405 Allow断言，其他冻结约束保持。
 
 ## 项目结构
 
@@ -139,3 +139,18 @@ Builder规定Debug/Release各32项及ASan+UBSan/LSan20项通过；TSan初次初�
 2026-10-31 V1.3/S3独立Reviewer001 PASS：最终候选Debug32/32（31.00秒）、Release32/32（31.31秒）、ASan+UBSan/LSan20/20（25.36秒）、限定setarch进程布局下TSan3/3（1.26秒）；原裸跑0/3初始化失败保留。三负对照-6/-6/1、一键演示exit0，45进程/12故障/18个FINAL资源回收通过。累计纠正2/2，无新增债务；S1–S3阶段验收全部完成，不表示已合并或标签发布，V1.4未开始。
 
 TSan仅改变指定测试进程树地址随机化属性，不改系统全局配置；有限检查不证明穷举无race。保留全接口监听/可信环境、超时不回滚、join可能等待、TD006/WSL2/长尾/EOF风险。
+
+
+## V1.4/S1 共享逻辑资源预算（实现候选）
+
+生产main现在向所有网络worker注入同一预算：最多128个已准入连接，64MiB输入逻辑预留，64MiB待发送输出。每个连接先保留16KiB传输窗口，每个活跃请求另保留1040KiB；小请求也整额预留，128连接同时存在时最多61个活跃请求。连接、输入或输出预算不足时只关闭相关连接（客户端见EOF/reset），不额外构造可能再次超额的错误响应；已有业务队列过载仍为503。
+
+输出配额包括尚未发送的文件剩余字节，实际send/sendfile成功即归还；这限制并行下载工作量，不代表文件内容全部驻留内存。预算不是RSS硬限：Buffer容量、请求副本、JSON临时、线程栈、内核socket和文件缓存等不在其内。资源表、9项退出指标及兼容边界见[运行说明](documentation/RUNNING.md#v14s1-共享逻辑资源预算)。新增两套测试，原32目标和旧测试不改；本阶段仍待独立验收，V1.4整体未完成。
+
+S1首轮Builder验证中，Debug34/34、ASan+UBSan/LSan22/22、指定TSan4/4通过，Release33/34：未改动的旧task_application_concurrency_tests在ready等待后检查outstanding处失败。原反例保留。补充001批准仅修旧测试等待helper及两调用，并新增独立门闩回归：受控ready32/running1/outstanding33后等待退槽至32，保留原容量断言。修后Builder完整Debug/Release各34/34、ASan22/22、既定setarch TSan4/4各一次通过；现已独立复审PASS，最终分层证据见下方收口检查点。
+
+### V1.4/S1 收口检查点
+
+2026-10-31 V1.4/S1独立Reviewer002 PASS，累计纠正2/2，无新增债务。r3独立Debug34/34（34.38秒）、Release34/34（33.13秒）、ASan+UBSan/LSan22/22（27.66秒）、限定进程布局TSan4/4（1.36秒）及三负对照通过；r4只改新Python指标消费者，修后三配置HTTP各1/1（2.11/2.09/2.39秒）、同原真实管道反例及HTTP负对照通过，58进程正常清理。未声称r4重跑全量；Debug构建摘要有warning_present，未声称全零告警。原Release33/34与P2 FAIL保留。S1已完成，S2/S3未开始，V1.4整体未完成；验收不代表合并或标签发布。
+
+128连接、64MiB输入预留/待发输出逻辑预算及EOF/reset过载策略保持；文件剩余字节不是RSS，旧16桶/原指标含义不变。TD006、WSL2/长尾/EOF风险及原P3不关闭或顺手修改。

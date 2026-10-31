@@ -53,6 +53,9 @@ struct Session : std::enable_shared_from_this<Session> {
   std::shared_ptr<const AsyncTaskHandler> asyncHandler;
   std::shared_ptr<business::TaskJob> pendingJob;
   std::uint64_t taskGeneration{};
+  std::shared_ptr<base::ResourceBudget> resourceBudget;
+  base::ResourceLease requestLease;
+  void closeResourceRejected(net::TcpConnection& connection);
   void armTaskContinuation(net::TcpConnection& connection);
   void onTaskContinuation(net::TcpConnection& connection, std::uint64_t generation);
   void sendFinalResponse(net::TcpConnection& connection, http::ResponseResult result);
@@ -60,7 +63,8 @@ struct Session : std::enable_shared_from_this<Session> {
   explicit Session(HttpCallbackStats* callbackStats,
                    metrics::ServerMetrics* serverMetrics = nullptr,
                    bool enableAccessLog = false,
-                   std::chrono::milliseconds readTimeout = std::chrono::milliseconds{0});
+                   std::chrono::milliseconds readTimeout = std::chrono::milliseconds{0},
+                   std::shared_ptr<base::ResourceBudget> resourceBudget = {});
   ~Session();
   void setRequestHeadersCallback(RequestHeadersCallback requestHeadersCallback) {
     this->requestHeadersCallback = std::move(requestHeadersCallback);
@@ -88,6 +92,7 @@ struct HttpMessageHandler {
   std::chrono::milliseconds requestReadTimeout{0};
 
   std::shared_ptr<const AsyncTaskHandler> asyncHandler{};
+  std::shared_ptr<base::ResourceBudget> resourceBudget{};
 
   void setRequestHeadersCallback(RequestHeadersCallback requestHeadersCallback) {
     this->requestHeadersCallback = std::move(requestHeadersCallback);
@@ -108,6 +113,7 @@ struct HttpMessageFactory {
   std::chrono::milliseconds requestReadTimeout{0};
   std::shared_ptr<const http::RequestRouter> ownedRouter{};
   std::shared_ptr<const AsyncTaskHandler> asyncHandler{};
+  std::shared_ptr<base::ResourceBudget> resourceBudget{};
   // “为新连接创建 HTTP 消息回调”的工厂
   net::TcpConnection::MessageCallback onMessageFactory() const;
 };
@@ -120,8 +126,10 @@ net::TcpConnection::MessageCallback makeHttpCallback(
     HttpCallbackStats* stats = nullptr,
     metrics::ServerMetrics* metrics = nullptr,
     bool accessLogEnabled = false,
-    std::chrono::milliseconds requestReadTimeout = std::chrono::milliseconds{0});
+    std::chrono::milliseconds requestReadTimeout = std::chrono::milliseconds{0},
+    std::shared_ptr<base::ResourceBudget> resourceBudget = {});
 net::TcpServer::MessageFactoryCallback makeHttpFactory(
     const http::StaticFileService& service,
-    std::chrono::milliseconds requestReadTimeout = std::chrono::milliseconds{0});
+    std::chrono::milliseconds requestReadTimeout = std::chrono::milliseconds{0},
+    std::shared_ptr<base::ResourceBudget> resourceBudget = {});
 }  // namespace hp::app

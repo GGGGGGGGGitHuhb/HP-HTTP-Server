@@ -27,7 +27,9 @@ class TcpConnection final : private base::NonCopyable {
   TcpConnection(EventLoop& ownerEventLoop,
                 Socket socket,
                 Identity identity,
-                std::size_t maxInputBytes);
+                std::size_t maxInputBytes,
+                std::shared_ptr<base::ResourceBudget> resourceBudget = {},
+                base::ResourceLease connectionLease = {});
   void setMessageCallback(MessageCallback messageCallback) {
     messageCallback_ = std::move(messageCallback);
   }

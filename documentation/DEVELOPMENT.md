@@ -178,3 +178,32 @@ setarch x86_64 --addr-no-randomize ctest --test-dir build-tsan \
 2026-10-31 V1.3/S3独立Reviewer001 PASS：最终候选Debug32/32（31.00秒）、Release32/32（31.31秒）、ASan+UBSan/LSan20/20（25.36秒）、限定setarch进程布局下TSan3/3（1.26秒）；原裸跑0/3初始化失败保留。三负对照-6/-6/1、一键演示exit0，45进程/12故障/18个FINAL资源回收通过。累计纠正2/2，无新增债务；S1–S3阶段验收全部完成，不表示已合并或标签发布，V1.4未开始。
 
 TSan仅改变指定测试进程树地址随机化属性，不改系统全局配置；有限检查不证明穷举无race。保留全接口监听/可信环境、超时不回滚、join可能等待、TD006/WSL2/长尾/EOF风险。
+
+
+## V1.4/S1 资源预算验证（候选）
+
+新增resource_budget_tests/http_resource_budget_http_tests，完整34项；ASan+UBSan/LSan原20加新2共22项。旧32身份及全部旧测试源码保持，不新增冻结例外。C++固定8×256竞争、default128/61边界、size_t极值和租约移动；真实socketpair小发送缓冲得到EAGAIN并按实际write/sendfile核守恒。新独立测试二进制仅复用既有TcpServerTestAccess友元；新单次operator-new失败注入用于append分配异常回滚，未增加生产seam。
+
+HTTP测试使用独立resource_budget_test_server，小限额构造/控制与快照仅存在测试程序；生产main另验默认边界。stdout控制和stderr日志由两个reader分开收集，避免并发日志拼接控制协议；两reader与三pipe均有清理记录。PORT前/后、中途故障必须自身回收，正常不靠强杀。test-tmp/resource-evidence-*保留日志JSON/summary，合成静态根删除，单suite120秒、socket5秒、总日志16MiB。
+
+TSan沿已验证进程级setarch路线，对独立GCC thread插桩构建运行一次固定四目标：
+
+```bash
+setarch x86_64 --addr-no-randomize ctest --test-dir build-tsan \
+  -R '^(http_task_api|bounded_task_executor|task_application_concurrency|resource_budget)_tests$' \
+  --output-on-failure --timeout 120
+```
+
+原裸跑失败历史保留；不改全局ASLR、不使用suppression、不以初始化失败当通过、不反复换参数追绿。有限动态检测不等于穷举竞态。
+
+新反证`HP_RESOURCE_NEGATIVE=1`：Debug/Release resource_budget_tests在R01有效检查后故意失败；HTTP用`python3 tests/HttpResourceBudgetHttp_test.py <server> <resource_budget_test_server>`，先设独立HP_S3_TEST_TMP_ROOT，真实资源恢复后故意错误预期且自身清理。Release使用总执行检查，源码不为反证修改。阶段状态和完整证据待独立审查，不据Builder自测关闭V1.4或原技术债。
+
+2026-10-31 S1首轮Builder矩阵：Debug34/34、Release33/34、ASan+UBSan/LSan22/22、TSan4/4。唯一Release失败为旧TaskApplicationConcurrency_test.cpp:239：waitReady(32)返回后outstanding==32断言失败；失败日志未打印具体outstanding数值。ready计数不必然表示另一个取消中的running已退出是初步机制推断，须Leader核查，不能自行修改旧测试/执行器、重跑追绿或降低矩阵要求。该轮阻塞记录保留，未独立验收。新HTTP驱动初次合并stderr/stdout导致控制行被日志前缀拼接的失败及分流修正均保留，最终三个配置该新套件通过。
+
+2026-10-31 补充001批准后，旧TaskApplicationConcurrency仅waitQuiescentReady及两处调用改为同snapshot联合终态（ready/outstanding=count、queued/running=0），保留5秒上界及原断言；其余59旧文件不变。新resource_budget_tests用两独立门闩实测受控32 ready/1 running/33 outstanding中间态，再释放至32、补槽34及最终36 admitted/released；不把该受控计数冒称原失败日志采集值。最终候选Builder各一次Debug34/34、Release34/34、ASan22/22及既定setarch TSan4/4通过，负对照-6/-6/1，待Reviewer独立审查。产品执行器未改，原Release33/34和原TSan4/4证据保留。
+
+### V1.4/S1 收口检查点
+
+2026-10-31 V1.4/S1独立Reviewer002 PASS，累计纠正2/2，无新增债务。r3独立Debug34/34（34.38秒）、Release34/34（33.13秒）、ASan+UBSan/LSan22/22（27.66秒）、限定进程布局TSan4/4（1.36秒）及三负对照通过；r4只改新Python指标消费者，修后三配置HTTP各1/1（2.11/2.09/2.39秒）、同原真实管道反例及HTTP负对照通过，58进程正常清理。未声称r4重跑全量；Debug构建摘要有warning_present，未声称全零告警。原Release33/34与P2 FAIL保留。S1已完成，S2/S3未开始，V1.4整体未完成；验收不代表合并或标签发布。
+
+128连接、64MiB输入预留/待发输出逻辑预算及EOF/reset过载策略保持；文件剩余字节不是RSS，旧16桶/原指标含义不变。TD006、WSL2/长尾/EOF风险及原P3不关闭或顺手修改。

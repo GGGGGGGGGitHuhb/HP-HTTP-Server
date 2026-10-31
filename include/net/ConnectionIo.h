@@ -8,6 +8,7 @@
 #include "base/Buffer.h"
 #include "base/FileRegion.h"
 #include "base/NonCopyable.h"
+#include "base/ResourceBudget.h"
 #include "net/Socket.h"
 
 namespace hp::net {
@@ -45,9 +46,12 @@ class ConnectionIo final : private base::NonCopyable {
 
   static bool outputFits(std::size_t pending, std::size_t incoming) noexcept;
 
-  explicit ConnectionIo(Socket socket, std::size_t maxInputBytes = 0) noexcept;
+  explicit ConnectionIo(Socket socket,
+                        std::size_t maxInputBytes = 0,
+                        std::shared_ptr<base::ResourceBudget> resourceBudget = {},
+                        base::ResourceLease connectionLease = {});
   ConnectionIo(ConnectionIo&&) noexcept = default;
-  ConnectionIo& operator=(ConnectionIo&&) noexcept = default;
+  ConnectionIo& operator=(ConnectionIo&& other) noexcept;
 
   [[nodiscard]] int fd() const noexcept;
 
@@ -73,6 +77,10 @@ class ConnectionIo final : private base::NonCopyable {
  private:
   friend struct ConnectionIoTestAccess;
 
+  // 租约先构造、最后析构：缓冲及socket释放后才归还连接/窗口。
+  base::ResourceLease connectionLease_;
+  base::ResourceLease outputLease_;
+  std::shared_ptr<base::ResourceBudget> resourceBudget_;
   Socket socket_;
 
   std::size_t maxInputBytes_{0};

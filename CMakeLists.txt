@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(hp_http_core STATIC
+    src/base/ResourceBudget.cpp
     src/business/TaskService.cpp
     src/business/BoundedTaskExecutor.cpp
     src/http/TaskApiHandler.cpp
@@ -245,5 +246,20 @@ if(BUILD_TESTING)
             $<TARGET_FILE:hp_http_server> $<TARGET_FILE:async_task_test_server>
             ${CMAKE_CURRENT_SOURCE_DIR}/scripts/demo_task_application.py)
     set_tests_properties(task_application_concurrency_tests http_application_acceptance_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(resource_budget_tests tests/ResourceBudget_test.cpp)
+    target_link_libraries(resource_budget_tests PRIVATE hp_http_app)
+    enable_debug_warnings(resource_budget_tests)
+    add_executable(resource_budget_test_server tests/ResourceBudgetServer.cpp)
+    target_link_libraries(resource_budget_test_server PRIVATE hp_http_app)
+    enable_debug_warnings(resource_budget_test_server)
+    add_test(NAME resource_budget_tests COMMAND resource_budget_tests)
+    add_test(NAME http_resource_budget_http_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpResourceBudgetHttp_test.py
+            $<TARGET_FILE:hp_http_server> $<TARGET_FILE:resource_budget_test_server>)
+    set_tests_properties(resource_budget_tests http_resource_budget_http_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()

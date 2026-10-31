@@ -12,7 +12,7 @@ ctest --test-dir build -R '^http_protocol_baseline(_http)?_tests$' --output-on-f
 
 - `http_protocol_baseline_tests`：直接使用当前 `RequestParser::feedRequestBytes/resetRequestParser`；短语料每个切分点及逐字节、长边界整包/逐字节/127字节块。每次核acceptedBytes、累计requestBytes、终态及reset，不访问私有状态。
 - `http_protocol_baseline_http_tests`：真实启动服务器，分别threads=0/2，解析完整响应及正文；同一socket验证连续请求，正常SIGTERM回收；只使用Python标准库。
-- CMake共32项，S3前30项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
+- CMake共34项，V1.4/S1前32项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
 - 新HTTP测试在`HP_S3_TEST_TMP_ROOT`（CTest设为构建目录的test-tmp）下建立唯一运行目录，删除业务fixture，保留有界服务器日志、每进程JSON回收记录及summary.json。失败亦保留证据。每次socket操作服从同一场景5秒绝对截止，套件120秒，每响应最多9MiB；不依赖短sleep确认事件。
 
 ## 支持/拒绝及覆盖映射
@@ -159,3 +159,14 @@ V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30�
 2026-10-31 V1.3/S3独立Reviewer001 PASS：最终候选Debug32/32（31.00秒）、Release32/32（31.31秒）、ASan+UBSan/LSan20/20（25.36秒）、限定setarch进程布局下TSan3/3（1.26秒）；原裸跑0/3初始化失败保留。三负对照-6/-6/1、一键演示exit0，45进程/12故障/18个FINAL资源回收通过。累计纠正2/2，无新增债务；S1–S3阶段验收全部完成，不表示已合并或标签发布，V1.4未开始。
 
 TSan仅改变指定测试进程树地址随机化属性，不改系统全局配置；有限检查不证明穷举无race。保留全接口监听/可信环境、超时不回滚、join可能等待、TD006/WSL2/长尾/EOF风险。
+
+
+## V1.4/S1 资源不足与协议边界（候选）
+
+新增resource_budget_tests与http_resource_budget_http_tests：联合连接/输入准入、移动/异常归还、真实send/sendfile部分写与EAGAIN、跨owner满额拒绝和自然恢复、生产128连接/61活跃请求、100/FIN/pipeline/读取及业务超时/drain。连接/输入/输出全局不足为静默关闭，不发送额外500/503；任务执行器和存储自身503保持原义。输入拒绝发生在parser前，输出拒绝未发送final，均aborted/unknown且不计parse/provider错误。原32测试与16状态桶不改，资源9键仅main退出追加。本节尚待独立验收，不等同新增HTTP方法或更完整协议支持。
+
+### V1.4/S1 收口检查点
+
+2026-10-31 V1.4/S1独立Reviewer002 PASS，累计纠正2/2，无新增债务。r3独立Debug34/34（34.38秒）、Release34/34（33.13秒）、ASan+UBSan/LSan22/22（27.66秒）、限定进程布局TSan4/4（1.36秒）及三负对照通过；r4只改新Python指标消费者，修后三配置HTTP各1/1（2.11/2.09/2.39秒）、同原真实管道反例及HTTP负对照通过，58进程正常清理。未声称r4重跑全量；Debug构建摘要有warning_present，未声称全零告警。原Release33/34与P2 FAIL保留。S1已完成，S2/S3未开始，V1.4整体未完成；验收不代表合并或标签发布。
+
+128连接、64MiB输入预留/待发输出逻辑预算及EOF/reset过载策略保持；文件剩余字节不是RSS，旧16桶/原指标含义不变。TD006、WSL2/长尾/EOF风险及原P3不关闭或顺手修改。

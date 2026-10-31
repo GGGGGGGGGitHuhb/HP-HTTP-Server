@@ -18,14 +18,17 @@ class ConnectionRegistry final : private base::NonCopyable {
   ConnectionRegistry(EventLoop& ownerEventLoop,
                      std::size_t maxInputBytes,
                      ConnectionTimeouts timeouts = {},
-                     metrics::ServerMetrics* metrics = nullptr);
+                     metrics::ServerMetrics* metrics = nullptr,
+                     std::shared_ptr<base::ResourceBudget> resourceBudget = {});
   ~ConnectionRegistry() noexcept;
 
   void setStopCallback(StopCallback stopCallback) { stopCallback_ = std::move(stopCallback); }
 
   void beginConnectionsDrain(bool force = false);
 
-  void onAccepted(Socket socket, TcpConnection::MessageCallback messageCallback);
+  void onAccepted(Socket socket,
+                  TcpConnection::MessageCallback messageCallback,
+                  base::ResourceLease connectionLease = {});
   // 把连接加入待清理链
   void onClose(int fd, TcpConnection::Identity identity) noexcept;
   // 从 ConnectionRegisry::connections_ 表中移除连接对象
@@ -46,6 +49,7 @@ class ConnectionRegistry final : private base::NonCopyable {
   bool draining_{false}, notified_{false};
   StopCallback stopCallback_;
 
+  std::shared_ptr<base::ResourceBudget> resourceBudget_;
   metrics::ServerMetrics* metrics_;
   const ConnectionTimeouts timeouts_;
   EventLoop& ownerEventLoop_;
