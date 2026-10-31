@@ -10,13 +10,17 @@ TcpServer::TcpServer(std::uint16_t requestedPort,
                      std::size_t maxInputBytes,
                      std::size_t workerCount,
                      ConnectionTimeouts timeouts,
-                     metrics::ServerMetrics* metrics)
-    : metrics_(metrics),
+                     metrics::ServerMetrics* metrics,
+                     std::shared_ptr<base::ResourceBudget> resourceBudget)
+    : resourceBudget_(std::move(resourceBudget)),
+      metrics_(metrics),
       maxInputBytes_(maxInputBytes),
       workerCount_(workerCount),
       timeouts_(timeouts),
       workerRegistries_(workerCount <= 64 ? workerCount : 0),
       acceptor_(mainEventLoop_, requestedPort) {
+  if (resourceBudget_ && maxInputBytes_ != base::kTransportInputBytes)
+    throw std::invalid_argument("resource budget requires a 16KiB transport window");
   acceptor_.setAcceptedCallback([this](Socket socket) { onAccepted(std::move(socket)); });
   if (timeouts.idle.count() < 0 || timeouts.keepAlive.count() < 0 ||
       timeouts.idle.count() > 86400000 || timeouts.keepAlive.count() > 86400000)
@@ -28,8 +32,11 @@ TcpServer::TcpServer(std::uint16_t requestedPort,
       });
   if (workerCount == 0) {
     // 连接注册表属于主循环
-    mainConnectionRegistry_ =
-        std::make_unique<ConnectionRegistry>(mainEventLoop_, maxInputBytes_, timeouts_, metrics_);
+    mainConnectionRegistry_ = std::make_unique<ConnectionRegistry>(mainEventLoop_,
+                                                                   maxInputBytes_,
+                                                                   timeouts_,
+                                                                   metrics_,
+                                                                   resourceBudget_);
     mainConnectionRegistry_->setStopCallback(
         [target = &mainEventLoop_]() { target->requestLoopStop(); });
   } else {
@@ -151,18 +158,26 @@ void TcpServer::onAccepted(Socket socket) {
     acceptor_.disableAcceptEvents();
     return;
   }
-  auto messageCallback =
+  base::ResourceAcquisition acquired;
+  if (resourceBudget_) {
+    acquired = resourceBudget_->tryAcquireConnection();
+    if (!acquired.accepted()) return;
+  }
+  // 局部转交对象也按socket先于租约析构，factory/分配失败无提前退槽窗口。
+  ConnectionHandoff accepted{std::move(acquired.lease), std::move(socket), {}};
+  accepted.messageCallback =
       messageFactoryCallback_ ? messageFactoryCallback_() : TcpConnection::MessageCallback{};
   if (workerCount_ == 0) {
-    mainConnectionRegistry_->onAccepted(std::move(socket), std::move(messageCallback));
+    mainConnectionRegistry_->onAccepted(std::move(accepted.socket),
+                                        std::move(accepted.messageCallback),
+                                        std::move(accepted.connectionLease));
     return;
   }
   const auto workerIndex = nextWorkerIndex_;
   nextWorkerIndex_ = (nextWorkerIndex_ + 1) % workerCount_;
 
   // 把 socket 和该连接的消息回调放入 `ConnectionHandoff` 并投递
-  auto handoff = std::make_shared<ConnectionHandoff>(
-      ConnectionHandoff{std::move(socket), std::move(messageCallback)});
+  auto handoff = std::make_shared<ConnectionHandoff>(std::move(accepted));
   workerPool_.postTaskToWorkerAtIndex(workerIndex,
                                       [this, workerIndex, handoff](EventLoop& workerEventLoop) {
                                         adoptConnection(workerIndex, handoff, workerEventLoop);
@@ -170,8 +185,11 @@ void TcpServer::onAccepted(Socket socket) {
 }
 
 void TcpServer::initializeWorkerRegistry(std::size_t workerIndex, EventLoop& workerEventLoop) {
-  workerRegistries_[workerIndex] =
-      std::make_unique<ConnectionRegistry>(workerEventLoop, maxInputBytes_, timeouts_, metrics_);
+  workerRegistries_[workerIndex] = std::make_unique<ConnectionRegistry>(workerEventLoop,
+                                                                        maxInputBytes_,
+                                                                        timeouts_,
+                                                                        metrics_,
+                                                                        resourceBudget_);
   workerRegistries_[workerIndex]->setStopCallback(
       [target = &workerEventLoop]() { target->requestLoopStop(); });
   workerEventLoop.registerControlCallback(
@@ -197,7 +215,8 @@ void TcpServer::adoptConnection(std::size_t workerIndex,
   if (stopping_) return;
   try {
     workerRegistries_[workerIndex]->onAccepted(std::move(handoff->socket),
-                                               std::move(handoff->messageCallback));
+                                               std::move(handoff->messageCallback),
+                                               std::move(handoff->connectionLease));
   } catch (const std::bad_alloc&) {
     throw;
   } catch (const std::exception& error) {

@@ -238,3 +238,20 @@ V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30�
 2026-10-31 V1.3/S3独立Reviewer001 PASS：最终候选Debug32/32（31.00秒）、Release32/32（31.31秒）、ASan+UBSan/LSan20/20（25.36秒）、限定setarch进程布局下TSan3/3（1.26秒）；原裸跑0/3初始化失败保留。三负对照-6/-6/1、一键演示exit0，45进程/12故障/18个FINAL资源回收通过。累计纠正2/2，无新增债务；S1–S3阶段验收全部完成，不表示已合并或标签发布，V1.4未开始。
 
 TSan仅改变指定测试进程树地址随机化属性，不改系统全局配置；有限检查不证明穷举无race。保留全接口监听/可信环境、超时不回滚、join可能等待、TD006/WSL2/长尾/EOF风险。
+
+
+## V1.4/S1 资源租约（候选）
+
+ResourceBudget位于base，shared core以一个mutex原子维护connections/input/output各自limit/current/peak/rejected；ResourceLease可移动不可复制，析构noexcept、输出可部分释放。锁内只计账，不调用factory、socket、日志或大分配。main构造一次，显式注入TcpServer与HttpMessageFactory同一对象，寿命覆盖网络停止/业务join及退出快照；TaskService/业务执行器保留各自所有权，不重复账本。
+
+accept后联合连接+16KiB窗口准入先于factory。局部及跨worker ConnectionHandoff、Registry的临时接受对象都把租约放在socket之前构造，使失败析构先关fd后退槽。采用ConnectionIo的租约声明在socket/buffer之前；TcpConnection的消息/写完成回调在Io前销毁，Session请求租约先归还，再销毁Io缓冲/socket，最后归还连接窗口。移动赋值保留旧Io到作用域末尾，先释放旧资源再归还其租约，不复制额度。
+
+Session首input记录请求后获取1040KiB请求租约，失败在parser前静默aborted/unknown；100保留同租约，final完成/中止共用幂等finish。输出完整incoming先tryAcquire再append/FileRegion接管，异常局部lease回滚；send/sendfile每次positive返回紧邻扣减。额度异常在final/interim发送边界精确捕获，不落入provider500递归；状态在send前写定以保持同步回调重入安全。其余系统异常仍走原关闭/异常契约。
+
+九项资源统计由main追加到原退出快照，不改ServerMetrics serializer/HTTP16桶。预算域、固定值及排除项详见RUNNING；早期章节“无全局配额”是历史能力描述，当前显式注入的生产main以本节为准，不将逻辑预算解释成RSS保证。
+
+### V1.4/S1 收口检查点
+
+2026-10-31 V1.4/S1独立Reviewer002 PASS，累计纠正2/2，无新增债务。r3独立Debug34/34（34.38秒）、Release34/34（33.13秒）、ASan+UBSan/LSan22/22（27.66秒）、限定进程布局TSan4/4（1.36秒）及三负对照通过；r4只改新Python指标消费者，修后三配置HTTP各1/1（2.11/2.09/2.39秒）、同原真实管道反例及HTTP负对照通过，58进程正常清理。未声称r4重跑全量；Debug构建摘要有warning_present，未声称全零告警。原Release33/34与P2 FAIL保留。S1已完成，S2/S3未开始，V1.4整体未完成；验收不代表合并或标签发布。
+
+128连接、64MiB输入预留/待发输出逻辑预算及EOF/reset过载策略保持；文件剩余字节不是RSS，旧16桶/原指标含义不变。TD006、WSL2/长尾/EOF风险及原P3不关闭或顺手修改。

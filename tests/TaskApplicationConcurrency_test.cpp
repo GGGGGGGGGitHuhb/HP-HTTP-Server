@@ -171,9 +171,13 @@ void checkSnapshot(const BoundedTaskExecutor& executor) {
   requireTestCondition(value.admitted == value.released + value.outstanding);
 }
 
-void waitReady(const BoundedTaskExecutor& executor, std::size_t count) {
+void waitQuiescentReady(const BoundedTaskExecutor& executor, std::size_t count) {
   const auto deadline = std::chrono::steady_clock::now() + 5s;
-  while (executor.snapshot().ready != count) {
+  for (;;) {
+    const auto value = executor.snapshot();
+    if (value.ready == count && value.outstanding == count && value.queued == 0 &&
+        value.running == 0)
+      return;
     checkSnapshot(executor);
     requireTestCondition(std::chrono::steady_clock::now() < deadline);
     std::this_thread::yield();
@@ -235,14 +239,14 @@ void testExecutorComposition() {
   probe.executor.cancelTask(probe.jobs[0]);
   requireTestCondition(probe.executor.snapshot().outstanding == 33);
   gate->release();
-  waitReady(probe.executor, 32);
+  waitQuiescentReady(probe.executor, 32);
   requireTestCondition(probe.executor.snapshot().outstanding == 32);
   for (unsigned i : {0U, 2U}) {
     auto submission = probe.executor.submitTask(std::make_shared<SnapshotWork>(service));
     requireTestCondition(submission.admission == TaskAdmission::kAccepted);
     probe.jobs[i] = submission.job;
   }
-  waitReady(probe.executor, 34);
+  waitQuiescentReady(probe.executor, 34);
   requireTestCondition(
       probe.executor.submitTask(std::make_shared<SnapshotWork>(service)).admission ==
       TaskAdmission::kOverloaded);

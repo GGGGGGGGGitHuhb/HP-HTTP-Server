@@ -19,8 +19,10 @@ std::string errorMessage(int fd, const char* operation, int error) {
 TcpConnection::TcpConnection(EventLoop& ownerEventLoop,
                              Socket socket,
                              Identity identity,
-                             std::size_t maxInputBytes)
-    : io_(std::move(socket), maxInputBytes),
+                             std::size_t maxInputBytes,
+                             std::shared_ptr<base::ResourceBudget> resourceBudget,
+                             base::ResourceLease connectionLease)
+    : io_(std::move(socket), maxInputBytes, std::move(resourceBudget), std::move(connectionLease)),
       identity_(identity),
       connectionChannel_(ownerEventLoop, io_.fd()) {
   if (identity == 0) throw std::invalid_argument("invalid connection identity");

@@ -16,7 +16,8 @@ class TcpServer final : private base::NonCopyable {
                      std::size_t maxInputBytes = 0,
                      std::size_t workerCount = 0,
                      ConnectionTimeouts timeouts = {},
-                     metrics::ServerMetrics* metrics = nullptr);
+                     metrics::ServerMetrics* metrics = nullptr,
+                     std::shared_ptr<base::ResourceBudget> resourceBudget = {});
   ~TcpServer() noexcept;
   void registerMessageFactoryCallback(MessageFactoryCallback messageFactoryCallback);
 
@@ -44,6 +45,7 @@ class TcpServer final : private base::NonCopyable {
   }
 
   struct ConnectionHandoff {
+    base::ResourceLease connectionLease;
     Socket socket;
     TcpConnection::MessageCallback messageCallback;
   };
@@ -60,6 +62,7 @@ class TcpServer final : private base::NonCopyable {
 
   EventLoop mainEventLoop_;
   MessageFactoryCallback messageFactoryCallback_;  // 绑定 `onMessageFactory()`
+  std::shared_ptr<base::ResourceBudget> resourceBudget_;
   metrics::ServerMetrics* metrics_;
   std::size_t maxInputBytes_;
   const std::size_t workerCount_;
