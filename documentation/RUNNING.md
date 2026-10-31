@@ -211,3 +211,13 @@ TSan仅改变指定测试进程树地址随机化属性，不改系统全局配�
 2026-10-31 V1.4/S2独立Reviewer001 PASS：最终r2候选Debug36/36（35.36秒）、Release36/36（34.82秒）、ASan+UBSan/LSan24/24（31.13秒）、限定setarch进程布局TSan5/5（3.49秒）；负对照-6/-6/1、14份C++格式通过，32份长寿命fixture、12个故障和4个临时root正常清理。63旧tests及31冻结保持。当前纠正1/2，无新增债务；原JSON include/help失败历史保留。S2已完成、S3未开始，V1.4整体未完成；阶段验收不表示已合并或标签发布。
 
 管理默认关闭、实际回环绑定且无鉴权，readiness不保证容量；独立逻辑预算不等于全局RSS。日志由外部接收者轮转，网络drain期限不等于整个进程退出期限；不合作业务或sink仍可能延长join。TD006/WSL2/EOF/长尾及S1 warning/P3保持。
+
+## V1.4/S3 部署示例
+
+[部署说明](DEPLOYMENT.md)与新增systemd/JSON配对示例说明hp-http普通用户、只读静态站点和手动安装步骤；本地工具不执行系统安装/服务命令。Type=exec不是ready，SendSIGKILL=no意味着15秒超时后仍可能残留进程并阻碍重启。管理口不代理，业务0.0.0.0需要外部网络隔离；TLS证书/代理与journald策略不在本地验收范围。
+
+### V1.4/S3 最终验收检查点
+
+2026-10-31 V1.4/S3独立Reviewer002 PASS，P2初始化清理缺陷关闭，累计纠正2/2，无新增债务。最终干净r2独立Debug37/37（35.50秒）、Release37/37（34.93秒）、ASan+UBSan/LSan25/25（31.95秒）、限定setarch TSan5/5（3.51秒）、Release demo exit0、新负对照exit1；24个服务器及2个demo进程完整回收。S1–S3阶段验收全部完成，不表示S3已合并、打标签或生产发布。原Debug35/37与Reviewer001 FAIL保留，人工RST不冒称原生产RST根因复现。
+
+仅静态unit字段/重定位副本与非root普通进程实测，未安装运行systemd服务或TLS代理。业务全接口/管理回环无鉴权、readiness非容量、外部轮转、网络drain非进程退出硬截止以及TD006/WSL2/长尾/EOF限制保持；逻辑配额不等于RSS，无性能新采样。

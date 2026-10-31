@@ -124,9 +124,22 @@ def check_trailers_and_fin(server):
     print("CASE Q04-trailer-policy-and-FIN-prefixes PASS", flush=True)
 
 
+def require_deadline_close(sock):
+    import errno
+    try:
+        data = sock.recv(1)
+    except ConnectionResetError as error:
+        if error.errno != errno.ECONNRESET:
+            raise
+        return 'RST'
+    require(data == b"", "deadline unexpectedly sent final/data")
+    return 'EOF'
+
+
 def check_drip_stage(server, prefix, case):
     with contextlib.closing(Client(server.port)) as client:
         started = time.monotonic()
+        print("CASE Q05-enter", case, flush=True)
         if case == "header":
             client.send(b"POST /api/echo HTTP/1.1\r\nHost:")
         else:
@@ -138,7 +151,8 @@ def check_drip_stage(server, prefix, case):
         while time.monotonic() - started < 0.9:
             ready, _, _ = select.select([client.socket], [], [], 0.04)
             if ready:
-                require(client.socket.recv(1) == b"", "deadline unexpectedly sent final/data")
+                observation = require_deadline_close(client.socket)
+                print("CASE Q05-close", case, observation, flush=True)
                 closed = True
                 break
             client.send(b"x")

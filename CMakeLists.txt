@@ -276,3 +276,10 @@ if(BUILD_TESTING)
     set_tests_properties(server_operations_tests http_operations_http_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()
+
+if(BUILD_TESTING)
+    add_test(NAME http_deployment_acceptance_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpDeploymentAcceptance_test.py $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(http_deployment_acceptance_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
