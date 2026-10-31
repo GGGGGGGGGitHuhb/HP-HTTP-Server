@@ -10,6 +10,8 @@ struct TcpServerTestAccess;
 
 class TcpServer final : private base::NonCopyable {
  public:
+  using StartedCallback = std::function<void()>;
+
   using MessageFactoryCallback = std::function<TcpConnection::MessageCallback()>;
 
   explicit TcpServer(std::uint16_t requestedPort,
@@ -17,11 +19,16 @@ class TcpServer final : private base::NonCopyable {
                      std::size_t workerCount = 0,
                      ConnectionTimeouts timeouts = {},
                      metrics::ServerMetrics* metrics = nullptr,
-                     std::shared_ptr<base::ResourceBudget> resourceBudget = {});
+                     std::shared_ptr<base::ResourceBudget> resourceBudget = {},
+                     ListenAddress listenAddress = ListenAddress::kAny);
   ~TcpServer() noexcept;
   void registerMessageFactoryCallback(MessageFactoryCallback messageFactoryCallback);
 
   [[nodiscard]] std::uint16_t boundPort() const noexcept;
+
+  void setStartedCallback(StartedCallback startedCallback) {
+    startedCallback_ = std::move(startedCallback);
+  }
 
   void runTcpServer();
 
@@ -60,6 +67,7 @@ class TcpServer final : private base::NonCopyable {
   void onControl(std::size_t workerIndex, EventLoop::Control kind, EventLoop::Deadline deadline);
   void onControl(EventLoop::Control kind, EventLoop::Deadline deadline);
 
+  StartedCallback startedCallback_;
   EventLoop mainEventLoop_;
   MessageFactoryCallback messageFactoryCallback_;  // 绑定 `onMessageFactory()`
   std::shared_ptr<base::ResourceBudget> resourceBudget_;

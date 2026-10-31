@@ -10,16 +10,16 @@
 #include "net/EventLoop.h"
 
 namespace hp::net {
-Socket Acceptor::createListener(std::uint16_t port) {
+Socket Acceptor::createListener(std::uint16_t port, ListenAddress listenAddress) {
   Socket listener = Socket::createTcp();
   listener.setReuseAddress(true);
-  listener.bindAny(port);
+  listener.bindIpv4(port, listenAddress);
   listener.listen(128);
   return listener;
 }
 
-Acceptor::Acceptor(EventLoop& ownerEventLoop, std::uint16_t port)
-    : listener_(createListener(port)),
+Acceptor::Acceptor(EventLoop& ownerEventLoop, std::uint16_t port, ListenAddress listenAddress)
+    : listener_(createListener(port, listenAddress)),
       boundPort_(listener_.localPort()),
       listenerChannel_(ownerEventLoop, listener_.fd()) {
   listenerChannel_.registerEventCallback(

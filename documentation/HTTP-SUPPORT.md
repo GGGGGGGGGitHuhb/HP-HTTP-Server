@@ -12,7 +12,7 @@ ctest --test-dir build -R '^http_protocol_baseline(_http)?_tests$' --output-on-f
 
 - `http_protocol_baseline_tests`：直接使用当前 `RequestParser::feedRequestBytes/resetRequestParser`；短语料每个切分点及逐字节、长边界整包/逐字节/127字节块。每次核acceptedBytes、累计requestBytes、终态及reset，不访问私有状态。
 - `http_protocol_baseline_http_tests`：真实启动服务器，分别threads=0/2，解析完整响应及正文；同一socket验证连续请求，正常SIGTERM回收；只使用Python标准库。
-- CMake共34项，V1.4/S1前32项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
+- CMake共36项，V1.4/S2前34项全部保留；server_integration_tests仍是历史别名，不能当作新增独立覆盖。现有23个冻结目标及31份相关源码仍不迁移（S2拒绝语料例外保留，V1.1/S3两份Allow历史例外保留；S1历史一份两literal例外保留；S2仅三份精确例外及已批symlink literal补充，其余28份不改），见[开发说明](DEVELOPMENT.md#冻结旧测试与覆盖限制)。
 - 新HTTP测试在`HP_S3_TEST_TMP_ROOT`（CTest设为构建目录的test-tmp）下建立唯一运行目录，删除业务fixture，保留有界服务器日志、每进程JSON回收记录及summary.json。失败亦保留证据。每次socket操作服从同一场景5秒绝对截止，套件120秒，每响应最多9MiB；不依赖短sleep确认事件。
 
 ## 支持/拒绝及覆盖映射
@@ -170,3 +170,13 @@ TSan仅改变指定测试进程树地址随机化属性，不改系统全局配�
 2026-10-31 V1.4/S1独立Reviewer002 PASS，累计纠正2/2，无新增债务。r3独立Debug34/34（34.38秒）、Release34/34（33.13秒）、ASan+UBSan/LSan22/22（27.66秒）、限定进程布局TSan4/4（1.36秒）及三负对照通过；r4只改新Python指标消费者，修后三配置HTTP各1/1（2.11/2.09/2.39秒）、同原真实管道反例及HTTP负对照通过，58进程正常清理。未声称r4重跑全量；Debug构建摘要有warning_present，未声称全零告警。原Release33/34与P2 FAIL保留。S1已完成，S2/S3未开始，V1.4整体未完成；验收不代表合并或标签发布。
 
 128连接、64MiB输入预留/待发输出逻辑预算及EOF/reset过载策略保持；文件剩余字节不是RSS，旧16桶/原指标含义不变。TD006、WSL2/长尾/EOF风险及原P3不关闭或顺手修改。
+
+## V1.4/S2 独立管理接口（候选）
+
+业务listener路由不变；管理显式启用且仅实际绑定127.0.0.1，独立线程/预算、不计业务HTTP指标。GET /healthz、/readyz、/metrics以及方法/body/Expect/query精确规则见[配置说明](CONFIGURATION.md)。管理不提供静态文件/任务接口，所有handler响应no-store、text/plain、close，HEAD405无正文；parser提前拒绝仍原格式。readiness不表示剩余容量，快照不是跨模块事务。
+
+### V1.4/S2 收口检查点
+
+2026-10-31 V1.4/S2独立Reviewer001 PASS：最终r2候选Debug36/36（35.36秒）、Release36/36（34.82秒）、ASan+UBSan/LSan24/24（31.13秒）、限定setarch进程布局TSan5/5（3.49秒）；负对照-6/-6/1、14份C++格式通过，32份长寿命fixture、12个故障和4个临时root正常清理。63旧tests及31冻结保持。当前纠正1/2，无新增债务；原JSON include/help失败历史保留。S2已完成、S3未开始，V1.4整体未完成；阶段验收不表示已合并或标签发布。
+
+管理默认关闭、实际回环绑定且无鉴权，readiness不保证容量；独立逻辑预算不等于全局RSS。日志由外部接收者轮转，网络drain期限不等于整个进程退出期限；不合作业务或sink仍可能延长join。TD006/WSL2/EOF/长尾及S1 warning/P3保持。

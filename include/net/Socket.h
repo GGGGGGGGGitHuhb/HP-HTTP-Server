@@ -5,6 +5,7 @@
 #include "base/NonCopyable.h"
 
 namespace hp::net {
+enum class ListenAddress { kAny, kLoopback };
 
 class Socket final : private base::NonCopyable {
  public:
@@ -28,6 +29,7 @@ class Socket final : private base::NonCopyable {
   void setTcpNoDelay(bool enabled);
 
   void bindAny(std::uint16_t port);
+  void bindIpv4(std::uint16_t port, ListenAddress listenAddress);
   void listen(int backlog);
   [[nodiscard]] Socket acceptNonBlocking();
 

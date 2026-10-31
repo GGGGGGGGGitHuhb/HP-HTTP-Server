@@ -39,8 +39,9 @@ target_include_directories(hp_http_core PUBLIC include)
 find_package(Threads REQUIRED)
 target_link_libraries(hp_http_core PUBLIC Threads::Threads)
 
-add_library(hp_http_app STATIC app/AsyncTaskHandler.cpp app/HttpConnectionHandler.cpp app/AccessLog.cpp app/SignalWatcher.cpp)
+add_library(hp_http_app STATIC app/ServerConfig.cpp app/ManagementHandler.cpp app/ManagementServer.cpp app/AsyncTaskHandler.cpp app/HttpConnectionHandler.cpp app/AccessLog.cpp app/SignalWatcher.cpp)
 target_include_directories(hp_http_app PUBLIC app)
+target_include_directories(hp_http_app SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
 target_link_libraries(hp_http_app PUBLIC hp_http_core)
 
 add_executable(hp_http_server app/main.cpp)
@@ -261,5 +262,17 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpResourceBudgetHttp_test.py
             $<TARGET_FILE:hp_http_server> $<TARGET_FILE:resource_budget_test_server>)
     set_tests_properties(resource_budget_tests http_resource_budget_http_tests PROPERTIES TIMEOUT 120
+        ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(server_operations_tests tests/ServerOperations_test.cpp)
+    target_link_libraries(server_operations_tests PRIVATE hp_http_app ${CMAKE_DL_LIBS})
+    target_link_options(server_operations_tests PRIVATE -Wl,--export-dynamic-symbol=pthread_create -Wl,--wrap=epoll_create1 -Wl,--wrap=epoll_wait -Wl,--wrap=fstat)
+    enable_debug_warnings(server_operations_tests)
+    add_test(NAME server_operations_tests COMMAND server_operations_tests)
+    add_test(NAME http_operations_http_tests
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/HttpOperationsHttp_test.py $<TARGET_FILE:hp_http_server>)
+    set_tests_properties(server_operations_tests http_operations_http_tests PROPERTIES TIMEOUT 120
         ENVIRONMENT "HP_S3_TEST_TMP_ROOT=${CMAKE_BINARY_DIR}/test-tmp;PYTHONDONTWRITEBYTECODE=1")
 endif()

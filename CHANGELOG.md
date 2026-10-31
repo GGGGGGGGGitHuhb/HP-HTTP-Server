@@ -5,6 +5,12 @@
 <a id="unreleased"></a>
 ## V1.4 — 开发中（未发布）
 
+### S2 配置与运行观测
+
+- 新增严格有界JSON配置与CLI覆盖、启动前校验及已有资源预算参数；默认关闭的真实IPv4回环管理服务独立提供health/readiness/metrics，保留原业务和退出指标契约。
+- 管理无鉴权/readiness非容量保证；stderr外部轮转，网络drain期限不保证业务或logger join硬截止。
+- 2026-10-31 V1.4/S2独立Reviewer001 PASS：最终r2候选Debug36/36（35.36秒）、Release36/36（34.82秒）、ASan+UBSan/LSan24/24（31.13秒）、限定setarch进程布局TSan5/5（3.49秒）；负对照-6/-6/1、14份C++格式通过，32份长寿命fixture、12个故障和4个临时root正常清理。63旧tests及31冻结保持。当前纠正1/2，无新增债务；原JSON include/help失败历史保留。S2已完成、S3未开始，V1.4整体未完成；阶段验收不表示已合并或标签发布。
+
 ### S1 全局资源预算与过载
 
 - 新增共享128连接、64MiB输入预留、64MiB待发输出逻辑预算；handoff/Session/Io移动租约恰好一次释放，过载关闭相关连接并可恢复，现有业务槽/数据边界保持，退出追加9个resource字段。

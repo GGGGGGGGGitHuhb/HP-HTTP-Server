@@ -84,10 +84,13 @@ void Socket::setTcpNoDelay(bool enabled) {
   }
 }
 
-void Socket::bindAny(std::uint16_t port) {
+void Socket::bindAny(std::uint16_t port) { bindIpv4(port, ListenAddress::kAny); }
+
+void Socket::bindIpv4(std::uint16_t port, ListenAddress listenAddress) {
   sockaddr_in address{};
   address.sin_family = AF_INET;
-  address.sin_addr.s_addr = htonl(INADDR_ANY);
+  address.sin_addr.s_addr =
+      htonl(listenAddress == ListenAddress::kLoopback ? INADDR_LOOPBACK : INADDR_ANY);
   address.sin_port = htons(port);
 
   if (::bind(fd_, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == -1) {

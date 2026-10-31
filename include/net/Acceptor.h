@@ -11,7 +11,9 @@ class Acceptor final : private base::NonCopyable {
  public:
   using AcceptedCallback = std::function<void(Socket)>;
 
-  Acceptor(EventLoop& ownerEventLoop, std::uint16_t port);
+  Acceptor(EventLoop& ownerEventLoop,
+           std::uint16_t port,
+           ListenAddress listenAddress = ListenAddress::kAny);
   void setAcceptedCallback(AcceptedCallback acceptedCallback) {
     acceptedCallback_ = std::move(acceptedCallback);
   }
@@ -27,7 +29,7 @@ class Acceptor final : private base::NonCopyable {
  private:
   friend struct AcceptorTestAccess;
 
-  static Socket createListener(std::uint16_t port);
+  static Socket createListener(std::uint16_t port, ListenAddress listenAddress);
   void handleListenerEvent(std::uint32_t mask);
   void acceptPendingConnections();
 
