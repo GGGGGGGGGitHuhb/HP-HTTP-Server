@@ -118,7 +118,7 @@ S3独立初审FAIL定位RFC850完整timestamp的50年阈值，最小修复与13�
 
 ## V1.3/S1 任务验证（已独立验收）
 
-当前28项CTest保留旧26身份，新增http_task_api_tests/http_task_api_http_tests。Debug/Release各28，规定ASan+UBSan/LSan原14加新2共16。两个新suite覆盖有界SAX/schema/media、容量/ID、8线程固定操作量/8客户端barrier并发、factory共享和真实threads0/2、Expect阶段差异、JSON/no-store与16桶计数。socket场景5秒绝对截止、suite120秒，JSON额外256KiB上限；无性能/TSan结论。
+S1验收时28项CTest保留旧26身份，新增http_task_api_tests/http_task_api_http_tests。Debug/Release各28，规定ASan+UBSan/LSan原14加新2共16。两个新suite覆盖有界SAX/schema/media、容量/ID、8线程固定操作量/8客户端barrier并发、factory共享和真实threads0/2、Expect阶段差异、JSON/no-store与16桶计数。socket场景5秒绝对截止、suite120秒，JSON额外256KiB上限；无性能/TSan结论。
 
 ```bash
 ctest --test-dir build -R '^http_task_api(_http)?_tests$' --output-on-failure --timeout 120
@@ -127,3 +127,15 @@ ctest --test-dir build -R '^http_task_api(_http)?_tests$' --output-on-failure --
 固定third_party/nlohmann/json.hpp 3.12.0及MIT见[来源清单](../third_party/nlohmann/README.md)；CMake只本地PRIVATE SYSTEM include，不下载/安装，第三方原文件不格式化。新负对照只显式设置HP_TASK_API_NEGATIVE=1：C++资源创建前错误TaskInput，HTTP实际POST201后错误title，必须非零且finally回收。原全部旧测试仅一个已批例外：静态S06总桶13→16，旧i<13/索引/计数及其他字节保持；31冻结/23停用目标不变。
 
 S1独立Reviewer PASS：Debug/Release各28/28、规定sanitizer16/16，三负对照-6/-6/1、14项目文件格式通过；151条HTTP及22份fixture清理正常。25项候选/导出同字节且HEAD+patch独立重建一致，52旧测试SHA不变，唯一S06总数13→16机械重建通过，31冻结不变。累计纠正3/3和协调停止记录保留，原缩进warning已修正但不删除历史；官方MIT行尾空格保留，不为格式变更vendor。
+
+## V1.3/S2 新增异步验证（待独立审查）
+
+新增`bounded_task_executor_tests`与`http_async_task_http_tests`，独立夹具`async_task_test_server`只在测试构建使用。Debug/Release要求30项，ASan+UBSan/LSan为原16加新2共18项；原测试与31冻结文件不修改。C++使用NDEBUG有效检查；`HP_ASYNC_TASK_NEGATIVE=1`仅新suite负对照，生产不读取。
+
+HTTP场景5秒、suite120秒，门闩经管道明确放行；日志保存fixture FINAL admitted/released/outstanding与子进程退出，成功和故意失败均收尾。执行器独立验证ready占槽与取消运行不提前释放，真实Registry验证fd复用及timer生命周期；不以忙等或sleep猜测worker是否已进入门闩。唯一sleep_until用于已明确准入job的绝对过期边界。
+
+### V1.3/S2 验收检查点
+
+V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30（28.76秒）、规定ASan+UBSan/LSan18/18（22.85秒）；三负对照-6/-6/1、16文件格式通过。55旧测试及31冻结保持；启动异常夹具自清理缺陷已修复，原FAIL与初URL失败保留，累计纠正2/2，无新债。S2已完成，S3未开始，V1.3整体未完成；验收不表示合并或标签发布。
+
+23文件导出由HEAD+stage.patch独立重建验证；20文件与被测候选同字节，3重叠文件仅8处原用户注释差异并人工行为等价审计。export未另编译。5ms非硬实时、逻辑容量非RSS硬限、运行取消不提前释放槽及旧性能/EOF边界保持。

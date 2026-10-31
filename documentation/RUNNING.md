@@ -143,3 +143,15 @@ POST201、GET/PUT200返回`{"id":"1","title":"demo","completed":false}`形状；
 完整请求后的业务400/404/415/503可保活，405/应用413/受控500close；仅Expect头阶段提前路径/ID/query400/404因body尚未消费而强制close，无100/副作用。合法Expect先100，完整body才检查媒体/JSON/存储；完整后invalid_json400仍保活。公共target/framing错误保留原格式/关闭规则，所有静态条件/Range对任务无效。
 
 多worker共享同一进程内mutex存储，单次操作原子、list为拥有快照；同步锁不承诺公平或无阻塞。已提交写入在响应编码/发送失败后可能已生效，POST重试可能重复；无幂等键、事务、持久化、鉴权或业务线程池。日志不记录title/body/Content-Type/query，新增metrics末尾201/415/503；业务错误不算parse/provider错误。
+
+## V1.3/S2 异步任务运行边界（候选）
+
+正常启动命令不变，生产任务API默认固定2业务线程、32排队、34未释放槽；包含ready结果及取消后仍运行的job。1000ms从成功准入计时到owner交付，5ms续接轮询不续期。过载/停止准入为`{"error":"task_overloaded"}`，超时为`{"error":"task_timeout"}`；均503、JSON、no-store、准确Content-Length并close。廉价路径/ID/query/方法/body/media错误仍先按既有语义返回；JSON无效或资源不存在可能在过载时先得到503。静态/echo和无异步注入的兼容factory不走执行器。
+
+SIGTERM首先停止业务准入并取消，再网络drain；网络结束后等待实际工作返回。HTTP超时不撤销已提交写入，重试POST可能重复。不存在生产慢端点、调试header/env控制或强杀线程；测试门闩只由独立async_task_test_server构造注入。
+
+### V1.3/S2 验收检查点
+
+V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30（28.76秒）、规定ASan+UBSan/LSan18/18（22.85秒）；三负对照-6/-6/1、16文件格式通过。55旧测试及31冻结保持；启动异常夹具自清理缺陷已修复，原FAIL与初URL失败保留，累计纠正2/2，无新债。S2已完成，S3未开始，V1.3整体未完成；验收不表示合并或标签发布。
+
+23文件导出由HEAD+stage.patch独立重建验证；20文件与被测候选同字节，3重叠文件仅8处原用户注释差异并人工行为等价审计。export未另编译。5ms非硬实时、逻辑容量非RSS硬限、运行取消不提前释放槽及旧性能/EOF边界保持。

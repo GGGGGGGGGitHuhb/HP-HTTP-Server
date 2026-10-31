@@ -4,7 +4,7 @@ Linux C++20 HTTP 服务器学习项目：提供受限 HTTP/1.1 GET/HEAD 静态�
 
 ## 后续方向
 
-2026-10-29调整：取消本仓库原L7网关扩展，后续依次规划V1.1请求正文与基础路由、V1.2 HTTP兼容与静态资源语义、V1.3无数据库动态接口、V1.4运行保障。V1.1/S1协议与回归基线已完成独立验收并合并，S2正文与读取期限已完成独立验收，S3方法路由已完成独立验收，V1.1三个阶段均已验收完成，S3已合并origin/main（标签发布未核实）；V1.2/S1已完成独立验收并合并，S2目标解析已独立验收（Approved revision1及补充，Reviewer001 PASS），S3条件请求与单区间下载已独立复审PASS，V1.2三个阶段均已验收完成；S3已合并（本阶段起点PR40），发布标签未核实；V1.3/S1内存任务API已独立验收PASS，S2/S3未开始，V1.3整体未完成；当前仍是受限HTTP服务，详见[路线图](ROADMAP.md#后续路线与共同门槛)。数据库、代理及推理网关不在本轮范围。
+2026-10-29调整：取消本仓库原L7网关扩展，后续依次规划V1.1请求正文与基础路由、V1.2 HTTP兼容与静态资源语义、V1.3无数据库动态接口、V1.4运行保障。V1.1/S1协议与回归基线已完成独立验收并合并，S2正文与读取期限已完成独立验收，S3方法路由已完成独立验收，V1.1三个阶段均已验收完成，S3已合并origin/main（标签发布未核实）；V1.2/S1已完成独立验收并合并，S2目标解析已独立验收（Approved revision1及补充，Reviewer001 PASS），S3条件请求与单区间下载已独立复审PASS，V1.2三个阶段均已验收完成；S3已合并（本阶段起点PR40），发布标签未核实；V1.3/S1内存任务API已独立验收PASS，S2已独立复审PASS、S3未开始，V1.3整体未完成；当前仍是受限HTTP服务，详见[路线图](ROADMAP.md#后续路线与共同门槛)。数据库、代理及推理网关不在本轮范围。
 
 ## 环境要求
 
@@ -39,7 +39,7 @@ ctest --test-dir build -N
 ctest --test-dir build --output-on-failure
 ```
 
-当前CMake注册28项，含已验收S3静态语义两套及目标解析两套及已验收chunked/Expect两套、历史别名和synthetic工具测试；历史V1.1/S3增加方法路由C++与真实HTTP两套，Builder及Reviewer独立通过Debug/Release各20/20、规定sanitizer 8/8，Reviewer结论PASS；错误预期和失败清理反证有效。当前行为见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，测试入口与冻结覆盖边界见[开发说明](documentation/DEVELOPMENT.md)。23个旧目标仍停用；S3仅定向更新两份旧测试的静态405 Allow断言，其他冻结约束保持。
+当前CMake注册30项，含已验收S3静态语义两套及目标解析两套及已验收chunked/Expect两套、历史别名和synthetic工具测试；历史V1.1/S3增加方法路由C++与真实HTTP两套，Builder及Reviewer独立通过Debug/Release各20/20、规定sanitizer 8/8，Reviewer结论PASS；错误预期和失败清理反证有效。当前行为见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，测试入口与冻结覆盖边界见[开发说明](documentation/DEVELOPMENT.md)。23个旧目标仍停用；S3仅定向更新两份旧测试的静态405 Allow断言，其他冻结约束保持。
 
 ## 项目结构
 
@@ -119,3 +119,11 @@ V1.2/S2已验收统一目标一次percent解码：`/space%20name.txt`访问编�
 ### V1.3/S1 内存任务API（已独立验收）
 
 新增`GET/POST /api/tasks`和`GET/PUT/DELETE /api/tasks/{id}`。POST/PUT必须提供JSON对象`{"title":"demo","completed":false}`及Content-Type: application/json；PUT完整替换，ID为字符串，最多128条，重启清空。任务命名空间优先同名静态文件，HEAD返回405无正文，其他/API路径和echo保持原规则。所有任务JSON响应带唯一no-store，错误与连接策略见[运行说明](documentation/RUNNING.md#v13s1-内存任务api已独立验收)。无数据库、鉴权、持久化、PATCH或异步业务线程池；V1.3未验收完成。
+
+## V1.3/S2 异步任务候选（待独立审查）
+
+生产入口将完整任务请求交给固定2线程执行器：最多排队32个，包含运行和待领取结果共34槽。静态文件与echo继续由连接owner处理；原无异步注入的factory保持同步兼容。任务从准入到owner交付最多1000ms；过载或超时返回JSON 503并关闭连接。输入验证、100 Continue与请求读取期限仍在owner。
+
+新增`bounded_task_executor_tests`、`http_async_task_http_tests`，CTest共30项；详细行为与退出限制见[运行说明](documentation/RUNNING.md)。本阶段尚待Reviewer验收，未宣称性能提升。
+
+V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30（28.76秒）、规定ASan+UBSan/LSan18/18（22.85秒）；三负对照-6/-6/1、16文件格式通过。55旧测试及31冻结保持；启动异常夹具自清理缺陷已修复，原FAIL与初URL失败保留，累计纠正2/2，无新债。S2已完成，S3未开始，V1.3整体未完成；验收不表示合并或标签发布。

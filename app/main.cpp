@@ -182,6 +182,7 @@ struct ServerOptions {
 struct ShutdownSignalHandler {
   hp::app::SignalWatcher& signals;
   hp::net::TcpServer& server;
+  hp::business::BoundedTaskExecutor& executor;
   std::chrono::milliseconds shutdownTimeout;
   bool draining{false};
 
@@ -193,6 +194,7 @@ struct ShutdownSignalHandler {
       } else {
         // 首次请求优雅关闭
         draining = true;
+        executor.stopAcceptingAndCancel();
         server.requestServerGracefulShutdown(hp::timer::TimerQueue::Clock::now() + shutdownTimeout);
       }
       hp::base::info("Shutdown signal observed: " + std::to_string(signal) + ".");
@@ -223,6 +225,8 @@ int runServer(int argc, char* argv[]) {
     hp::http::StaticFileService service(options.root);
     auto tasks = std::make_shared<hp::business::TaskService>();
     hp::http::RequestRouter router(service, tasks);
+    auto executor = std::make_shared<hp::business::BoundedTaskExecutor>();
+    auto asyncHandler = std::make_shared<hp::app::AsyncTaskHandler>(router.taskHandler(), executor);
     hp::app::SignalWatcher signals;
     hp::net::TcpServer server(options.port,
                               hp::http::kMaxHeaderBytes,
@@ -233,10 +237,12 @@ int runServer(int argc, char* argv[]) {
         [target = hp::app::HttpMessageFactory{router,
                                               &metrics,
                                               options.accessLog,
-                                              options.requestReadTimeout}]() {
+                                              options.requestReadTimeout,
+                                              {},
+                                              asyncHandler}]() {
           return target.onMessageFactory();
         });
-    ShutdownSignalHandler shutdownSignals{signals, server, options.shutdownTimeout};
+    ShutdownSignalHandler shutdownSignals{signals, server, *executor, options.shutdownTimeout};
     auto& signalChannel = server.watchControlFd(signals.fd());
     signalChannel.registerEventCallback([target = &shutdownSignals](std::uint32_t events) {
       target->handleShutdownSignal(events);
@@ -248,6 +254,8 @@ int runServer(int argc, char* argv[]) {
     std::cout << "V0.1 / S3 minimal HTTP static file server listening on port " << portText << "."
               << std::endl;
     server.runTcpServer();
+    executor->stopAcceptingAndCancel();
+    executor->joinWorkers();
   } catch (const std::exception& error) {
     hp::base::error(error.what());
     exitCode = 1;

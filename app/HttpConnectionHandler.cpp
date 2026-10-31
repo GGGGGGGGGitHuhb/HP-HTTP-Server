@@ -22,6 +22,7 @@ Session::Session(HttpCallbackStats* callbackStats,
 }
 
 Session::~Session() {
+  if (pendingJob) asyncHandler->cancelRequest(pendingJob);
   finishPendingRequest(true);
   if (auto observer = sessionEventCallback.load()) observer(false, this);
 }
@@ -139,6 +140,27 @@ void Session::onMessage(net::TcpConnection& connection) {
       case http::ParseStatus::kMethodNotAllowed:
         throw std::logic_error("parser returned obsolete method status");
       case http::ParseStatus::kComplete: {
+        if (asyncHandler) {
+          auto submission = asyncHandler->submitRequest(parsed.request, policy);
+          if (submission.dispatch == AsyncDispatch::kPending) {
+            pendingJob = std::move(submission.job);
+            ++taskGeneration;
+            phase = Phase::kAwaitingTask;
+            try {
+              armTaskContinuation(connection);
+            } catch (...) {
+              asyncHandler->cancelRequest(pendingJob);
+              pendingJob.reset();
+              connection.cancelContinuation();
+              sendFinalResponse(connection, AsyncTaskHandler::failureResponse());
+            }
+            return;
+          }
+          if (submission.response) {
+            sendFinalResponse(connection, std::move(*submission.response));
+            return;
+          }
+        }
         // 调用响应回调 responseCallback()
         auto result = responseCallback(parsed.request, policy);
         if (close && result.effectivePolicy != http::ConnectionPolicy::kClose)
@@ -162,13 +184,58 @@ void Session::onMessage(net::TcpConnection& connection) {
                                        http::ConnectionPolicy::kClose,
                                        omitBody);
   }
+  sendFinalResponse(connection,
+                    {std::move(response),
+                     close ? http::ConnectionPolicy::kClose : http::ConnectionPolicy::kKeepAlive,
+                     std::move(file),
+                     static_cast<http::Status>(accessRecord.status),
+                     accessRecord.contentBytes});
+}
+
+void Session::sendFinalResponse(net::TcpConnection& connection, http::ResponseResult result) {
+  phase = Phase::kWriting;
+  close = result.effectivePolicy == http::ConnectionPolicy::kClose;
+  accessRecord.status = static_cast<int>(result.status);
+  accessRecord.contentBytes = result.contentBytes;
   // send 可同步触发完成并递归处理pipeline，所有状态须先写定。
   completed = true;
   if (stats) ++stats->responses;
-  if (file)
-    connection.sendFile(response, std::move(*file));
+  if (result.file)
+    connection.sendFile(result.bytes, std::move(*result.file));
   else
-    connection.sendBytes(response);
+    connection.sendBytes(result.bytes);
+}
+
+void Session::armTaskContinuation(net::TcpConnection& connection) {
+  const auto next = std::min(std::chrono::steady_clock::now() + std::chrono::milliseconds{5},
+                             pendingJob->deadline());
+  connection.scheduleContinuation(
+      next,
+      [weak = weak_from_this(), generation = taskGeneration](net::TcpConnection& target) {
+        if (auto session = weak.lock()) session->onTaskContinuation(target, generation);
+      });
+}
+
+void Session::onTaskContinuation(net::TcpConnection& connection, std::uint64_t generation) {
+  if (phase != Phase::kAwaitingTask || generation != taskGeneration || connection.isDraining())
+    return;
+  std::optional<http::ResponseResult> result;
+  try {
+    if (std::chrono::steady_clock::now() < pendingJob->deadline())
+      result = asyncHandler->collectResponse(pendingJob);
+    if (std::chrono::steady_clock::now() >= pendingJob->deadline())
+      result = AsyncTaskHandler::timeoutResponse();
+    if (!result) {
+      armTaskContinuation(connection);
+      return;
+    }
+  } catch (...) {
+    result = AsyncTaskHandler::failureResponse();
+  }
+  asyncHandler->cancelRequest(pendingJob);
+  pendingJob.reset();
+  connection.cancelContinuation();
+  sendFinalResponse(connection, std::move(*result));
 }
 
 void Session::onRequestHeaders(net::TcpConnection& connection, const http::RequestHead& head) {
@@ -242,6 +309,7 @@ void HttpMessageHandler::onMessage(net::TcpConnection& connection,
                                    bool) {
   if (!session) {
     session = std::make_shared<Session>(stats, metrics, accessLogEnabled, requestReadTimeout);
+    session->asyncHandler = asyncHandler;
     session->setResponseCallback(std::move(responseCallback));
     session->setRequestHeadersCallback(std::move(requestHeadersCallback));
     connection.setWriteCompleteCallback([session = session](net::TcpConnection& connection) {
@@ -254,6 +322,7 @@ void HttpMessageHandler::onMessage(net::TcpConnection& connection,
 
 net::TcpConnection::MessageCallback HttpMessageFactory::onMessageFactory() const {
   HttpMessageHandler handler;
+  handler.asyncHandler = asyncHandler;
   handler.metrics = metrics;
   handler.accessLogEnabled = accessLogEnabled;
   handler.requestReadTimeout = requestReadTimeout;

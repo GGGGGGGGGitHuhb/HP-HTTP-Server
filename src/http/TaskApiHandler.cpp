@@ -281,9 +281,10 @@ std::optional<ResponseResult> TaskApiHandler::onTaskHeaders(TaskRoute route,
   return validateTaskRequest(route, method, ConnectionPolicy::kClose);
 }
 
-ResponseResult TaskApiHandler::executeTask(TaskRoute route,
-                                           const HttpRequest& request,
-                                           ConnectionPolicy policy) const {
+std::optional<ResponseResult> TaskApiHandler::prevalidateTask(TaskRoute route,
+                                                              const HttpRequest& request,
+                                                              ConnectionPolicy policy) const {
+  if (auto rejected = validateTaskRequest(route, request.method, policy)) return rejected;
   if (request.body.size() > kMaxTaskInputBytes)
     return taskError(Status::kContentTooLarge,
                      "body_too_large",
@@ -295,6 +296,20 @@ ResponseResult TaskApiHandler::executeTask(TaskRoute route,
                        "unexpected_body",
                        "Request body is not allowed",
                        policy);
+    return std::nullopt;
+  }
+  if (!isTaskMediaType(request.contentType))
+    return taskError(Status::kUnsupportedMediaType,
+                     "unsupported_media_type",
+                     "Content-Type must be application/json",
+                     policy);
+  return std::nullopt;
+}
+
+ResponseResult TaskApiHandler::executeTask(TaskRoute route,
+                                           const HttpRequest& request,
+                                           ConnectionPolicy policy) const {
+  if (request.method == "GET" || request.method == "DELETE") {
     if (request.method == "DELETE") {
       const auto deleted = service_->deleteTask(route.id);
       if (deleted.status != business::TaskStatus::kSuccess)
@@ -307,11 +322,6 @@ ResponseResult TaskApiHandler::executeTask(TaskRoute route,
       return taskResponse(Status::kOk, serializeTasks(service_->listTasks()), policy);
     return serviceResponse(service_->getTask(route.id), Status::kOk, policy);
   }
-  if (!isTaskMediaType(request.contentType))
-    return taskError(Status::kUnsupportedMediaType,
-                     "unsupported_media_type",
-                     "Content-Type must be application/json",
-                     policy);
   const auto input = parseTaskInput(request.body);
   if (!input) return taskError(Status::kBadRequest, "invalid_json", "Invalid task JSON", policy);
   if (request.method == "POST")
@@ -323,8 +333,7 @@ ResponseResult TaskApiHandler::onTaskResponse(TaskRoute route,
                                               const HttpRequest& request,
                                               ConnectionPolicy policy) const {
   try {
-    if (auto rejected = validateTaskRequest(route, request.method, policy))
-      return std::move(*rejected);
+    if (auto rejected = prevalidateTask(route, request, policy)) return std::move(*rejected);
     return executeTask(route, request, policy);
   } catch (...) {
     return internalError(request.method == "HEAD");
