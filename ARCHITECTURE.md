@@ -201,7 +201,7 @@ RequestParser拥有四种必要条件头，Complete复制到HttpRequest，Reques
 新状态metrics追加在原10桶后，206/304非errors，416只计errors；Session/net/期限/回调绑定不变，条件原值不进日志。实时文件访问非一致快照；强校验器、安全断点拼接、multipart及内容缓存均不在当前范围。S3独立复审PASS，V1.2阶段验收完成，合并发布另行处理。
 
 
-## V1.3/S1 任务资源（已独立验收）
+## V1.3/S1 任务资源（已独立验收，以下描述S1时点）
 
 main在worker启动前创建共享TaskService并注入RequestRouter；TaskApiHandler保存shared_ptr。兼容单参router构造独立store，makeHttpFactory(service)的ownedRouter只创建一次，多个连接共享，独立factory不共享。server停止/join连接后才销毁router/store，不新增全局单例/线程/timer。Session/net不变。
 
@@ -213,9 +213,9 @@ TaskService不依赖HTTP/net/JSON，mutex保护map、nextId/exhausted；128条�
 
 原13个metrics桶不变，末尾201/415/503；业务错误不计parse/provider，受控JSON500close不泄漏异常。store内部异常边界继续有原Session兜底。任务忽略静态条件与Range，不产生206/304。无DB/持久化/鉴权/分页/异步业务，原技术债仍保留。
 
-V1.3/S1已获独立Reviewer PASS，28/28/16及任务并发/Expect阶段策略/失败清理验证完成；S2候选待独立审查、S3未开始，V1.3整体未完成。累计纠正3/3与历史停止保留，无新债，不据功能验证宣称同步provider可抢占或全局资源配额已解决。
+V1.3/S1已获独立Reviewer PASS，28/28/16及任务并发/Expect阶段策略/失败清理验证完成；S2现已独立验收；S3组合验收进行中，V1.3整体未完成。累计纠正3/3与历史停止保留，无新债，不据功能验证宣称同步provider可抢占或全局资源配额已解决。
 
-## V1.3/S2 有界任务执行候选
+## V1.3/S2 有界任务执行（已独立验收）
 
 `main`按TaskService/router→BoundedTaskExecutor/AsyncTaskHandler→TcpServer顺序构造。owner完成目标、ID、query、方法、正文大小/media等廉价校验，再由AsyncTaskHandler创建拥有请求与共享TaskApiHandler的TaskWork；worker执行JSON、store、编码，不持连接、Session或EventLoop。队列和Queued/Running/Ready/Retired状态由执行器mutex保护，用户工作在锁外。ready结果仍占槽；queued取消立即释放，running取消到真正返回才释放。
 
@@ -228,3 +228,13 @@ Session进入kAwaitingTask并暂停读取，每连接仅一个job。独立connec
 V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30（28.76秒）、规定ASan+UBSan/LSan18/18（22.85秒）；三负对照-6/-6/1、16文件格式通过。55旧测试及31冻结保持；启动异常夹具自清理缺陷已修复，原FAIL与初URL失败保留，累计纠正2/2，无新债。S2已完成，S3未开始，V1.3整体未完成；验收不表示合并或标签发布。
 
 23文件导出由HEAD+stage.patch独立重建验证；20文件与被测候选同字节，3重叠文件仅8处原用户注释差异并人工行为等价审计。export未另编译。5ms非硬实时、逻辑容量非RSS硬限、运行取消不提前释放槽及旧性能/EOF边界保持。
+
+## V1.3/S3 组合验证与演示（候选）
+
+本阶段不改生产线程、路由、存储或退出接口。新测试从公开TaskService/执行器接口组合固定并发操作；HTTP驱动启动真实main及既有测试门闩，客户端和子进程由驱动显式回收。演示脚本只依赖标准库，不导入tests，也不成为服务器依赖。监听仍INADDR_ANY，客户端回环不能限制监听地址；仅合成数据、异常清理和公开边界说明见DEMO。
+
+### V1.3/S3 最终验收检查点
+
+2026-10-31 V1.3/S3独立Reviewer001 PASS：最终候选Debug32/32（31.00秒）、Release32/32（31.31秒）、ASan+UBSan/LSan20/20（25.36秒）、限定setarch进程布局下TSan3/3（1.26秒）；原裸跑0/3初始化失败保留。三负对照-6/-6/1、一键演示exit0，45进程/12故障/18个FINAL资源回收通过。累计纠正2/2，无新增债务；S1–S3阶段验收全部完成，不表示已合并或标签发布，V1.4未开始。
+
+TSan仅改变指定测试进程树地址随机化属性，不改系统全局配置；有限检查不证明穷举无race。保留全接口监听/可信环境、超时不回滚、join可能等待、TD006/WSL2/长尾/EOF风险。

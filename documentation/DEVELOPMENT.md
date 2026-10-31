@@ -139,3 +139,42 @@ HTTP场景5秒、suite120秒，门闩经管道明确放行；日志保存fixture
 V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30（28.76秒）、规定ASan+UBSan/LSan18/18（22.85秒）；三负对照-6/-6/1、16文件格式通过。55旧测试及31冻结保持；启动异常夹具自清理缺陷已修复，原FAIL与初URL失败保留，累计纠正2/2，无新债。S2已完成，S3未开始，V1.3整体未完成；验收不表示合并或标签发布。
 
 23文件导出由HEAD+stage.patch独立重建验证；20文件与被测候选同字节，3重叠文件仅8处原用户注释差异并人工行为等价审计。export未另编译。5ms非硬实时、逻辑容量非RSS硬限、运行取消不提前释放槽及旧性能/EOF边界保持。
+
+## V1.3/S3 综合应用验收（候选）
+
+当前新增task_application_concurrency_tests与http_application_acceptance_tests，完整CTest为32项；旧30身份保持，全部旧测试只读。新C++固定8生产者×32操作，验证整对象、容量与执行器槽守恒；HTTP组合在threads0/2运行。每响应/客户端操作有5秒界限，suite120秒，日志16MiB。真实启动前后及中途失败必须自身wait/join/关闭管道/删除临时根，外层救援不能计为通过。
+
+标准库演示入口见[DEMO](DEMO.md)。HTTP测试在构建目录test-tmp下保留application-evidence-*，其中summary、每进程JSON、failure-cleanup及门闩FINAL是清理证据；临时静态根删除。所有服务器仍监听0.0.0.0临时端口，需可信开发环境。
+
+规定独立Debug/Release全32项、ASan+UBSan/LSan原18项加新2项共20项。TSan单独构建，不与ASan混用：
+
+```bash
+cmake -S . -B build-tsan -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_CXX_FLAGS='-fsanitize=thread -fno-omit-frame-pointer' \
+  -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=thread'
+cmake --build build-tsan -j2 --target http_task_api_tests bounded_task_executor_tests task_application_concurrency_tests
+ctest --test-dir build-tsan -R '^(http_task_api|bounded_task_executor|task_application_concurrency)_tests$' --output-on-failure --timeout 120
+```
+
+TSan三目标必须实际运行且无race诊断，结合人工同步/所有权审查；初始化不支持应报告BLOCKED，不以没有诊断声称通过，不自动修改系统或关闭检测。有限检查不证明穷举无数据竞争。
+
+新套件反证入口`HP_APPLICATION_NEGATIVE=1`：分别运行Debug/Release的task_application_concurrency_tests，或`python3 tests/HttpApplicationAcceptance_test.py <server> <async_task_test_server> scripts/demo_task_application.py`。后者需显式设置HP_S3_TEST_TMP_ROOT；故意错误预期非零且正常自清理。Release检查不依赖assert。阶段随后Reviewer已独立PASS，V1.3阶段验收完成，历史技术债保持。
+
+2026-10-31 Builder执行Debug32/32、Release32/32和ASan+UBSan/LSan20/20通过。TSan三个目标均在启动时报`FATAL: ThreadSanitizer: unexpected memory mapping`，未进入测试；这不是race检查通过。该次初始路线按批准门槛阻塞，未获Reviewer独立验收，不关闭V1.3。当时没有更换运行配置、关闭检测或修改系统来重试。原全量后仅完善新Python驱动末尾异常保留，并针对受影响HTTP套件、demo和负对照复验，具体最终证据见本阶段实现报告。
+
+
+2026-10-31 后续一次有界进程布局适配：保留同一GCC TSan二进制、相同源码与3个目标，仅用已安装setarch关闭该CTest及其测试子进程的地址随机化。实际3/3（1.24秒），无TSan race诊断；原裸跑0/3失败保留。此方式只改变测试进程树属性，不写sysctl或修改全机配置，不关闭race检测，也不用于HTTP/demo/生产服务。不保证适用于所有TSan映射错误；失败应保留证据并停止，不循环换参数。
+
+```bash
+setarch x86_64 --addr-no-randomize ctest --test-dir build-tsan \
+  -R '^(http_task_api|bounded_task_executor|task_application_concurrency)_tests$' \
+  --output-on-failure --timeout 120
+```
+
+本次完成的是Builder自测环境障碍处理，S3随后已完成Reviewer独立构建与验证，见最终验收检查点。有限TSan结果不证明穷举无竞争；验证程序中使用本地socket，但该路线不启动HTTP监听器或演示服务器。
+
+### V1.3/S3 最终验收检查点
+
+2026-10-31 V1.3/S3独立Reviewer001 PASS：最终候选Debug32/32（31.00秒）、Release32/32（31.31秒）、ASan+UBSan/LSan20/20（25.36秒）、限定setarch进程布局下TSan3/3（1.26秒）；原裸跑0/3初始化失败保留。三负对照-6/-6/1、一键演示exit0，45进程/12故障/18个FINAL资源回收通过。累计纠正2/2，无新增债务；S1–S3阶段验收全部完成，不表示已合并或标签发布，V1.4未开始。
+
+TSan仅改变指定测试进程树地址随机化属性，不改系统全局配置；有限检查不证明穷举无race。保留全接口监听/可信环境、超时不回滚、join可能等待、TD006/WSL2/长尾/EOF风险。

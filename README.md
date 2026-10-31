@@ -4,7 +4,7 @@ Linux C++20 HTTP 服务器学习项目：提供受限 HTTP/1.1 GET/HEAD 静态�
 
 ## 后续方向
 
-2026-10-29调整：取消本仓库原L7网关扩展，后续依次规划V1.1请求正文与基础路由、V1.2 HTTP兼容与静态资源语义、V1.3无数据库动态接口、V1.4运行保障。V1.1/S1协议与回归基线已完成独立验收并合并，S2正文与读取期限已完成独立验收，S3方法路由已完成独立验收，V1.1三个阶段均已验收完成，S3已合并origin/main（标签发布未核实）；V1.2/S1已完成独立验收并合并，S2目标解析已独立验收（Approved revision1及补充，Reviewer001 PASS），S3条件请求与单区间下载已独立复审PASS，V1.2三个阶段均已验收完成；S3已合并（本阶段起点PR40），发布标签未核实；V1.3/S1内存任务API已独立验收PASS，S2已独立复审PASS、S3未开始，V1.3整体未完成；当前仍是受限HTTP服务，详见[路线图](ROADMAP.md#后续路线与共同门槛)。数据库、代理及推理网关不在本轮范围。
+2026-10-29调整：取消本仓库原L7网关扩展，后续依次规划V1.1请求正文与基础路由、V1.2 HTTP兼容与静态资源语义、V1.3无数据库动态接口、V1.4运行保障。V1.1/S1协议与回归基线已完成独立验收并合并，S2正文与读取期限已完成独立验收，S3方法路由已完成独立验收，V1.1三个阶段均已验收完成，S3已合并origin/main（标签发布未核实）；V1.2/S1已完成独立验收并合并，S2目标解析已独立验收（Approved revision1及补充，Reviewer001 PASS），S3条件请求与单区间下载已独立复审PASS，V1.2三个阶段均已验收完成；S3已合并（本阶段起点PR40），发布标签未核实；V1.3/S1内存任务API已独立验收PASS，S2已独立复审PASS且合并、S3已独立PASS，V1.3阶段验收完成（S3未合并、标签未发布）；当前仍是受限HTTP服务，详见[路线图](ROADMAP.md#后续路线与共同门槛)。数据库、代理及推理网关不在本轮范围。
 
 ## 环境要求
 
@@ -39,7 +39,7 @@ ctest --test-dir build -N
 ctest --test-dir build --output-on-failure
 ```
 
-当前CMake注册30项，含已验收S3静态语义两套及目标解析两套及已验收chunked/Expect两套、历史别名和synthetic工具测试；历史V1.1/S3增加方法路由C++与真实HTTP两套，Builder及Reviewer独立通过Debug/Release各20/20、规定sanitizer 8/8，Reviewer结论PASS；错误预期和失败清理反证有效。当前行为见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，测试入口与冻结覆盖边界见[开发说明](documentation/DEVELOPMENT.md)。23个旧目标仍停用；S3仅定向更新两份旧测试的静态405 Allow断言，其他冻结约束保持。
+当前CMake注册32项，含已验收S3静态语义两套及目标解析两套及已验收chunked/Expect两套、历史别名和synthetic工具测试；历史V1.1/S3增加方法路由C++与真实HTTP两套，Builder及Reviewer独立通过Debug/Release各20/20、规定sanitizer 8/8，Reviewer结论PASS；错误预期和失败清理反证有效。当前行为见[HTTP支持矩阵](documentation/HTTP-SUPPORT.md)，测试入口与冻结覆盖边界见[开发说明](documentation/DEVELOPMENT.md)。23个旧目标仍停用；S3仅定向更新两份旧测试的静态405 Allow断言，其他冻结约束保持。
 
 ## 项目结构
 
@@ -50,7 +50,7 @@ ctest --test-dir build --output-on-failure
 
 ## 已知限制
 
-当前GET完整消费固定长度或chunked解码正文但不解释其业务含义，文件响应仍由路径决定；HEAD返回同GET表示头但不发送正文；POST /api/echo回显原始正文，其他资源方法组合405。请求头16KiB、行4KiB、正文1MiB、文件8MiB独立上限，合法正文超限413，非法framing400；仅支持单个chunked编码及100-continue期望，trailer仅X-Checksum/X-Trace-Id；不支持响应chunked、multipart多Range、Unicode规范化、TLS、HTTP/2、目录列表或代理。生产输入窗口仍16KiB，不是正文总上限。无全局连接/内存配额或业务执行期限，owner上的阻塞provider不能被定时器抢占。协议及资源边界见 [架构](ARCHITECTURE.md)。
+当前GET完整消费固定长度或chunked解码正文但不解释其业务含义，文件响应仍由路径决定；HEAD返回同GET表示头但不发送正文；POST /api/echo回显原始正文，其他资源方法组合405。请求头16KiB、行4KiB、正文1MiB、文件8MiB独立上限，合法正文超限413，非法framing400；仅支持单个chunked编码及100-continue期望，trailer仅X-Checksum/X-Trace-Id；不支持响应chunked、multipart多Range、Unicode规范化、TLS、HTTP/2、目录列表或代理。生产输入窗口仍16KiB，不是正文总上限。无全局连接/内存配额；任务API已有1秒业务期限，owner上的同步provider仍不能被定时器抢占。协议及资源边界见 [架构](ARCHITECTURE.md)。
 
 性能数据限定WSL2同机loopback、closed-loop与热缓存。V0.6/S2矩阵提供条件化基线；S3只有M2小文件跟踪配对与M6未跟踪CPU，大文件syscall未知。strace单次QPS变化-95.85%为巨大观测扰动，不证明稳定瓶颈、恢复或长尾根因。RO-002、TD-001、TD-006保持开放；详见 [风险](TECH-DEBT-TRACKER.md) 与 [公开性能结果](benchmark/README.md)。
 
@@ -120,10 +120,22 @@ V1.2/S2已验收统一目标一次percent解码：`/space%20name.txt`访问编�
 
 新增`GET/POST /api/tasks`和`GET/PUT/DELETE /api/tasks/{id}`。POST/PUT必须提供JSON对象`{"title":"demo","completed":false}`及Content-Type: application/json；PUT完整替换，ID为字符串，最多128条，重启清空。任务命名空间优先同名静态文件，HEAD返回405无正文，其他/API路径和echo保持原规则。所有任务JSON响应带唯一no-store，错误与连接策略见[运行说明](documentation/RUNNING.md#v13s1-内存任务api已独立验收)。无数据库、鉴权、持久化、PATCH或异步业务线程池；V1.3未验收完成。
 
-## V1.3/S2 异步任务候选（待独立审查）
+## V1.3/S2 异步任务（已独立验收）
 
 生产入口将完整任务请求交给固定2线程执行器：最多排队32个，包含运行和待领取结果共34槽。静态文件与echo继续由连接owner处理；原无异步注入的factory保持同步兼容。任务从准入到owner交付最多1000ms；过载或超时返回JSON 503并关闭连接。输入验证、100 Continue与请求读取期限仍在owner。
 
-新增`bounded_task_executor_tests`、`http_async_task_http_tests`，CTest共30项；详细行为与退出限制见[运行说明](documentation/RUNNING.md)。本阶段尚待Reviewer验收，未宣称性能提升。
+新增`bounded_task_executor_tests`、`http_async_task_http_tests`，CTest共30项；详细行为与退出限制见[运行说明](documentation/RUNNING.md)。S2已独立验收，未宣称性能提升。
 
 V1.3/S2经独立Reviewer002复审PASS：Debug30/30（29.17秒）、Release30/30（28.76秒）、规定ASan+UBSan/LSan18/18（22.85秒）；三负对照-6/-6/1、16文件格式通过。55旧测试及31冻结保持；启动异常夹具自清理缺陷已修复，原FAIL与初URL失败保留，累计纠正2/2，无新债。S2已完成，S3未开始，V1.3整体未完成；验收不表示合并或标签发布。
+
+## V1.3/S3 综合应用验收（已独立验收）
+
+新增有界并发与真实HTTP组合两套测试，保留原30项注册，当前共32项。提供[一键演示与curl示例](documentation/DEMO.md)，展示静态文件、echo、任务CRUD和重启清空；演示只用临时合成数据，监听0.0.0.0临时端口，客户端连127.0.0.1，须在可信开发环境运行。S3已独立验收PASS，V1.3阶段验收完成，尚未合并或标签发布。
+
+Builder规定Debug/Release各32项及ASan+UBSan/LSan20项通过；TSan初次初始化因unexpected memory mapping失败，随后同二进制在限定进程布局路线下3/3通过。原失败保留，S3已独立验收PASS，详见[验证路线与限制](documentation/DEVELOPMENT.md#v13s3-综合应用验收候选)。
+
+### V1.3/S3 最终验收检查点
+
+2026-10-31 V1.3/S3独立Reviewer001 PASS：最终候选Debug32/32（31.00秒）、Release32/32（31.31秒）、ASan+UBSan/LSan20/20（25.36秒）、限定setarch进程布局下TSan3/3（1.26秒）；原裸跑0/3初始化失败保留。三负对照-6/-6/1、一键演示exit0，45进程/12故障/18个FINAL资源回收通过。累计纠正2/2，无新增债务；S1–S3阶段验收全部完成，不表示已合并或标签发布，V1.4未开始。
+
+TSan仅改变指定测试进程树地址随机化属性，不改系统全局配置；有限检查不证明穷举无race。保留全接口监听/可信环境、超时不回滚、join可能等待、TD006/WSL2/长尾/EOF风险。
