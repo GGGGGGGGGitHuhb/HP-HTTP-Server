@@ -166,3 +166,15 @@ S1首轮Builder验证中，Debug34/34、ASan+UBSan/LSan22/22、指定TSan4/4通�
 2026-10-31 V1.4/S2独立Reviewer001 PASS：最终r2候选Debug36/36（35.36秒）、Release36/36（34.82秒）、ASan+UBSan/LSan24/24（31.13秒）、限定setarch进程布局TSan5/5（3.49秒）；负对照-6/-6/1、14份C++格式通过，32份长寿命fixture、12个故障和4个临时root正常清理。63旧tests及31冻结保持。当前纠正1/2，无新增债务；原JSON include/help失败历史保留。S2已完成、S3未开始，V1.4整体未完成；阶段验收不表示已合并或标签发布。
 
 管理默认关闭、实际回环绑定且无鉴权，readiness不保证容量；独立逻辑预算不等于全局RSS。日志由外部接收者轮转，网络drain期限不等于整个进程退出期限；不合作业务或sink仍可能延长join。TD006/WSL2/EOF/长尾及S1 warning/P3保持。
+
+## V1.4/S3 部署与版本回归（已验收）
+
+配对[systemd示例](examples/systemd/hp-http-server.service)、[部署配置](examples/deployment/server.json)与[部署说明](documentation/DEPLOYMENT.md)提供非特权账号/只读站点、外部日志轮转和独立TLS代理边界。当前只静态验证重定位unit及非root普通进程停启，不安装systemd或代理；SendSIGKILL=no使15秒停止超时不保证退出，业务0.0.0.0仍需外部隔离。
+
+新标准库`scripts/verify_deployment.py --server <绝对binary> --artifacts <绝对新目录>`验证真实权限拒绝、启动失败、两次SIGTERM停启及任务清空，所有控制行只消费stdout。新增单一CTest后共37项，要求从HEAD+纯阶段patch的干净源码完成37/37/25与既定TSan5及Release演示/负对照；现已独立Reviewer002 PASS，V1.4阶段验收完成，未生产发布。
+
+### V1.4/S3 最终验收检查点
+
+2026-10-31 V1.4/S3独立Reviewer002 PASS，P2初始化清理缺陷关闭，累计纠正2/2，无新增债务。最终干净r2独立Debug37/37（35.50秒）、Release37/37（34.93秒）、ASan+UBSan/LSan25/25（31.95秒）、限定setarch TSan5/5（3.51秒）、Release demo exit0、新负对照exit1；24个服务器及2个demo进程完整回收。S1–S3阶段验收全部完成，不表示S3已合并、打标签或生产发布。原Debug35/37与Reviewer001 FAIL保留，人工RST不冒称原生产RST根因复现。
+
+仅静态unit字段/重定位副本与非root普通进程实测，未安装运行systemd服务或TLS代理。业务全接口/管理回环无鉴权、readiness非容量、外部轮转、网络drain非进程退出硬截止以及TD006/WSL2/长尾/EOF限制保持；逻辑配额不等于RSS，无性能新采样。

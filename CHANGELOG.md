@@ -3,7 +3,12 @@
 本文档记录 HP HTTP Server 已经完成并得到适当验证的重要变化。未来计划写入 `ROADMAP.md`，长期架构写入 `ARCHITECTURE.md`，技术债写入 `TECH-DEBT-TRACKER.md`，实现与审查证据写入对应报告。
 
 <a id="unreleased"></a>
-## V1.4 — 开发中（未发布）
+## V1.4 — 阶段验收完成（未发布）
+
+### S3 部署示例与版本回归
+
+- 新增非特权systemd/配置示例、外置HTTPS与权限说明、本地停启验收工具和单一CTest；不改变生产能力或安装服务。唯一旧Q05例外接受EOF/明确ECONNRESET，原期限与无数据断言保持。
+- 2026-10-31 V1.4/S3独立Reviewer002 PASS，P2初始化清理缺陷关闭，累计纠正2/2，无新增债务。最终干净r2独立Debug37/37（35.50秒）、Release37/37（34.93秒）、ASan+UBSan/LSan25/25（31.95秒）、限定setarch TSan5/5（3.51秒）、Release demo exit0、新负对照exit1；24个服务器及2个demo进程完整回收。S1–S3阶段验收全部完成，不表示S3已合并、打标签或生产发布。原Debug35/37与Reviewer001 FAIL保留，人工RST不冒称原生产RST根因复现。
 
 ### S2 配置与运行观测
 

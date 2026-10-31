@@ -38,3 +38,13 @@
 仅原始目标精确匹配，query及编码别名404；先路径后方法，已知路径非GET405且`Allow: GET`，HEAD405不发正文。GET完整非空body400；Expect头阶段417close，不发100；更早parser错误仍沿原协议错误格式。
 
 首次SIGINT/TERM先撤ready再业务drain。管理在业务网络退出前仍可返回not ready；业务网络退出后先停止/join管理，再join业务执行器与日志消费者。配置/启动失败不留下半服务；握手1秒是等待启动结果的期限，超时后仍合作stop/join，不是任意线程1秒强杀。管理端口已关闭也不意味着进程已经退出。
+
+## 部署配置示例
+
+`examples/deployment/server.json`配合`examples/systemd/hp-http-server.service`使用绝对root、8080业务与9090回环管理；原`examples/server-config.json`仍供源码目录本地使用。部署者须复核账号、所有父目录搜索权限与只读文件；配置错exit2不自动重启，root权限运行失败exit1。详见[部署说明](DEPLOYMENT.md)，示例未实际安装运行。
+
+### V1.4/S3 最终验收检查点
+
+2026-10-31 V1.4/S3独立Reviewer002 PASS，P2初始化清理缺陷关闭，累计纠正2/2，无新增债务。最终干净r2独立Debug37/37（35.50秒）、Release37/37（34.93秒）、ASan+UBSan/LSan25/25（31.95秒）、限定setarch TSan5/5（3.51秒）、Release demo exit0、新负对照exit1；24个服务器及2个demo进程完整回收。S1–S3阶段验收全部完成，不表示S3已合并、打标签或生产发布。原Debug35/37与Reviewer001 FAIL保留，人工RST不冒称原生产RST根因复现。
+
+仅静态unit字段/重定位副本与非root普通进程实测，未安装运行systemd服务或TLS代理。业务全接口/管理回环无鉴权、readiness非容量、外部轮转、网络drain非进程退出硬截止以及TD006/WSL2/长尾/EOF限制保持；逻辑配额不等于RSS，无性能新采样。

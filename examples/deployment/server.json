@@ -1,0 +1,15 @@
+{
+  "port": 8080,
+  "root": "/srv/hp-http-server/www",
+  "threads": 2,
+  "idle_timeout_ms": 30000,
+  "keep_alive_timeout_ms": 15000,
+  "request_read_timeout_ms": 10000,
+  "shutdown_timeout_ms": 5000,
+  "access_log": false,
+  "metrics_on_exit": true,
+  "admin_port": 9090,
+  "max_connections": 128,
+  "input_budget_bytes": 67108864,
+  "output_budget_bytes": 67108864
+}
